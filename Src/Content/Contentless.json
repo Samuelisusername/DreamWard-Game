@@ -1,0 +1,27 @@
+{
+    "exclude": [
+        "obj/*",
+        "bin/*"
+    ],
+    "logSkipped": true,
+    "overrides": {
+        "*.ogg": {
+            "processor": "SoundEffectProcessor"
+        },
+        "*.mp3": {
+            "processor": "SoundEffectProcessor"
+        },
+        "*.wav": {
+            "processor": "SoundEffectProcessor"
+        },
+        "*.txt": {
+            "copy": true
+        },
+        "*.json": {
+            "copy": true
+        },
+        "*.ttf": {
+            "copy": true
+        }
+    }
+}

@@ -1,0 +1,68 @@
+###########################
+# DO NOT MODIFY THIS FILE #
+###########################
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  timeout: 10 minutes
+  tags:
+    - gamelab
+    - dotnet9
+  script:
+    - dotnet publish Src\Gamelab.csproj -c Release -r win-x64 /p:PublishSingleFile=true --self-contained
+    - if (Test-Path -Path Build) { Remove-Item -Path Build -Recurse -Force }; New-Item -ItemType Directory -Path Build;
+    - Copy-Item -Path Src\bin\Release\net9.0\win-x64\publish\* -Destination Build -Recurse;
+  artifacts:
+    paths:
+      - Build
+    expire_in: 48 hours
+
+# Run unit tests on Windows 10 and 11.
+unit-tests:
+  stage: test
+  timeout: 10 minutes
+  parallel:
+    matrix:
+      - OS: "win10"
+      - OS: "win11"
+  tags:
+    - gamelab
+    - $OS
+    - dotnet9
+  script:
+    - dotnet test Tests\Tests.csproj --logger:"console;verbosity=normal" --logger:"junit;LogFilePath=Output/Report.xml" -c Release
+  artifacts:
+    when: always
+    reports:
+      junit: Tests/Output/Report.xml
+      metrics: Tests/Output/Metrics.txt
+    paths:
+      - Tests/Output
+
+# Test the actual build in a clean environment to ensure there are no hidden dependencies needed to run the game.
+build-test:
+  stage: test
+  timeout: 10 minutes
+  parallel:
+    matrix:
+      - OS: "win10"
+        DOTNET_TAG: "dotnet9"
+      - OS: "win11"
+        DOTNET_TAG: "dotnet9"
+      - OS: "win11"
+        DOTNET_TAG: "no-dotnet"
+  tags:
+    - gamelab
+    - $OS
+    - $DOTNET_TAG
+  needs:
+    - build
+  script:
+    - Remove-Item -Path Src -Recurse -Force # Delete Src folder to ensure exe doesn't accidentally reference files outside the build output
+    - if (Test-Path -Path C:\TMP) { Remove-Item -Path C:\TMP -Recurse -Force }; New-Item -ItemType Directory -Path C:\TMP;
+    - Copy-Item -Path Build\* -Destination C:\TMP -Recurse # Copy the build to a temporary location
+    - C:\TMP\Gamelab.exe --run-cicd-test
