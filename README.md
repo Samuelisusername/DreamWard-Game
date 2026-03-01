@@ -1,9 +1,7 @@
-# :exclamation: READ FIRST :exclamation:
-Before committing anything, set up [gitignore](.gitignore) and [gitattributes](.gitattributes) correctly for your project and your programming environment. When gitignore and git LFS are configured, remove this section from the readme.
-
-# ENTER YOUR GAME TITLE HERE
+# Dreamward
 # :video_game: Game Programming Lab 2026 - Team Dreams
 
-ENTER DESCRIPTION HERE
+The game is a single player isometric 2D tower defense. 
+In line with the overall theme "Dream", the main character is defending against nightmares.\\
 
 Members: Curdin Schenkel, Lassi Luukkonen, Samuel Gair, Murezi Giger, Ruchitraa Rajagopal, and Elitsa Popova
