@@ -8,6 +8,7 @@ using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
 using FontStashSharp;
 using System.IO;
+using MonoGame.Extended.Input;
 
 namespace Gamelab.Screens;
 
@@ -34,7 +35,10 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
     public override void Update(GameTime gameTime)
     {
         // Get keyboard and all gamepad states for input handling
-        var keyboard = Keyboard.GetState();
+        MouseExtended.Update();
+        KeyboardExtended.Update();
+        var mouse = MouseExtended.GetState();
+        var keyboard = KeyboardExtended.GetState();
         var gamePads = new Dictionary<int, GamePadState>();
         for (int i = 0; i < GamePad.MaximumGamePadCount; i++)
         {
@@ -49,10 +53,10 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
             gamePads.Add(i, gamePad);
         }
 
-        Update(gameTime, keyboard, gamePads);
+        Update(gameTime, keyboard, gamePads, mouse);
     }
 
-    protected virtual void Update(GameTime gameTime, KeyboardState keyboard, Dictionary<int, GamePadState> gamePads)
+    protected virtual void Update(GameTime gameTime, KeyboardStateExtended keyboard, Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
     }
 

@@ -68,7 +68,7 @@ public class GamelabGame : Game
         base.Initialize();
 
         //TODO: Replace with actual game name
-        Window.Title = "Gamelab Game";
+        Window.Title = "DreamWard";
         IsMouseVisible = true;
 
         if (IsDebug)
@@ -92,7 +92,7 @@ public class GamelabGame : Game
         var fontBytes = File.ReadAllBytes(fontPath);
         fontSystem.AddFont(fontBytes);
 
-        screenManager.ShowScreen(new MainMenuScreen(this));
+        screenManager.ShowScreen(new HexMapScreen(this));
         logger.Info("Game initialized");
     }
 

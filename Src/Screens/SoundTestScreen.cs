@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio; // Crucial for SFX
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended.Input;
 using System.Collections.Generic;    // Needed for your team's GamePad dictionary
 
 namespace Gamelab.Screens;
@@ -8,7 +9,6 @@ namespace Gamelab.Screens;
 public class SoundTestScreen : GamelabGameScreen
 {
     private SoundEffect _testSound;
-    private KeyboardState _previousKeyboardState;
 
     public SoundTestScreen(GamelabGame game) : base(game)
     {
@@ -24,15 +24,12 @@ public class SoundTestScreen : GamelabGameScreen
     }
 
     // NOTICE: We are using your team's custom Update method here!
-    protected override void Update(GameTime gameTime, KeyboardState keyboard, Dictionary<int, GamePadState> gamePads)
-    {
+        protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard, Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)    {
         // Check if Spacebar was just pressed this exact frame
-        if (keyboard.IsKeyDown(Keys.Space) && _previousKeyboardState.IsKeyUp(Keys.Space))
+        if (keyboard.WasKeyPressed(Keys.Space))
         {
             _testSound.Play(); 
         }
-
-        _previousKeyboardState = keyboard;
     }
 
     public override void Draw(GameTime gameTime)
