@@ -20,3 +20,9 @@
 #begin Data/example.json
 /copy:Data/example.json
 
+#begin Sounds/shuffle.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/shuffle.wav
+
