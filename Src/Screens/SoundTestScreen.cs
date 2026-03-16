@@ -17,10 +17,8 @@ public class SoundTestScreen : GamelabGameScreen
     public override void LoadContent()
     {
         base.LoadContent();
-        
-        // 1. Make sure "myTestSound" matches your actual file name exactly!
         // 2. Do not include the ".wav" extension here.
-        _testSound = Game.Content.Load<SoundEffect>("Sounds/myTestSound");
+        _testSound = Game.Content.Load<SoundEffect>("Sounds/shuffle");
     }
 
     // NOTICE: We are using your team's custom Update method here!
