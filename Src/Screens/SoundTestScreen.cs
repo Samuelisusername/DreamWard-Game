@@ -35,9 +35,6 @@ public class SoundTestScreen : GamelabGameScreen
     public override void LoadContent()
     {
         base.LoadContent();
-        GamelabGame.textureAtlas = new();
-        TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
-        GamelabGame.textureAtlas.Add("monsters", monsters);
         // 2. Do not include the ".wav" extension here.
         _testSound = Game.Content.Load<SoundEffect>("Sounds/shuffle");
         _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");

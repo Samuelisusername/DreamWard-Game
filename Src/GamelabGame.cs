@@ -96,10 +96,19 @@ public class GamelabGame : Game
         var fontBytes = File.ReadAllBytes(fontPath);
         fontSystem.AddFont(fontBytes);
 
-        //screenManager.ShowScreen(new HexMapScreen(this));
+        screenManager.ShowScreen(new HexMapScreen(this));
         //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
-        screenManager.ShowScreen(new SoundTestScreen(this));
+        // screenManager.ShowScreen(new SoundTestScreen(this));
         logger.Info("Game initialized");
+    }
+
+    protected override void LoadContent()
+    {
+        base.LoadContent();
+        
+        textureAtlas = new();
+        TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
+        textureAtlas.Add("monsters", monsters);
     }
 
     protected override void Update(GameTime gameTime)

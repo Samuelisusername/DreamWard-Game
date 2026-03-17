@@ -5,15 +5,24 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 public class TestMonster : Entity
-{
+{   
+    /// <summary>
+    /// THe map manage used by the monster to 
+    /// </summary>
     private MapManager _mapManager;
 
-    private TimeSpan _speed; //this is the time it takes a Monster to move from one tile to the next
+    //this is the time it takes a Monster to move from one tile to the next
+    private TimeSpan _speed; 
 
+    //how much time elapsed since the monster started moving from the last tile?
     private TimeSpan _elapsed = TimeSpan.Zero;
 
+    //the path the entity tries to follow
     private List<(int,int)> _path = new List<(int,int)>();
 
+    /// <summary>
+    /// the path the entity tries to follow
+    /// </summary>
     public List<(int,int)> Path 
     {
         get{return _path;}
@@ -31,11 +40,14 @@ public class TestMonster : Entity
         }
     }
 
+    //did the entity reach its goal
     private bool _goalReached => _path.Count <= 1;
 
+    //where inbetween two tiles is the monster?
     private float _pathProgress;
 
-    private Vector2 _localOffset = new Vector2(-32,-90);
+    //the offset to draw the monster on the tile
+    private readonly Vector2 _localOffset = new Vector2(-32,-90);
 
 
     public TestMonster(AnimatedSprite sprite, MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
@@ -66,6 +78,10 @@ public class TestMonster : Entity
         base.Update(gameTime);
     }
 
+    /// <summary>
+    /// draw the monster
+    /// </summary>
+    /// <param name="spriteBatch"></param>
     public override void Draw(SpriteBatch spriteBatch)
     {
         if(_goalReached)
