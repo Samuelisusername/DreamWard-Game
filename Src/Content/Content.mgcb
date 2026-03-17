@@ -110,3 +110,13 @@
 /processorParam:Quality=Best
 /build:Sounds/shuffle.wav
 
+#begin Sounds/preferred_option_day.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/build:Sounds/preferred_option_day.mp3
+
+#begin Sounds/creepy_demon_night_forest.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/build:Sounds/creepy_demon_night_forest.mp3
+

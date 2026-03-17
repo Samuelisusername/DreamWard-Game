@@ -93,6 +93,8 @@ public class GamelabGame : Game
         fontSystem.AddFont(fontBytes);
 
         screenManager.ShowScreen(new HexMapScreen(this));
+        //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
+        //screenManager.ShowScreen(new SoundTestScreen(this));
         logger.Info("Game initialized");
     }
 
