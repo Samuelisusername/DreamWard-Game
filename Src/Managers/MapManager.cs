@@ -1,16 +1,11 @@
 using System;
 using Microsoft.Xna.Framework;
 using DreamWardUtils.Graphics;
+using Gamelab.Screens;
 
 public class MapManager
 {    
     private readonly TileSet _tileSet;
-
-    // the tileset with the structures
-    private readonly TileSet _structureSet;    
-
-    // the tileset with the monsters
-    private readonly TileSet _monsterSet;
 
 
     private readonly int[,] _tiles; //col first 
@@ -20,7 +15,7 @@ public class MapManager
 
     
     //stores which tiles has which monster on it -1 if none
-    private readonly int[,] _monsters;//colfirst
+    private readonly Entity[,] _monsters;//colfirst
 
 
 
@@ -52,6 +47,7 @@ public class MapManager
         Columns = columns;
         Scale = Vector2.One;
         _tiles = new int[Columns,Rows];
+        _monsters = new Entity[Columns,Rows];
     }
 
     public void SetTile(int col, int row, int tileSetID)
@@ -64,24 +60,33 @@ public class MapManager
         return _tileSet.GetTile(_tiles[col,row] + _animationOffset);
     }
 
+    public Vector2 GetWorldPositionOfTile(int col, int row)
+    {
+        float tileX = col * TileWidth - (col * ScaledOffset);
+        float tileY = col % 2 == 0 ? row * TileHeight : row * TileHeight + ScaledOffset;
+
+        return new Vector2(tileX, tileY) + Offset; //TODO: this returns the top left corner so far mybe change to something else
+    }
+
     public void SetStructure(int col, int row, int structureSetId)
     {
         _structures[col,row] = structureSetId;
     }
 
-    public TextureRegion GetStructure(int col, int row)
-    {        
-        return _structureSet.GetTile(_structures[col,row]);
-    }
-
-    public void SetMonster(int col, int row, int monsterSetID)
+    public void SetMonster(int col, int row, Entity monster)
     {
-        _monsters[col,row] = monsterSetID;
+        _monsters[col,row] = monster;
     }
 
-    public TextureRegion GetMonster(int col, int row)
+    public Entity GetMonster(int col, int row)
     {        
-        return _monsterSet.GetTile(_monsters[col,row]);
+        return _monsters[col,row];
+    }
+
+    public void MoveMonster((int,int) origin, (int,int) goal)
+    {
+        _monsters[goal.Item1,goal.Item2] =  _monsters[origin.Item1,origin.Item2];
+        _monsters[origin.Item1,origin.Item2] = null;
     }
 
     public void Update(GameTime gameTime)
@@ -92,6 +97,13 @@ public class MapManager
         {
             _elapsed -= _delay;
             _animationOffset = (_animationOffset + 1) % 2;
+        }
+        for(int i = 0; i < Columns; i++)
+        {
+            for(int j = 0; j < Rows; j++)
+            {
+                ((TestMonster)(_monsters[i,j]))?.Update(gameTime);
+            }
         }
     }
 
@@ -111,10 +123,10 @@ public class MapManager
     /// </summary>
     /// <param name="position"></param>
     /// <returns>returns [col,row] of the tile at position. returns [-1,-1] if the position is not on the tilemap</returns>
-    private int[] getTileIndex(Vector2 position)
+    private (int,int) getTileIndex(Vector2 position)
     {
         position -= Offset;
-        int[] res = new int[2];
+        (int,int) res;
         int colAprox = (int)(position.X / (TileWidth - ScaledOffset));
         int isOddRow = colAprox % 2;
         int row = isOddRow  == 0? (int)Math.Floor(position.Y/TileHeight) : (int)Math.Floor((position.Y - ScaledOffset)/TileHeight);
@@ -125,35 +137,41 @@ public class MapManager
             float normalizedY = position.Y - (row * TileHeight) - ScaledOffset - (isOddRow * ScaledOffset);
             if(normalizedX + (1 * Scale.X) >= normalizedY && normalizedX >= -normalizedY)
             {
-                res = [colAprox,row];
+                res = (colAprox,row);
             }
             else
             {                
-                res = [colAprox-1,rowL];
+                res = (colAprox-1,rowL);
             }
             
         }
         else
         {
-            res = [colAprox,row];            
+            res = (colAprox,row);            
         }
 
-        if(res[0] >= 0 && res[0] < Columns && res[1] >= 0 && res[1] < Rows)
+        if(res.Item1 >= 0 && res.Item1 < Columns && res.Item2 >= 0 && res.Item2 < Rows)
         {
             return res;
         }
         else
         {
-            return [-1,-1];
+            return (-1,-1);
         }
     }
 
     public void HandleClick(Vector2 position)
     {
-        int[] index = getTileIndex(position);
-        if(index[0] >= 0)
+        (int,int) index = getTileIndex(position);
+        if(index.Item1 >= 0)
         {
-            _tiles[index[0],index[1]] = _tiles[index[0],index[1]] > 1 ? _tiles[index[0],index[1]] - 2 : _tiles[index[0],index[1]] +2;
+            TestMonster newMonster = new TestMonster(HexMapScreen.textureAtlas["monsters"].CreateAnimatedSprite("fly-animation"), this, TimeSpan.FromSeconds(2),index)
+            {
+                Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
+            };
+            _monsters[index.Item1,index.Item2] = newMonster;
+
+            _tiles[index.Item1,index.Item2] = _tiles[index.Item1,index.Item2] > 1 ? _tiles[index.Item1,index.Item2] - 2 : _tiles[index.Item1,index.Item2] +2;
         }
 
     }
@@ -166,11 +184,18 @@ public class MapManager
     public void Zoom(float delta, Vector2 focus)
     {
         Vector2 oldMapPoint = focus - Offset;
-        Vector2 newScale = new Vector2(Math.Max(Scale.X + delta,4), Math.Max(Scale.Y + delta,4));
+        Vector2 newScale = new Vector2(Math.Max(Scale.X + delta,0.5f), Math.Max(Scale.Y + delta,0.5f));
         Vector2 scaleRatio = newScale / Scale;
         Vector2 newMapPoint = oldMapPoint * scaleRatio;
         Vector2 correction = oldMapPoint - newMapPoint;
         Offset += correction;
         Scale = newScale;
+        for(int i = 0; i < Columns; i++)
+        {
+            for(int j = 0; j < Rows; j++)
+            {
+                _monsters[i,j]?.SetScale(newScale);
+            }
+        }
     }
 }

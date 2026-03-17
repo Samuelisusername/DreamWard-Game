@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas>
+    <Texture>Sprites/monsters_alternative</Texture>
+    <Regions>
+        <Region name="fly-1" x="0" y="0" width="128" height="128" />
+        <Region name="fly-2" x="128" y="0" width="128" height="128" />
+        <Region name="normal-1" x="0" y="128" width="128" height="128" />
+        <Region name="normal-2" x="128" y="128" width="128" height="128" />
+        <Region name="smol-1" x="0" y="256" width="128" height="128" />
+        <Region name="smol-2" x="128" y="256" width="128" height="128" />
+        <Region name="strong-1" x="0" y="384" width="128" height="128" />
+        <Region name="strong-2" x="128" y="384" width="128" height="128" />
+        <Region name="monkey-1" x="0" y="512" width="128" height="128" />
+        <Region name="monkey-2" x="128" y="512" width="128" height="128" />
+        <Region name="amalgom-1" x="0" y="640" width="128" height="128" />
+        <Region name="amalgom-2" x="128" y="640" width="128" height="128" />
+    </Regions>
+    <Animations>
+        <Animation name="fly-animation" delay="200">
+            <Frame region="fly-1" />
+            <Frame region="fly-2" />
+        </Animation>
+        <Animation name="normal-animation" delay="200">
+            <Frame region="normal-1" />
+            <Frame region="normal-2" />
+        </Animation>
+        <Animation name="smol-animation" delay="200">
+            <Frame region="smol-1" />
+            <Frame region="smol-2" />
+        </Animation>
+        <Animation name="strong-animation" delay="200">
+            <Frame region="strong-1" />
+            <Frame region="strong-2" />
+        </Animation>
+        <Animation name="monkey-animation" delay="200">
+            <Frame region="monkey-1" />
+            <Frame region="monkey-2" />
+        </Animation>
+        <Animation name="amalgom-animation" delay="200">
+            <Frame region="amalgom-1" />
+            <Frame region="amalgom-2" />
+        </Animation>
+    </Animations>
+</TextureAtlas>

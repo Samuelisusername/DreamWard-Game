@@ -13,9 +13,11 @@ namespace Gamelab.Screens;
 
 public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
 {
-
+    public static Dictionary<string, TextureAtlas> textureAtlas;
     MapManager mapManager;
     MapRenderer mapRenderer;
+
+    EntityRenderer entityRenderer;
 
     Vector2 _oldPos;
 
@@ -25,6 +27,9 @@ public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
     public override void LoadContent()
     {
         base.LoadContent();
+        textureAtlas = new();
+        TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
+        textureAtlas.Add("monsters", monsters);
         Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles_alternative");
         TextureRegion region = new TextureRegion(texture,0,0,128,64);
         TileSet set = new TileSet(region,64,32);
@@ -32,6 +37,8 @@ public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
         mapManager.FillRandomly();
         mapManager.Scale = new Vector2(4,4);
         mapRenderer = new MapRenderer(mapManager);
+        entityRenderer = new EntityRenderer(mapManager);
+
     }
 
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard, Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
@@ -83,6 +90,8 @@ public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
 
         mapRenderer.Draw(spriteBatch);
+
+        entityRenderer.Draw(spriteBatch);
 
         spriteBatch.End();
 

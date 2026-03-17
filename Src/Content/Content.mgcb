@@ -20,6 +20,15 @@
 #begin promptfont.ttf
 /copy:promptfont.ttf
 
+#begin Sounds/shuffle.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/shuffle.wav
+
+#begin Sprites/atlas-definition.xml
+/copy:Sprites/atlas-definition.xml
+
 #begin Sprites/day_player.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -67,6 +76,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/day_top.png
+
+#begin Sprites/monsters_alternative.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/monsters_alternative.png
 
 #begin Sprites/monsters.png
 /importer:TextureImporter

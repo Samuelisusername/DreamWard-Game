@@ -5,7 +5,6 @@ using DreamWardUtils.Graphics;
 
 public class MapRenderer
 {
-
     private MapManager _manager;
 
     public MapRenderer(MapManager manager)
