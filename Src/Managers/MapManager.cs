@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using DreamWardUtils.Graphics;
 using Gamelab.Screens;
+using Gamelab;
 
 public class MapManager
 {    
@@ -165,7 +166,7 @@ public class MapManager
         (int,int) index = getTileIndex(position);
         if(index.Item1 >= 0)
         {
-            TestMonster newMonster = new TestMonster(HexMapScreen.textureAtlas["monsters"].CreateAnimatedSprite("fly-animation"), this, TimeSpan.FromSeconds(2),index)
+            TestMonster newMonster = new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("fly-animation"), this, TimeSpan.FromSeconds(2),index)
             {
                 Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
             };

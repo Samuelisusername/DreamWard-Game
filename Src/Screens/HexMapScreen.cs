@@ -13,7 +13,6 @@ namespace Gamelab.Screens;
 
 public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
 {
-    public static Dictionary<string, TextureAtlas> textureAtlas;
     MapManager mapManager;
     MapRenderer mapRenderer;
 
@@ -27,9 +26,9 @@ public class HexMapScreen(GamelabGame game) : GamelabGameScreen(game)
     public override void LoadContent()
     {
         base.LoadContent();
-        textureAtlas = new();
+        GamelabGame.textureAtlas = new();
         TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
-        textureAtlas.Add("monsters", monsters);
+        GamelabGame.textureAtlas.Add("monsters", monsters);
         Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles_alternative");
         TextureRegion region = new TextureRegion(texture,0,0,128,64);
         TileSet set = new TileSet(region,64,32);

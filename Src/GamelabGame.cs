@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using DreamWardUtils.Graphics;
 using FontStashSharp;
 using Gamelab.Screens;
 using Gamelab.Utils;
@@ -17,6 +19,8 @@ public class GamelabGame : Game
         Release,
         Debug,
     }
+    
+    public static Dictionary<string, TextureAtlas> textureAtlas;
 
     public static GamelabGame Instance { get; private set; }
 
@@ -92,9 +96,9 @@ public class GamelabGame : Game
         var fontBytes = File.ReadAllBytes(fontPath);
         fontSystem.AddFont(fontBytes);
 
-        screenManager.ShowScreen(new HexMapScreen(this));
+        //screenManager.ShowScreen(new HexMapScreen(this));
         //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
-        //screenManager.ShowScreen(new SoundTestScreen(this));
+        screenManager.ShowScreen(new SoundTestScreen(this));
         logger.Info("Game initialized");
     }
 

@@ -21,6 +21,8 @@ public class SoundTestScreen : GamelabGameScreen
     MapManager mapManager;
     MapRenderer mapRenderer;
 
+    EntityRenderer entityRenderer;
+
     Vector2 _oldPos;
 
     //Potentially something for an inputManager
@@ -33,6 +35,9 @@ public class SoundTestScreen : GamelabGameScreen
     public override void LoadContent()
     {
         base.LoadContent();
+        GamelabGame.textureAtlas = new();
+        TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
+        GamelabGame.textureAtlas.Add("monsters", monsters);
         // 2. Do not include the ".wav" extension here.
         _testSound = Game.Content.Load<SoundEffect>("Sounds/shuffle");
         _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
@@ -45,7 +50,8 @@ public class SoundTestScreen : GamelabGameScreen
         mapManager = new MapManager(set,30,30, TimeSpan.FromMilliseconds(500));
         mapManager.FillRandomly();
         mapManager.Scale = new Vector2(4,4);
-        mapRenderer = new MapRenderer(mapManager);
+        mapRenderer = new MapRenderer(mapManager);     
+        entityRenderer = new EntityRenderer(mapManager);   
     }
 
     // NOTICE: We are using your team's custom Update method here!
@@ -102,6 +108,8 @@ public class SoundTestScreen : GamelabGameScreen
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
 
         mapRenderer.Draw(spriteBatch);
+
+        entityRenderer.Draw(spriteBatch);
 
         spriteBatch.End();
 
