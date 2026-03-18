@@ -2,16 +2,40 @@ using System;
 
 public class SanityManger
 {
+    private MapManager _map_manager;
+    private PathFindingManager _pathFindingManager;
 
     public int Sanity {get; private set;}
 
-    /// <summary>
-    /// Removes sanity from the players total
-    /// </summary>
-    /// <param name="amount">the amount of sanity to remove if it is negative the amount is added insead</param>
-    public void RemoveSanity(int amount)
+    public SanityManger(MapManager mapManager, PathFindingManager pathFindingManager    )
     {
+        _map_manager = mapManager;
+        _pathFindingManager = pathFindingManager;
+        Sanity = 12; // initialize sanity at the beginning of the game
+    }
+
+    /// <summary>
+    /// Deducts sanity from the players total
+    /// </summary>
+    /// <param name="amount">the amount of sanity to remove</param>
+    public bool DeductSanity(int amount)
+    {   
+        if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
+        if (Sanity < amount) return false;
         Sanity -= amount;
+        return true;
+    }
+
+    /// <summary>
+    /// Adds sanity to the players total
+    /// </summary>
+    /// <param name="amount">the amount of sanity to add</param>
+    /// Not sure if this method is even needed...
+    public bool AddSanity(int amount)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
+        Sanity += amount;
+        return true;
     }
 
     /// <summary>
@@ -19,6 +43,20 @@ public class SanityManger
     /// </summary>
     public void AddSanityGainedFromNewDay()
     {
+        // Missing MapManager functionality (meadows) to implement
+        //for (int i = 0; i < _map_manager.Columns; i++)
+        //{
+        //    for (int j = 0; j < _map_manager.Rows; j++)
+        //    {
+        //        if (_map_manager.GetTile(i, j).IsMeadow)
+        //        {
+        //            int distance = _pathFindingManager.CalculateTileDistance(i, j, _map_manager.PlayerColumn, _map_manager.PlayerRow);
+        //            if (distance <= 3) AddSanity(4);
+        //            else AddSanity(2);
+        //        }
+        //        throw new notimplementedexception();
+        //    }
+        //}
         throw new NotImplementedException();
     }
 }
