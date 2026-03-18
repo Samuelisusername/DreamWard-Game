@@ -25,7 +25,7 @@
   "scale": "1",
   "slices": [
    { "name": "var0", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 64, "h": 32 } }] },
-   { "name": "var2", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 32, "w": 64, "h": 32 } }] },
+   { "name": "var1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 32, "w": 64, "h": 32 } }] },
    { "name": "var2", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 64, "w": 64, "h": 32 } }] },
    { "name": "var3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 96, "w": 64, "h": 32 } }] },
    { "name": "var4", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 64, "h": 32 } }] },

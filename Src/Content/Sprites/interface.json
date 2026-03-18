@@ -1,0 +1,21 @@
+{ "frames": {
+   "interface.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 640, "h": 360 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 640, "h": 360 },
+    "sourceSize": { "w": 640, "h": 360 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-dev",
+  "image": "interface.png",
+  "format": "RGBA8888",
+  "size": { "w": 640, "h": 360 },
+  "scale": "1",
+  "slices": [
+  ]
+ }
+}
