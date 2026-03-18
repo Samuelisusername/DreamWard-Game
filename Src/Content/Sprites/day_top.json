@@ -1,0 +1,28 @@
+{ "frames": {
+   "day_top.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 128, "h": 2560 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2560 },
+    "sourceSize": { "w": 128, "h": 2560 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-dev",
+  "image": "day_top.png",
+  "format": "RGBA8888",
+  "size": { "w": 128, "h": 2560 },
+  "scale": "1",
+  "slices": [
+   { "name": "tent", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] },
+   { "name": "bush", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 128, "h": 128 } }] },
+   { "name": "void", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 128, "h": 128 } }] },
+   { "name": "hill", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 384, "w": 128, "h": 128 } }] },
+   { "name": "wall", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 512, "w": 128, "h": 128 } }] },
+   { "name": "treeBig", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] },
+   { "name": "treeSmall", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 768, "w": 128, "h": 128 } }] }
+  ]
+ }
+}

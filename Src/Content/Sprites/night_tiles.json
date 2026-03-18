@@ -1,0 +1,39 @@
+{ "frames": {
+   "night_tiles 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 64, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 320 },
+    "sourceSize": { "w": 64, "h": 320 },
+    "duration": 100
+   },
+   "night_tiles 1.aseprite": {
+    "frame": { "x": 64, "y": 0, "w": 64, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 64, "h": 320 },
+    "sourceSize": { "w": 64, "h": 320 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17-dev",
+  "image": "night_tiles.png",
+  "format": "RGBA8888",
+  "size": { "w": 128, "h": 320 },
+  "scale": "1",
+  "slices": [
+   { "name": "var0", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 64, "h": 32 } }] },
+   { "name": "var1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 32, "w": 64, "h": 32 } }] },
+   { "name": "var2", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 64, "w": 64, "h": 32 } }] },
+   { "name": "var3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 96, "w": 64, "h": 32 } }] },
+   { "name": "var4", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 64, "h": 32 } }] },
+   { "name": "var5", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 160, "w": 64, "h": 32 } }] },
+   { "name": "var6", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 192, "w": 64, "h": 32 } }] },
+   { "name": "var7", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 224, "w": 64, "h": 32 } }] },
+   { "name": "var8", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 64, "h": 32 } }] },
+   { "name": "var9", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 288, "w": 64, "h": 32 } }] }
+  ]
+ }
+}
