@@ -141,3 +141,15 @@
 /processor:SoundEffectProcessor
 /build:Sounds/creepy_demon_night_forest.mp3
 
+#begin Sprites/night_tiles.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_tiles.png
+
