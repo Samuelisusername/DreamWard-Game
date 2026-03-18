@@ -50,7 +50,7 @@ public class HexMapScreen : GamelabGameScreen
 
         if(mouse.DeltaScrollWheelValue != 0)
         {
-            float delta = mouse.DeltaScrollWheelValue * 0.01f;
+            float delta = mouse.DeltaScrollWheelValue * (-0.01f);
             //Move this into the MapManager as a function
             mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
         }
