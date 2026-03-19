@@ -9,6 +9,8 @@ using FontStashSharp;
 using DreamWardUtils.Graphics;
 using System;
 using MonoGame.Extended.Input;
+using Gamelab.Managers;
+using Newtonsoft.Json.Serialization;
 
 
 namespace Gamelab.Screens;
@@ -36,7 +38,11 @@ public class SoundTestScreen : GamelabGameScreen
     {
         base.LoadContent();
         // 2. Do not include the ".wav" extension here.
-        _testSound = Game.Content.Load<SoundEffect>("Sounds/shuffle");
+        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
+        
         _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
         SoundEffectInstance dayMusic = _day_BackgroundSound.CreateInstance();
         dayMusic.IsLooped = true; // Tell it to repeat forever
@@ -58,7 +64,7 @@ public class SoundTestScreen : GamelabGameScreen
         // Check if Spacebar was just pressed this exact frame
         if (keyboard.WasKeyPressed(Keys.Space))
         {
-            _testSound.Play(); 
+            AudioManager.Play("sheep_baa"); 
         }
         if (keyboard.IsKeyDown(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
         {

@@ -20,6 +20,108 @@
 #begin promptfont.ttf
 /copy:promptfont.ttf
 
+#begin Sounds/action_cards/coinsplash.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/action_cards/coinsplash.wav
+
+#begin Sounds/action_cards/shuffle.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/action_cards/shuffle.wav
+
+#begin Sounds/buildings/AOE-tower_stomp.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/AOE-tower_stomp.wav
+
+#begin Sounds/buildings/dream_catcher_placement_sound.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/dream_catcher_placement_sound.wav
+
+#begin Sounds/buildings/metal_09.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/metal_09.wav
+
+#begin Sounds/buildings/shoot_01.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/shoot_01.wav
+
+#begin Sounds/buildings/slam_02.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/slam_02.wav
+
+#begin Sounds/buildings/tower_breaking.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/tower_breaking.wav
+
+#begin Sounds/creepy_demon_night_forest.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/creepy_demon_night_forest.mp3
+
+#begin Sounds/demons/cute_03.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/cute_03.wav
+
+#begin Sounds/demons/grunt_03.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/grunt_03.wav
+
+#begin Sounds/demons/qubodupRatAttack.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/qubodupRatAttack.wav
+
+#begin Sounds/demons/qubodupRatDeath.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/qubodupRatDeath.wav
+
+#begin Sounds/demons/qubodupRatPain.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/qubodupRatPain.wav
+
+#begin Sounds/demons/scream_01.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/demons/scream_01.wav
+
+#begin Sounds/preferred_option_day.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/preferred_option_day.mp3
+
+#begin Sounds/sheep_baa.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/sheep_baa.wav
+
 #begin Sounds/shuffle.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -113,6 +215,18 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/night_player.png
 
+#begin Sprites/night_tiles.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_tiles.png
+
 #begin Sprites/night_top.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -125,31 +239,56 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/night_top.png
 
-#begin Sounds/shuffle.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/shuffle.wav
+#begin Sprites/monsters.json
+/copy:Sprites/monsters.json
 
-#begin Sounds/preferred_option_day.mp3
-/importer:Mp3Importer
-/processor:SoundEffectProcessor
-/build:Sounds/preferred_option_day.mp3
+#begin Sprites/night_top.json
+/copy:Sprites/night_top.json
 
-#begin Sounds/creepy_demon_night_forest.mp3
-/importer:Mp3Importer
-/processor:SoundEffectProcessor
-/build:Sounds/creepy_demon_night_forest.mp3
+#begin Sprites/nightpalette.json
+/copy:Sprites/nightpalette.json
 
-#begin Sprites/night_tiles.png
+#begin Sprites/day_tiles.json
+/copy:Sprites/day_tiles.json
+
+#begin Sprites/daypalette.json
+/copy:Sprites/daypalette.json
+
+#begin Sprites/interface.png
 /importer:TextureImporter
 /processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/night_tiles.png
+/build:Sprites/interface.png
+
+#begin Sprites/night_tiles.json
+/copy:Sprites/night_tiles.json
+
+#begin Sprites/cards.json
+/copy:Sprites/cards.json
+
+#begin Sprites/day_top.json
+/copy:Sprites/day_top.json
+
+#begin Sprites/cards.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/cards.png
+
+#begin Sprites/nightpalette.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/nightpalette.png
+
+#begin Sprites/day_player.json
+/copy:Sprites/day_player.json
+
+#begin Sprites/night_player.json
+/copy:Sprites/night_player.json
+
+#begin Sprites/interface.json
+/copy:Sprites/interface.json
+
+#begin Sprites/daypalette.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/daypalette.png
 
