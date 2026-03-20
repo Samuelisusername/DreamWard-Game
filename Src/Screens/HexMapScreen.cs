@@ -46,6 +46,16 @@ public class HexMapScreen : GamelabGameScreen
             Game.Exit();
         }
 
+        if (keyboard.WasKeyPressed(Keys.Space))
+        {
+            mapManager.SpawnRandomMonsters();
+        }
+
+        if (keyboard.WasKeyPressed(Keys.R))
+        {
+            mapManager.RandomizeGoal();
+        }
+
         mapManager.Update(gameTime);
 
         if(mouse.DeltaScrollWheelValue != 0)

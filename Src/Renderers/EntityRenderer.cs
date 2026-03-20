@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 
 public class EntityRenderer
 {
@@ -24,8 +25,7 @@ public class EntityRenderer
         {
             for(int j = 0; j < _manager.Rows; j++)
             {
-                TestMonster monster = (TestMonster)_manager.GetMonster(i,j);
-                monster?.Draw(spriteBatch);
+                _manager.GetMonster(i,j)?.Draw(spriteBatch);
             }            
         }
     }

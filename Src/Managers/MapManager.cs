@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using DreamWardUtils.Graphics;
 using Gamelab;
+using System.Collections.Generic;
 
 public class MapManager
 {    
@@ -17,7 +18,7 @@ public class MapManager
     private readonly int[,] _structures;//colfirst
     
     //stores which tiles has which monster on it -1 if none
-    private readonly Entity[,] _monsters;//colfirst
+    private readonly MonsterGroup[,] _monsters;//colfirst
 
 #endregion
 
@@ -81,7 +82,8 @@ public class MapManager
         Rows = rows;
         _delay = delay;
         _tiles = new int[Columns,Rows];
-        _monsters = new Entity[Columns,Rows];
+        _monsters = new MonsterGroup[Columns,Rows];
+
     }
     
     public void Update(GameTime gameTime)
@@ -98,7 +100,16 @@ public class MapManager
         {
             for(int j = 0; j < Rows; j++)
             {
-                ((TestMonster)_monsters[i,j])?.Update(gameTime);
+                _monsters[i,j]?.Update(gameTime);
+            }
+        }
+        //move the monsters if needed we do this in two loops to avoid updating monsters twice
+        for(int i = 0; i < Columns; i++)
+        {
+            for(int j = 0; j < Rows; j++)
+            {
+                
+                _monsters[i,j]?.Move();
             }
         }
     }
@@ -127,7 +138,7 @@ public class MapManager
     /// <summary>
     /// returns the Monster on the tile
     /// </summary>
-    public Entity GetMonster(int col, int row)
+    public MonsterGroup GetMonster(int col, int row)
     {        
         return _monsters[col,row];
     }
@@ -135,10 +146,21 @@ public class MapManager
     /// <summary>
     /// moves the monsters in the tile speicified by origin to the tile specified by goal
     /// </summary>
-    public void MoveMonster((int,int) origin, (int,int) goal)
+    public void MoveMonster(TestMonster monster, (int,int) origin, (int,int) goal)
     {
-        _monsters[goal.Item1,goal.Item2] =  _monsters[origin.Item1,origin.Item2];
-        _monsters[origin.Item1,origin.Item2] = null;
+        if(_monsters[origin.Item1,origin.Item2].Count == 0)
+        {
+            _monsters[origin.Item1,origin.Item2] = null;
+        }
+        if( _monsters[goal.Item1,goal.Item2] != null)
+        {
+            _monsters[goal.Item1,goal.Item2].AddMonster(monster);
+        }
+        else
+        {
+            _monsters[goal.Item1,goal.Item2] = new MonsterGroup(this,  TimeSpan.FromSeconds(2),goal);
+            _monsters[goal.Item1,goal.Item2].AddMonster(monster);
+        }
     }
 
     /// <summary>
@@ -212,14 +234,10 @@ public class MapManager
         (int,int) index = getTileIndex(position);
         if(index.Item1 >= 0)
         {
-            TestMonster newMonster = index.Item1 % 2 == 0 ?  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index)
-            {
-                Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
-            } :  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index)
-            {
-                Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
-            };
-            _monsters[index.Item1,index.Item2] = newMonster;
+            // TestMonster newMonster = index.Item1 % 2 == 0 ?  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index) :  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index);
+            // _monsters[index.Item1,index.Item2].Add(newMonster);
+
+            _tiles[index.Item1,index.Item2] = _tiles[index.Item1,index.Item2] > 1 ? _tiles[index.Item1,index.Item2] - 2 : _tiles[index.Item1,index.Item2] +2;
         }
 
     }
@@ -255,6 +273,32 @@ public class MapManager
             for(int j = 0; j < Rows; j++)
             {
                 _monsters[i,j]?.SetScale(newScale);
+            }
+        }
+    }
+#endregion
+
+#region Testing funcs
+
+    public void SpawnRandomMonsters()
+    {
+        for(int i = 0; i < 10; i ++)
+        {
+            (int,int) index = ((int)Random.Shared.NextInt64(0,10),(int)Random.Shared.NextInt64(0,10));
+            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2),index);
+            TestMonster newMonster = new TestMonster(this, index, (5,5));
+            group.AddMonster(newMonster);
+            _monsters[index.Item1,index.Item2] = group;
+        }
+    }
+
+    public void RandomizeGoal()
+    {
+         for(int i = 0; i < Columns; i++)
+        {
+            for(int j = 0; j < Rows; j++)
+            {
+                _monsters[i,j]?.RandomziePath();
             }
         }
     }
