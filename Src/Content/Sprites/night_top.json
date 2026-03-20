@@ -39,6 +39,8 @@
   "format": "RGBA8888",
   "size": { "w": 512, "h": 2560 },
   "scale": "1",
+  "frameTags": [
+  ],
   "slices": [
    { "name": "tent", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] },
    { "name": "bush", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 128, "h": 128 } }] },

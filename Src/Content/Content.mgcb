@@ -292,3 +292,45 @@
 /processor:TextureProcessor
 /build:Sprites/daypalette.png
 
+#begin Sprites/interface.json
+/copy:Sprites/interface.json
+
+#begin Sprites/night_tiles.json
+/copy:Sprites/night_tiles.json
+
+#begin Sprites/day_tiles.json
+/copy:Sprites/day_tiles.json
+
+#begin Sprites/day_top.json
+/copy:Sprites/day_top.json
+
+#begin Sprites/night_player.json
+/copy:Sprites/night_player.json
+
+#begin Sprites/cards.json
+/copy:Sprites/cards.json
+
+#begin Sprites/cards.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/cards.png
+
+#begin Sprites/interface.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/interface.png
+
+#begin Sprites/day_player.json
+/copy:Sprites/day_player.json
+
+#begin Sprites/night_top.json
+/copy:Sprites/night_top.json
+
+#begin Sprites/nightpalette.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/nightpalette.png
+
+#begin Sprites/todo.txt
+/copy:Sprites/todo.txt
+

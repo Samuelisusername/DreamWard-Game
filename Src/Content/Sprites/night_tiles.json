@@ -23,6 +23,8 @@
   "format": "RGBA8888",
   "size": { "w": 128, "h": 320 },
   "scale": "1",
+  "frameTags": [
+  ],
   "slices": [
    { "name": "var0", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 64, "h": 32 } }] },
    { "name": "var1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 32, "w": 64, "h": 32 } }] },
