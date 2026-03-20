@@ -331,6 +331,3 @@
 /processor:TextureProcessor
 /build:Sprites/nightpalette.png
 
-#begin Sprites/todo.txt
-/copy:Sprites/todo.txt
-

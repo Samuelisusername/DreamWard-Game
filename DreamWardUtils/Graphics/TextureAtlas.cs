@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Xna.Framework;
@@ -139,6 +141,75 @@ public class TextureAtlas
                         Animation animation = new Animation(frames, delay);
                         atlas.AddAnimation(name, animation);
                     }
+                }
+
+                return atlas;
+            }
+        }
+    }
+
+    public static TextureAtlas FromJsonFile(ContentManager content, string fileName)
+    {
+        TextureAtlas atlas = new TextureAtlas();
+
+        string filePath = Path.Combine(content.RootDirectory, fileName);
+
+        using (Stream stream = TitleContainer.OpenStream(filePath))
+        {
+            using (JsonDocument reader = JsonDocument.Parse(stream))
+            {
+                JsonElement root = reader.RootElement;
+
+                // The meta.image element contains the name of the png to load we can change the json file name to the texture name to get its path.
+                // So we will retrieve that value then use the content manager to load the texture.
+                string textureName = root.GetProperty("meta").GetProperty("image").GetString();
+                textureName = Path.GetFileNameWithoutExtension(textureName);
+                string[] pathAsArray = fileName.Split("/");
+                pathAsArray[pathAsArray.Length -1] = textureName;
+                string texturePath = String.Join('/', pathAsArray);
+                atlas.Texture = content.Load<Texture2D>(texturePath);
+
+                // The <Regions> element contains individual <Region> elements, each one describing
+                // a different texture region within the atlas.  
+                //
+                // Example:
+                // <Regions>
+                //      <Region name="spriteOne" x="0" y="0" width="32" height="32" />
+                //      <Region name="spriteTwo" x="32" y="0" width="32" height="32" />
+                // </Regions>
+                //
+                // So we retrieve all of the <Region> elements then loop through each one
+                // and generate a new TextureRegion instance from it and add it to this atlas.
+                foreach(JsonElement entity in root.GetProperty("meta").GetProperty("slices").EnumerateArray())
+                {
+                    string entityName = entity.GetProperty("name").GetString();
+                    foreach(JsonElement frame in entity.GetProperty("keys").EnumerateArray())
+                    {
+                        JsonElement bounds = frame.GetProperty("bounds");
+                        int x = bounds.GetProperty("x").GetInt32();
+                        int y = bounds.GetProperty("y").GetInt32();
+                        int width = bounds.GetProperty("w").GetInt32();
+                        int height = bounds.GetProperty("h").GetInt32();
+                        for(int i = 0; i < root.GetProperty("frames").GetPropertyCount(); i++)
+                        {                            
+                            atlas.AddRegion(entityName + i.ToString(), x + width * i, y, width, height);
+                        }
+
+                    }
+                    foreach(JsonElement anim in root.GetProperty("meta").GetProperty("frameTags").EnumerateArray())
+                    {
+                        string animName = entityName + "_" + anim.GetProperty("name").GetString();
+                        int from = anim.GetProperty("from").GetInt32();
+                        int to = anim.GetProperty("to").GetInt32();
+                        List<TextureRegion> frames = new List<TextureRegion>();
+                        for(int i = from; i <= to; i++)
+                        {
+                            frames.Add(atlas.GetRegion(entityName + i.ToString()));
+                        }
+                        Animation newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                        atlas.AddAnimation(animName, newAnimation);
+                    }
+                    
                 }
 
                 return atlas;

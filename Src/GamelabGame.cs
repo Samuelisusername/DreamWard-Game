@@ -107,7 +107,7 @@ public class GamelabGame : Game
         base.LoadContent();
         
         textureAtlas = new();
-        TextureAtlas monsters = TextureAtlas.FromFile(Content, "Sprites/atlas-definition.xml");
+        TextureAtlas monsters = TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
         textureAtlas.Add("monsters", monsters);
     }
 

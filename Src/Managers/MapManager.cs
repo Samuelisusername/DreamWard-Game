@@ -212,7 +212,10 @@ public class MapManager
         (int,int) index = getTileIndex(position);
         if(index.Item1 >= 0)
         {
-            TestMonster newMonster = new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("fly-animation"), this, TimeSpan.FromSeconds(2),index)
+            TestMonster newMonster = index.Item1 % 2 == 0 ?  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index)
+            {
+                Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
+            } :  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index)
             {
                 Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
             };
