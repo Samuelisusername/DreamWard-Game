@@ -47,8 +47,8 @@ public class SoundTestScreen : GamelabGameScreen
         SoundEffectInstance dayMusic = _day_BackgroundSound.CreateInstance();
         dayMusic.IsLooped = true; // Tell it to repeat forever
         dayMusic.Play();          // Press play EXACTLY ONCE
-        Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles_alternative");
-        TextureRegion region = new TextureRegion(texture,0,0,128,64);
+        Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
+        TextureRegion region = new TextureRegion(texture,0,0,128,320);
         TileSet set = new TileSet(region,64,32);
         mapManager = new MapManager(set,30,30, TimeSpan.FromMilliseconds(500));
         mapManager.FillRandomly();

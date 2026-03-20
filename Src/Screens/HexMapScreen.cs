@@ -24,8 +24,8 @@ public class HexMapScreen : GamelabGameScreen
 
     public HexMapScreen(GamelabGame game) : base(game)
     {
-        Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles_alternative");
-        TextureRegion region = new TextureRegion(texture,0,0,128,64);
+        Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
+        TextureRegion region = new TextureRegion(texture,0,0,128,320);
         TileSet set = new TileSet(region,64,32);
         mapManager = new MapManager(set,30,30, TimeSpan.FromMilliseconds(500));
         mapManager.FillRandomly();
