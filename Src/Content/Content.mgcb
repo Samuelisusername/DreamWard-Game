@@ -128,9 +128,6 @@
 /processorParam:Quality=Best
 /build:Sounds/shuffle.wav
 
-#begin Sprites/atlas-definition.xml
-/copy:Sprites/atlas-definition.xml
-
 #begin Sprites/day_player.png
 /importer:TextureImporter
 /processor:TextureProcessor
