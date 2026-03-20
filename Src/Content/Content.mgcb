@@ -309,3 +309,16 @@
 /processor:TextureProcessor
 /build:Sprites/monsters_alternative.png
 
+#begin Sprites/cards1.json
+/copy:Sprites/cards1.json
+
+#begin Sprites/cards1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/cards1.png
+
+#begin font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/build:font.spritefont
+
