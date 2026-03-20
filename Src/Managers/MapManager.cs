@@ -220,8 +220,6 @@ public class MapManager
                 Path = [index, (index.Item1 - 1, index.Item2 - 1), (index.Item1 - 2, index.Item2 - 2), (index.Item1 - 2, index.Item2 - 3), (index.Item1 - 3, index.Item2 - 3), (index.Item1 - 4, index.Item2 - 4)]
             };
             _monsters[index.Item1,index.Item2] = newMonster;
-
-            _tiles[index.Item1,index.Item2] = _tiles[index.Item1,index.Item2] > 1 ? _tiles[index.Item1,index.Item2] - 2 : _tiles[index.Item1,index.Item2] +2;
         }
 
     }
