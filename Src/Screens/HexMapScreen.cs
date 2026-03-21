@@ -16,6 +16,7 @@ public class HexMapScreen : GamelabGameScreen
     private readonly MapManager mapManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
+    private List<Entity> _entities;
 
 
     //Potentially something for an inputManager
@@ -31,7 +32,8 @@ public class HexMapScreen : GamelabGameScreen
         mapManager.FillRandomly();
         mapManager.Scale = new Vector2(4,4);
         mapRenderer = new MapRenderer(mapManager);
-        entityRenderer = new EntityRenderer(mapManager);
+        _entities = new List<Entity>();
+        entityRenderer = new EntityRenderer(mapManager, _entities);
     }
 
     public override void LoadContent()
