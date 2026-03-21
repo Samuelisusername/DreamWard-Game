@@ -24,6 +24,7 @@ public class SoundTestScreen : GamelabGameScreen
     MapRenderer mapRenderer;
 
     EntityRenderer entityRenderer;
+    private List<Entity> _entities = new();
 
     Vector2 _oldPos;
 
@@ -54,7 +55,7 @@ public class SoundTestScreen : GamelabGameScreen
         mapManager.FillRandomly();
         mapManager.Scale = new Vector2(4,4);
         mapRenderer = new MapRenderer(mapManager);     
-        entityRenderer = new EntityRenderer(mapManager);   
+        entityRenderer = new EntityRenderer(mapManager, _entities);  
     }
 
     // NOTICE: We are using your team's custom Update method here!
