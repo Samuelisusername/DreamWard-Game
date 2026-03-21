@@ -102,8 +102,9 @@ public class GamelabGame : Game
         MapScreenInstance = new MapScreen(this);
         CardScreenInstance = new CardScreen(this);
         MapScreenInstance.SetManager(CardScreenInstance.SanityManager, CardScreenInstance.CardManager);
-        // screenManager.ShowScreen(MapScreenInstance);
-        screenManager.ShowScreen(new HexMapScreen(this));
+        //to see the changes
+        screenManager.ShowScreen(MapScreenInstance);
+        //screenManager.ShowScreen(new HexMapScreen(this));
         //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
         // screenManager.ShowScreen(new SoundTestScreen(this));
         //screenManager.ShowScreen(new CardScreen(this));
@@ -119,6 +120,8 @@ public class GamelabGame : Game
         textureAtlas.Add("monsters", monsters);
         TextureAtlas night_top = TextureAtlas.FromFile(Content, "Sprites/night_top-atlas-definition.xml");
         textureAtlas.Add("night_top", night_top);
+        TextureAtlas day_top = TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
+        textureAtlas.Add("day_top", day_top);
     }
 
     protected override void Update(GameTime gameTime)

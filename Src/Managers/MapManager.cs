@@ -146,7 +146,7 @@ public class MapManager
     /// <summary>
     /// moves the monsters in the tile speicified by origin to the tile specified by goal
     /// </summary>
-    public void MoveMonster(TestMonster monster, (int,int) origin, (int,int) goal)
+    public void MoveMonster(Monster monster, (int,int) origin, (int,int) goal)
     {
         if(_monsters[origin.Item1,origin.Item2].Count == 0)
         {
@@ -239,7 +239,7 @@ public class MapManager
         (int,int) index = getTileIndex(position);
         if(index.Item1 >= 0)
         {
-            // TestMonster newMonster = index.Item1 % 2 == 0 ?  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index) :  new TestMonster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index);
+            // Monster newMonster = index.Item1 % 2 == 0 ?  new Monster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index) :  new Monster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index);
             // _monsters[index.Item1,index.Item2].Add(newMonster);
 
             _tiles[index.Item1,index.Item2] = _tiles[index.Item1,index.Item2] > 1 ? _tiles[index.Item1,index.Item2] - 2 : _tiles[index.Item1,index.Item2] +2;
@@ -291,9 +291,41 @@ public class MapManager
         {
             (int,int) index = ((int)Random.Shared.NextInt64(0,10),(int)Random.Shared.NextInt64(0,10));
             MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2),index);
-            TestMonster newMonster = new TestMonster(this, index, (5,5));
+            var sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
+            Monster newMonster = new Monster(sprite, this, index, (5,5));
             group.AddMonster(newMonster);
             _monsters[index.Item1,index.Item2] = group;
+        }
+    }
+
+    /// <summary>
+    /// Spawns a monster at a random edge tile that walks toward the given target tile
+    /// </summary>
+    public void SpawnMonsterAtEdge(int targetCol, int targetRow)
+    {
+        int side = Random.Shared.Next(4);
+        int col, row;
+        switch (side)
+        {
+            case 0:  col = 0;            row = Random.Shared.Next(Rows);    break;
+            case 1:  col = Columns - 1;  row = Random.Shared.Next(Rows);    break;
+            case 2:  col = Random.Shared.Next(Columns); row = 0;            break;
+            default: col = Random.Shared.Next(Columns); row = Rows - 1;     break;
+        }
+
+        if (_monsters[col, row] != null)
+        {
+            var sprite1 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
+            Monster newMonster = new Monster(sprite1, this, (col, row), (targetCol, targetRow));
+            _monsters[col, row].AddMonster(newMonster);
+        }
+        else
+        {
+            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
+            var sprite2 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
+            Monster newMonster = new Monster(sprite2, this, (col, row), (targetCol, targetRow));
+            group.AddMonster(newMonster);
+            _monsters[col, row] = group;
         }
     }
 

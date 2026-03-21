@@ -28,7 +28,7 @@ public class MonsterGroup
     //the offset to draw the monster on the tile
     private readonly Vector2 _localOffset = new Vector2(-32,-90);
 
-    private List<TestMonster> _monsters;
+    private List<Monster> _monsters;
 
     /// <summary>
     /// Posistion of the entity on the map
@@ -53,7 +53,7 @@ public class MonsterGroup
         _normalSprite.Scale = mapManager.Scale;
         _mapManager = mapManager;
         _speed = speed;
-        _monsters = new List<TestMonster>();
+        _monsters = new List<Monster>();
         TilePosition = tilePosition;
     }
     
@@ -75,22 +75,24 @@ public class MonsterGroup
     }
     
     public void Move()
-    {        
-        for (int i = 0; i <  _monsters.Count; i++)
+    {
+        for (int i = 0; i < _monsters.Count; i++)
         {
             if(!_monsters[i].GoalReached && _monsters[i].ShouldMove)
             {
-                TestMonster monster = _monsters[i];
+                Monster monster = _monsters[i];
                 _monsters.Remove(monster);
-                _mapManager.MoveMonster(monster,monster.Path[0],monster.Path[1]);  
-                monster.Path.RemoveAt(0);
+                (int,int) origin = monster.Path[0];
+                (int,int) dest = monster.Path[1];
+                monster.Move();
+                _mapManager.MoveMonster(monster, origin, dest);
                 monster.ShouldMove = false;
                 i--;
             }
         }
     }
 
-    public void AddMonster(TestMonster monster)
+    public void AddMonster(Monster monster)
     {
         _monsters.Add(monster);
     }
@@ -138,7 +140,7 @@ public class MonsterGroup
     {
         foreach (var monster in _monsters)
         {
-            monster.RandomPath(TilePosition, (-1,-1));
+            monster.GenerateHexPath(TilePosition, (-1,-1));
         }
     }
 }

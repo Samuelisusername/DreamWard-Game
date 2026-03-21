@@ -90,6 +90,14 @@ public class MapScreen : GamelabGameScreen
         if (keyboard.IsKeyDown(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
             Game.Exit();
 
+        // Spawn monster at edge heading toward tent
+        if (keyboard.WasKeyPressed(Keys.Space))
+        {
+            int centerX = mapManager.Columns / 2;
+            int centerY = mapManager.Rows / 2;
+            mapManager.SpawnMonsterAtEdge(centerX, centerY);
+        }
+
         // Map update
         mapManager.Update(gameTime);
         //Entity Update
