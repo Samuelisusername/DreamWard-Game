@@ -6,13 +6,19 @@ using Microsoft.Xna.Framework.Graphics;
 
 public abstract class Entity
 {   
-    //healts of the entity
+    //health of the entity
     protected int _health;
 
     /// <summary>
     /// Posistion of the entity on the map
     /// </summary>
     public (int,int) TilePosition {get; protected set;}
+    public bool IsBuildEntity { get; private set; } = false;
+    public void SetAsBuildEntity() => IsBuildEntity = true;
+    public virtual void SetTilePosition((int,int) newPos)
+    {
+        TilePosition = newPos;
+    }
 
     /// <summary>
     /// is the Entity destoryed
@@ -32,6 +38,8 @@ public abstract class Entity
 
     public void Update(GameTime gameTime)
     {
+        if (_sprite != null)
+            _sprite.Scale = _mapManager.Scale;
         _sprite.Update(gameTime);
     }
 
@@ -44,8 +52,27 @@ public abstract class Entity
         _sprite.Scale = scale;
     }
 
+    protected MapManager _mapManager;
+    protected Vector2 _localOffset = new Vector2(-32, -90);
+    public Entity(AnimatedSprite sprite, MapManager mapManager, (int,int) tilePos, int health = 100)
+    {
+        _sprite = sprite;
+        _mapManager = mapManager;
+        TilePosition = tilePos;
+        _health = health;
+
+        if (_sprite != null)
+            _sprite.Scale = _mapManager.Scale;
+    }
+
     /// <summary>
     /// draws the entity
     /// </summary>
-    public abstract void Draw(SpriteBatch spriteBatch);
+    public virtual void Draw(SpriteBatch spriteBatch)
+    {
+        if (_sprite == null) return;
+
+        Vector2 worldPos = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
+        _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);
+    }
 }
