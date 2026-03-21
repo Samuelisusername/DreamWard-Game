@@ -1,13 +1,13 @@
 using System;
 
-public class SanityManger
+public class SanityManager
 {
     private MapManager _map_manager;
     private PathFindingManager _pathFindingManager;
 
     public int Sanity {get; private set;}
 
-    public SanityManger(MapManager mapManager, PathFindingManager pathFindingManager    )
+    public SanityManager(MapManager mapManager, PathFindingManager pathFindingManager    )
     {
         _map_manager = mapManager;
         _pathFindingManager = pathFindingManager;
