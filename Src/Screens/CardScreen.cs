@@ -13,13 +13,16 @@ namespace Gamelab.Screens;
 public class CardScreen : GamelabGameScreen
 {
     private CardManager _manager;
-    private SanityManger _sanity;
+    public CardManager CardManager => _manager;
+    private SanityManager _sanity;
+    public SanityManager SanityManager => _sanity;
+    private Rectangle _toMapScreenBtn;
 
     private SpriteFont _font;
     private Texture2D _dummy, _cardTexture;
     private Dictionary<string, Rectangle> _cardRegions;
 
-    // 🎨 Colors
+    // Colors
     private readonly Color BG = new(0x10, 0x52, 0x18);
     private readonly Color SLOT = new(0x0F, 0x4A, 0x18);
     private readonly Color TEXT = new(0xD6, 0xC9, 0x90);
@@ -29,7 +32,7 @@ public class CardScreen : GamelabGameScreen
     public CardScreen(GamelabGame game) : base(game)
     {
         _manager = new CardManager();
-        _sanity = new SanityManger(null, null);
+        _sanity = new SanityManager(null, null);
     }
 
     // -----------------------
@@ -41,6 +44,7 @@ public class CardScreen : GamelabGameScreen
 
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
         _dummy.SetData(new[] { Color.White });
+        _toMapScreenBtn = new Rectangle(20, 20, 130, 50);
 
         _cardTexture = Content.Load<Texture2D>("Sprites/cards1");
 
@@ -83,6 +87,12 @@ public class CardScreen : GamelabGameScreen
         if (l.MapDeck.Contains(pos)) { _manager.DrawMapAC(l.MapDeck.Location.ToVector2()); return; }
         if (l.StackDeck.Contains(pos)) { _manager.DrawStackAC(l.StackDeck.Location.ToVector2()); return; }
 
+        if (_toMapScreenBtn.Contains(pos))
+        {
+            Game.screenManager.ShowScreen(Game.MapScreenInstance);
+            return;
+        }
+
         for (int i = 0; i < l.Top3Rects.Count; i++)
         {
             if (l.BuyButtons[i].Contains(pos) &&
@@ -94,9 +104,9 @@ public class CardScreen : GamelabGameScreen
             }
         }
 
-        HandleSlotButtons(_manager.MapSlots, l.MapSlots, pos);
-        HandleSlotButtons(_manager.StackSlots, l.StackSlots, pos);
-        HandleSlotButtons(_manager.BuildSlots, l.BuildSlots, pos);
+        HandleSlotButtons(_manager.MapSlots, l.MapSlots, pos, CardType.MapAction);
+        HandleSlotButtons(_manager.StackSlots, l.StackSlots, pos, CardType.StackAction);
+        HandleSlotButtons(_manager.BuildSlots, l.BuildSlots, pos, CardType.Build);
     }
 
     // -----------------------
@@ -106,6 +116,7 @@ public class CardScreen : GamelabGameScreen
     {
         GraphicsDevice.Clear(BG);
         spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
+        DrawButton(_toMapScreenBtn, "To Map");
 
         var l = GetLayout();
 
@@ -116,7 +127,9 @@ public class CardScreen : GamelabGameScreen
         spriteBatch.DrawString(_font, "Build Cards", l.BuildLabel, TEXT);
 
         // Sanity
-        spriteBatch.DrawString(_font, $"Sanity: {_sanity.Sanity}", new Vector2(20, 20), TEXT);
+        string text = $"Sanity: {_sanity.Sanity}";
+        var size = _font.MeasureString(text);
+        spriteBatch.DrawString( _font, text,new Vector2(viewportAdapter.VirtualWidth - size.X - 20, 20),TEXT);
 
         // Decks
         DrawSprite("deck", l.MapDeck);
@@ -133,7 +146,7 @@ public class CardScreen : GamelabGameScreen
             ));
         }
 
-        // 🔥 TOP 3 CARDS (with cost spacing)
+        // TOP 3 CARDS 
         for (int i = 0; i < _manager.Top3Cards.Count; i++)
         {
             var rect = l.Top3Rects[i];
@@ -142,14 +155,14 @@ public class CardScreen : GamelabGameScreen
 
             int cost = _manager.DiscountActive ? Math.Max(card.Cost - 1, 0) : card.Cost;
 
-            // Cost text (closer to card)
+            // Cost text
             string costText = $"Cost: {cost}";
-            var size = _font.MeasureString(costText);
+            var size1 = _font.MeasureString(costText);
             int costY = rect.Bottom + 5;
             spriteBatch.DrawString(_font, costText,
-                new Vector2(rect.Center.X - size.X / 2, costY), TEXT);
+                new Vector2(rect.Center.X - size1.X / 2, costY), TEXT);
 
-            // Buy button (far from cost)
+            // Buy button
             if (_manager.DrawTop3Free || i == 0)
             {
                 var btn = l.BuyButtons[i];
@@ -159,9 +172,9 @@ public class CardScreen : GamelabGameScreen
         }
 
         // Slots
-        DrawSlots(_manager.MapSlots, l.MapSlots);
-        DrawSlots(_manager.StackSlots, l.StackSlots);
-        DrawSlots(_manager.BuildSlots, l.BuildSlots);
+        DrawSlots(_manager.MapSlots, l.MapSlots, CardType.MapAction);
+        DrawSlots(_manager.StackSlots, l.StackSlots, CardType.StackAction);
+        DrawSlots(_manager.BuildSlots, l.BuildSlots, CardType.Build);
 
         spriteBatch.End();
     }
@@ -169,7 +182,7 @@ public class CardScreen : GamelabGameScreen
     // -----------------------
     // DRAW HELPERS
     // -----------------------
-    private void DrawSlots(List<CardSlot> slots, List<Rectangle> rects)
+    private void DrawSlots(List<CardSlot> slots, List<Rectangle> rects, CardType type)
     {
         for (int i = 0; i < rects.Count; i++)
         {
@@ -178,7 +191,10 @@ public class CardScreen : GamelabGameScreen
             if (slots[i].Card != null)
             {
                 DrawCard(slots[i].Card, rects[i]);
-                DrawButton(GetBottom(rects[i], 0), "USE");
+
+                if (type == CardType.StackAction)
+                    DrawButton(GetBottom(rects[i], 0), "USE");
+
                 DrawButton(GetBottom(rects[i], 1), "DISCARD");
             }
         }
@@ -203,14 +219,24 @@ public class CardScreen : GamelabGameScreen
         spriteBatch.DrawString(_font, text, pos, BTN_TEXT, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
-    private void HandleSlotButtons(List<CardSlot> slots, List<Rectangle> rects, Vector2 mouse)
+    private void HandleSlotButtons(List<CardSlot> slots, List<Rectangle> rects, Vector2 mouse, CardType type)
     {
         for (int i = 0; i < rects.Count; i++)
         {
             if (slots[i].Card == null) continue;
 
-            if (GetBottom(rects[i], 0).Contains(mouse)) { _manager.UseCard(slots[i].Card); return; }
-            if (GetBottom(rects[i], 1).Contains(mouse)) { slots[i].Card = null; return; }
+            if (type == CardType.StackAction &&
+                GetBottom(rects[i], 0).Contains(mouse))
+            {
+                _manager.UseCard(slots[i].Card);
+                return;
+            }
+
+            if (GetBottom(rects[i], 1).Contains(mouse))
+            {
+                slots[i].Card = null;
+                return;
+            }
         }
     }
 
