@@ -177,6 +177,11 @@ public class MapManager
         }
     }
 
+    public (int,int) GetTileFromScreenPosition(Vector2 pos)
+    {
+        return getTileIndex(pos);
+    }
+
 #endregion
     
 #region Input handling
