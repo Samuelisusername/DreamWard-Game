@@ -24,6 +24,9 @@ public class GamelabGame : Game
 
     public static GamelabGame Instance { get; private set; }
 
+    public CardScreen CardScreenInstance;
+    public MapScreen MapScreenInstance;
+
     private readonly Logger logger = new("Game");
     public readonly GraphicsDeviceManager graphics;
     public readonly ScreenManager screenManager;
@@ -96,6 +99,10 @@ public class GamelabGame : Game
         var fontBytes = File.ReadAllBytes(fontPath);
         fontSystem.AddFont(fontBytes);
 
+        MapScreenInstance = new MapScreen(this);
+        CardScreenInstance = new CardScreen(this);
+        MapScreenInstance.SetManager(CardScreenInstance.SanityManager, CardScreenInstance.CardManager);
+        // screenManager.ShowScreen(MapScreenInstance);
         screenManager.ShowScreen(new HexMapScreen(this));
         //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
         // screenManager.ShowScreen(new SoundTestScreen(this));
@@ -110,6 +117,8 @@ public class GamelabGame : Game
         textureAtlas = new();
         TextureAtlas monsters = TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
         textureAtlas.Add("monsters", monsters);
+        TextureAtlas night_top = TextureAtlas.FromFile(Content, "Sprites/night_top-atlas-definition.xml");
+        textureAtlas.Add("night_top", night_top);
     }
 
     protected override void Update(GameTime gameTime)
