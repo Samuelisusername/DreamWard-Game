@@ -322,3 +322,11 @@
 /processor:FontDescriptionProcessor
 /build:font.spritefont
 
+#begin Sprites/night_top-atlas-definition.xml
+/copy:Sprites/night_top-atlas-definition.xml
+
+#begin Sprites/night_top_alternative.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/night_top_alternative.png
+
