@@ -133,7 +133,7 @@ public class CardManager
     // -----------------------
     // Buy build card from Top3
     // -----------------------
-    public Card BuyTopCard(SanityManger sanity, int index = 0)
+    public Card BuyTopCard(SanityManager sanity, int index = 0)
     {
         if (Top3Cards.Count == 0 || BuildSlots.All(s => s.IsFilled)) return null;
 
