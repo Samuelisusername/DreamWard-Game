@@ -114,6 +114,7 @@ public class CardScreen : GamelabGameScreen
     // -----------------------
     public override void Draw(GameTime gameTime)
     {
+        base.Draw(gameTime);
         GraphicsDevice.Clear(BG);
         spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
         DrawButton(_toMapScreenBtn, "To Map");
