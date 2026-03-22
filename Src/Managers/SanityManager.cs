@@ -2,23 +2,36 @@ using System;
 
 public class SanityManager
 {
-    private MapManager _map_manager;
-    private PathFindingManager _pathFindingManager;
+    private readonly MapManager _map_manager;
+    private readonly PathFindingManager _pathFindingManager;
+    private readonly GamePhaseManager _gamePhaseManager;
 
     public int Sanity {get; private set;}
 
-    public SanityManager(MapManager mapManager, PathFindingManager pathFindingManager    )
+    public SanityManager(MapManager mapManager, PathFindingManager pathFindingManager, GamePhaseManager gamePhaseManager)
     {
         _map_manager = mapManager;
         _pathFindingManager = pathFindingManager;
+        _gamePhaseManager = gamePhaseManager;
         Sanity = 12; // initialize sanity at the beginning of the game
     }
 
     /// <summary>
-    /// Deducts sanity from the players total
+    /// Deducts sanity from the players total. The game might end if sanity goes to 0.
     /// </summary>
     /// <param name="amount">the amount of sanity to remove</param>
-    public bool DeductSanity(int amount)
+    public void DeductSanity(int amount)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
+        if (Sanity < amount) _gamePhaseManager.checkGameOver();
+        Sanity -= amount;
+    }
+
+    /// <summary>
+    /// Deducts sanity from the players total if possible, otherwise does nothing and returns false
+    /// </summary>
+    /// <param name="amount">the amount of sanity to remove</param>
+    public bool TryDeductSanity(int amount)
     {   
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
         if (Sanity < amount) return false;

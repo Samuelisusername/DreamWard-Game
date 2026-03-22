@@ -32,7 +32,7 @@ public class CardScreen : GamelabGameScreen
     public CardScreen(GamelabGame game) : base(game)
     {
         _manager = new CardManager();
-        _sanity = new SanityManager(null, null);
+        _sanity = new SanityManager(null, null, null);
     }
 
     // -----------------------

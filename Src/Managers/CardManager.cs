@@ -141,7 +141,7 @@ public class CardManager
         Card card = Top3Cards[index];
 
         int cost = _discountActive ? card.Cost - 1 : card.Cost;
-        if (!sanity.DeductSanity(Math.Max(cost, 0))) return null;
+        if (!sanity.TryDeductSanity(Math.Max(cost, 0))) return null;
 
         // Apply card
         _discountActive = false;
