@@ -47,7 +47,7 @@ public class MonsterGroup
 
     public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
     {
-        _amalgamSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("amalgam_walkSW");
+        _amalgamSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_amalgam_walkSW");
         _amalgamSprite.Scale = mapManager.Scale;
         _normalSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
         _normalSprite.Scale = mapManager.Scale;
