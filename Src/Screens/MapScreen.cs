@@ -190,7 +190,7 @@ public class MapScreen : GamelabGameScreen
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(GamelabGame.GamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
 
         spriteBatch.Begin(samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
