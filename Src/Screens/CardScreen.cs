@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
 using MonoGame.Extended.Input;
+using Gamelab.Managers;
 
 namespace Gamelab.Screens;
 
@@ -40,6 +41,7 @@ public class CardScreen : GamelabGameScreen
     // -----------------------
     public override void LoadContent()
     {
+        AudioManager.LoadSound(Game.Content, "coinsplash", "Sounds/action_cards/coinsplash");
         _font = Content.Load<SpriteFont>("font");
 
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
@@ -100,6 +102,7 @@ public class CardScreen : GamelabGameScreen
                 !_manager.BuildSlots.All(s => s.IsFilled))
             {
                 _manager.BuyTopCard(_sanity, i);
+                AudioManager.Play("coinsplash");
                 return;
             }
         }
@@ -205,7 +208,6 @@ public class CardScreen : GamelabGameScreen
 
     private void DrawSprite(string name, Rectangle rect)
         => spriteBatch.Draw(_cardTexture, rect, _cardRegions[name], Color.White);
-
     private void DrawButton(Rectangle rect, string text)
     {
         spriteBatch.Draw(_dummy, rect, BTN);

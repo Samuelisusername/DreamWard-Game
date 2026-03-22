@@ -322,3 +322,9 @@
 /processor:TextureProcessor
 /build:Sprites/night_top_alternative.png
 
+#begin Sounds/dragonflap.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/dragonflap.wav
+

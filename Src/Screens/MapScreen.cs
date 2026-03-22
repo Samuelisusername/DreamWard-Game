@@ -64,6 +64,7 @@ public class MapScreen : GamelabGameScreen
         base.LoadContent();
 
         AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
+        AudioManager.LoadSound(Game.Content, "dragonflap", "Sounds/dragonflap");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
@@ -149,6 +150,7 @@ public class MapScreen : GamelabGameScreen
             if (_toCardScreenBtn.Contains(pos))
             {
                 Game.screenManager.ShowScreen(Game.CardScreenInstance);
+                AudioManager.Play("dragonflap");
                 return;
             }
 
