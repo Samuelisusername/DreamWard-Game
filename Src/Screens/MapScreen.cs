@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
 using DreamWardUtils.Graphics;
 using MonoGame.Extended.Input;
+using System.Security.Cryptography;
 
 namespace Gamelab.Screens;
 
@@ -15,7 +16,6 @@ public class MapScreen : GamelabGameScreen
     private readonly MapManager mapManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
-    private List<Entity> _entities;
     private SanityManager _sanityManager;
     private CardManager _cardManager;
 
@@ -37,7 +37,7 @@ public class MapScreen : GamelabGameScreen
     private bool _isDrag;
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
-    private Entity _selectedEntity = null;
+    private (int,int) _selectedTile = (-1,-1);
 
     public MapScreen(GamelabGame game) : base(game)
     {
@@ -50,8 +50,7 @@ public class MapScreen : GamelabGameScreen
         mapManager.Scale = new Vector2(4, 4);
         mapRenderer = new MapRenderer(mapManager);
 
-        _entities = new List<Entity>();
-        entityRenderer = new EntityRenderer(mapManager, _entities);
+        entityRenderer = new EntityRenderer(mapManager);
         SpawnDefaultEntities();
     }
 
@@ -100,8 +99,6 @@ public class MapScreen : GamelabGameScreen
 
         // Map update
         mapManager.Update(gameTime);
-        //Entity Update
-        entityRenderer.Update(gameTime);
 
         // Zoom
         if (mouse.DeltaScrollWheelValue != 0)
@@ -291,18 +288,18 @@ public class MapScreen : GamelabGameScreen
         int centerY = mapManager.Rows / 2;
 
         // 🏕️ Tent at center
-        _entities.Add(new Tent(
+        mapManager.PlaceEntity(new Tent(
             atlas.CreateAnimatedSprite("tent-animation"),
             mapManager,
             (centerX, centerY)
-        ));
+        ),centerX,centerY);
 
         // 🐑 Sheep next to tent
-        _entities.Add(new Sheep(
+        mapManager.PlaceEntity(new Sheep(
             atlas.CreateAnimatedSprite("sheep-animation"),
             mapManager,
             (centerX + 1, centerY)
-        ));
+        ),centerX + 1, centerY);
     }
 
     private void HandleMapCardUse(Vector2 pos)
@@ -312,7 +309,7 @@ public class MapScreen : GamelabGameScreen
 
         if (_activeMapCard.Type == CardType.Build)
         {
-            bool success = PlaceEntity(_activeMapCard, col, row);
+            bool success = mapManager.PlaceEntity(_activeMapCard, col, row);
 
             if (success)
             {
@@ -335,54 +332,13 @@ public class MapScreen : GamelabGameScreen
         }
     }
 
-    private bool PlaceEntity(Card card, int col, int row)
-    {
-        bool occupied = _entities.Any(e => e.TilePosition == (col, row));
-        if (occupied)
-        {
-            Console.WriteLine("Tile already occupied!");
-            return false;
-        }
-        var atlas = GamelabGame.textureAtlas["night_top"];
-
-        string animKey = card.SpriteName switch
-        {
-            "dreamcatcher" => "wall-animation", // map dreamcatcher to wall
-            "sniper" => "sniper-animation",
-            "aoe" => "aoe-animation",
-            "fence" => "fence-animation",
-            "meadow" => "meadow-animation",
-            _ => null
-        };
-
-        if (animKey == null) return false; // no matching animation
-
-        var sprite = atlas.CreateAnimatedSprite(animKey);
-
-        Entity entity = card.Name switch
-        {
-            "sniper" => new SniperTower(sprite, mapManager, (col,row)),
-            "aoe" => new AOETower(sprite, mapManager, (col,row)),
-            "fence" => new Fence(sprite, mapManager, (col,row)),
-            "meadow" => new Meadow(sprite, mapManager, (col,row)),
-            "dreamcatcher" => new Wall(sprite, mapManager, (col,row)), // create Wall entity
-            _ => null
-        };
-
-        if (entity != null){
-            entity.SetAsBuildEntity();
-            _entities.Add(entity);
-            return true;
-        }
-        return false;
-    }
 
     private bool ApplyMapAction(Card card, Vector2 mousePos)
     {
         (int col, int row) = mapManager.GetTileFromScreenPosition(mousePos);
         if (col < 0) return false;
 
-        Entity target = _entities.FirstOrDefault(e => e.TilePosition == (col, row));
+        Entity target = mapManager.GetStructure(col, row);
 
         switch (card.Effect)
         {
@@ -390,25 +346,29 @@ public class MapScreen : GamelabGameScreen
                 // ✅ Keep as-is
                 if (target != null && target.IsBuildEntity)
                 {
-                    _entities.Remove(target);
+                    mapManager.RemoveStructure(col,row);
                     return true; // action succeeded
                 }
                 return false;
             case CardEffect.Move:
                 {
-                    if (_selectedEntity == null)
+                    if (_selectedTile == (-1,-1))
                     {
-                        Entity targetEntity = _entities.FirstOrDefault(e => e.TilePosition == (col, row) && e.IsBuildEntity);
-                        if (targetEntity != null){
-                            _selectedEntity = targetEntity;
+                        if(mapManager.GetStructure(col,row) != null)
+                        {
+                            _selectedTile = (col,row);
+                            return false; // do not consume card yet
                         }
-                        return false; // do not consume card yet
+                        return false;
                     }
                     else{
-                        bool tileOccupied = _entities.Any(e => e.TilePosition == (col, row) && e.IsBuildEntity);
-                        if (!tileOccupied){
-                            _selectedEntity.SetTilePosition((col, row));
-                            _selectedEntity = null;
+                        Entity enitityGoal = mapManager.GetStructure(col,row);
+                        if (enitityGoal == null){
+                            Entity entityToMove = mapManager.GetStructure(_selectedTile.Item1, _selectedTile.Item2);
+                            entityToMove.SetTilePosition((col,row));
+                            mapManager.RemoveStructure(_selectedTile.Item1, _selectedTile.Item2);
+                            mapManager.PlaceEntity(entityToMove,col,row);
+                            _selectedTile = (-1,-1);
                             return true;
                         }
                         else{
@@ -440,11 +400,8 @@ public class MapScreen : GamelabGameScreen
             var rat = new Rat(sprite, mapManager, tile);
 
             // Replace in entities list
-            int index = _entities.IndexOf(target);
-            if (index >= 0)
-            {
-                _entities[index] = rat;
-            }
+            mapManager.RemoveStructure(tile.Item1, tile.Item2);
+            mapManager.PlaceEntity(rat,tile.Item1, tile.Item2);
         }
     }
 }

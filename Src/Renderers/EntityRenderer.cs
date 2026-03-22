@@ -8,25 +8,11 @@ public class EntityRenderer
 {
     private MapManager _manager;
 
-    private List<Entity> _entities;
-
-    public EntityRenderer(MapManager mapManager, List<Entity> entities)
+    public EntityRenderer(MapManager mapManager)
     {
         _manager = mapManager;
-        _entities = entities;
     }
 
-    public void Update(Microsoft.Xna.Framework.GameTime gameTime)
-    {
-        // Update all entities
-        foreach (var entity in _entities)
-        {
-            entity.Update(gameTime);
-        }
-
-        // Remove destroyed ones
-        _entities.RemoveAll(e => e.IsDestroyed);
-    }
 
     /// <summary>
     /// draws all entities (e.g. the player, monsters, sheep, rats) and 
@@ -36,15 +22,12 @@ public class EntityRenderer
     /// <param name="gameTime"></param>
     public void Draw(SpriteBatch spriteBatch)
     {
-        foreach (var entity in _entities)
-        {
-            entity.Draw(spriteBatch);
-        }
         for(int i = 0; i < _manager.Columns; i++)
         {
             for(int j = 0; j < _manager.Rows; j++)
             {
                 _manager.GetMonster(i,j)?.Draw(spriteBatch);
+                _manager.GetStructure(i,j)?.Draw(spriteBatch);
             }            
         }
     }

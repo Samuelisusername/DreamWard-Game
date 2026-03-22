@@ -28,7 +28,7 @@ public class MonsterGroup
     //the offset to draw the monster on the tile
     private readonly Vector2 _localOffset = new Vector2(-32,-90);
 
-    private List<Monster> _monsters;
+    public List<Monster> Monsters{get; private set;}
 
     /// <summary>
     /// Posistion of the entity on the map
@@ -41,9 +41,9 @@ public class MonsterGroup
     //the animation of this entity
     protected AnimatedSprite _normalSprite;
 
-    private bool _goalReached => _monsters.Select(i => i.GoalReached).All(j => j);
+    private bool _goalReached => Monsters.Select(i => i.GoalReached).All(j => j);
 
-    public int Count => _monsters.Count;
+    public int Count => Monsters.Count;
 
     public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
     {
@@ -53,7 +53,7 @@ public class MonsterGroup
         _normalSprite.Scale = mapManager.Scale;
         _mapManager = mapManager;
         _speed = speed;
-        _monsters = new List<Monster>();
+        Monsters = new List<Monster>();
         TilePosition = tilePosition;
     }
     
@@ -67,7 +67,7 @@ public class MonsterGroup
             if(_elapsed >= _speed)
             {
                 _elapsed -= _speed;
-                _monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
+                Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
                 //_mapManager.MoveMonster(this,Path[0],Path[1]);
             }
             _pathProgress = (float)(_elapsed / _speed);
@@ -76,12 +76,12 @@ public class MonsterGroup
     
     public void Move()
     {
-        for (int i = 0; i < _monsters.Count; i++)
+        for (int i = 0; i < Monsters.Count; i++)
         {
-            if(!_monsters[i].GoalReached && _monsters[i].ShouldMove)
+            if(!Monsters[i].GoalReached && Monsters[i].ShouldMove)
             {
-                Monster monster = _monsters[i];
-                _monsters.Remove(monster);
+                Monster monster = Monsters[i];
+                Monsters.Remove(monster);
                 (int,int) origin = monster.Path[0];
                 (int,int) dest = monster.Path[1];
                 monster.Move();
@@ -94,7 +94,7 @@ public class MonsterGroup
 
     public void AddMonster(Monster monster)
     {
-        _monsters.Add(monster);
+        Monsters.Add(monster);
     }
 
     /// <summary>
@@ -107,14 +107,12 @@ public class MonsterGroup
         _normalSprite.Scale = scale;
     }
 
-
-
     /// <summary>
     /// draw the monster
     /// </summary>
     public void Draw(SpriteBatch spriteBatch)
     {
-        List<(int,int)> goals = _monsters.Select(i => i.GetCurrentGoal()).ToList();
+        List<(int,int)> goals = Monsters.Select(i => i.GetCurrentGoal()).ToList();
         List<(int,int)> amalgamGoals = goals.Where(i => goals.Count(j => j == i) > 2).Distinct().ToList();
         List<(int,int)> singleGoals = goals.Where(i => goals.Count(j => j == i) <= 2).Distinct().ToList();
 
@@ -138,7 +136,7 @@ public class MonsterGroup
 
     public void RandomziePath()
     {
-        foreach (var monster in _monsters)
+        foreach (var monster in Monsters)
         {
             monster.GenerateHexPath(TilePosition, (-1,-1));
         }

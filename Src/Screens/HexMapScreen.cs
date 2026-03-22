@@ -33,7 +33,7 @@ public class HexMapScreen : GamelabGameScreen
         mapManager.Scale = new Vector2(4,4);
         mapRenderer = new MapRenderer(mapManager);
         _entities = new List<Entity>();
-        entityRenderer = new EntityRenderer(mapManager, _entities);
+        entityRenderer = new EntityRenderer(mapManager);
     }
 
     public override void LoadContent()

@@ -15,7 +15,7 @@ public class MapManager
     private readonly int[,] _tiles; //col first 
 
     //stores which tiles has which structure on it -1 if none
-    private readonly int[,] _structures;//colfirst
+    private readonly Entity[,] _structures;//colfirst
     
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
@@ -83,7 +83,7 @@ public class MapManager
         _delay = delay;
         _tiles = new int[Columns,Rows];
         _monsters = new MonsterGroup[Columns,Rows];
-
+        _structures = new Entity[Columns,Rows];
     }
     
     public void Update(GameTime gameTime)
@@ -101,6 +101,7 @@ public class MapManager
             for(int j = 0; j < Rows; j++)
             {
                 _monsters[i,j]?.Update(gameTime);
+                _structures[i,j]?.Update(gameTime);
             }
         }
         //move the monsters if needed we do this in two loops to avoid updating monsters twice
@@ -161,6 +162,98 @@ public class MapManager
             _monsters[goal.Item1,goal.Item2] = new MonsterGroup(this,  TimeSpan.FromSeconds(2),goal);
             _monsters[goal.Item1,goal.Item2].AddMonster(monster);
         }
+    }
+
+    /// <summary>
+    /// returns the structure at the given position
+    /// </summary>
+    public Entity GetStructure(int col, int row)
+    {
+        return _structures[col,row];
+    }
+
+    /// <summary>
+    /// removes the structure at the given position
+    /// </summary>
+    public void RemoveStructure(int col, int row)
+    {
+        _structures[col,row] = null;
+    }
+    
+    
+    /// <summary>
+    /// Places an entity at the given position
+    /// </summary>
+    public bool PlaceEntity(Entity entity, int col, int row)
+    {        
+        bool occupied = _structures[col,row] != null;
+        if (occupied)
+        {
+            Console.WriteLine("Tile already occupied!");
+            return false;
+        }
+
+        if (entity != null){
+            entity.SetAsBuildEntity();
+            _structures[col,row] = entity;
+            return true;
+        }
+        return false;
+    }
+
+
+    /// <summary>
+    /// Places an entity defined by the Card at the given position
+    /// </summary>
+    public bool PlaceEntity(Card card, int col, int row)
+    {        
+        bool occupied = _structures[col,row] != null;
+        if (occupied)
+        {
+            Console.WriteLine("Tile already occupied!");
+            return false;
+        }
+        var atlas = GamelabGame.textureAtlas["night_top"];
+
+        string animKey = card.SpriteName switch
+        {
+            "dreamcatcher" => "wall-animation", // map dreamcatcher to wall
+            "sniper" => "sniper-animation",
+            "aoe" => "aoe-animation",
+            "fence" => "fence-animation",
+            "meadow" => "meadow-animation",
+            _ => null
+        };
+
+        if (animKey == null) return false; // no matching animation
+
+        var sprite = atlas.CreateAnimatedSprite(animKey);
+
+        Entity entity = card.Name switch
+        {
+            "sniper" => new SniperTower(sprite, this, (col,row)),
+            "aoe" => new AOETower(sprite, this, (col,row)),
+            "fence" => new Fence(sprite, this, (col,row)),
+            "meadow" => new Meadow(sprite, this, (col,row)),
+            "dreamcatcher" => new Wall(sprite, this, (col,row)), // create Wall entity
+            _ => null
+        };
+
+        if (entity != null){
+            entity.SetAsBuildEntity();
+            _structures[col,row] = entity;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// return all entities on this tile(monstes and structures)
+    /// </summary>
+    public List<Entity> GetAllEntities(int col, int row)
+    {
+        List<Entity> res = [GetStructure(col,row), .. GetMonster(col,row).Monsters];
+        return res;
     }
 
     /// <summary>
