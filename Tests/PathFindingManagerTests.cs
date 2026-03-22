@@ -454,7 +454,7 @@ public class PathFindingManagerTests
     {
         T entity = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
 
-        FieldInfo healthField = typeof(Entity).GetField("_health", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        FieldInfo healthField = typeof(Entity).GetField("_currentHealth", BindingFlags.Instance | BindingFlags.NonPublic)!;
         healthField.SetValue(entity, health);
 
         return entity;
