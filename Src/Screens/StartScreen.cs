@@ -3,23 +3,24 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended.Input;
 
 namespace Gamelab.Screens;
 
 public class StartScreen : GamelabGameScreen
 {
-    private readonly GamelabGame _game;
     private SpriteFont _font;
-    private MouseState _prevMouse;
+    private Texture2D _bgTexture;
+    private Texture2D _pixel;
 
     // Colors
-    private readonly Color _bgColor = new Color(8, 48, 43);      
-    private readonly Color _titleColor = new Color(188, 182, 157); 
-    private readonly Color _buttonColor = new Color(72, 93, 70); 
-    private readonly Color _buttonBorderColor = new Color(188, 182, 157); 
-    private readonly Color _buttonTextColor = new Color(188, 182, 157); 
+    private readonly Color _bgColor = new Color(8, 48, 43);
+    private readonly Color _titleColor = new Color(188, 182, 157);
+    private readonly Color _buttonColor = new Color(72, 93, 70);
+    private readonly Color _buttonBorderColor = new Color(188, 182, 157);
+    private readonly Color _buttonTextColor = new Color(188, 182, 157);
     private Rectangle[] _buttons;
-    private string[] _buttonLabels = { "Start Game", "How to Play", "Settings", "Quit Game" };
+    private string[] _buttonLabels = { "Start New Game", "Continue Game", "How to Play", "Settings", "Quit Game" };
 
     private enum MenuState { MainMenu, HowToPlay, Settings }
     private MenuState _currentState = MenuState.MainMenu;
@@ -33,23 +34,25 @@ public class StartScreen : GamelabGameScreen
     - Use action cards strategically to gain advantages.
     - During the night, watch how your defenses protect you from monsters.";
 
-    private float _volume = 0.5f; // 0.0 to 1.0
+    private float _volume = 0.5f;
     private Rectangle _volumeBar;
 
-    public StartScreen(GamelabGame game) : base(game) => _game = game;
-    private Texture2D _bgTexture;
+    public StartScreen(GamelabGame game) : base(game) { }
 
     public override void LoadContent()
     {
+        base.LoadContent();
         _font = Content.Load<SpriteFont>("font");
         _bgTexture = Content.Load<Texture2D>("Sprites/Start");
+        _pixel = new Texture2D(GraphicsDevice, 1, 1);
+        _pixel.SetData(new[] { Color.White });
         UpdateLayout();
     }
 
     private void UpdateLayout()
     {
-        int w = _game.GraphicsDevice.Viewport.Width;
-        int h = _game.GraphicsDevice.Viewport.Height;
+        int w = virtualScreenSize.X;
+        int h = virtualScreenSize.Y;
 
         if (_currentState == MenuState.MainMenu)
         {
@@ -60,77 +63,88 @@ public class StartScreen : GamelabGameScreen
             int startY = h / 3;
 
             for (int i = 0; i < _buttons.Length; i++)
-            {
                 _buttons[i] = new Rectangle(w / 2 - btnWidth / 2, startY + i * (btnHeight + spacing), btnWidth, btnHeight);
-            }
         }
         else
         {
-            // Single Back button for HowToPlay and Settings
             _buttons = new Rectangle[]
             {
-                new Rectangle(50, _game.GraphicsDevice.Viewport.Height - 100, 150, 50)
+                new Rectangle(50, h - 100, 150, 50)
             };
         }
 
-        // Volume bar position relative to screen
         if (_currentState == MenuState.Settings)
-        {
             _volumeBar = new Rectangle(w / 2 - 200, h / 3, 400, 30);
-        }
     }
 
-    public override void Update(GameTime gameTime)
+    protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
+        Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
-        var m = Mouse.GetState();
+        if (keyboard.IsKeyDown(Keys.Escape))
+            Game.Exit();
+
         UpdateLayout();
+        Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
 
         switch (_currentState)
         {
             case MenuState.MainMenu:
-                for (int i = 0; i < _buttons.Length; i++)
+                if (mouse.WasButtonPressed(MouseButton.Left))
                 {
-                    if (m.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released &&
-                        _buttons[i].Contains(m.Position))
+                    for (int i = 0; i < _buttons.Length; i++)
                     {
-                        HandleButtonClick(_buttonLabels[i]);
+                        if (_buttons[i].Contains(pos))
+                        {
+                            string label = _buttonLabels[i];
+                            if (label == "Continue Game" && Game.MapScreenInstance == null)
+                                return;
+                            HandleButtonClick(label);
+                            break;
+                        }
                     }
                 }
                 break;
 
             case MenuState.HowToPlay:
             case MenuState.Settings:
-                if (m.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released)
+                if (mouse.WasButtonPressed(MouseButton.Left))
                 {
-                    // Back button
-                    if (_buttons[0].Contains(m.Position))
+                    if (_buttons[0].Contains(pos))
                         _currentState = MenuState.MainMenu;
 
-                    // Only respond if clicking **inside the volume bar**
-                    if (_volumeBar.Contains(m.Position))
+                    if (_volumeBar.Contains(pos))
                     {
-                        _volume = (m.X - _volumeBar.X) / (float)_volumeBar.Width;
+                        _volume = (pos.X - _volumeBar.X) / (float)_volumeBar.Width;
                         _volume = MathHelper.Clamp(_volume, 0f, 1f);
-
-                        // Store globally so all screens can use it
-                        _game.MasterVolume = _volume; // <-- add this in your GamelabGame class
+                        Game.MasterVolume = _volume;
+                        Game.MapScreenInstance?.UpdateVolume();
                     }
                 }
                 break;
         }
-
-        _prevMouse = m;
     }
 
     private void HandleButtonClick(string label)
     {
         switch (label)
         {
-            case "Start Game":
-                _game.MapScreenInstance = new MapScreen(_game);
-                _game.CardScreenInstance = new CardScreen(_game);
-                _game.MapScreenInstance.SetManager(_game.CardScreenInstance.SanityManager, _game.CardScreenInstance.CardManager);
-                _game.SwitchToScreen(_game.MapScreenInstance);
+            case "Continue Game":
+                if (Game.MapScreenInstance != null)
+                {
+                    Game.SwitchToScreen(Game.MapScreenInstance);
+                }
+                break;
+
+            case "Start New Game":
+                Game.MapScreenInstance = new MapScreen(Game);
+                Game.CardScreenInstance = new CardScreen(Game);
+
+                Game.MapScreenInstance.SetManager(
+                    Game.CardScreenInstance.SanityManager,
+                    Game.CardScreenInstance.CardManager
+                );
+
+                Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
             case "How to Play":
                 _currentState = MenuState.HowToPlay;
@@ -139,7 +153,7 @@ public class StartScreen : GamelabGameScreen
                 _currentState = MenuState.Settings;
                 break;
             case "Quit Game":
-                _game.Exit();
+                Game.Exit();
                 break;
         }
     }
@@ -147,19 +161,18 @@ public class StartScreen : GamelabGameScreen
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
-        spriteBatch.Begin();
-        //spriteBatch.GraphicsDevice.Clear(_bgColor);
-        // Draw background image scaled to full screen
-        var vp = _game.GraphicsDevice.Viewport;
-        float scaleX = (float)vp.Width / _bgTexture.Width;
-        float scaleY = (float)vp.Height / _bgTexture.Height;
-        float scale = Math.Max(scaleX, scaleY); // fill screen
+        GraphicsDevice.Clear(_bgColor);
+        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
 
-        Vector2 size = new Vector2(_bgTexture.Width * scale, _bgTexture.Height * scale);
-        Vector2 pos = new Vector2((vp.Width - size.X) / 2, (vp.Height - size.Y) / 2);
-
-        spriteBatch.Draw(_bgTexture, pos, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-
+        // Draw background scaled to fill virtual screen
+        int vw = virtualScreenSize.X;
+        int vh = virtualScreenSize.Y;
+        float scaleX = (float)vw / _bgTexture.Width;
+        float scaleY = (float)vh / _bgTexture.Height;
+        float bgScale = Math.Max(scaleX, scaleY);
+        Vector2 bgSize = new Vector2(_bgTexture.Width * bgScale, _bgTexture.Height * bgScale);
+        Vector2 bgPos = new Vector2((vw - bgSize.X) / 2, (vh - bgSize.Y) / 2);
+        spriteBatch.Draw(_bgTexture, bgPos, null, Color.White, 0f, Vector2.Zero, bgScale, SpriteEffects.None, 0f);
 
         switch (_currentState)
         {
@@ -179,121 +192,117 @@ public class StartScreen : GamelabGameScreen
 
     private void DrawMainMenu()
     {
-        // Title
-        DrawScaledText("DreamWard", _titleColor, _game.GraphicsDevice.Viewport.Width / 2, 50);
+        DrawScaledText("DreamWard", _titleColor, virtualScreenSize.X / 2, 50, 3f);
 
-        // Buttons
         foreach (var (btnRect, idx) in _buttons.WithIndex())
         {
-            DrawButton(btnRect, _buttonLabels[idx]);
+            string label = _buttonLabels[idx];
+
+            // Disable Continue if no game exists
+            if (label == "Continue Game" && Game.MapScreenInstance == null)
+            {
+                DrawButtonDisabled(btnRect, label);
+            }
+            else
+            {
+                DrawButton(btnRect, label);
+            }
         }
     }
 
-    private void DrawHowToPlay()
+    private void DrawButtonDisabled(Rectangle rect, string text)
     {
-        // Title
-        DrawScaledText("How to Play", _titleColor, _game.GraphicsDevice.Viewport.Width / 2, 50);
+        Color disabledColor = new Color(58, 74, 57);
+        Color disabledText = new Color(143, 138, 119);
 
-        int w = _game.GraphicsDevice.Viewport.Width;
-        int h = _game.GraphicsDevice.Viewport.Height;
+        DrawRoundedRectangle(rect, 10, disabledColor, disabledText);
 
-        // Paragraph area (80% width, 60% height, leave space for Back button)
-        Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
+        Vector2 textSize = _font.MeasureString(text);
+        float scale = MathF.Min(rect.Width / textSize.X * 0.9f, rect.Height / textSize.Y * 0.9f);
 
-        // Draw the scaled paragraph
-        DrawScaledParagraph(_howToPlayText, paragraphArea, _titleColor);
-
-        // Back button
-        DrawButton(_buttons[0], "Back");
-    }
-
-    private void DrawScaledParagraph(string text, Rectangle area, Color color)
-    {
-        // Measure the full text without scaling
-        Vector2 size = _font.MeasureString(text);
-
-        // Compute scale to fit width and height
-        float scaleX = area.Width / size.X;
-        float scaleY = area.Height / size.Y;
-        float scale = Math.Min(scaleX, scaleY);
-
-        // Draw text centered in rectangle
-        Vector2 pos = new Vector2(
-            area.X + area.Width / 2 - size.X * scale / 2,
-            area.Y + area.Height / 2 - size.Y * scale / 2
+        Vector2 textPos = new Vector2(
+            rect.Center.X - textSize.X * scale / 2,
+            rect.Center.Y - textSize.Y * scale / 2
         );
 
-        spriteBatch.DrawString(_font, text, pos, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, text, textPos, disabledText, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+    private void DrawHowToPlay()
+    {
+        int w = virtualScreenSize.X;
+        int h = virtualScreenSize.Y;
+        DrawScaledText("How to Play", _titleColor, w / 2, 50, 2f);
+
+        Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
+        DrawScaledParagraph(_howToPlayText, paragraphArea, _titleColor);
+
+        DrawButton(_buttons[0], "Back");
     }
 
     private void DrawSettings()
     {
-        // Title
-        DrawScaledText("Settings", _titleColor, _game.GraphicsDevice.Viewport.Width / 2, 50);
+        int w = virtualScreenSize.X;
+        int h = virtualScreenSize.Y;
+        DrawScaledText("Settings", _titleColor, w / 2, 50, 2f);
 
-        // Volume bar position (responsive)
-        int w = _game.GraphicsDevice.Viewport.Width;
-        int h = _game.GraphicsDevice.Viewport.Height;
-        _volumeBar = new Rectangle(w / 2 - 200, h / 3, 400, 30);
+        Color barBackgroundColor = new Color(188, 182, 157);
+        Color barFillColor = new Color(72, 93, 70);
 
-        // Colors
-        Color barBackgroundColor = new Color(188, 182, 157); 
-        Color barFillColor = new Color(72, 93, 70);           
-
-        // Draw volume bar background
         DrawRoundedRectangle(_volumeBar, 5, barBackgroundColor, _buttonBorderColor);
 
-        // Draw filled volume inside bar
         Rectangle fill = new Rectangle(_volumeBar.X, _volumeBar.Y, (int)(_volumeBar.Width * _volume), _volumeBar.Height);
         DrawRoundedRectangle(fill, 5, barFillColor, Color.Transparent);
 
-        // Draw label above the bar (centered)
         string volumeLabel = "Volume";
         Vector2 labelSize = _font.MeasureString(volumeLabel);
         Vector2 labelPos = new Vector2(_volumeBar.Center.X - labelSize.X / 2, _volumeBar.Y - labelSize.Y - 5);
         spriteBatch.DrawString(_font, volumeLabel, labelPos, _buttonTextColor);
 
-        // Back button
         DrawButton(_buttons[0], "Back");
     }
 
-    // Draw button with scaled text to fit
+    private void DrawScaledParagraph(string text, Rectangle area, Color color)
+    {
+        Vector2 size = _font.MeasureString(text);
+        float scaleX = area.Width / size.X;
+        float scaleY = area.Height / size.Y;
+        float scale = Math.Min(scaleX, scaleY);
+        Vector2 pos = new Vector2(
+            area.X + area.Width / 2 - size.X * scale / 2,
+            area.Y + area.Height / 2 - size.Y * scale / 2
+        );
+        spriteBatch.DrawString(_font, text, pos, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
     private void DrawButton(Rectangle rect, string text)
     {
         DrawRoundedRectangle(rect, 10, _buttonColor, _buttonBorderColor);
-
         Vector2 textSize = _font.MeasureString(text);
-        float scale = MathF.Min(rect.Width / textSize.X * 0.9f, rect.Height / textSize.Y * 0.9f); // padding 0.9
+        float scale = MathF.Min(rect.Width / textSize.X * 0.9f, rect.Height / textSize.Y * 0.9f);
         Vector2 textPos = new Vector2(rect.Center.X - textSize.X * scale / 2, rect.Center.Y - textSize.Y * scale / 2);
         spriteBatch.DrawString(_font, text, textPos, _buttonTextColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
-    // Draw simple filled rectangle with optional border
     private void DrawRoundedRectangle(Rectangle rect, int radius, Color fillColor, Color borderColor)
     {
-        Texture2D pixel = new Texture2D(_game.GraphicsDevice, 1, 1);
-        pixel.SetData(new[] { Color.White });
-
-        spriteBatch.Draw(pixel, rect, fillColor);
+        spriteBatch.Draw(_pixel, rect, fillColor);
 
         int thickness = 3;
         if (borderColor != Color.Transparent)
         {
-            spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, thickness), borderColor); // Top
-            spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - thickness, rect.Width, thickness), borderColor); // Bottom
-            spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, thickness, rect.Height), borderColor); // Left
-            spriteBatch.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), borderColor); // Right
+            spriteBatch.Draw(_pixel, new Rectangle(rect.X, rect.Y, rect.Width, thickness), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(rect.X, rect.Bottom - thickness, rect.Width, thickness), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(rect.X, rect.Y, thickness, rect.Height), borderColor);
+            spriteBatch.Draw(_pixel, new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), borderColor);
         }
     }
 
-    // Draw scaled text centered at (centerX, y)
-    private void DrawScaledText(string text, Color color, float centerX, float y)
+    private void DrawScaledText(string text, Color color, float centerX, float y, float scale = 1f)
     {
-        Vector2 textSize = _font.MeasureString(text);
-        float scale = 1f;
-        spriteBatch.DrawString(_font, text, new Vector2(centerX - textSize.X * scale / 2, y), color);
+        Vector2 textSize = _font.MeasureString(text) * scale;
+        Vector2 pos = new Vector2(centerX - textSize.X / 2, y);
+        spriteBatch.DrawString(_font, text, pos, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
-    
 }
 
 // Extension to iterate with index

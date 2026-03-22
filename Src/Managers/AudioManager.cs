@@ -102,12 +102,11 @@ public static class AudioManager
     // ---------------------------------------------------
     public static void Play(string name)
     {
-        if (_sounds.ContainsKey(name))
-        {
-            _sounds[name].Play();
+        if (_sounds.ContainsKey(name)){
+            float volume = GamelabGame.Instance.MasterVolume;
+            _sounds[name].Play(volume, 0f, 0f);
         }
-        else
-        {
+        else{
             Console.WriteLine($"[Audio Warning] Tried to play '{name}', but it hasn't been loaded!");
         }
     }

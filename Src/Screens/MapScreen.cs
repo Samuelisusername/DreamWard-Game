@@ -54,6 +54,12 @@ public class MapScreen : GamelabGameScreen
     private readonly Color SLOT_BORDER_COLOR = new Color(0xd8, 0xd4, 0xc1); 
     private readonly Color TEXT_COLOR = new Color(0xd8, 0xd4, 0xc1);
 
+    public void UpdateVolume()
+    {
+        if (_dayMusicInstance != null)
+            _dayMusicInstance.Volume = Game.MasterVolume;
+    }
+
     public MapScreen(GamelabGame game) : base(game)
     {
         // Map setup
@@ -75,7 +81,6 @@ public class MapScreen : GamelabGameScreen
 
         AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
         AudioManager.LoadSound(Game.Content, "dragonflap", "Sounds/dragonflap");
-        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
@@ -85,6 +90,7 @@ public class MapScreen : GamelabGameScreen
         if(_dayMusicInstance == null){
             _dayMusicInstance = _day_BackgroundSound.CreateInstance();
             _dayMusicInstance.IsLooped = true; 
+            _dayMusicInstance.Volume = Game.MasterVolume;
             _dayMusicInstance.Play();
         }      
 
@@ -129,6 +135,13 @@ public class MapScreen : GamelabGameScreen
             int centerY = mapManager.Rows / 2;
             mapManager.SpawnMonsterAtEdge(centerX, centerY);
             AudioManager.Play("grunt_03");
+        }
+
+        if (keyboard.WasKeyPressed(Keys.P))
+        {
+            Game.StartScreenInstance ??= new StartScreen(Game);
+            Game.SwitchToScreen(Game.StartScreenInstance);
+            return;
         }
 
         // Map update

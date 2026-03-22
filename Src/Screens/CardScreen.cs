@@ -79,6 +79,13 @@ public class CardScreen : GamelabGameScreen
             var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
             HandleClick(pos);
         }
+
+        if (keyboard.WasKeyPressed(Keys.P))
+        {
+            Game.StartScreenInstance ??= new StartScreen(Game);
+            Game.SwitchToScreen(Game.StartScreenInstance);
+            return;
+        }
     }
 
     // -----------------------
