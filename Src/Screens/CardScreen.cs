@@ -41,6 +41,7 @@ public class CardScreen : GamelabGameScreen
     // -----------------------
     public override void LoadContent()
     {
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
         AudioManager.LoadSound(Game.Content, "coinsplash", "Sounds/action_cards/coinsplash");
         AudioManager.LoadSound(Game.Content, "dragonflap", "Sounds/dragonflap");
         _font = Content.Load<SpriteFont>("font");
@@ -87,8 +88,8 @@ public class CardScreen : GamelabGameScreen
     {
         var l = GetLayout();
 
-        if (l.MapDeck.Contains(pos)) { _manager.DrawMapAC(l.MapDeck.Location.ToVector2()); return; }
-        if (l.StackDeck.Contains(pos)) { _manager.DrawStackAC(l.StackDeck.Location.ToVector2()); return; }
+        if (l.MapDeck.Contains(pos)) { _manager.DrawMapAC(l.MapDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
+        if (l.StackDeck.Contains(pos)) { _manager.DrawStackAC(l.StackDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
 
         if (_toMapScreenBtn.Contains(pos))
         {
