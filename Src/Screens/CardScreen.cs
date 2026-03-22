@@ -24,11 +24,11 @@ public class CardScreen : GamelabGameScreen
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Colors
-    private readonly Color BG = new(0x10, 0x52, 0x18);
-    private readonly Color SLOT = new(0x0F, 0x4A, 0x18);
-    private readonly Color TEXT = new(0xD6, 0xC9, 0x90);
-    private readonly Color BTN = new(0x1F, 0x42, 0x21);
-    private readonly Color BTN_TEXT = new(0xEB, 0xE0, 0xBE);
+    private readonly Color BG = new(0x18, 0x3A, 0x37);    
+    private readonly Color SLOT = new(0x08, 0x30, 0x2B); 
+    private readonly Color TEXT = new(0xBC, 0xB6, 0x9D); 
+    private readonly Color BTN = new(0x08, 0x30, 0x2B);   
+    private readonly Color BTN_TEXT = new(0xBC, 0xB6, 0x9D);
 
     public CardScreen(GamelabGame game) : base(game)
     {
