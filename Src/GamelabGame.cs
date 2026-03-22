@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using DreamWardUtils.Graphics;
@@ -26,6 +26,8 @@ public class GamelabGame : Game
 
     public CardScreen CardScreenInstance;
     public MapScreen MapScreenInstance;
+    public StartScreen StartScreenInstance;
+    public float MasterVolume { get; set; } = 0.5f;
 
     private readonly Logger logger = new("Game");
     public readonly GraphicsDeviceManager graphics;
@@ -99,11 +101,8 @@ public class GamelabGame : Game
         var fontBytes = File.ReadAllBytes(fontPath);
         fontSystem.AddFont(fontBytes);
 
-        MapScreenInstance = new MapScreen(this);
-        CardScreenInstance = new CardScreen(this);
-        MapScreenInstance.SetManager(CardScreenInstance.SanityManager, CardScreenInstance.CardManager);
         //to see the changes
-        screenManager.ShowScreen(MapScreenInstance);
+        screenManager.ShowScreen(new StartScreen(this));
         //screenManager.ShowScreen(new HexMapScreen(this));
         //uncomment the next line to test the sfx with the map (pressing space bar results in a "shuffle sound") -> try it :D
         //SoundTestScreen soundtest = new SoundTestScreen(this);
