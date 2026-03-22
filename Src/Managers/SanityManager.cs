@@ -6,7 +6,7 @@ public class SanityManager
     private readonly PathFindingManager _pathFindingManager;
     private readonly GamePhaseManager _gamePhaseManager;
 
-    public int Sanity {get; private set;}
+    public int Sanity {get; set;}
 
     public SanityManager(MapManager mapManager, PathFindingManager pathFindingManager, GamePhaseManager gamePhaseManager)
     {

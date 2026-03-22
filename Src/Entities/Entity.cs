@@ -7,7 +7,11 @@ using Microsoft.Xna.Framework.Graphics;
 public abstract class Entity
 {   
     //health of the entity
-    protected int _health;
+    protected float _currentHealth;
+    protected float _maxHealth;
+
+    public float CurrentHealth => _currentHealth;
+    public float MaxHealth => _maxHealth;
 
     /// <summary>
     /// Posistion of the entity on the map
@@ -23,7 +27,7 @@ public abstract class Entity
     /// <summary>
     /// is the Entity destoryed
     /// </summary>
-    public bool IsDestroyed => _health <= 0;
+    public bool IsDestroyed => _currentHealth <= 0;
 
     //the animation of this entity
     protected AnimatedSprite _sprite;
@@ -31,9 +35,9 @@ public abstract class Entity
     /// <summary>
     /// removes health from the entity
     /// </summary>
-    public void TakeDamage(int amount)
+    public virtual void TakeDamage(float amount)
     {
-        _health -= amount;
+        _currentHealth -= amount;
     }
 
     public void Update(GameTime gameTime)
@@ -59,7 +63,8 @@ public abstract class Entity
         _sprite = sprite;
         _mapManager = mapManager;
         TilePosition = tilePos;
-        _health = health;
+        _currentHealth = health;
+        _maxHealth = health;
 
         if (_sprite != null)
             _sprite.Scale = _mapManager.Scale;

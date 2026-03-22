@@ -72,14 +72,15 @@ public class CardManager
 
     private void InitDecks()
     {
-        // Build deck
+        // Build deck (other cards commented out for combat testing)
         _buildDeck.AddRange(new[]
-        {
+        {   
+            //rest commented out for testing
             new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper" },
-            new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
-            new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher" },
-            new Card { Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence" },
-            new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow" }
+            // new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
+            // new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher" },
+            // new Card { Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence" },
+            // new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow" }
         });
 
         // Map action cards

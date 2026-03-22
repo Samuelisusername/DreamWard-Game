@@ -21,11 +21,14 @@ public class MapScreen : GamelabGameScreen
     private readonly EntityRenderer entityRenderer;
     private SanityManager _sanityManager;
     private CardManager _cardManager;
+    private Tent _tent;
 
     public void SetManager(SanityManager sanityManager, CardManager manager)
     {
         _sanityManager = sanityManager;
         _cardManager = manager;
+        if (_tent != null)
+            _tent.SetSanityManager(sanityManager);
     }
 
     // Cards
@@ -90,6 +93,9 @@ public class MapScreen : GamelabGameScreen
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
         _dummy.SetData(new[] { Color.White });
 
+        // 1x1 white texture used by EntityRenderer to draw HP bars
+        entityRenderer.SetHealthBarTexture(_dummy);
+
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
         _cardRegions = new()
@@ -127,6 +133,12 @@ public class MapScreen : GamelabGameScreen
 
         // Map update
         mapManager.Update(gameTime);
+
+        if (mapManager.TentDestroyed)
+        {
+            Game.SwitchToScreen(new GameOverScreen(Game));
+            return;
+        }
 
         // Zoom
         if (mouse.DeltaScrollWheelValue != 0)
@@ -328,11 +340,12 @@ public class MapScreen : GamelabGameScreen
         int centerY = mapManager.Rows / 2;
 
         // 🏕️ Tent at center
-        mapManager.PlaceEntity(new Tent(
+        _tent = new Tent(
             atlas.CreateAnimatedSprite("tent-animation"),
             mapManager,
             (centerX, centerY)
-        ),centerX,centerY);
+        );
+        mapManager.PlaceEntity(_tent, centerX, centerY);
 
         // 🐑 Sheep next to tent
         mapManager.PlaceEntity(new Sheep(

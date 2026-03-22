@@ -36,6 +36,11 @@ public class MapManager
     public int Columns { get; }
     
     /// <summary>
+    /// True when the tent has been destroyed by monsters
+    /// </summary>
+    public bool TentDestroyed { get; private set; }
+
+    /// <summary>
     /// The scale at which the map is rendered
     /// </summary>
     public Vector2 Scale { get; set; }
@@ -110,8 +115,81 @@ public class MapManager
         {
             for(int j = 0; j < Rows; j++)
             {
-                
+
                 _monsters[i,j]?.Move();
+            }
+        }
+
+        CombatUpdate(gameTime);
+    }
+
+    private void CombatUpdate(GameTime gameTime)
+    {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        // Towers attack monsters in range (focus first monster found)
+        for (int i = 0; i < Columns; i++)
+        {
+            for (int j = 0; j < Rows; j++)
+            {
+                if (_structures[i,j] is Tower tower && !tower.IsDestroyed)
+                {
+                    var tilesInRange = tower.GetTilesInRange();
+                    foreach (var tile in tilesInRange)
+                    {
+                        var group = _monsters[tile.Item1, tile.Item2];
+                        if (group != null && group.Count > 0)
+                        {
+                            group.Monsters[0].TakeDamage(tower.DamagePerSecond * dt);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Monsters attack structures on the same tile
+        for (int i = 0; i < Columns; i++)
+        {
+            for (int j = 0; j < Rows; j++)
+            {
+                var group = _monsters[i,j];
+                var structure = _structures[i,j];
+                if (group != null && structure != null && !structure.IsDestroyed)
+                {
+                    foreach (var monster in group.Monsters)
+                    {
+                        monster.Attack(structure, dt);
+                    }
+                }
+            }
+        }
+
+        // Remove dead monsters and empty groups
+        for (int i = 0; i < Columns; i++)
+        {
+            for (int j = 0; j < Rows; j++)
+            {
+                if (_monsters[i,j] != null)
+                {
+                    _monsters[i,j].RemoveDead();
+                    if (_monsters[i,j].Count == 0)
+                        _monsters[i,j] = null;
+                }
+            }
+        }
+
+        // Remove dead structures
+        for (int i = 0; i < Columns; i++)
+        {
+            for (int j = 0; j < Rows; j++)
+            {
+                if (_structures[i,j] != null && _structures[i,j].IsDestroyed)
+                {
+                    if (_structures[i,j] is Tent)
+                        TentDestroyed = true;
+                    _structures[i,j] = null;
+                }
             }
         }
     }
@@ -235,11 +313,11 @@ public class MapManager
 
         Entity entity = card.Name switch
         {
-            "sniper" => new SniperTower(sprite, this, (col,row)),
-            "aoe" => new AOETower(sprite, this, (col,row)),
+            "sniper" => new Tower(sprite, this, (col,row), damagePerSecond: 8f, health: 100),
+            "aoe" => new AreaTower(sprite, this, (col,row), damagePerSecond: 5f, health: 80),
             "fence" => new Fence(sprite, this, (col,row)),
             "meadow" => new Meadow(sprite, this, (col,row)),
-            "dreamcatcher" => new Wall(sprite, this, (col,row)), // create Wall entity
+            "dreamcatcher" => new Wall(sprite, this, (col,row)),
             _ => null
         };
 

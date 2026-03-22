@@ -1,4 +1,6 @@
 using System;
+using Gamelab;
+using Gamelab.Screens;
 
 public class GamePhaseManager
 {
@@ -53,6 +55,6 @@ public class GamePhaseManager
 
     private void EndGame()
     {
-        throw new NotImplementedException();
+        GamelabGame.Instance.SwitchToScreen(new Gamelab.Screens.GameOverScreen(GamelabGame.Instance));
     }
 }

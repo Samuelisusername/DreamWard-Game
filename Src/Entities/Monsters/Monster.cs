@@ -48,7 +48,7 @@ public class Monster : Entity
     }
 
     public Monster(AnimatedSprite sprite, MapManager mapManager, (int,int) startTile, (int,int) goal,
-                   MonsterType type = MonsterType.Regular, float damagePerSecond = 5f, int health = 100)
+                   MonsterType type = MonsterType.Regular, float damagePerSecond = 3f, int health = 30)
         : base(sprite, mapManager, startTile, health)
     {
         Type = type;
@@ -96,10 +96,10 @@ public class Monster : Entity
     /// Deals damage to entities on the same tile based on DPS and elapsed time.
     /// Only attacks when the monster has reached its goal.
     /// </summary>
-    public void Attack(List<Entity> entities, GameTime gameTime)
+    public void Attack(Entity target, float deltaTime)
     {
-       // attack what is in path and in range
-       
+        if (target == null || target.IsDestroyed) return;
+        target.TakeDamage(DamagePerSecond * deltaTime);
     }
 
     /// <summary>

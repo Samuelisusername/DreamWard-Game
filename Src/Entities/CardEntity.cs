@@ -1,3 +1,4 @@
+using System;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework;
 
@@ -11,9 +12,23 @@ public class CardEntity : Entity
 
 public class Tent : CardEntity
 {
+    private SanityManager _sanityManager;
+
     public Tent(AnimatedSprite sprite, MapManager mapManager, (int,int) pos)
-        : base(sprite, mapManager, pos, 12) 
+        : base(sprite, mapManager, pos, 12)
     {
+    }
+
+    public void SetSanityManager(SanityManager sanityManager)
+    {
+        _sanityManager = sanityManager;
+    }
+
+    public override void TakeDamage(float amount)
+    {
+        base.TakeDamage(amount);
+        if (_sanityManager != null)
+            _sanityManager.Sanity = Math.Max(0, (int)Math.Ceiling(_currentHealth));
     }
 }
 
@@ -57,18 +72,3 @@ public class Wall : CardEntity
     }
 }
 
-public class SniperTower : CardEntity
-{
-    public SniperTower(AnimatedSprite sprite, MapManager mapManager, (int,int) pos)
-        : base(sprite, mapManager, pos, 7)
-    {
-    }
-}
-
-public class AOETower : CardEntity
-{
-    public AOETower(AnimatedSprite sprite, MapManager mapManager, (int,int) pos)
-        : base(sprite, mapManager, pos, 7)
-    {
-    }
-}

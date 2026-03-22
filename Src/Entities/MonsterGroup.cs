@@ -45,6 +45,23 @@ public class MonsterGroup
 
     public int Count => Monsters.Count;
 
+    public Vector2 GetInterpolatedWorldPosition()
+    {
+        Vector2 origin = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
+        if (Monsters.Count == 0) return origin;
+        var goal = Monsters[0].GetCurrentGoal();
+        Vector2 goalPos = _mapManager.GetWorldPositionOfTile(goal.Item1, goal.Item2);
+        return origin + (goalPos - origin) * _pathProgress;
+    }
+
+    public float TotalCurrentHealth => Monsters.Sum(m => m.CurrentHealth);
+    public float TotalMaxHealth => Monsters.Sum(m => m.MaxHealth);
+
+    public void RemoveDead()
+    {
+        Monsters.RemoveAll(m => m.IsDestroyed);
+    }
+
     public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
     {
         _amalgamSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_amalgam_walkSW");
