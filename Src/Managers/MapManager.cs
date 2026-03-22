@@ -21,9 +21,6 @@ public class MapManager
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
 
-    private SanityManager _sanityManager;
-    private float _sanityDamageAccumulator;
-
 #endregion
 
 #region public properties

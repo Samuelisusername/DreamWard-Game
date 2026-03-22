@@ -68,7 +68,8 @@ public abstract class Entity
     }
 
     protected MapManager _mapManager;
-    protected Vector2 _localOffset = new Vector2(-32, -90);
+    protected Vector2 _localMonsterOffset = new Vector2(-32, -90);
+    protected Vector2 _localStructureOffset = new Vector2(-32, -96);
     public Entity(string animName, MapManager mapManager, (int,int) tilePos, int health = 100, bool isBuildEntity = false)
     {
         IsBuildEntity = isBuildEntity;
@@ -98,6 +99,13 @@ public abstract class Entity
         if (_sprite == null) return;
 
         Vector2 worldPos = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-        _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);
+        if(!IsBuildEntity)
+        {
+            _sprite.Draw(spriteBatch, worldPos + _localMonsterOffset * _sprite.Scale);
+        }
+        else
+        {
+            _sprite.Draw(spriteBatch, worldPos + _localStructureOffset * _sprite.Scale);
+        }
     }
 }
