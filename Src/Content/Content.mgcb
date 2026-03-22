@@ -339,3 +339,8 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/action_cards/error.wav
+#begin Sprites/Start.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/Start.png
+
