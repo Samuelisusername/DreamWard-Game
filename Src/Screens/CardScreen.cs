@@ -42,6 +42,7 @@ public class CardScreen : GamelabGameScreen
     public override void LoadContent()
     {
         AudioManager.LoadSound(Game.Content, "coinsplash", "Sounds/action_cards/coinsplash");
+        AudioManager.LoadSound(Game.Content, "dragonflap", "Sounds/dragonflap");
         _font = Content.Load<SpriteFont>("font");
 
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
@@ -92,6 +93,7 @@ public class CardScreen : GamelabGameScreen
         if (_toMapScreenBtn.Contains(pos))
         {
             Game.screenManager.ShowScreen(Game.MapScreenInstance);
+            AudioManager.Play("dragonflap");
             return;
         }
 

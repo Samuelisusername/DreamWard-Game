@@ -70,6 +70,7 @@ public class MapScreen : GamelabGameScreen
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
         AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
         AudioManager.LoadSound(Game.Content, "slam_02", "Sounds/buildings/slam_02");
+        AudioManager.LoadSound(Game.Content, "tower_breaking", "Sounds/buildings/tower_breaking");
         
         _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
         if(_dayMusicInstance == null){
