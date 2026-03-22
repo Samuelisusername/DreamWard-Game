@@ -46,7 +46,7 @@ public class CardScreen : GamelabGameScreen
         _dummy.SetData(new[] { Color.White });
         _toMapScreenBtn = new Rectangle(20, 20, 130, 50);
 
-        _cardTexture = Content.Load<Texture2D>("Sprites/cards1");
+        _cardTexture = Content.Load<Texture2D>("Sprites/cards");
 
         _cardRegions = new()
         {

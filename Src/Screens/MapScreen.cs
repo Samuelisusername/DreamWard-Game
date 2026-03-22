@@ -83,7 +83,7 @@ public class MapScreen : GamelabGameScreen
         _dummy.SetData(new[] { Color.White });
 
         // Card textures
-        _cardTexture = Content.Load<Texture2D>("Sprites/cards1");
+        _cardTexture = Content.Load<Texture2D>("Sprites/cards");
         _cardRegions = new()
         {
             { "sniper", new(0,0,128,128) },
