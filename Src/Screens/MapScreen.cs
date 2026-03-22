@@ -7,6 +7,9 @@ using Microsoft.Xna.Framework.Input;
 using FontStashSharp;
 using DreamWardUtils.Graphics;
 using MonoGame.Extended.Input;
+using Gamelab.Managers;
+using Microsoft.Xna.Framework.Audio; 
+
 using System.Security.Cryptography;
 
 namespace Gamelab.Screens;
@@ -38,6 +41,8 @@ public class MapScreen : GamelabGameScreen
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
     private (int,int) _selectedTile = (-1,-1);
+    private SoundEffect _day_BackgroundSound;
+    private SoundEffectInstance _dayMusicInstance;
 
     public MapScreen(GamelabGame game) : base(game)
     {
@@ -57,6 +62,20 @@ public class MapScreen : GamelabGameScreen
     public override void LoadContent()
     {
         base.LoadContent();
+
+        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
+        AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
+        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
+        AudioManager.LoadSound(Game.Content, "slam_02", "Sounds/buildings/slam_02");
+        
+        _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
+        if(_dayMusicInstance == null){
+            _dayMusicInstance = _day_BackgroundSound.CreateInstance();
+            _dayMusicInstance.IsLooped = true; 
+            _dayMusicInstance.Play();
+        }      
 
         // Fonts and dummy texture
         _font = Content.Load<SpriteFont>("font");
@@ -347,6 +366,7 @@ public class MapScreen : GamelabGameScreen
                 if (target != null && target.IsBuildEntity)
                 {
                     mapManager.RemoveStructure(col,row);
+                    AudioManager.Play("tower_breaking");
                     return true; // action succeeded
                 }
                 return false;
@@ -382,6 +402,7 @@ public class MapScreen : GamelabGameScreen
                 if (target is Sheep)
                 {
                     PolymorphEntity(target);
+                    AudioManager.Play("qubodupRatAttack"); //probably change this audio later
                     return true; // polymorph succeeded
                 }
                 return false;
