@@ -139,11 +139,6 @@ public class StartScreen : GamelabGameScreen
                 Game.MapScreenInstance = new MapScreen(Game);
                 Game.CardScreenInstance = new CardScreen(Game);
 
-                Game.MapScreenInstance.SetManager(
-                    Game.CardScreenInstance.SanityManager,
-                    Game.CardScreenInstance.CardManager
-                );
-
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
             case "How to Play":

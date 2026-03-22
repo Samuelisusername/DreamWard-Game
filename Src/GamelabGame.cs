@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using DreamWardUtils.Graphics;
 using FontStashSharp;
+using Gamelab.Managers;
 using Gamelab.Screens;
 using Gamelab.Utils;
 using Gamelab.Utils.Logging;
@@ -54,6 +55,13 @@ public class GamelabGame : Game
 
     public bool IsRunning => screenManager.ActiveScreen != null;
 
+    public static CardManager CardManager {get; private set;}
+    public static CombatManager CombatManager {get; private set;}
+    public static GamePhaseManager GamePhaseManager {get; private set;}
+    public static MapManager MapManager {get; private set;}
+    public static PathFindingManager PathFindingManager {get; private set;}
+    public static SanityManager SanityManager {get; private set;}
+
     public GamelabGame(RunMode runMode)
     {
         Instance = this;
@@ -69,6 +77,10 @@ public class GamelabGame : Game
         jsonLoader = new(this, "Data");
 
         screenManager = new ScreenManager();
+        CardManager = new();
+        CombatManager = new();
+        GamePhaseManager = new();
+        SanityManager = new();
         Components.Add(screenManager);
     }
 
@@ -120,10 +132,27 @@ public class GamelabGame : Game
         textureAtlas = new();
         TextureAtlas monsters = TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
         textureAtlas.Add("monsters", monsters);
-        TextureAtlas night_top = TextureAtlas.FromFile(Content, "Sprites/night_top-atlas-definition.xml");
+        TextureAtlas night_top = TextureAtlas.FromJsonFile(Content, "Sprites/night_top.json");
         textureAtlas.Add("night_top", night_top);
         TextureAtlas day_top = TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
         textureAtlas.Add("day_top", day_top);
+        
+        //load tilesets
+        Texture2D textureDay = Content.Load<Texture2D>("Sprites/day_tiles");
+        TextureRegion regionDay = new(textureDay, 0, 0, textureDay.Width, textureDay.Height);
+        TileSet setDay = new(regionDay, 64, 32);
+
+        Texture2D textureNight = Content.Load<Texture2D>("Sprites/night_tiles");
+        TextureRegion regionNight = new(textureNight, 0, 0, textureNight.Width, textureNight.Height);
+        TileSet setNight = new(regionNight, 64, 32);
+
+
+        MapManager = new MapManager(setDay, setNight, 20, 20, TimeSpan.FromMilliseconds(500));
+        MapManager.FillRandomly();
+        MapManager.Scale = new Vector2(4, 4);
+        
+        //pathfindingManager need the MapManager on init
+        PathFindingManager = new();
     }
 
     protected override void Update(GameTime gameTime)

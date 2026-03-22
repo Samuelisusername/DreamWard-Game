@@ -11,10 +11,6 @@ using Microsoft.Xna.Framework.Graphics;
 
 public class MonsterGroup
 {  
-    /// <summary>
-    /// THe map manage used by the monster to 
-    /// </summary>
-    private MapManager _mapManager;
 
     //this is the time it takes a Monster to move from one tile to the next
     private TimeSpan _speed; 
@@ -47,10 +43,10 @@ public class MonsterGroup
 
     public Vector2 GetInterpolatedWorldPosition()
     {
-        Vector2 origin = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
+        Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
         if (Monsters.Count == 0) return origin;
         var goal = Monsters[0].GetCurrentGoal();
-        Vector2 goalPos = _mapManager.GetWorldPositionOfTile(goal.Item1, goal.Item2);
+        Vector2 goalPos = GamelabGame.MapManager.GetWorldPositionOfTile(goal.Item1, goal.Item2);
         return origin + (goalPos - origin) * _pathProgress;
     }
 
@@ -60,6 +56,10 @@ public class MonsterGroup
     public void RemoveDead()
     {
         Monsters.RemoveAll(m => m.IsDestroyed);
+        if(Count == 0)
+        {
+            GamelabGame.MapManager.RemoveMonsterGroup(TilePosition.Item1, TilePosition.Item2);
+        }
     }
 
     public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
@@ -68,7 +68,6 @@ public class MonsterGroup
         _amalgamSprite.Scale = mapManager.Scale;
         _normalSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
         _normalSprite.Scale = mapManager.Scale;
-        _mapManager = mapManager;
         _speed = speed;
         Monsters = new List<Monster>();
         TilePosition = tilePosition;
@@ -85,7 +84,7 @@ public class MonsterGroup
             {
                 _elapsed -= _speed;
                 Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
-                //_mapManager.MoveMonster(this,Path[0],Path[1]);
+                //GamelabGame.MapManager.MoveMonster(this,Path[0],Path[1]);
             }
             _pathProgress = (float)(_elapsed / _speed);
         }
@@ -102,7 +101,7 @@ public class MonsterGroup
                 (int,int) origin = monster.Path[0];
                 (int,int) dest = monster.Path[1];
                 monster.Move();
-                _mapManager.MoveMonster(monster, origin, dest);
+                GamelabGame.MapManager.MoveMonster(monster, origin, dest);
                 monster.ShouldMove = false;
                 i--;
             }
@@ -135,8 +134,8 @@ public class MonsterGroup
 
         foreach (var tileGoal in amalgamGoals)
         {
-            Vector2 origin = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-            Vector2 goal = _mapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
+            Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
+            Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
             Vector2 dir = goal-origin;
             _amalgamSprite.Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _amalgamSprite.Scale);     
         }
@@ -144,8 +143,8 @@ public class MonsterGroup
         
         foreach (var tileGoal in singleGoals)
         {
-            Vector2 origin = _mapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-            Vector2 goal = _mapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
+            Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
+            Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
             Vector2 dir = goal-origin;
             _normalSprite.Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _normalSprite.Scale);     
         }

@@ -1,6 +1,8 @@
 
 using System.Diagnostics;
+using System.Security;
 using DreamWardUtils.Graphics;
+using Gamelab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -32,6 +34,10 @@ public abstract class Entity
     //the animation of this entity
     protected AnimatedSprite _sprite;
 
+    private bool _isDaySprite = true;
+
+    private string _animName;
+
     /// <summary>
     /// removes health from the entity
     /// </summary>
@@ -42,6 +48,11 @@ public abstract class Entity
 
     public void Update(GameTime gameTime)
     {
+        if(IsBuildEntity && GamelabGame.GamePhaseManager.IsDay != _isDaySprite)
+        {
+            _isDaySprite = !_isDaySprite;
+            _sprite = _isDaySprite ? GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) : GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
+        }
         if (_sprite != null)
             _sprite.Scale = _mapManager.Scale;
         _sprite.Update(gameTime);
@@ -58,9 +69,18 @@ public abstract class Entity
 
     protected MapManager _mapManager;
     protected Vector2 _localOffset = new Vector2(-32, -90);
-    public Entity(AnimatedSprite sprite, MapManager mapManager, (int,int) tilePos, int health = 100)
+    public Entity(string animName, MapManager mapManager, (int,int) tilePos, int health = 100, bool isBuildEntity = false)
     {
-        _sprite = sprite;
+        IsBuildEntity = isBuildEntity;
+        _animName = animName;
+        if(IsBuildEntity)
+        {
+            _sprite = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);
+        }
+        else
+        {            
+            _sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite(animName);
+        }
         _mapManager = mapManager;
         TilePosition = tilePos;
         _currentHealth = health;

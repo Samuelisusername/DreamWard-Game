@@ -11,9 +11,9 @@ public class Tower : Entity
     public float DamagePerSecond { get; set; }
     public int RangeDepth { get; protected set; }
 
-    public Tower(AnimatedSprite sprite, MapManager mapManager, (int,int) pos,
+    public Tower(string animName, MapManager mapManager, (int,int) pos,
                  float damagePerSecond = 3f, int health = 7)
-        : base(sprite, mapManager, pos, health)
+        : base(animName, mapManager, pos, health, true)
     {
         DamagePerSecond = damagePerSecond;
         RangeDepth = 1;
@@ -94,9 +94,9 @@ public class Tower : Entity
 /// </summary>
 public class AreaTower : Tower
 {
-    public AreaTower(AnimatedSprite sprite, MapManager mapManager, (int,int) pos,
+    public AreaTower(string animName, MapManager mapManager, (int,int) pos,
                      float damagePerSecond = 2f, int health = 7)
-        : base(sprite, mapManager, pos, damagePerSecond, health)
+        : base(animName, mapManager, pos, damagePerSecond, health)
     {
         RangeDepth = 2;
     }

@@ -47,9 +47,9 @@ public class Monster : Entity
         }
     }
 
-    public Monster(AnimatedSprite sprite, MapManager mapManager, (int,int) startTile, (int,int) goal,
+    public Monster(string animName, MapManager mapManager, (int,int) startTile, (int,int) goal,
                    MonsterType type = MonsterType.Regular, float damagePerSecond = 3f, int health = 30)
-        : base(sprite, mapManager, startTile, health)
+        : base(animName, mapManager, startTile, health)
     {
         Type = type;
         DamagePerSecond = type == MonsterType.Flying ? damagePerSecond * 0.5f : damagePerSecond;

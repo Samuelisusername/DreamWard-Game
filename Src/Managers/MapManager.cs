@@ -10,10 +10,10 @@ public class MapManager
 #region storage
 
     //all the possible Textures a tile can have are held in here
-    private readonly TileSet _tileSet;
+    private readonly Dictionary<string, TileSet> _tileSets;
 
     //which tile of the tileset is display at this position?
-    private readonly int[,] _tiles; //col first 
+    private readonly int[,] _tiles; //col first
 
     //stores which tiles has which structure on it -1 if none
     private readonly Entity[,] _structures;//colfirst
@@ -21,8 +21,6 @@ public class MapManager
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
 
-    private SanityManager _sanityManager;
-    private float _sanityDamageAccumulator;
 
 #endregion
 
@@ -41,12 +39,7 @@ public class MapManager
     /// <summary>
     /// True when the tent has been destroyed by monsters
     /// </summary>
-    public bool TentDestroyed { get; private set; }
-
-    public void SetSanityManager(SanityManager sanityManager)
-    {
-        _sanityManager = sanityManager;
-    }
+    public bool TentDestroyed { get; set; }
 
     /// <summary>
     /// The scale at which the map is rendered
@@ -61,12 +54,12 @@ public class MapManager
     /// <summary>
     /// The width of a single tile
     /// </summary>
-    public float TileWidth => _tileSet.TileWidth * Scale.X;
+    public float TileWidth => _tileSets["day"].TileWidth * Scale.X;
 
     /// <summary>
     /// The height of a single tile
     /// </summary>
-    public float TileHeight => _tileSet.TileHeight * Scale.Y;
+    public float TileHeight => _tileSets["day"].TileHeight * Scale.Y;
 
     /// <summary>
     /// The region of the hexagon that overlaps with other hexagons
@@ -89,9 +82,13 @@ public class MapManager
 #endregion
 
 
-    public MapManager(TileSet set, int columns, int rows, TimeSpan delay)
+    public MapManager(TileSet setDay, TileSet setNight, int columns, int rows, TimeSpan delay)
     {
-        _tileSet = set;
+        _tileSets = new Dictionary<string, TileSet>
+        {
+            { "day", setDay },
+            { "night", setNight }
+        };
         Columns = columns;
         Rows = rows;
         _delay = delay;
@@ -128,90 +125,18 @@ public class MapManager
             }
         }
 
-        CombatUpdate(gameTime);
-    }
 
-    private void CombatUpdate(GameTime gameTime)
-    {
-        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        // Towers attack monsters in range (focus first monster found)
-        for (int i = 0; i < Columns; i++)
+        if(!GamelabGame.GamePhaseManager.IsDay)
         {
-            for (int j = 0; j < Rows; j++)
+            GamelabGame.CombatManager.ManageMoveAndAttack(gameTime);
+            foreach (var monster in _monsters)
             {
-                if (_structures[i,j] is Tower tower && !tower.IsDestroyed)
+                if(monster != null)
                 {
-                    var tilesInRange = tower.GetTilesInRange();
-                    foreach (var tile in tilesInRange)
-                    {
-                        var group = _monsters[tile.Item1, tile.Item2];
-                        if (group != null && group.Count > 0)
-                        {
-                            group.Monsters[0].TakeDamage(tower.DamagePerSecond * dt);
-                            break;
-                        }
-                    }
+                    return;
                 }
             }
-        }
-
-        // Monsters attack structures on the same tile
-        for (int i = 0; i < Columns; i++)
-        {
-            for (int j = 0; j < Rows; j++)
-            {
-                var group = _monsters[i,j];
-                var structure = _structures[i,j];
-                if (group != null && structure != null && !structure.IsDestroyed)
-                {
-                    float hpBefore = structure.CurrentHealth;
-                    foreach (var monster in group.Monsters)
-                    {
-                        monster.Attack(structure, dt);
-                    }
-
-                    if (structure is Tent or Sheep && _sanityManager != null)
-                    {
-                        float damage = hpBefore - structure.CurrentHealth;
-                        _sanityDamageAccumulator += damage;
-                        if (_sanityDamageAccumulator >= 1f)
-                        {
-                            int toDeduct = (int)_sanityDamageAccumulator;
-                            _sanityManager.DeductSanity(toDeduct);
-                            _sanityDamageAccumulator -= toDeduct;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Remove dead monsters and empty groups
-        for (int i = 0; i < Columns; i++)
-        {
-            for (int j = 0; j < Rows; j++)
-            {
-                if (_monsters[i,j] != null)
-                {
-                    _monsters[i,j].RemoveDead();
-                    if (_monsters[i,j].Count == 0)
-                        _monsters[i,j] = null;
-                }
-            }
-        }
-
-        // Remove dead structures
-        for (int i = 0; i < Columns; i++)
-        {
-            for (int j = 0; j < Rows; j++)
-            {
-                if (_structures[i,j] != null && _structures[i,j].IsDestroyed)
-                {
-                    if (_structures[i,j] is Tent)
-                        TentDestroyed = true;
-                    _structures[i,j] = null;
-                }
-            }
+            GamelabGame.GamePhaseManager.SwitchToDay(); 
         }
     }
 
@@ -222,7 +147,7 @@ public class MapManager
     /// </summary>
     public TextureRegion GetTile(int col, int row)
     {        
-        return _tileSet.GetTile(_tiles[col,row] + _animationOffset);
+        return GamelabGame.GamePhaseManager.IsDay ? _tileSets["day"].GetTile(_tiles[col,row] + _animationOffset) :  _tileSets["night"].GetTile(_tiles[col,row] + _animationOffset);
     }
 
     /// <summary>
@@ -235,6 +160,23 @@ public class MapManager
 
         return new Vector2(tileX, tileY) + Offset; //TODO: this returns the top left corner so far mybe change to something else
     }
+    
+    public void AddMonster(int col, int row, int targetCol, int targetRow)
+    {
+        
+        if (_monsters[col, row] != null)
+        {
+            Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
+            _monsters[col, row].AddMonster(newMonster);
+        }
+        else
+        {
+            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
+            Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
+            group.AddMonster(newMonster);
+            _monsters[col, row] = group;
+        }
+    }
 
     /// <summary>
     /// returns the Monster on the tile
@@ -242,6 +184,15 @@ public class MapManager
     public MonsterGroup GetMonster(int col, int row)
     {        
         return _monsters[col,row];
+    }
+
+    
+    /// <summary>
+    /// returns the Monster on the tile
+    /// </summary>
+    public MonsterGroup RemoveMonsterGroup(int col, int row)
+    {        
+        return _monsters[col,row] = null;
     }
 
     /// <summary>
@@ -316,29 +267,26 @@ public class MapManager
             Console.WriteLine("Tile already occupied!");
             return false;
         }
-        var atlas = GamelabGame.textureAtlas["night_top"];
 
         string animKey = card.SpriteName switch
         {
-            "dreamcatcher" => "wall-animation", // map dreamcatcher to wall
-            "sniper" => "sniper-animation",
-            "aoe" => "aoe-animation",
-            "fence" => "fence-animation",
-            "meadow" => "meadow-animation",
+            "dreamcatcher" => "wall_idle", // map dreamcatcher to wall
+            "sniper" => "towerSniper_idle",
+            "aoe" => "towerAOE_idle",
+            "fence" => "fence_idle",
+            "meadow" => "meadow_idle",
             _ => null
         };
 
         if (animKey == null) return false; // no matching animation
 
-        var sprite = atlas.CreateAnimatedSprite(animKey);
-
         Entity entity = card.Name switch
         {
-            "sniper" => new Tower(sprite, this, (col,row), damagePerSecond: 8f, health: 100),
-            "aoe" => new AreaTower(sprite, this, (col,row), damagePerSecond: 5f, health: 80),
-            "fence" => new Fence(sprite, this, (col,row)),
-            "meadow" => new Meadow(sprite, this, (col,row)),
-            "dreamcatcher" => new Wall(sprite, this, (col,row)),
+            "sniper" => new Tower(animKey, this, (col,row), damagePerSecond: 8f, health: 100),
+            "toaoe" => new AreaTower(animKey, this, (col,row), damagePerSecond: 5f, health: 80),
+            "fence" => new Fence(animKey, this, (col,row)),
+            "meadow" => new Meadow(animKey, this, (col,row)),
+            "dreamcatcher" => new Wall(animKey, this, (col,row)),
             _ => null
         };
 
@@ -368,7 +316,7 @@ public class MapManager
         {
             for(int j = 0; j < Rows; j++)
             {
-                _tiles[i,j] = Random.Shared.Next(0,_tileSet.Count / 2) * 2;
+                _tiles[i,j] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
             }
         }
     }
@@ -376,6 +324,18 @@ public class MapManager
     public (int,int) GetTileFromScreenPosition(Vector2 pos)
     {
         return getTileIndex(pos);
+    }
+
+    public (int,int) GetTent()
+    {
+        foreach (var item in _structures)
+        {
+            if(item as Tent is {} cool)
+            {
+                return cool.TilePosition;
+            }
+        }
+        return (-1,-1);
     }
 
 #endregion
@@ -487,43 +447,12 @@ public class MapManager
         {
             (int,int) index = ((int)Random.Shared.NextInt64(0,10),(int)Random.Shared.NextInt64(0,10));
             MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2),index);
-            var sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-            Monster newMonster = new Monster(sprite, this, index, (5,5));
+            Monster newMonster = new Monster("normal_walkSW", this, index, (5,5));
             group.AddMonster(newMonster);
             _monsters[index.Item1,index.Item2] = group;
         }
     }
 
-    /// <summary>
-    /// Spawns a monster at a random edge tile that walks toward the given target tile
-    /// </summary>
-    public void SpawnMonsterAtEdge(int targetCol, int targetRow)
-    {
-        int side = Random.Shared.Next(4);
-        int col, row;
-        switch (side)
-        {
-            case 0:  col = 0;            row = Random.Shared.Next(Rows);    break;
-            case 1:  col = Columns - 1;  row = Random.Shared.Next(Rows);    break;
-            case 2:  col = Random.Shared.Next(Columns); row = 0;            break;
-            default: col = Random.Shared.Next(Columns); row = Rows - 1;     break;
-        }
-
-        if (_monsters[col, row] != null)
-        {
-            var sprite1 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-            Monster newMonster = new Monster(sprite1, this, (col, row), (targetCol, targetRow));
-            _monsters[col, row].AddMonster(newMonster);
-        }
-        else
-        {
-            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
-            var sprite2 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-            Monster newMonster = new Monster(sprite2, this, (col, row), (targetCol, targetRow));
-            group.AddMonster(newMonster);
-            _monsters[col, row] = group;
-        }
-    }
 
     public void RandomizeGoal()
     {

@@ -4,17 +4,11 @@ using Gamelab.Screens;
 
 public class SanityManager
 {
-    private readonly MapManager _map_manager;
-    private readonly PathFindingManager _pathFindingManager;
-    private readonly GamePhaseManager _gamePhaseManager;
 
     public int Sanity {get; private set;}
 
-    public SanityManager(MapManager mapManager, PathFindingManager pathFindingManager, GamePhaseManager gamePhaseManager)
+    public SanityManager()
     {
-        _map_manager = mapManager;
-        _pathFindingManager = pathFindingManager;
-        _gamePhaseManager = gamePhaseManager;
         Sanity = 12; // initialize sanity at the beginning of the game
     }
 
@@ -29,8 +23,8 @@ public class SanityManager
         if (Sanity <= 0)
         {
             Sanity = 0;
-            if (_gamePhaseManager != null)
-                _gamePhaseManager.checkGameOver();
+            if (GamelabGame.GamePhaseManager != null)
+                GamelabGame.GamePhaseManager.checkGameOver();
             else
                 GamelabGame.Instance.SwitchToScreen(new Gamelab.Screens.GameOverScreen(GamelabGame.Instance));
         }

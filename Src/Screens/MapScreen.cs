@@ -1,33 +1,19 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using FontStashSharp;
-using DreamWardUtils.Graphics;
 using MonoGame.Extended.Input;
 using Gamelab.Managers;
-using Microsoft.Xna.Framework.Audio; 
-
-using System.Security.Cryptography;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Gamelab.Screens;
 
 public class MapScreen : GamelabGameScreen
 {
-    private readonly MapManager mapManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
-    private SanityManager _sanityManager;
-    private CardManager _cardManager;
 
-    public void SetManager(SanityManager sanityManager, CardManager manager)
-    {
-        _sanityManager = sanityManager;
-        _cardManager = manager;
-        mapManager.SetSanityManager(sanityManager);
-    }
 
     // Cards
     private SpriteFont _font;
@@ -61,15 +47,9 @@ public class MapScreen : GamelabGameScreen
     public MapScreen(GamelabGame game) : base(game)
     {
         // Map setup
-        Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
-        TextureRegion region = new(texture, 0, 0, 128, 320);
-        TileSet set = new(region, 64, 32);
-        mapManager = new MapManager(set, 30, 30, TimeSpan.FromMilliseconds(500));
-        mapManager.FillRandomly();
-        mapManager.Scale = new Vector2(4, 4);
-        mapRenderer = new MapRenderer(mapManager);
+        mapRenderer = new MapRenderer(GamelabGame.MapManager);
 
-        entityRenderer = new EntityRenderer(mapManager);
+        entityRenderer = new EntityRenderer(GamelabGame.MapManager);
         SpawnDefaultEntities();
     }
 
@@ -129,10 +109,10 @@ public class MapScreen : GamelabGameScreen
         // Spawn monster at edge heading toward tent
         if (keyboard.WasKeyPressed(Keys.Space))
         {
-            int centerX = mapManager.Columns / 2;
-            int centerY = mapManager.Rows / 2;
-            mapManager.SpawnMonsterAtEdge(centerX, centerY);
+            int centerX = GamelabGame.MapManager.Columns / 2;
+            int centerY = GamelabGame.MapManager.Rows / 2;
             AudioManager.Play("grunt_03");
+            GamelabGame.GamePhaseManager.SwitchToNight();
         }
 
         if (keyboard.WasKeyPressed(Keys.P))
@@ -143,9 +123,9 @@ public class MapScreen : GamelabGameScreen
         }
 
         // Map update
-        mapManager.Update(gameTime);
+        GamelabGame.MapManager.Update(gameTime);
 
-        if (mapManager.TentDestroyed)
+        if (GamelabGame.MapManager.TentDestroyed)
         {
             Game.SwitchToScreen(new GameOverScreen(Game));
             return;
@@ -155,7 +135,7 @@ public class MapScreen : GamelabGameScreen
         if (mouse.DeltaScrollWheelValue != 0)
         {
             float delta = mouse.DeltaScrollWheelValue * (-0.01f);
-            mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
         }
 
         // Drag
@@ -168,7 +148,7 @@ public class MapScreen : GamelabGameScreen
         if (mouse.IsButtonDown(MouseButton.Left) && _dragStarted)
         {
             Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-            mapManager.MoveMap(deltaPos);
+            GamelabGame.MapManager.MoveMap(deltaPos);
             if (deltaPos.Length() > 0)
             {
                 _isDrag = true;
@@ -179,25 +159,27 @@ public class MapScreen : GamelabGameScreen
         if (mouse.WasButtonReleased(MouseButton.Left))
         {
             _dragStarted = false;
-            Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-
-            // Navigation to CardScreen
-            if (_toCardScreenBtn.Contains(pos))
+            if(GamelabGame.GamePhaseManager.IsDay)
             {
-                Game.SwitchToScreen(Game.CardScreenInstance);
-                AudioManager.Play("dragonflap");
-                return;
-            }
-
-            // Check USE buttons on cards
-            if (HandleCardUseClicks(pos))
-                return;
-
-            if (!_isDrag)
-            {
-                if (_activeMapCard != null)
+                Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                // Navigation to CardScreen
+                if (_toCardScreenBtn.Contains(pos))
                 {
-                    HandleMapCardUse(pos);
+                    Game.SwitchToScreen(Game.CardScreenInstance);
+                    AudioManager.Play("dragonflap");
+                    return;
+                }
+
+                // Check USE buttons on cards
+                if (HandleCardUseClicks(pos))
+                    return;
+
+                if (!_isDrag)
+                {
+                    if (_activeMapCard != null)
+                    {
+                        HandleMapCardUse(pos);
+                    }
                 }
             }
             _isDrag = false;
@@ -216,19 +198,25 @@ public class MapScreen : GamelabGameScreen
         // ✅ Map
         mapRenderer.Draw(spriteBatch);
         entityRenderer.Draw(spriteBatch);
+        
+        // draw sanity
+        if (GamelabGame.SanityManager != null)
+            {
+                string text = $"Sanity: {GamelabGame.SanityManager.Sanity}";
+                spriteBatch.DrawString(_font, text,
+                    new Vector2(20, 20),
+                    TEXT_COLOR);
+            }
 
-        // ✅ UI (now also scaled)
-        DrawButton(_toCardScreenBtn, "Cards");
-
-        if (_sanityManager != null)
+        if(GamelabGame.GamePhaseManager.IsDay)
         {
-            string text = $"Sanity: {_sanityManager.Sanity}";
-            spriteBatch.DrawString(_font, text,
-                new Vector2(20, 20),
-                TEXT_COLOR);
-        }
+            // ✅ UI (now also scaled)
+            DrawButton(_toCardScreenBtn, "Cards");
 
-        DrawCardSlots();
+            
+
+            DrawCardSlots();
+        }
 
         spriteBatch.End();
     }
@@ -248,9 +236,9 @@ public class MapScreen : GamelabGameScreen
 
     private void DrawCardSlots()
     {
-        if (_cardManager == null) return;
+        if (GamelabGame.CardManager == null) return;
 
-        var slots = _cardManager.MapSlots.Concat(_cardManager.BuildSlots).ToList();
+        var slots = GamelabGame.CardManager.MapSlots.Concat(GamelabGame.CardManager.BuildSlots).ToList();
 
         int cardW = 80;
         int cardH = 110;
@@ -298,7 +286,7 @@ public class MapScreen : GamelabGameScreen
 
     private bool HandleCardUseClicks(Vector2 mousePos)
     {
-        var slots = _cardManager.MapSlots.Concat(_cardManager.BuildSlots).ToList();
+        var slots = GamelabGame.CardManager.MapSlots.Concat(GamelabGame.CardManager.BuildSlots).ToList();
 
         int cardW = 80;
         int cardH = 110;
@@ -335,7 +323,7 @@ public class MapScreen : GamelabGameScreen
                 }
                 else
                 {
-                    _cardManager.UseCard(card); // stack cards still instant
+                    GamelabGame.CardManager.UseCard(card); // stack cards still instant
                 }
                  return true;
             }
@@ -347,36 +335,34 @@ public class MapScreen : GamelabGameScreen
     {
         var atlas = GamelabGame.textureAtlas["night_top"];
 
-        int centerX = mapManager.Columns / 2;
-        int centerY = mapManager.Rows / 2;
+        int centerX = GamelabGame.MapManager.Columns / 2;
+        int centerY = GamelabGame.MapManager.Rows / 2;
 
         // 🏕️ Tent at center
-        mapManager.PlaceEntity(new Tent(
-            atlas.CreateAnimatedSprite("tent-animation"),
-            mapManager,
+        GamelabGame.MapManager.PlaceEntity(new Tent("tent_idle",
+            GamelabGame.MapManager,
             (centerX, centerY)
         ), centerX, centerY);
 
         // 🐑 Sheep next to tent
-        mapManager.PlaceEntity(new Sheep(
-            atlas.CreateAnimatedSprite("sheep-animation"),
-            mapManager,
+        GamelabGame.MapManager.PlaceEntity(new Sheep("sheepSmall_idle",
+            GamelabGame.MapManager,
             (centerX + 1, centerY)
         ),centerX + 1, centerY);
     }
 
     private void HandleMapCardUse(Vector2 pos)
     {
-        (int col, int row) = mapManager.GetTileFromScreenPosition(pos);
+        (int col, int row) = GamelabGame.MapManager.GetTileFromScreenPosition(pos);
         if (col < 0) return;
 
         if (_activeMapCard.Type == CardType.Build)
         {
-            bool success = mapManager.PlaceEntity(_activeMapCard, col, row);
+            bool success = GamelabGame.MapManager.PlaceEntity(_activeMapCard, col, row);
 
             if (success)
             {
-                _cardManager.UseCard(_activeMapCard);
+                GamelabGame.CardManager.UseCard(_activeMapCard);
                 AudioManager.Play("slam_02");
                 _activeMapCard = null;
             }
@@ -390,7 +376,7 @@ public class MapScreen : GamelabGameScreen
 
             if (success)
             {
-                _cardManager.UseCard(_activeMapCard); // ✅ NOW works for ALL actions
+                GamelabGame.CardManager.UseCard(_activeMapCard); // ✅ NOW works for ALL actions
                 _activeMapCard = null;
             }
         }
@@ -399,10 +385,10 @@ public class MapScreen : GamelabGameScreen
 
     private bool ApplyMapAction(Card card, Vector2 mousePos)
     {
-        (int col, int row) = mapManager.GetTileFromScreenPosition(mousePos);
+        (int col, int row) = GamelabGame.MapManager.GetTileFromScreenPosition(mousePos);
         if (col < 0) return false;
 
-        Entity target = mapManager.GetStructure(col, row);
+        Entity target = GamelabGame.MapManager.GetStructure(col, row);
 
         switch (card.Effect)
         {
@@ -410,7 +396,7 @@ public class MapScreen : GamelabGameScreen
                 // ✅ Keep as-is
                 if (target != null && target.IsBuildEntity)
                 {
-                    mapManager.RemoveStructure(col,row);
+                    GamelabGame.MapManager.RemoveStructure(col,row);
                     AudioManager.Play("tower_breaking");
                     return true; // action succeeded
                 }
@@ -419,7 +405,7 @@ public class MapScreen : GamelabGameScreen
                 {
                     if (_selectedTile == (-1,-1))
                     {
-                        if(mapManager.GetStructure(col,row) != null)
+                        if(GamelabGame.MapManager.GetStructure(col,row) != null)
                         {
                             _selectedTile = (col,row);
                             return false; // do not consume card yet
@@ -427,12 +413,12 @@ public class MapScreen : GamelabGameScreen
                         return false;
                     }
                     else{
-                        Entity enitityGoal = mapManager.GetStructure(col,row);
+                        Entity enitityGoal = GamelabGame.MapManager.GetStructure(col,row);
                         if (enitityGoal == null){
-                            Entity entityToMove = mapManager.GetStructure(_selectedTile.Item1, _selectedTile.Item2);
+                            Entity entityToMove = GamelabGame.MapManager.GetStructure(_selectedTile.Item1, _selectedTile.Item2);
                             entityToMove.SetTilePosition((col,row));
-                            mapManager.RemoveStructure(_selectedTile.Item1, _selectedTile.Item2);
-                            mapManager.PlaceEntity(entityToMove,col,row);
+                            GamelabGame.MapManager.RemoveStructure(_selectedTile.Item1, _selectedTile.Item2);
+                            GamelabGame.MapManager.PlaceEntity(entityToMove,col,row);
                             _selectedTile = (-1,-1);
                             return true;
                         }
@@ -462,12 +448,11 @@ public class MapScreen : GamelabGameScreen
         if (target is Sheep)
         {
             var tile = target.TilePosition;
-            var sprite = GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite("rat-animation");
-            var rat = new Rat(sprite, mapManager, tile);
+            var rat = new Rat("rats_idle", GamelabGame.MapManager, tile);
 
             // Replace in entities list
-            mapManager.RemoveStructure(tile.Item1, tile.Item2);
-            mapManager.PlaceEntity(rat,tile.Item1, tile.Item2);
+            GamelabGame.MapManager.RemoveStructure(tile.Item1, tile.Item2);
+            GamelabGame.MapManager.PlaceEntity(rat,tile.Item1, tile.Item2);
         }
     }
 }

@@ -9,18 +9,8 @@ using Microsoft.Xna.Framework;
 /// </summary>
 public class VoidTile : Entity
 {
-    public VoidTile(MapManager mapManager, (int,int) pos)
-        : base(MakeStaticSprite(mapManager), mapManager, pos, int.MaxValue)
+    public VoidTile(string animName, MapManager mapManager, (int,int) pos)
+        : base(animName, mapManager, pos, int.MaxValue)
     {
-    }
-
-    /// <summary>
-    /// It's static since there's only one frame.
-    /// </summary>
-    private static AnimatedSprite MakeStaticSprite(MapManager mapManager)
-    {
-        var region = GamelabGame.textureAtlas["day_top"].GetRegion("void0");
-        var anim = new Animation(new List<TextureRegion> { region }, TimeSpan.FromSeconds(1));
-        return new AnimatedSprite(anim);
     }
 }

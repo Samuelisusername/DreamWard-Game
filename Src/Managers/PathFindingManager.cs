@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Gamelab;
 
 public class PathFindingManager
 {
-    private readonly MapManager _mapManager;
     private const int Step4InitialWaitTurns = 2;
 
     // Keep track of all tiles that are going to be attacked and by who
@@ -17,13 +17,12 @@ public class PathFindingManager
     /// <summary>
     /// Initializes a pathfinding manager bound to a map.
     /// </summary>
-    public PathFindingManager(MapManager mapManager)
+    public PathFindingManager()
     {
-        _mapManager = mapManager;
         _activeTargets = new List<(int, int, int, int)>();
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
-        _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
+        _defenceStrength = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
     }
 
@@ -62,9 +61,9 @@ public class PathFindingManager
 
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
-        int[,] minMaxDamage = new int[_mapManager.Columns, _mapManager.Rows];
-        (int col, int row)?[,] previousTile = new (int col, int row)?[_mapManager.Columns, _mapManager.Rows]; // For path reconstruction.
-        int[,] timeToReach = new int[_mapManager.Columns, _mapManager.Rows];
+        int[,] minMaxDamage = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+        (int col, int row)?[,] previousTile = new (int col, int row)?[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows]; // For path reconstruction.
+        int[,] timeToReach = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
         CalculateWeakestPaths(startTile, minMaxDamage, previousTile, timeToReach);
 
         var allTargets = GetAllTargetStructures(monster);
@@ -159,7 +158,7 @@ public class PathFindingManager
                         continue;
                     }
 
-                    Entity structure = _mapManager.GetStructure(tile.Item1, tile.Item2);
+                    Entity structure = GamelabGame.MapManager.GetStructure(tile.Item1, tile.Item2);
                     if (structure != null && IsSecondaryTarget(monster, structure))
                     {
                         firstSecondary = tile;
@@ -215,11 +214,11 @@ public class PathFindingManager
         Array.Clear(_defenceStrength, 0, _defenceStrength.Length);
         _defenders.Clear();
 
-        for (int col = 0; col < _mapManager.Columns; col++)
+        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
         {
-            for (int row = 0; row < _mapManager.Rows; row++)
+            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
             {
-                Entity structure = _mapManager.GetStructure(col, row);
+                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
                 if (structure is not Tower tower)
                 {
                     continue;
@@ -246,9 +245,9 @@ public class PathFindingManager
     /// </summary>
     private void CalculateWeakestPaths((int col, int row) startTile, int[,] minMaxDamage, (int col, int row)?[,] previousTile, int[,] timeToReach)
     {
-        for (int col = 0; col < _mapManager.Columns; col++)
+        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
         {
-            for (int row = 0; row < _mapManager.Rows; row++)
+            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
             {
                 minMaxDamage[col, row] = int.MaxValue;
                 previousTile[col, row] = null;
@@ -313,11 +312,11 @@ public class PathFindingManager
     private List<((int, int) Tile, Entity Target)> GetAllTargetStructures(Monster monster)
     {
         var targets = new List<((int, int), Entity)>();
-        for (int col = 0; col < _mapManager.Columns; col++)
+        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
         {
-            for (int row = 0; row < _mapManager.Rows; row++)
+            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
             {
-                Entity structure = _mapManager.GetStructure(col, row);
+                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
                 if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
                 {
                     continue;
@@ -455,7 +454,7 @@ public class PathFindingManager
 
         var path = new List<(int, int)>();
         var current = endTile;
-        int maxSteps = _mapManager.Columns * _mapManager.Rows;
+        int maxSteps = GamelabGame.MapManager.Columns * GamelabGame.MapManager.Rows;
 
         for (int steps = 0; steps <= maxSteps; steps++)
         {
@@ -491,7 +490,7 @@ public class PathFindingManager
 
     private bool IsInBounds((int col, int row) tile)
     {
-        return tile.col >= 0 && tile.col < _mapManager.Columns && tile.row >= 0 && tile.row < _mapManager.Rows;
+        return tile.col >= 0 && tile.col < GamelabGame.MapManager.Columns && tile.row >= 0 && tile.row < GamelabGame.MapManager.Rows;
     }
 
     /// <summary>

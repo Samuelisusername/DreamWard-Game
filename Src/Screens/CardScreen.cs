@@ -13,10 +13,6 @@ namespace Gamelab.Screens;
 
 public class CardScreen : GamelabGameScreen
 {
-    private CardManager _manager;
-    public CardManager CardManager => _manager;
-    private SanityManager _sanity;
-    public SanityManager SanityManager => _sanity;
     private Rectangle _toMapScreenBtn;
 
     private SpriteFont _font;
@@ -32,8 +28,6 @@ public class CardScreen : GamelabGameScreen
 
     public CardScreen(GamelabGame game) : base(game)
     {
-        _manager = new CardManager();
-        _sanity = new SanityManager(null, null, null);
     }
 
     // -----------------------
@@ -72,7 +66,7 @@ public class CardScreen : GamelabGameScreen
         Dictionary<int, GamePadState> gamePads,
         MouseStateExtended mouse)
     {
-        _manager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+        GamelabGame.CardManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         if (mouse.WasButtonPressed(MouseButton.Left))
         {
@@ -95,8 +89,8 @@ public class CardScreen : GamelabGameScreen
     {
         var l = GetLayout();
 
-        if (l.MapDeck.Contains(pos)) { _manager.DrawMapAC(l.MapDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
-        if (l.StackDeck.Contains(pos)) { _manager.DrawStackAC(l.StackDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
+        if (l.MapDeck.Contains(pos)) { GamelabGame.CardManager.DrawMapAC(l.MapDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
+        if (l.StackDeck.Contains(pos)) { GamelabGame.CardManager.DrawStackAC(l.StackDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
 
         if (_toMapScreenBtn.Contains(pos))
         {
@@ -108,18 +102,18 @@ public class CardScreen : GamelabGameScreen
         for (int i = 0; i < l.Top3Rects.Count; i++)
         {
             if (l.BuyButtons[i].Contains(pos) &&
-                (_manager.DrawTop3Free || i == 0) &&
-                !_manager.BuildSlots.All(s => s.IsFilled))
+                (GamelabGame.CardManager.DrawTop3Free || i == 0) &&
+                !GamelabGame.CardManager.BuildSlots.All(s => s.IsFilled))
             {
-                _manager.BuyTopCard(_sanity, i);
+                GamelabGame.CardManager.BuyTopCard(GamelabGame.SanityManager, i);
                 AudioManager.Play("coinsplash");
                 return;
             }
         }
 
-        HandleSlotButtons(_manager.MapSlots, l.MapSlots, pos, CardType.MapAction);
-        HandleSlotButtons(_manager.StackSlots, l.StackSlots, pos, CardType.StackAction);
-        HandleSlotButtons(_manager.BuildSlots, l.BuildSlots, pos, CardType.Build);
+        HandleSlotButtons(GamelabGame.CardManager.MapSlots, l.MapSlots, pos, CardType.MapAction);
+        HandleSlotButtons(GamelabGame.CardManager.StackSlots, l.StackSlots, pos, CardType.StackAction);
+        HandleSlotButtons(GamelabGame.CardManager.BuildSlots, l.BuildSlots, pos, CardType.Build);
     }
 
     // -----------------------
@@ -141,7 +135,7 @@ public class CardScreen : GamelabGameScreen
         spriteBatch.DrawString(_font, "Build Cards", l.BuildLabel, TEXT);
 
         // Sanity
-        string text = $"Sanity: {_sanity.Sanity}";
+        string text = $"Sanity: {GamelabGame.SanityManager.Sanity}";
         var size = _font.MeasureString(text);
         spriteBatch.DrawString( _font, text,new Vector2(viewportAdapter.VirtualWidth - size.X - 20, 20),TEXT);
 
@@ -151,23 +145,23 @@ public class CardScreen : GamelabGameScreen
         DrawSprite("deck", l.BuildDeck);
 
         // Active card animation
-        if (_manager.ActiveCard != null)
+        if (GamelabGame.CardManager.ActiveCard != null)
         {
-            DrawCard(_manager.ActiveCard, new Rectangle(
-                (int)_manager.ActiveCardStartPos.X + 20,
-                (int)_manager.ActiveCardStartPos.Y,
+            DrawCard(GamelabGame.CardManager.ActiveCard, new Rectangle(
+                (int)GamelabGame.CardManager.ActiveCardStartPos.X + 20,
+                (int)GamelabGame.CardManager.ActiveCardStartPos.Y,
                 l.ActiveCard.Width, l.ActiveCard.Height
             ));
         }
 
         // TOP 3 CARDS 
-        for (int i = 0; i < _manager.Top3Cards.Count; i++)
+        for (int i = 0; i < GamelabGame.CardManager.Top3Cards.Count; i++)
         {
             var rect = l.Top3Rects[i];
-            var card = _manager.Top3Cards[i];
+            var card = GamelabGame.CardManager.Top3Cards[i];
             DrawCard(card, rect);
 
-            int cost = _manager.DiscountActive ? Math.Max(card.Cost - 1, 0) : card.Cost;
+            int cost = GamelabGame.CardManager.DiscountActive ? Math.Max(card.Cost - 1, 0) : card.Cost;
 
             // Cost text
             string costText = $"Cost: {cost}";
@@ -177,7 +171,7 @@ public class CardScreen : GamelabGameScreen
                 new Vector2(rect.Center.X - size1.X / 2, costY), TEXT);
 
             // Buy button
-            if (_manager.DrawTop3Free || i == 0)
+            if (GamelabGame.CardManager.DrawTop3Free || i == 0)
             {
                 var btn = l.BuyButtons[i];
                 btn.Y = costY + 40;
@@ -186,9 +180,9 @@ public class CardScreen : GamelabGameScreen
         }
 
         // Slots
-        DrawSlots(_manager.MapSlots, l.MapSlots, CardType.MapAction);
-        DrawSlots(_manager.StackSlots, l.StackSlots, CardType.StackAction);
-        DrawSlots(_manager.BuildSlots, l.BuildSlots, CardType.Build);
+        DrawSlots(GamelabGame.CardManager.MapSlots, l.MapSlots, CardType.MapAction);
+        DrawSlots(GamelabGame.CardManager.StackSlots, l.StackSlots, CardType.StackAction);
+        DrawSlots(GamelabGame.CardManager.BuildSlots, l.BuildSlots, CardType.Build);
 
         spriteBatch.End();
     }
@@ -241,7 +235,7 @@ public class CardScreen : GamelabGameScreen
             if (type == CardType.StackAction &&
                 GetBottom(rects[i], 0).Contains(mouse))
             {
-                _manager.UseCard(slots[i].Card);
+                GamelabGame.CardManager.UseCard(slots[i].Card);
                 return;
             }
 
