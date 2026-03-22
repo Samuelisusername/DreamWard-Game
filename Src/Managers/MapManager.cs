@@ -24,6 +24,8 @@ public class MapManager
     private SanityManager _sanityManager;
     private float _sanityDamageAccumulator;
 
+    private PathFindingManager _pathFindingManager;
+
 #endregion
 
 #region public properties
@@ -98,6 +100,7 @@ public class MapManager
         _tiles = new int[Columns,Rows];
         _monsters = new MonsterGroup[Columns,Rows];
         _structures = new Entity[Columns,Rows];
+        _pathFindingManager = new PathFindingManager(this);
     }
     
     public void Update(GameTime gameTime)
@@ -509,17 +512,35 @@ public class MapManager
             default: col = Random.Shared.Next(Columns); row = Rows - 1;     break;
         }
 
+        var sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
+        Monster newMonster = new Monster(sprite, this, (col, row), (targetCol, targetRow));
+
+        // // --- GenerateHexPath version (simple greedy path to target) ---
+        // if (_monsters[col, row] != null)
+        // {
+        //     _monsters[col, row].AddMonster(newMonster);
+        // }
+        // else
+        // {
+        //     MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
+        //     group.AddMonster(newMonster);
+        //     _monsters[col, row] = group;
+        // }
+
+        // --- PathFindingManager version (strategic pathfinding) ---
+        var smartPath = _pathFindingManager.CalculatePath(newMonster);
+        if (smartPath != null && smartPath.Count > 0)
+        {
+            newMonster.Path = smartPath;
+        }
+
         if (_monsters[col, row] != null)
         {
-            var sprite1 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-            Monster newMonster = new Monster(sprite1, this, (col, row), (targetCol, targetRow));
             _monsters[col, row].AddMonster(newMonster);
         }
         else
         {
             MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
-            var sprite2 = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-            Monster newMonster = new Monster(sprite2, this, (col, row), (targetCol, targetRow));
             group.AddMonster(newMonster);
             _monsters[col, row] = group;
         }
