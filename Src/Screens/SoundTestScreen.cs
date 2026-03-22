@@ -8,7 +8,6 @@ using MonoGame.Extended.Input;
 using FontStashSharp;
 using DreamWardUtils.Graphics;
 using System;
-using MonoGame.Extended.Input;
 using Gamelab.Managers;
 using Newtonsoft.Json.Serialization;
 

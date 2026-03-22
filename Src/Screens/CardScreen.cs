@@ -93,7 +93,7 @@ public class CardScreen : GamelabGameScreen
 
         if (_toMapScreenBtn.Contains(pos))
         {
-            Game.screenManager.ShowScreen(Game.MapScreenInstance);
+            Game.SwitchToScreen(Game.MapScreenInstance);
             AudioManager.Play("dragonflap");
             return;
         }

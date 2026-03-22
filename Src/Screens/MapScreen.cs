@@ -38,6 +38,7 @@ public class MapScreen : GamelabGameScreen
 
     // Drag
     private bool _isDrag;
+    private bool _dragStarted;
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
     private (int,int) _selectedTile = (-1,-1);
@@ -48,7 +49,7 @@ public class MapScreen : GamelabGameScreen
     {
         // Map setup
         Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
-        TextureRegion region = new(texture, 0, 0, 128, 64);
+        TextureRegion region = new(texture, 0, 0, 128, 320);
         TileSet set = new(region, 64, 32);
         mapManager = new MapManager(set, 30, 30, TimeSpan.FromMilliseconds(500));
         mapManager.FillRandomly();
@@ -130,9 +131,12 @@ public class MapScreen : GamelabGameScreen
 
         // Drag
         if (mouse.WasButtonPressed(MouseButton.Left))
+        {
             _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+            _dragStarted = true;
+        }
 
-        if (mouse.IsButtonDown(MouseButton.Left))
+        if (mouse.IsButtonDown(MouseButton.Left) && _dragStarted)
         {
             Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
             mapManager.MoveMap(deltaPos);
@@ -145,12 +149,13 @@ public class MapScreen : GamelabGameScreen
 
         if (mouse.WasButtonReleased(MouseButton.Left))
         {
+            _dragStarted = false;
             Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
 
             // Navigation to CardScreen
             if (_toCardScreenBtn.Contains(pos))
             {
-                Game.screenManager.ShowScreen(Game.CardScreenInstance);
+                Game.SwitchToScreen(Game.CardScreenInstance);
                 AudioManager.Play("dragonflap");
                 return;
             }
