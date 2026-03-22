@@ -1,6 +1,94 @@
 { "frames": {
-   "day_player.aseprite": {
+   "day_player 0.aseprite": {
     "frame": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 1.aseprite": {
+    "frame": { "x": 16, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 2.aseprite": {
+    "frame": { "x": 32, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 3.aseprite": {
+    "frame": { "x": 48, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 4.aseprite": {
+    "frame": { "x": 64, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 5.aseprite": {
+    "frame": { "x": 80, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 6.aseprite": {
+    "frame": { "x": 96, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 7.aseprite": {
+    "frame": { "x": 112, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 8.aseprite": {
+    "frame": { "x": 128, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 9.aseprite": {
+    "frame": { "x": 144, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 10.aseprite": {
+    "frame": { "x": 160, "y": 0, "w": 16, "h": 320 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
+    "sourceSize": { "w": 16, "h": 320 },
+    "duration": 100
+   },
+   "day_player 11.aseprite": {
+    "frame": { "x": 176, "y": 0, "w": 16, "h": 320 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 320 },
@@ -13,11 +101,24 @@
   "version": "1.3.17-dev",
   "image": "day_player.png",
   "format": "RGBA8888",
-  "size": { "w": 16, "h": 320 },
+  "size": { "w": 192, "h": 320 },
   "scale": "1",
   "frameTags": [
+   { "name": "idleSW", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
+   { "name": "idleNW", "from": 1, "to": 1, "direction": "forward", "color": "#000000ff" },
+   { "name": "idleN", "from": 2, "to": 2, "direction": "forward", "color": "#000000ff" },
+   { "name": "idleNE", "from": 3, "to": 3, "direction": "forward", "color": "#000000ff" },
+   { "name": "idleSE", "from": 4, "to": 4, "direction": "forward", "color": "#000000ff" },
+   { "name": "idleS", "from": 5, "to": 5, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkSW", "from": 6, "to": 6, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkNW", "from": 7, "to": 7, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkN", "from": 8, "to": 8, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkNE", "from": 9, "to": 9, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkSE", "from": 10, "to": 10, "direction": "forward", "color": "#000000ff" },
+   { "name": "walkS", "from": 11, "to": 11, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
+   { "name": "player", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 16, "h": 32 } }] }
   ]
  }
 }
