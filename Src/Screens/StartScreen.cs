@@ -20,7 +20,7 @@ public class StartScreen : GamelabGameScreen
     private readonly Color _buttonBorderColor = new Color(188, 182, 157);
     private readonly Color _buttonTextColor = new Color(188, 182, 157);
     private Rectangle[] _buttons;
-    private string[] _buttonLabels = { "Start Game", "How to Play", "Settings", "Quit Game" };
+    private string[] _buttonLabels = { "Start New Game", "Continue Game", "How to Play", "Settings", "Quit Game" };
 
     private enum MenuState { MainMenu, HowToPlay, Settings }
     private MenuState _currentState = MenuState.MainMenu;
@@ -95,7 +95,10 @@ public class StartScreen : GamelabGameScreen
                     {
                         if (_buttons[i].Contains(pos))
                         {
-                            HandleButtonClick(_buttonLabels[i]);
+                            string label = _buttonLabels[i];
+                            if (label == "Continue Game" && Game.MapScreenInstance == null)
+                                return;
+                            HandleButtonClick(label);
                             break;
                         }
                     }
@@ -114,6 +117,7 @@ public class StartScreen : GamelabGameScreen
                         _volume = (pos.X - _volumeBar.X) / (float)_volumeBar.Width;
                         _volume = MathHelper.Clamp(_volume, 0f, 1f);
                         Game.MasterVolume = _volume;
+                        Game.MapScreenInstance?.UpdateVolume();
                     }
                 }
                 break;
@@ -124,10 +128,22 @@ public class StartScreen : GamelabGameScreen
     {
         switch (label)
         {
-            case "Start Game":
+            case "Continue Game":
+                if (Game.MapScreenInstance != null)
+                {
+                    Game.SwitchToScreen(Game.MapScreenInstance);
+                }
+                break;
+
+            case "Start New Game":
                 Game.MapScreenInstance = new MapScreen(Game);
                 Game.CardScreenInstance = new CardScreen(Game);
-                Game.MapScreenInstance.SetManager(Game.CardScreenInstance.SanityManager, Game.CardScreenInstance.CardManager);
+
+                Game.MapScreenInstance.SetManager(
+                    Game.CardScreenInstance.SanityManager,
+                    Game.CardScreenInstance.CardManager
+                );
+
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
             case "How to Play":
@@ -179,9 +195,38 @@ public class StartScreen : GamelabGameScreen
         DrawScaledText("DreamWard", _titleColor, virtualScreenSize.X / 2, 50, 3f);
 
         foreach (var (btnRect, idx) in _buttons.WithIndex())
-            DrawButton(btnRect, _buttonLabels[idx]);
+        {
+            string label = _buttonLabels[idx];
+
+            // Disable Continue if no game exists
+            if (label == "Continue Game" && Game.MapScreenInstance == null)
+            {
+                DrawButtonDisabled(btnRect, label);
+            }
+            else
+            {
+                DrawButton(btnRect, label);
+            }
+        }
     }
 
+    private void DrawButtonDisabled(Rectangle rect, string text)
+    {
+        Color disabledColor = new Color(58, 74, 57);
+        Color disabledText = new Color(143, 138, 119);
+
+        DrawRoundedRectangle(rect, 10, disabledColor, disabledText);
+
+        Vector2 textSize = _font.MeasureString(text);
+        float scale = MathF.Min(rect.Width / textSize.X * 0.9f, rect.Height / textSize.Y * 0.9f);
+
+        Vector2 textPos = new Vector2(
+            rect.Center.X - textSize.X * scale / 2,
+            rect.Center.Y - textSize.Y * scale / 2
+        );
+
+        spriteBatch.DrawString(_font, text, textPos, disabledText, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
     private void DrawHowToPlay()
     {
         int w = virtualScreenSize.X;
