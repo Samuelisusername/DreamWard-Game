@@ -176,7 +176,7 @@ public class StartScreen : GamelabGameScreen
 
     private void DrawMainMenu()
     {
-        DrawScaledText("DreamWard", _titleColor, virtualScreenSize.X / 2, 50);
+        DrawScaledText("DreamWard", _titleColor, virtualScreenSize.X / 2, 50, 3f);
 
         foreach (var (btnRect, idx) in _buttons.WithIndex())
             DrawButton(btnRect, _buttonLabels[idx]);
@@ -186,7 +186,7 @@ public class StartScreen : GamelabGameScreen
     {
         int w = virtualScreenSize.X;
         int h = virtualScreenSize.Y;
-        DrawScaledText("How to Play", _titleColor, w / 2, 50);
+        DrawScaledText("How to Play", _titleColor, w / 2, 50, 2f);
 
         Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
         DrawScaledParagraph(_howToPlayText, paragraphArea, _titleColor);
@@ -198,7 +198,7 @@ public class StartScreen : GamelabGameScreen
     {
         int w = virtualScreenSize.X;
         int h = virtualScreenSize.Y;
-        DrawScaledText("Settings", _titleColor, w / 2, 50);
+        DrawScaledText("Settings", _titleColor, w / 2, 50, 2f);
 
         Color barBackgroundColor = new Color(188, 182, 157);
         Color barFillColor = new Color(72, 93, 70);
@@ -252,10 +252,11 @@ public class StartScreen : GamelabGameScreen
         }
     }
 
-    private void DrawScaledText(string text, Color color, float centerX, float y)
+    private void DrawScaledText(string text, Color color, float centerX, float y, float scale = 1f)
     {
-        Vector2 textSize = _font.MeasureString(text);
-        spriteBatch.DrawString(_font, text, new Vector2(centerX - textSize.X / 2, y), color);
+        Vector2 textSize = _font.MeasureString(text) * scale;
+        Vector2 pos = new Vector2(centerX - textSize.X / 2, y);
+        spriteBatch.DrawString(_font, text, pos, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 }
 
