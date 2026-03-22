@@ -1,4 +1,6 @@
 using System;
+using Gamelab;
+using Gamelab.Screens;
 
 public class SanityManager
 {
@@ -23,8 +25,15 @@ public class SanityManager
     public void DeductSanity(int amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
-        if (Sanity < amount) _gamePhaseManager.checkGameOver();
         Sanity -= amount;
+        if (Sanity <= 0)
+        {
+            Sanity = 0;
+            if (_gamePhaseManager != null)
+                _gamePhaseManager.checkGameOver();
+            else
+                GamelabGame.Instance.SwitchToScreen(new Gamelab.Screens.GameOverScreen(GamelabGame.Instance));
+        }
     }
 
     /// <summary>
