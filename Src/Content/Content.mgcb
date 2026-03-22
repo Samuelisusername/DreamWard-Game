@@ -333,3 +333,9 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/action_cards/card-place.wav
+
+#begin Sounds/action_cards/error.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/action_cards/error.wav

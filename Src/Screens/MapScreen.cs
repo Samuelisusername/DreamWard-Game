@@ -65,12 +65,11 @@ public class MapScreen : GamelabGameScreen
 
         AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
         AudioManager.LoadSound(Game.Content, "dragonflap", "Sounds/dragonflap");
+        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
-        AudioManager.LoadSound(Game.Content, "sheep_baa", "Sounds/sheep_baa");
-        AudioManager.LoadSound(Game.Content, "slam_02", "Sounds/buildings/slam_02");
-        AudioManager.LoadSound(Game.Content, "tower_breaking", "Sounds/buildings/tower_breaking");
+
         
         _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
         if(_dayMusicInstance == null){
@@ -116,6 +115,7 @@ public class MapScreen : GamelabGameScreen
             int centerX = mapManager.Columns / 2;
             int centerY = mapManager.Rows / 2;
             mapManager.SpawnMonsterAtEdge(centerX, centerY);
+            AudioManager.Play("grunt_03");
         }
 
         // Map update

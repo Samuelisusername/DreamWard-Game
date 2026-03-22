@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using DreamWardUtils.Graphics;
 using Gamelab;
 using System.Collections.Generic;
+using Gamelab.Managers;
 
 public class MapManager
 {    
@@ -190,6 +191,7 @@ public class MapManager
         if (occupied)
         {
             Console.WriteLine("Tile already occupied!");
+            AudioManager.Play("error");
             return false;
         }
 
