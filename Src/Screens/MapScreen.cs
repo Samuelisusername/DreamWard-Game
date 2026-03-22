@@ -333,6 +333,7 @@ public class MapScreen : GamelabGameScreen
             if (success)
             {
                 _cardManager.UseCard(_activeMapCard);
+                AudioManager.Play("slam_02");
                 _activeMapCard = null;
             }
 

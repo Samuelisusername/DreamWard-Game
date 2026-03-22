@@ -195,7 +195,9 @@ public class MapManager
 
         if (entity != null){
             entity.SetAsBuildEntity();
+            
             _structures[col,row] = entity;
+
             return true;
         }
         return false;
