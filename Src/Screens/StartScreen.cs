@@ -136,6 +136,7 @@ public class StartScreen : GamelabGameScreen
                 break;
 
             case "Start New Game":
+                Game.ResetGame();
                 Game.MapScreenInstance = new MapScreen(Game);
                 Game.CardScreenInstance = new CardScreen(Game);
 

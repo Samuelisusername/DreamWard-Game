@@ -10,7 +10,7 @@ public class MapManager
 #region storage
 
     //all the possible Textures a tile can have are held in here
-    private readonly Dictionary<string, TileSet> _tileSets;
+    internal readonly Dictionary<string, TileSet> _tileSets;
 
     //which tile of the tileset is display at this position?
     private readonly int[,] _tiles; //col first

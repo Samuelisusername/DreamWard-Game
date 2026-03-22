@@ -180,6 +180,26 @@ public class GamelabGame : Game
     }
 
     /// <summary>
+    /// Resets all game managers to their initial state for a new game.
+    /// </summary>
+    public void ResetGame()
+    {
+        CardManager = new();
+        CombatManager = new();
+        GamePhaseManager = new();
+        SanityManager = new();
+
+        // Recreate MapManager with fresh tile data
+        var setDay = MapManager._tileSets["day"];
+        var setNight = MapManager._tileSets["night"];
+        MapManager = new MapManager(setDay, setNight, 20, 20, TimeSpan.FromMilliseconds(500));
+        MapManager.FillRandomly();
+        MapManager.Scale = new Vector2(4, 4);
+
+        PathFindingManager = new();
+    }
+
+    /// <summary>
     /// Switch to the specified screen on the next update. Not transitioning immediately allows the current screen to finish its update and draw cycle, which can help avoid issues with switching screens in the middle of their logic.
     /// </summary>
     /// <param name="screen">The screen to switch to.</param>
