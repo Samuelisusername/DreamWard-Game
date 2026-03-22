@@ -21,14 +21,12 @@ public class MapScreen : GamelabGameScreen
     private readonly EntityRenderer entityRenderer;
     private SanityManager _sanityManager;
     private CardManager _cardManager;
-    private Tent _tent;
 
     public void SetManager(SanityManager sanityManager, CardManager manager)
     {
         _sanityManager = sanityManager;
         _cardManager = manager;
-        if (_tent != null)
-            _tent.SetSanityManager(sanityManager);
+        mapManager.SetSanityManager(sanityManager);
     }
 
     // Cards
@@ -353,12 +351,11 @@ public class MapScreen : GamelabGameScreen
         int centerY = mapManager.Rows / 2;
 
         // 🏕️ Tent at center
-        _tent = new Tent(
+        mapManager.PlaceEntity(new Tent(
             atlas.CreateAnimatedSprite("tent-animation"),
             mapManager,
             (centerX, centerY)
-        );
-        mapManager.PlaceEntity(_tent, centerX, centerY);
+        ), centerX, centerY);
 
         // 🐑 Sheep next to tent
         mapManager.PlaceEntity(new Sheep(

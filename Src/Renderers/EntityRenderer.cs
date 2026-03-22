@@ -50,7 +50,7 @@ public class EntityRenderer
                 {
                     Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);
                     DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, -80f);
+                              structure.CurrentHealth, structure.MaxHealth, -10f);
                 }
 
                 var group = _manager.GetMonster(i, j);

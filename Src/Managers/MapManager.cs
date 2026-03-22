@@ -21,6 +21,9 @@ public class MapManager
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
 
+    private SanityManager _sanityManager;
+    private float _sanityDamageAccumulator;
+
 #endregion
 
 #region public properties
@@ -39,6 +42,11 @@ public class MapManager
     /// True when the tent has been destroyed by monsters
     /// </summary>
     public bool TentDestroyed { get; private set; }
+
+    public void SetSanityManager(SanityManager sanityManager)
+    {
+        _sanityManager = sanityManager;
+    }
 
     /// <summary>
     /// The scale at which the map is rendered
@@ -157,9 +165,22 @@ public class MapManager
                 var structure = _structures[i,j];
                 if (group != null && structure != null && !structure.IsDestroyed)
                 {
+                    float hpBefore = structure.CurrentHealth;
                     foreach (var monster in group.Monsters)
                     {
                         monster.Attack(structure, dt);
+                    }
+
+                    if (structure is Tent or Sheep && _sanityManager != null)
+                    {
+                        float damage = hpBefore - structure.CurrentHealth;
+                        _sanityDamageAccumulator += damage;
+                        if (_sanityDamageAccumulator >= 1f)
+                        {
+                            int toDeduct = (int)_sanityDamageAccumulator;
+                            _sanityManager.DeductSanity(toDeduct);
+                            _sanityDamageAccumulator -= toDeduct;
+                        }
                     }
                 }
             }

@@ -35,7 +35,7 @@ public abstract class Entity
     /// <summary>
     /// removes health from the entity
     /// </summary>
-    public virtual void TakeDamage(float amount)
+    public void TakeDamage(float amount)
     {
         _currentHealth -= amount;
     }
