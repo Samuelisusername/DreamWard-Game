@@ -45,6 +45,12 @@ public class MapScreen : GamelabGameScreen
     private SoundEffect _day_BackgroundSound;
     private SoundEffectInstance _dayMusicInstance;
 
+    private readonly Color SLOT_COLOR = new Color(0xbc, 0xb6, 0x9d);  
+    private readonly Color BTN_COLOR = new Color(0xbc, 0xb6, 0x9d);  
+    private readonly Color BTN_TEXT_COLOR = new Color(0x74, 0x70, 0x5f);    
+    private readonly Color SLOT_BORDER_COLOR = new Color(0xd8, 0xd4, 0xc1); 
+    private readonly Color TEXT_COLOR = new Color(0xd8, 0xd4, 0xc1);
+
     public MapScreen(GamelabGame game) : base(game)
     {
         // Map setup
@@ -196,7 +202,7 @@ public class MapScreen : GamelabGameScreen
             string text = $"Sanity: {_sanityManager.Sanity}";
             spriteBatch.DrawString(_font, text,
                 new Vector2(20, 20),
-                Color.White);
+                TEXT_COLOR);
         }
 
         DrawCardSlots();
@@ -209,21 +215,19 @@ public class MapScreen : GamelabGameScreen
     // ------------------------
     private void DrawButton(Rectangle rect, string text)
     {
-        spriteBatch.Draw(_dummy, rect, Color.DarkGray);
+        spriteBatch.Draw(_dummy, rect, BTN_COLOR);
         var size = _font.MeasureString(text);
-        spriteBatch.DrawString(_font, text, new Vector2(rect.Center.X - (size.X * 0.6f) / 2, rect.Center.Y - (size.Y * 0.6f) / 2), Color.White, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, text,
+            new Vector2(rect.Center.X - (size.X * 0.6f) / 2,
+                        rect.Center.Y - (size.Y * 0.6f) / 2),
+            BTN_TEXT_COLOR, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
     }
 
     private void DrawCardSlots()
     {
-        if (_cardManager == null)
-        {
-            Console.WriteLine("CardManager is NULL");
-            return;
-        }
+        if (_cardManager == null) return;
 
         var slots = _cardManager.MapSlots.Concat(_cardManager.BuildSlots).ToList();
-
 
         int cardW = 80;
         int cardH = 110;
@@ -233,9 +237,17 @@ public class MapScreen : GamelabGameScreen
         int screenH = (int)viewportAdapter.VirtualHeight;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
-
         int startX = screenW - totalWidth - 20;
         int startY = screenH - cardH - 60;
+
+        // Draw rectangle surrounding all slots + buttons
+        Rectangle borderRect = new(
+            startX - 10,
+            startY - 10,
+            totalWidth + 20,
+            cardH + 25 + 20 // card height + button height + padding
+        );
+        spriteBatch.Draw(_dummy, borderRect, SLOT_BORDER_COLOR);
 
         for (int i = 0; i < slots.Count; i++)
         {
@@ -248,7 +260,7 @@ public class MapScreen : GamelabGameScreen
                 cardH
             );
 
-            spriteBatch.Draw(_dummy, rect, Color.DarkGreen);
+            spriteBatch.Draw(_dummy, rect, SLOT_COLOR);
 
             if (slot.Card != null)
             {
