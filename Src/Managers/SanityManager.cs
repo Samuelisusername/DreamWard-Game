@@ -59,7 +59,9 @@ public class SanityManager
     /// </summary>
     public void AddSanityGainedFromNewDay()
     {
-        // Missing MapManager functionality (meadows) to implement
+        Sanity += 10;
+        // Missing Ma
+        // pManager functionality (meadows) to implement
         //for (int i = 0; i < _map_manager.Columns; i++)
         //{
         //    for (int j = 0; j < _map_manager.Rows; j++)
@@ -73,6 +75,5 @@ public class SanityManager
         //        throw new notimplementedexception();
         //    }
         //}
-        throw new NotImplementedException();
     }
 }

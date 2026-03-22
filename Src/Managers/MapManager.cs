@@ -180,6 +180,10 @@ public class MapManager
         var smartPath = GamelabGame.PathFindingManager.CalculatePath(newMonster);
         if (smartPath != null && smartPath.Count > 0)
         {
+            while(smartPath.Count >= 2 && smartPath[0] == smartPath[1])
+            {
+                smartPath.RemoveAt(0);
+            }
             newMonster.Path = smartPath;
         }
 

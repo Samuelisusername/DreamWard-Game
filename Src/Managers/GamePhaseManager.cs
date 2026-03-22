@@ -18,7 +18,7 @@ public class GamePhaseManager
     public void SwitchToDay()
     {
         // call the SanityManger, MapManger and CardManager to set up the new day
-        //GamelabGame.SanityManager.AddSanityGainedFromNewDay();
+        GamelabGame.SanityManager.AddSanityGainedFromNewDay();
         // call CardManager, how??
         // I'm 50/50 on whether GamePhaseManager should call something like mapManager.StartNewDay() or
         // if the MapManager/Renderer should just check the GamePhaseManager's IsDay property
