@@ -21,9 +21,6 @@ public class MapManager
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
 
-    private SanityManager _sanityManager;
-    private float _sanityDamageAccumulator;
-
 #endregion
 
 #region public properties
@@ -303,7 +300,7 @@ public class MapManager
         Entity entity = card.Name switch
         {
             "sniper" => new Tower(animKey, this, (col,row), damagePerSecond: 8f, health: 100),
-            "toaoe" => new AreaTower(animKey, this, (col,row), damagePerSecond: 5f, health: 80),
+            "aoe" => new AreaTower(animKey, this, (col,row), damagePerSecond: 5f, health: 80),
             "fence" => new Fence(animKey, this, (col,row)),
             "meadow" => new Meadow(animKey, this, (col,row)),
             "dreamcatcher" => new Wall(animKey, this, (col,row)),
