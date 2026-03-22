@@ -21,6 +21,8 @@ public class MapManager
     //stores which tiles has which monster on it -1 if none
     private readonly MonsterGroup[,] _monsters;//colfirst
 
+    private SanityManager _sanityManager;
+    private float _sanityDamageAccumulator;
 
 #endregion
 
@@ -163,19 +165,37 @@ public class MapManager
     
     public void AddMonster(int col, int row, int targetCol, int targetRow)
     {
-        
+        Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
+
+        // // --- GenerateHexPath version (simple greedy path to target) ---
+        // if (_monsters[col, row] != null)
+        // {
+        //     _monsters[col, row].AddMonster(newMonster);
+        // }
+        // else
+        // {
+        //     MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
+        //     group.AddMonster(newMonster);
+        //     _monsters[col, row] = group;
+        // }
+
+        // --- PathFindingManager version (strategic pathfinding) ---
+        var smartPath = GamelabGame.PathFindingManager.CalculatePath(newMonster);
+        if (smartPath != null && smartPath.Count > 0)
+        {
+            newMonster.Path = smartPath;
+        }
+
         if (_monsters[col, row] != null)
         {
-            Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
             _monsters[col, row].AddMonster(newMonster);
         }
         else
         {
             MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
-            Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
             group.AddMonster(newMonster);
             _monsters[col, row] = group;
-        }
+        }       
     }
 
     /// <summary>
