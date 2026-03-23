@@ -1,6 +1,7 @@
 using System;
 using Gamelab;
 using Gamelab.Screens;
+using Gamelab.Managers;
 
 public class GamePhaseManager
 {
@@ -24,6 +25,7 @@ public class GamePhaseManager
         // if the MapManager/Renderer should just check the GamePhaseManager's IsDay property
         IsDay = true;
         DayCount += 1;
+        AudioManager.PlayMusic("day_music", GamelabGame.Instance.MasterVolume);
         checkGameOver();
     }
 
@@ -35,6 +37,7 @@ public class GamePhaseManager
         GamelabGame.CombatManager.SpawnMonsters(DayCount * 3);
         IsDay = false;
         // Same as above with MapManager/MapRenderer
+        AudioManager.PlayMusic("night_music", GamelabGame.Instance.MasterVolume);
     }
 
     public void checkGameOver()

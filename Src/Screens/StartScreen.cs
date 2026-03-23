@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
+using Gamelab.Managers;
 
 namespace Gamelab.Screens;
 
@@ -116,8 +117,7 @@ public class StartScreen : GamelabGameScreen
                     {
                         _volume = (pos.X - _volumeBar.X) / (float)_volumeBar.Width;
                         _volume = MathHelper.Clamp(_volume, 0f, 1f);
-                        Game.MasterVolume = _volume;
-                        Game.MapScreenInstance?.UpdateVolume();
+                        AudioManager.UpdateMusicVolume(_volume);
                     }
                 }
                 break;

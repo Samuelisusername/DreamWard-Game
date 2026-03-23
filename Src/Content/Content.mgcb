@@ -339,6 +339,13 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/action_cards/error.wav
+
+#begin Sounds/creepy_demon_night_forest.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/creepy_demon_night_forest.mp3
+
 #begin Sprites/Start.png
 /importer:TextureImporter
 /processor:TextureProcessor

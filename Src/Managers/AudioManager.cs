@@ -29,6 +29,46 @@ namespace Gamelab.Managers;
 public static class AudioManager
 {
     private static Dictionary<string, SoundEffect> _sounds = new Dictionary<string, SoundEffect>();
+    private static SoundEffectInstance _currentMusic;
+    private static string _currentMusicName = "";
+    // ---------------------------------------------------
+// Plays background music (loops automatically and stops the old song)
+// ---------------------------------------------------
+public static void PlayMusic(string name, float volume = 1f)
+{
+    // ✨ THE MAGIC FIX: If this song is already playing, just let it keep playing!
+    if (_currentMusicName == name) 
+        return;
+
+    if (_sounds.ContainsKey(name))
+    {
+        // Stop the old song if one is playing
+        if (_currentMusic != null)
+        {
+            _currentMusic.Stop();
+            _currentMusic.Dispose();
+        }
+
+        // Start the new song
+        _currentMusic = _sounds[name].CreateInstance();
+        _currentMusic.IsLooped = true;
+        _currentMusic.Volume = volume;
+        _currentMusic.Play();
+
+        // Remember what song we are playing now
+        _currentMusicName = name; 
+    }
+    else
+    {
+       // Console.WriteLine($"[Audio Warning] Tried to play music '{name}', but it hasn't been loaded!");
+    }
+}
+// Optional: Call this if the player changes the volume in the settings!
+public static void UpdateMusicVolume(float volume)
+{
+    if (_currentMusic != null)
+        _currentMusic.Volume = volume;
+}
 
     // ---------------------------------------------------
     // Loads an entire folder of sounds automatically

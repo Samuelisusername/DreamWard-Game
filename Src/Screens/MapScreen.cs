@@ -29,8 +29,6 @@ public class MapScreen : GamelabGameScreen
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
     private (int,int) _selectedTile = (-1,-1);
-    private SoundEffect _day_BackgroundSound;
-    private SoundEffectInstance _dayMusicInstance;
 
     private readonly Color SLOT_COLOR = new Color(0xbc, 0xb6, 0x9d);  
     private readonly Color BTN_COLOR = new Color(0xbc, 0xb6, 0x9d);  
@@ -38,11 +36,6 @@ public class MapScreen : GamelabGameScreen
     private readonly Color SLOT_BORDER_COLOR = new Color(0xd8, 0xd4, 0xc1); 
     private readonly Color TEXT_COLOR = new Color(0xd8, 0xd4, 0xc1);
 
-    public void UpdateVolume()
-    {
-        if (_dayMusicInstance != null)
-            _dayMusicInstance.Volume = Game.MasterVolume;
-    }
 
     public MapScreen(GamelabGame game) : base(game)
     {
@@ -63,14 +56,9 @@ public class MapScreen : GamelabGameScreen
         AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
 
-        
-        _day_BackgroundSound = Game.Content.Load<SoundEffect>("Sounds/preferred_option_day");
-        if(_dayMusicInstance == null){
-            _dayMusicInstance = _day_BackgroundSound.CreateInstance();
-            _dayMusicInstance.IsLooped = true; 
-            _dayMusicInstance.Volume = Game.MasterVolume;
-            _dayMusicInstance.Play();
-        }      
+        AudioManager.LoadSound(Game.Content, "day_music", "Sounds/preferred_option_day");
+        AudioManager.LoadSound(Game.Content, "night_music", "Sounds/creepy_demon_night_forest") ;
+        AudioManager.PlayMusic("day_music", Game.MasterVolume);
 
         // Fonts and dummy texture
         _font = Content.Load<SpriteFont>("font");
