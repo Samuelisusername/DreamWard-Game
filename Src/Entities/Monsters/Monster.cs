@@ -68,6 +68,7 @@ public class Monster : Entity
     public bool CanTarget(Entity entity)
     {
         if (entity is VoidTile) return false;
+        if (entity is TreeTile) return false;
         if (Type == MonsterType.Flying && entity is WallTile) return false;
         return true;
     }
@@ -80,6 +81,7 @@ public class Monster : Entity
     public bool CanStepOn(Entity entity)
     {
         if (entity is VoidTile && Type != MonsterType.Flying) return false;
+        if (entity is TreeTile) return false;
         if (entity is WallTile && Type != MonsterType.Flying) return false;
         if (entity is Fence && Type != MonsterType.Flying) return false;
         if (entity is Tower && Type != MonsterType.Flying) return false;

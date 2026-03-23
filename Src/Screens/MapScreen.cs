@@ -349,6 +349,41 @@ public class MapScreen : GamelabGameScreen
             GamelabGame.MapManager,
             (centerX + 1, centerY)
         ),centerX + 1, centerY);
+
+        // 🌲 Random trees
+        SpawnTrees(25, centerX, centerY);
+    }
+
+    private void SpawnTrees(int count, int centerX, int centerY)
+    {
+        int cols = GamelabGame.MapManager.Columns;
+        int rows = GamelabGame.MapManager.Rows;
+        string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
+        int placed = 0;
+        int attempts = 0;
+
+        while (placed < count && attempts < 200)
+        {
+            attempts++;
+            int col = System.Random.Shared.Next(cols);
+            int row = System.Random.Shared.Next(rows);
+
+            // Don't place near the tent (keep a 3-tile radius clear)
+            int dx = System.Math.Abs(col - centerX);
+            int dy = System.Math.Abs(row - centerY);
+            if (dx + dy <= 3) continue;
+
+            // Don't place on edges (leave room for monster spawns)
+            if (col == 0 || col == cols - 1 || row == 0 || row == rows - 1) continue;
+
+            // Don't place on occupied tiles
+            if (GamelabGame.MapManager.GetStructure(col, row) != null) continue;
+
+            string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
+            var tree = new TreeTile(anim, GamelabGame.MapManager, (col, row));
+            GamelabGame.MapManager.PlaceEntity(tree, col, row);
+            placed++;
+        }
     }
 
     private void HandleMapCardUse(Vector2 pos)

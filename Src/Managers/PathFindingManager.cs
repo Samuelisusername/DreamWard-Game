@@ -202,8 +202,10 @@ public class PathFindingManager
 
             if (allowThroughStructures)
             {
-                // Only block truly impassable tiles (VoidTile for non-flying monsters)
+                // Only block truly impassable tiles (VoidTile for non-flying, TreeTile for all)
                 if (currentStructure is VoidTile && monster.Type != MonsterType.Flying)
+                    continue;
+                if (currentStructure is TreeTile)
                     continue;
             }
             else
