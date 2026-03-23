@@ -21,12 +21,12 @@ public class EntityRenderer
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        for(int i = 0; i < _manager.Columns; i++)
+        for(int i = 0; i < _manager.Rows * 2; i++)
         {
-            for(int j = 0; j < _manager.Rows; j++)
+            for(int j = i % 2; j < _manager.Columns; j += 2)
             {
-                _manager.GetMonster(i,j)?.Draw(spriteBatch);
-                _manager.GetStructure(i,j)?.Draw(spriteBatch);
+                _manager.GetStructure(j,i/2)?.Draw(spriteBatch);
+                _manager.GetMonster(j,i/2)?.Draw(spriteBatch);
             }
         }
 
