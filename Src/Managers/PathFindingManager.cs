@@ -27,166 +27,96 @@ public class PathFindingManager
     }
 
     /// <summary>
-    /// Finds a target and a path to said target for the given monster.
+    /// Finds the cheapest path to the tent (primary target) for the given monster.
+    /// If the tent can be reached without crossing blocking structures, the monster
+    /// walks straight there.  If blocking structures are in the way, the path goes
+    /// through them — the monster will stop adjacent to the first blocker, attack it,
+    /// and recalculate once it is destroyed.
     /// </summary>
     public List<(int,int)> CalculatePath(Monster monster)
     {
-        // --- GENERAL PATHFINDING STRATEGY ---
-
-        // We define a 'primary target' as a target that reduces the player's sanity when destroyed.
-        // All other targets are secondary targets.
-
-        // We define the 'weakest path' to some target as a path that minimizes the maximum damage
-        // taken at any tile along the path to the target.
-
-        // A monster has the following preferences:
-        // 1. A primary target that can be reached without getting damaged at any point.
-        //      --> tent, sheep
-        // 2. A secondary target that can be reached without getting damaged at any point.
-        //      --> wall
-        // 3. A target that another monster is going to and that the first monster can reach at the
-        //    same time as the other monster without getting damaged *before* arriving in the
-        //    target's attack range.
-        //      --> tower
-        // 4. The first secondary target on the 'weakest path' to any of the primary targets. The
-        //    monster will wait a little bit to give the other monsters a chance to join in.
-
-        // ------------------------------------
-
-        // Remove stale assignment for this monster before recalculating.
         UnregisterMonsterTarget(monster);
-
-        // Update the map of how heavily each tile is defended.
         UpdateDefenceStrengths();
 
-        // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
-        int[,] minMaxDamage = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
-        (int col, int row)?[,] previousTile = new (int col, int row)?[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows]; // For path reconstruction.
-        int[,] timeToReach = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
-        CalculateWeakestPaths(startTile, minMaxDamage, previousTile, timeToReach);
-
+        int cols = GamelabGame.MapManager.Columns;
+        int rows = GamelabGame.MapManager.Rows;
         var allTargets = GetAllTargetStructures(monster);
 
-        // 1-2:
-        // Check if there is a primary (preferred) or a secondary target with minMaxDamage of 0.
-        // If so reconstruct the path to this target using previousTile and return it. Make sure to update
-        // _activeTargets (unless it's already there) and _monstersTargeting.
-        var primaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: true);
-        if (primaryZero != null)
+        // Phase 1: try to reach a primary target (tent/sheep) without crossing blocking structures.
+        int[,] minMaxDamage1 = new int[cols, rows];
+        (int col, int row)?[,] prev1 = new (int col, int row)?[cols, rows];
+        int[,] time1 = new int[cols, rows];
+        CalculateWeakestPaths(startTile, minMaxDamage1, prev1, time1, monster, allowThroughStructures: false);
+
+        var primary1 = SelectBestTarget(allTargets, minMaxDamage1, time1, IsPrimaryTarget, requireZeroDamage: false);
+        if (primary1 != null)
         {
-            var primaryPath = ReconstructPath(startTile, primaryZero.Value.Tile, previousTile, timeToReach);
-            if (primaryPath.Count > 0)
-            {
-                RegisterTarget(monster, primaryZero.Value.Tile, timeToReach[primaryZero.Value.Tile.Item1, primaryZero.Value.Tile.Item2]);
-                return primaryPath;
-            }
-        }
-
-        var secondaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: true);
-        if (secondaryZero != null)
-        {
-            var secondaryPath = ReconstructPath(startTile, secondaryZero.Value.Tile, previousTile, timeToReach);
-            if (secondaryPath.Count > 0)
-            {
-                RegisterTarget(monster, secondaryZero.Value.Tile, timeToReach[secondaryZero.Value.Tile.Item1, secondaryZero.Value.Tile.Item2]);
-                return secondaryPath;
-            }
-        }
-
-        // 3:
-        // for col, row, time in _activeTargets:
-        //  compare minMaxDamage to _defenceStrength at the target's tile
-        //  if minMaxDamage <= _defenceStrength and timeToReach <= time:
-        //      then construct the path to this target using previousTile and return it. if you would reach
-        //      the target earlier than the time in _activeTargets, then wait the difference in time, to
-        //      arrive at the same time as the other monster. Update _activeTargets and _monstersTargeting
-        //      accordingly.
-        foreach (var activeTarget in _activeTargets)
-        {
-            var targetTile = (activeTarget.col, activeTarget.row);
-            if (!IsInBounds(targetTile))
-            {
-                continue;
-            }
-
-            int tileMinMaxDamage = minMaxDamage[targetTile.Item1, targetTile.Item2];
-            int tileTimeToReach = timeToReach[targetTile.Item1, targetTile.Item2];
-            if (tileMinMaxDamage == int.MaxValue || tileTimeToReach == int.MaxValue)
-            {
-                continue;
-            }
-
-            if (tileMinMaxDamage <= _defenceStrength[targetTile.Item1, targetTile.Item2] &&
-                tileTimeToReach <= activeTarget.timeToBeAttacked)
-            {
-                var path = ReconstructPath(startTile, targetTile, previousTile, timeToReach);
-                if (path.Count == 0)
-                {
-                    continue;
-                }
-
-                int waitTime = activeTarget.timeToBeAttacked - tileTimeToReach;
-                for (int i = 0; i < waitTime; i++)
-                {
-                    path.Insert(0, startTile);
-                }
-
-                RegisterTarget(monster, targetTile, activeTarget.timeToBeAttacked);
+            var path = ReconstructPath(startTile, primary1.Value.Tile, prev1, time1);
+            if (path.Count > 0)
                 return path;
-            }
         }
 
-        // 4:
-        // a. Look through all primary targets and find the one with the lowest minMaxDamage.
-        // b. Reconstruct the path from startTile to this primary target using the 'previous' array.
-        // c. Loop through the tiles in this path and find the first one with minMaxDamage > 0. This will
-        //    be the first secondary target on the path to the primary target.
-        // d. Reconstruct the path from startTile to the secondary target you found and return it. Update
-        //    _activeTargets and _monstersTargeting accordingly.
-        var weakestPrimary = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
-        if (weakestPrimary != null)
+        // Phase 2: tent is blocked — allow pathfinding through blocking structures.
+        // The monster will stop adjacent to the first structure it can't step on and attack it.
+        // When that structure is destroyed, CombatManager triggers a full recalculation.
+        int[,] minMaxDamage2 = new int[cols, rows];
+        (int col, int row)?[,] prev2 = new (int col, int row)?[cols, rows];
+        int[,] time2 = new int[cols, rows];
+        CalculateWeakestPaths(startTile, minMaxDamage2, prev2, time2, monster, allowThroughStructures: true);
+
+        var primary2 = SelectBestTarget(allTargets, minMaxDamage2, time2, IsPrimaryTarget, requireZeroDamage: false);
+        if (primary2 != null)
         {
-            var pathToPrimary = ReconstructPath(startTile, weakestPrimary.Value.Tile, previousTile, timeToReach);
-            if (pathToPrimary.Count > 0)
-            {
-                (int, int)? firstSecondary = null;
-                foreach (var tile in pathToPrimary)
-                {
-                    if (minMaxDamage[tile.Item1, tile.Item2] <= 0)
-                    {
-                        continue;
-                    }
-
-                    Entity structure = GamelabGame.MapManager.GetStructure(tile.Item1, tile.Item2);
-                    if (structure != null && IsSecondaryTarget(monster, structure))
-                    {
-                        firstSecondary = tile;
-                        break;
-                    }
-                }
-
-                if (firstSecondary != null)
-                {
-                    var secondaryPath = ReconstructPath(startTile, firstSecondary.Value, previousTile, timeToReach);
-                    if (secondaryPath.Count > 0)
-                    {
-                        AddInitialWait(secondaryPath, startTile, Step4InitialWaitTurns);
-                        secondaryPath.Add(firstSecondary.Value);
-                        int attackTime = timeToReach[firstSecondary.Value.Item1, firstSecondary.Value.Item2] + 1 + Step4InitialWaitTurns;
-                        RegisterTarget(monster, firstSecondary.Value, attackTime);
-                        return secondaryPath;
-                    }
-                }
-
-                AddInitialWait(pathToPrimary, startTile, Step4InitialWaitTurns);
-                RegisterTarget(monster, weakestPrimary.Value.Tile, timeToReach[weakestPrimary.Value.Tile.Item1, weakestPrimary.Value.Tile.Item2] + Step4InitialWaitTurns);
-                return pathToPrimary;
-            }
+            var path = ReconstructPath(startTile, primary2.Value.Tile, prev2, time2);
+            if (path.Count > 0)
+                return path;
         }
 
         return new List<(int, int)> { startTile };
     }
+
+    // --- OLD 4-STEP STRATEGY (commented out) ---
+    // public List<(int,int)> CalculatePath_Old(Monster monster)
+    // {
+    //     // --- GENERAL PATHFINDING STRATEGY ---
+    //     // We define a 'primary target' as a target that reduces the player's sanity when destroyed.
+    //     // All other targets are secondary targets.
+    //     // We define the 'weakest path' to some target as a path that minimizes the maximum damage
+    //     // taken at any tile along the path to the target.
+    //     // A monster has the following preferences:
+    //     // 1. A primary target that can be reached without getting damaged at any point.
+    //     //      --> tent, sheep
+    //     // 2. A secondary target that can be reached without getting damaged at any point.
+    //     //      --> wall
+    //     // 3. A target that another monster is going to and that the first monster can reach at the
+    //     //    same time as the other monster without getting damaged *before* arriving in the
+    //     //    target's attack range.
+    //     //      --> tower
+    //     // 4. The first secondary target on the 'weakest path' to any of the primary targets. The
+    //     //    monster will wait a little bit to give the other monsters a chance to join in.
+    //     // ------------------------------------
+    //     // Remove stale assignment for this monster before recalculating.
+    //     UnregisterMonsterTarget(monster);
+    //     UpdateDefenceStrengths();
+    //     (int col, int row) startTile = monster.TilePosition;
+    //     int[,] minMaxDamage = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+    //     (int col, int row)?[,] previousTile = new (int col, int row)?[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+    //     int[,] timeToReach = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+    //     CalculateWeakestPaths(startTile, minMaxDamage, previousTile, timeToReach, monster, allowThroughStructures: false);
+    //     var allTargets = GetAllTargetStructures(monster);
+    //     // 1-2: zero-damage primary/secondary
+    //     var primaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: true);
+    //     if (primaryZero != null) { var p = ReconstructPath(startTile, primaryZero.Value.Tile, previousTile, timeToReach); if (p.Count > 0) { RegisterTarget(monster, primaryZero.Value.Tile, timeToReach[primaryZero.Value.Tile.Item1, primaryZero.Value.Tile.Item2]); return p; } }
+    //     var secondaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: true);
+    //     if (secondaryZero != null) { var p = ReconstructPath(startTile, secondaryZero.Value.Tile, previousTile, timeToReach); if (p.Count > 0) { RegisterTarget(monster, secondaryZero.Value.Tile, timeToReach[secondaryZero.Value.Tile.Item1, secondaryZero.Value.Tile.Item2]); return p; } }
+    //     // 3: join active targets
+    //     foreach (var activeTarget in _activeTargets) { /* ... coordination logic ... */ }
+    //     // 4: weakest path to primary, attack first blocker
+    //     var weakestPrimary = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
+    //     if (weakestPrimary != null) { /* ... find first secondary on path ... */ }
+    //     return new List<(int, int)> { startTile };
+    // }
 
     /// <summary>
     /// Removes tracking information for a monster that left the map or died.
@@ -243,7 +173,8 @@ public class PathFindingManager
     /// Computes weakest paths from the start tile by minimizing maximum defense encountered.
     /// Also tracks predecessor and arrival time for each tile.
     /// </summary>
-    private void CalculateWeakestPaths((int col, int row) startTile, int[,] minMaxDamage, (int col, int row)?[,] previousTile, int[,] timeToReach)
+    private void CalculateWeakestPaths((int col, int row) startTile, int[,] minMaxDamage,
+        (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster, bool allowThroughStructures)
     {
         for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
         {
@@ -266,6 +197,21 @@ public class PathFindingManager
             var current = queue.Dequeue();
             int currentDamage = minMaxDamage[current.col, current.row];
             int currentTime = timeToReach[current.col, current.row];
+
+            Entity currentStructure = GamelabGame.MapManager.GetStructure(current.col, current.row);
+
+            if (allowThroughStructures)
+            {
+                // Only block truly impassable tiles (VoidTile for non-flying monsters)
+                if (currentStructure is VoidTile && monster.Type != MonsterType.Flying)
+                    continue;
+            }
+            else
+            {
+                // Block at structures the monster can't step on
+                if (currentStructure != null && !monster.CanStepOn(currentStructure))
+                    continue;
+            }
 
             foreach (var neighbor in Tower.GetHexNeighbors(current))
             {

@@ -46,6 +46,12 @@ public class EntityRenderer
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -80f);
                 }
+                else if (structure is Fence)
+                {
+                    Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);
+                    DrawHpBar(spriteBatch, worldPos, scale,
+                              structure.CurrentHealth, structure.MaxHealth, -10f);
+                }
                 else if (structure is Tent)
                 {
                     Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);

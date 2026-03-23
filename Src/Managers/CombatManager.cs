@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Gamelab;
 using Microsoft.Xna.Framework;
 
@@ -71,30 +72,50 @@ public class CombatManager
             }
         }
 
-        // Monsters attack structures on the same tile
+        // Monsters attack the structure on their goal tile when they've stopped moving
         for (int i = 0; i < GamelabGame.MapManager.Columns; i++)
         {
             for (int j = 0; j < GamelabGame.MapManager.Rows; j++)
             {
                 var group = GamelabGame.MapManager.GetMonster(i, j);
-                var structure = GamelabGame.MapManager.GetStructure(i, j);
-                if (group != null && structure != null && !structure.IsDestroyed)
-                {
-                    float hpBefore = structure.CurrentHealth;
-                    foreach (var monster in group.Monsters)
-                    {
-                        monster.Attack(structure, dt);
-                    }
+                if (group == null) continue;
 
-                    if (structure is Tent or Sheep && GamelabGame.SanityManager != null)
+                foreach (var monster in group.Monsters)
+                {
+                    if (!monster.GoalReached) continue;
+
+                    var goalTile = monster.AttackTarget ?? monster.TilePosition;
+                    var structure = GamelabGame.MapManager.GetStructure(goalTile.Item1, goalTile.Item2);
+                    if (structure == null || structure.IsDestroyed) continue;
+
+                    if (structure is Tent tent && GamelabGame.SanityManager != null)
                     {
-                        float damage = hpBefore - structure.CurrentHealth;
+                        // Tent damage goes through sanity — tent HP mirrors sanity
+                        float damage = monster.DamagePerSecond * dt;
                         _sanityDamageAccumulator += damage;
                         if (_sanityDamageAccumulator >= 1f)
                         {
                             int toDeduct = (int)_sanityDamageAccumulator;
                             GamelabGame.SanityManager.DeductSanity(toDeduct);
                             _sanityDamageAccumulator -= toDeduct;
+                        }
+                        tent.SyncHealthWithSanity();
+                    }
+                    else
+                    {
+                        float hpBefore = structure.CurrentHealth;
+                        monster.Attack(structure, dt);
+
+                        if (structure is Sheep && GamelabGame.SanityManager != null)
+                        {
+                            float damage = hpBefore - structure.CurrentHealth;
+                            _sanityDamageAccumulator += damage;
+                            if (_sanityDamageAccumulator >= 1f)
+                            {
+                                int toDeduct = (int)_sanityDamageAccumulator;
+                                GamelabGame.SanityManager.DeductSanity(toDeduct);
+                                _sanityDamageAccumulator -= toDeduct;
+                            }
                         }
                     }
                 }
@@ -114,15 +135,38 @@ public class CombatManager
         }
 
         // Remove dead structures
+        bool anyStructureDestroyed = false;
         for (int i = 0; i < GamelabGame.MapManager.Columns; i++)
         {
             for (int j = 0; j < GamelabGame.MapManager.Rows; j++)
             {
-                if (GamelabGame.MapManager.GetStructure(i,j) != null && GamelabGame.MapManager.GetStructure(i,j).IsDestroyed)
+                var structure = GamelabGame.MapManager.GetStructure(i,j);
+                if (structure != null && structure.IsDestroyed)
                 {
-                    if (GamelabGame.MapManager.GetStructure(i,j) is Tent)
+                    if (structure is Tent)
                         GamelabGame.MapManager.TentDestroyed = true;
+                    anyStructureDestroyed = true;
                     GamelabGame.MapManager.RemoveStructure(i,j);
+                }
+            }
+        }
+
+        // When ANY structure is destroyed, recalculate paths for ALL monsters
+        if (anyStructureDestroyed)
+        {
+            for (int i = 0; i < GamelabGame.MapManager.Columns; i++)
+            {
+                for (int j = 0; j < GamelabGame.MapManager.Rows; j++)
+                {
+                    var group = GamelabGame.MapManager.GetMonster(i, j);
+                    if (group == null) continue;
+                    foreach (var monster in group.Monsters)
+                    {
+                        monster.AttackTarget = null;
+                        var newPath = GamelabGame.PathFindingManager.CalculatePath(monster);
+                        if (newPath != null && newPath.Count > 0)
+                            monster.Path = newPath;
+                    }
                 }
             }
         }

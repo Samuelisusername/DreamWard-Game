@@ -79,12 +79,28 @@ public class MonsterGroup
         _normalSprite.Update(gameTime);
         if(!_goalReached)
         {
+            // Before interpolating, check if any monster is blocked by a structure it can't step on.
+            // If so, trim its path now so it never visually moves toward the blocked tile.
+            for (int i = 0; i < Monsters.Count; i++)
+            {
+                var monster = Monsters[i];
+                if (!monster.GoalReached)
+                {
+                    var dest = monster.Path[1];
+                    Entity destStructure = GamelabGame.MapManager.GetStructure(dest.Item1, dest.Item2);
+                    if (destStructure != null && !monster.CanStepOn(destStructure))
+                    {
+                        monster.AttackTarget = dest;
+                        monster.Path = new System.Collections.Generic.List<(int,int)> { monster.Path[0] };
+                    }
+                }
+            }
+
             _elapsed += gameTime.ElapsedGameTime;
             if(_elapsed >= _speed)
             {
                 _elapsed -= _speed;
                 Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
-                //GamelabGame.MapManager.MoveMonster(this,Path[0],Path[1]);
             }
             _pathProgress = (float)(_elapsed / _speed);
         }

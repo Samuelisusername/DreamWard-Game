@@ -12,8 +12,19 @@ public class CardEntity : Entity
 public class Tent : CardEntity
 {
     public Tent(string animName, MapManager mapManager, (int,int) pos)
-        : base(animName, mapManager, pos, 12)
+        : base(animName, mapManager, pos, Gamelab.GamelabGame.SanityManager?.Sanity ?? 100)
     {
+    }
+
+    /// <summary>
+    /// Syncs the tent's HP with the current sanity value so the tent
+    /// dies exactly when sanity reaches 0.
+    /// </summary>
+    public void SyncHealthWithSanity()
+    {
+        int sanity = Gamelab.GamelabGame.SanityManager?.Sanity ?? 0;
+        _currentHealth = sanity;
+        _maxHealth = sanity > _maxHealth ? sanity : _maxHealth;
     }
 }
 

@@ -30,6 +30,9 @@ public class Monster : Entity
     // Flag set by MonsterGroup when it's time to step forward
     public bool ShouldMove { get; set; }
 
+    // The tile this monster is trying to attack (set when blocked or when reaching goal)
+    public (int,int)? AttackTarget { get; set; }
+
     public List<(int,int)> Path
     {
         get => _path;
@@ -72,12 +75,14 @@ public class Monster : Entity
     /// <summary>
     /// Returns whether this monster can step on a tile occupied by the given entity.
     /// VoidTile: only flying monsters can step on it.
-    /// WallTile: regular monsters cannot step on it (must attack first), flying ignores it.
+    /// WallTile/Fence/Tower: regular monsters cannot step on it (must attack first), flying ignores it.
     /// </summary>
     public bool CanStepOn(Entity entity)
     {
         if (entity is VoidTile && Type != MonsterType.Flying) return false;
         if (entity is WallTile && Type != MonsterType.Flying) return false;
+        if (entity is Fence && Type != MonsterType.Flying) return false;
+        if (entity is Tower && Type != MonsterType.Flying) return false;
         return true;
     }
 
