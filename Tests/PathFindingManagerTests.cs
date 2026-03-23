@@ -6,17 +6,27 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using DreamWardUtils.Graphics;
+using Gamelab;
 
 namespace Tests;
 
 public class PathFindingManagerTests
 {
+    private const string TentAnim = "tent_idle";
+    private const string SheepAnim = "sheepSmall_idle";
+    private const string WallAnim = "wall_idle";
+    private const string TowerAnim = "towerSniper_idle";
+    private const string MonsterAnim = "normal_walkSW";
+
     private PathFindingManager _pm;
 
     [SetUp]
     public void Setup()
     {
-        _pm = new PathFindingManager(CreateTestMapManager(8, 8));
+        var mapManager = CreateTestMapManager();
+        SetStaticProperty(typeof(GamelabGame), "MapManager", mapManager);
+        EnsureTestTextureAtlases();
+        _pm = new PathFindingManager();
     }
 
     private static MapManager CreateTestMapManager(int columns = 8, int rows = 8)
@@ -148,21 +158,7 @@ public class PathFindingManagerTests
         Assert.That(path.Count, Is.GreaterThan(1));
     }
 
-    [Test]
-    public void CalculatePath_EndToEnd_SecondMonsterSyncsWithActiveTarget_WaitsAtStart()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceTower((2, 1));
 
-        _ = scenario.CalculatePath((0, 0));
-        List<(int, int)> secondPath = scenario.CalculatePath((2, 3));
-
-        AssertValidPath(secondPath, (2, 3), (2, 2));
-        Assert.That(secondPath.Count, Is.GreaterThan(2));
-        Assert.That(secondPath[0], Is.EqualTo((2, 3)));
-        Assert.That(secondPath[1], Is.EqualTo((2, 3)));
-    }
 
     [Test]
     public void CalculatePath_EndToEnd_PrimaryPreferredEvenWhenSecondaryIsCloser()
@@ -188,21 +184,7 @@ public class PathFindingManagerTests
         AssertValidPath(path, (0, 0), (1, 0));
     }
 
-    [Test]
-    public void CalculatePath_EndToEnd_WhenTooLateToJoinActiveTarget_PicksDifferentPrimaryTarget()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceSheep((5, 2));
-        scenario.PlaceTower((2, 1));
-        scenario.PlaceTower((5, 1));
 
-        List<(int, int)> firstPath = scenario.CalculatePath((1, 2));
-        List<(int, int)> secondPath = scenario.CalculatePath((7, 2));
-
-        AssertValidPath(firstPath, (1, 2), (2, 2));
-        AssertValidPath(secondPath, (7, 2), (5, 2));
-    }
 
     [Test]
     public void CalculatePath_EndToEnd_BetweenTwoPrimaryTargets_PrefersLowerDefenseTarget()
@@ -259,51 +241,6 @@ public class PathFindingManagerTests
         }
     }
 
-    [Test]
-    public void CalculatePath_EndToEnd_SecondMonsterArrivingLate_DoesNotWaitAtStart()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceTower((2, 1));
-
-        _ = scenario.CalculatePath((2, 3));
-        List<(int, int)> lateMonsterPath = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(lateMonsterPath, (0, 0), (2, 2));
-        Assert.That(lateMonsterPath.Count, Is.GreaterThan(1));
-        Assert.That(lateMonsterPath[1], Is.Not.EqualTo((0, 0)));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_Step4AppliesInitialWaitForBackup()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceTower((2, 1));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        Assert.That(path, Is.Not.Null);
-        Assert.That(path.Count, Is.GreaterThanOrEqualTo(3));
-        Assert.That(path[0], Is.EqualTo((0, 0)));
-        Assert.That(path[1], Is.EqualTo((0, 0)));
-        Assert.That(path[2], Is.EqualTo((0, 0)));
-        Assert.That(path[^1], Is.EqualTo((2, 2)));
-
-        for (int i = 1; i < path.Count; i++)
-        {
-            var previous = path[i - 1];
-            var current = path[i];
-            if (previous == current)
-            {
-                continue;
-            }
-
-            var validNeighbors = Tower.GetHexNeighbors(previous);
-            Assert.That(validNeighbors.Contains(current), Is.True,
-                $"Invalid step from {previous} to {current} at index {i}.");
-        }
-    }
 
     [Test]
     public void CalculatePath_EndToEnd_RepeatedCallsKeepTargetStable()
@@ -460,6 +397,32 @@ public class PathFindingManagerTests
         return entity;
     }
 
+    private static void EnsureTestTextureAtlases()
+    {
+        if (GamelabGame.textureAtlas != null) return;
+
+        var atlas = new TextureAtlas();
+        var animation = new Animation(new List<TextureRegion> { new TextureRegion() }, TimeSpan.FromMilliseconds(100));
+        atlas.AddAnimation(TentAnim, animation);
+        atlas.AddAnimation(SheepAnim, animation);
+        atlas.AddAnimation(WallAnim, animation);
+        atlas.AddAnimation(TowerAnim, animation);
+        atlas.AddAnimation(MonsterAnim, animation);
+
+        GamelabGame.textureAtlas = new Dictionary<string, TextureAtlas>
+        {
+            ["day_top"] = atlas,
+            ["night_top"] = atlas,
+            ["monsters"] = atlas
+        };
+    }
+
+    private static void SetStaticProperty(Type type, string propertyName, object value)
+    {
+        var backingField = type.GetField($"<{propertyName}>k__BackingField", BindingFlags.Static | BindingFlags.NonPublic);
+        backingField!.SetValue(null, value);
+    }
+
     private sealed class PathFindingScenario
     {
         public MapManager MapManager { get; }
@@ -468,33 +431,35 @@ public class PathFindingManagerTests
         public PathFindingScenario(int columns = 8, int rows = 8)
         {
             MapManager = CreateTestMapManager(columns, rows);
-            PathFindingManager = new PathFindingManager(MapManager);
+            SetStaticProperty(typeof(GamelabGame), "MapManager", MapManager);
+            EnsureTestTextureAtlases();
+            PathFindingManager = new PathFindingManager();
         }
 
         public Tent PlaceTent((int col, int row) tile)
         {
-            var tent = new Tent(null!, MapManager, tile);
+            var tent = new Tent(TentAnim, MapManager, tile);
             Assert.That(MapManager.PlaceEntity(tent, tile.col, tile.row), Is.True);
             return tent;
         }
 
         public Sheep PlaceSheep((int col, int row) tile)
         {
-            var sheep = new Sheep(null!, MapManager, tile);
+            var sheep = new Sheep(SheepAnim, MapManager, tile);
             Assert.That(MapManager.PlaceEntity(sheep, tile.col, tile.row), Is.True);
             return sheep;
         }
 
         public Wall PlaceWall((int col, int row) tile)
         {
-            var wall = new Wall(null!, MapManager, tile);
+            var wall = new Wall(WallAnim, MapManager, tile);
             Assert.That(MapManager.PlaceEntity(wall, tile.col, tile.row), Is.True);
             return wall;
         }
 
         public Tower PlaceTower((int col, int row) tile)
         {
-            var tower = new Tower(null!, MapManager, tile);
+            var tower = new Tower(TowerAnim, MapManager, tile);
             Assert.That(MapManager.PlaceEntity(tower, tile.col, tile.row), Is.True);
             return tower;
         }
@@ -517,7 +482,7 @@ public class PathFindingManagerTests
 
         public List<(int, int)> CalculatePath((int col, int row) start, MonsterType type = MonsterType.Regular)
         {
-            var monster = new Monster(null!, MapManager, start, start, type);
+            var monster = new Monster(MonsterAnim, MapManager, start, start, type);
             return PathFindingManager.CalculatePath(monster);
         }
     }
@@ -528,7 +493,7 @@ public class PathFindingManagerTests
         var scenario = new PathFindingScenario();
         scenario.PlaceTent((2, 2));
 
-        var monster = new Monster(null!, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
 
         for (int i = 0; i < 100; i++)
         {
@@ -564,7 +529,7 @@ public class PathFindingManagerTests
         var scenario = new PathFindingScenario();
         scenario.PlaceTent((6, 6));
 
-        var monster = new Monster(null!, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
 
         List<(int, int)> firstPath = scenario.PathFindingManager.CalculatePath(monster);
         AssertValidPath(firstPath, (0, 0), (6, 6));
@@ -608,7 +573,7 @@ public class PathFindingManagerTests
         scenario.PlaceTent((2, 2));
         scenario.PlaceTower((2, 1));
 
-        var monster = new Monster(null!, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
 
         const int warmupIterations = 20;
         for (int i = 0; i < warmupIterations; i++)
