@@ -95,6 +95,14 @@ public class MapManager
         _monsters = new MonsterGroup[Columns,Rows];
         _structures = new Entity[Columns,Rows];
     }
+
+    /// <summary>
+    /// Test-only constructor: uses the same TileSet for day and night.
+    /// </summary>
+    public MapManager(TileSet tileSet, int columns, int rows, TimeSpan delay)
+        : this(tileSet, tileSet, columns, rows, delay)
+    {
+    }
     
     public void Update(GameTime gameTime)
     {   

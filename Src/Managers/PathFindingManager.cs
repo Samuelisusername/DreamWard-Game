@@ -14,15 +14,31 @@ public class PathFindingManager
     private readonly int[,] _defenceStrength;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
 
+    private readonly MapManager _mapManagerOverride;
+    private MapManager Map => _mapManagerOverride ?? GamelabGame.MapManager;
+
     /// <summary>
-    /// Initializes a pathfinding manager bound to a map.
+    /// Initializes a pathfinding manager using the global MapManager.
     /// </summary>
     public PathFindingManager()
     {
         _activeTargets = new List<(int, int, int, int)>();
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
-        _defenceStrength = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+        _defenceStrength = new int[Map.Columns, Map.Rows];
+        _defenders = new Dictionary<(int, int), List<Entity>>();
+    }
+
+    /// <summary>
+    /// Initializes a pathfinding manager bound to a specific MapManager (used by tests).
+    /// </summary>
+    public PathFindingManager(MapManager mapManager)
+    {
+        _mapManagerOverride = mapManager;
+        _activeTargets = new List<(int, int, int, int)>();
+        _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
+        _monsterToTarget = new Dictionary<Monster, (int, int)>();
+        _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
     }
 
@@ -39,8 +55,8 @@ public class PathFindingManager
         UpdateDefenceStrengths();
 
         (int col, int row) startTile = monster.TilePosition;
-        int cols = GamelabGame.MapManager.Columns;
-        int rows = GamelabGame.MapManager.Rows;
+        int cols = Map.Columns;
+        int rows = Map.Rows;
         var allTargets = GetAllTargetStructures(monster);
 
         // Phase 1: try to reach a primary target (tent/sheep) without crossing blocking structures.
@@ -100,9 +116,9 @@ public class PathFindingManager
     //     UnregisterMonsterTarget(monster);
     //     UpdateDefenceStrengths();
     //     (int col, int row) startTile = monster.TilePosition;
-    //     int[,] minMaxDamage = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
-    //     (int col, int row)?[,] previousTile = new (int col, int row)?[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
-    //     int[,] timeToReach = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+    //     int[,] minMaxDamage = new int[Map.Columns, Map.Rows];
+    //     (int col, int row)?[,] previousTile = new (int col, int row)?[Map.Columns, Map.Rows];
+    //     int[,] timeToReach = new int[Map.Columns, Map.Rows];
     //     CalculateWeakestPaths(startTile, minMaxDamage, previousTile, timeToReach, monster, allowThroughStructures: false);
     //     var allTargets = GetAllTargetStructures(monster);
     //     // 1-2: zero-damage primary/secondary
@@ -144,11 +160,11 @@ public class PathFindingManager
         Array.Clear(_defenceStrength, 0, _defenceStrength.Length);
         _defenders.Clear();
 
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < Map.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < Map.Rows; row++)
             {
-                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
+                Entity structure = Map.GetStructure(col, row);
                 if (structure is not Tower tower)
                 {
                     continue;
@@ -176,9 +192,9 @@ public class PathFindingManager
     private void CalculateWeakestPaths((int col, int row) startTile, int[,] minMaxDamage,
         (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster, bool allowThroughStructures)
     {
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < Map.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < Map.Rows; row++)
             {
                 minMaxDamage[col, row] = int.MaxValue;
                 previousTile[col, row] = null;
@@ -198,7 +214,7 @@ public class PathFindingManager
             int currentDamage = minMaxDamage[current.col, current.row];
             int currentTime = timeToReach[current.col, current.row];
 
-            Entity currentStructure = GamelabGame.MapManager.GetStructure(current.col, current.row);
+            Entity currentStructure = Map.GetStructure(current.col, current.row);
 
             if (allowThroughStructures)
             {
@@ -260,11 +276,11 @@ public class PathFindingManager
     private List<((int, int) Tile, Entity Target)> GetAllTargetStructures(Monster monster)
     {
         var targets = new List<((int, int), Entity)>();
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < Map.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < Map.Rows; row++)
             {
-                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
+                Entity structure = Map.GetStructure(col, row);
                 if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
                 {
                     continue;
@@ -402,7 +418,7 @@ public class PathFindingManager
 
         var path = new List<(int, int)>();
         var current = endTile;
-        int maxSteps = GamelabGame.MapManager.Columns * GamelabGame.MapManager.Rows;
+        int maxSteps = Map.Columns * Map.Rows;
 
         for (int steps = 0; steps <= maxSteps; steps++)
         {
@@ -438,7 +454,7 @@ public class PathFindingManager
 
     private bool IsInBounds((int col, int row) tile)
     {
-        return tile.col >= 0 && tile.col < GamelabGame.MapManager.Columns && tile.row >= 0 && tile.row < GamelabGame.MapManager.Rows;
+        return tile.col >= 0 && tile.col < Map.Columns && tile.row >= 0 && tile.row < Map.Rows;
     }
 
     /// <summary>
