@@ -16,6 +16,7 @@
   "size": { "w": 640, "h": 360 },
   "scale": "1",
   "frameTags": [
+   { "name": "idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
    { "name": "cursor_click", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 32, "y": 0, "w": 16, "h": 16 } }] },
