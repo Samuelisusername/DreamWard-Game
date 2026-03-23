@@ -346,6 +346,12 @@
 /processorParam:Quality=Best
 /build:Sounds/creepy_demon_night_forest.mp3
 
+#begin Sounds/start_screen.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/start_screen.wav
+
 #begin Sprites/Start.png
 /importer:TextureImporter
 /processor:TextureProcessor

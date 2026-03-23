@@ -48,6 +48,7 @@ public class StartScreen : GamelabGameScreen
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
         UpdateLayout();
+        AudioManager.LoadSound(Game.Content, "start_music", "Sounds/start_screen");
     }
 
     private void UpdateLayout()
@@ -81,6 +82,7 @@ public class StartScreen : GamelabGameScreen
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
+        AudioManager.PlayMusic("start_music", _volume);
         if (keyboard.IsKeyDown(Keys.Escape))
             Game.Exit();
 

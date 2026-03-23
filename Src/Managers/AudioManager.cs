@@ -108,7 +108,7 @@ public static void UpdateMusicVolume(float volume)
                 if (!_sounds.ContainsKey(name))
                 {
                     _sounds[name] = content.Load<SoundEffect>(assetPath);
-                    Console.WriteLine($"[Audio Success] Loaded: {name} from {assetPath}");
+                  //  Console.WriteLine($"[Audio Success] Loaded: {name} from {assetPath}");
                 }
             }
         }
