@@ -18,6 +18,9 @@
   "frameTags": [
   ],
   "slices": [
+   { "name": "cursor_click", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 32, "y": 0, "w": 16, "h": 16 } }] },
+   { "name": "cursor_hover", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 0, "w": 16, "h": 16 } }] },
+   { "name": "cursor arrow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 16, "h": 16 } }] }
   ]
  }
 }
