@@ -476,6 +476,8 @@ public class MapScreen : GamelabGameScreen
             // Replace in entities list
             GamelabGame.MapManager.RemoveStructure(tile.Item1, tile.Item2);
             GamelabGame.MapManager.PlaceEntity(rat,tile.Item1, tile.Item2);
+
+            GamelabGame.MapManager.RegisterPolymorph(target, rat);
         }
     }
 }
