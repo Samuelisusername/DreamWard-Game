@@ -110,6 +110,13 @@ public class MapScreen : GamelabGameScreen
             return;
         }
 
+        // Zoom before mapupdates so entity scale is synced
+        if (mouse.DeltaScrollWheelValue != 0)
+        {
+            float delta = mouse.DeltaScrollWheelValue * (-0.01f);
+            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+        }
+
         // Map update
         GamelabGame.MapManager.Update(gameTime);
 
@@ -119,12 +126,6 @@ public class MapScreen : GamelabGameScreen
             return;
         }
 
-        // Zoom
-        if (mouse.DeltaScrollWheelValue != 0)
-        {
-            float delta = mouse.DeltaScrollWheelValue * (-0.01f);
-            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
-        }
 
         // Drag
         if (mouse.WasButtonPressed(MouseButton.Left))
