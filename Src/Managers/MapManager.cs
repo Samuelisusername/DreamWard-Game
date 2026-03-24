@@ -367,6 +367,24 @@ public class MapManager
         return (-1,-1);
     }
 
+    private List<(Entity original, Entity polymorphed)> _polymorphedEntities = new();
+
+    public void RegisterPolymorph(Entity original, Entity polymorphed)
+    {
+        _polymorphedEntities.Add((original, polymorphed));
+    }
+
+    public void RestorePolymorphedEntities()
+    {
+        foreach (var (original, polymorphed) in _polymorphedEntities)
+        {
+            var tile = polymorphed.TilePosition;
+            GamelabGame.MapManager.RemoveStructure(tile.Item1, tile.Item2);
+            GamelabGame.MapManager.PlaceEntity(original, tile.Item1, tile.Item2);
+        }
+        _polymorphedEntities.Clear();
+    }
+
 #endregion
     
 #region Input handling
