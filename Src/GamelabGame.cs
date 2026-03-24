@@ -150,6 +150,7 @@ public class GamelabGame : Game
         MapManager = new MapManager(setDay, setNight, 20, 20, TimeSpan.FromMilliseconds(500));
         MapManager.FillRandomly();
         MapManager.Scale = new Vector2(4, 4);
+        MapUtils.Setup(20,20);
         
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();

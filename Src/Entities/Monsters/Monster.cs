@@ -69,6 +69,8 @@ public class Monster : Entity
     {
         if (entity is VoidTile) return false;
         if (entity is TreeTile) return false;
+        if (entity is Meadow) return false;
+        if (entity is PlacableMeadow) return false;
         if (Type == MonsterType.Flying && entity is WallTile) return false;
         return true;
     }

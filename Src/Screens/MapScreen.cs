@@ -147,7 +147,7 @@ public class MapScreen : GamelabGameScreen
         if (mouse.WasButtonReleased(MouseButton.Left))
         {
             _dragStarted = false;
-            if(GamelabGame.GamePhaseManager.IsDay)
+            if(GamelabGame.GamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
             {
                 Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 // Navigation to CardScreen
@@ -162,13 +162,11 @@ public class MapScreen : GamelabGameScreen
                 if (HandleCardUseClicks(pos))
                     return;
 
-                if (!_isDrag)
+                if (_activeMapCard != null)
                 {
-                    if (_activeMapCard != null)
-                    {
-                        HandleMapCardUse(pos);
-                    }
+                    HandleMapCardUse(pos);
                 }
+                GamelabGame.MapManager.TryMoveSheep(pos);
             }
             _isDrag = false;
         }
@@ -332,11 +330,25 @@ public class MapScreen : GamelabGameScreen
             (centerX, centerY)
         ), centerX, centerY);
 
-        // 🐑 Sheep next to tent
-        GamelabGame.MapManager.PlaceEntity(new Sheep("sheepSmall_idle",
+        Meadow starterMeadow = new Meadow("meadow_idle",
             GamelabGame.MapManager,
-            (centerX + 1, centerY)
-        ),centerX + 1, centerY);
+            (centerX + 1, centerY), 5
+        );
+
+        // 🐑 Sheep next to tent
+        GamelabGame.MapManager.PlaceSheep(starterMeadow ,centerX + 1, centerY);
+
+        GamelabGame.MapManager.PlaceEntity(new Meadow("meadow_idle",
+            GamelabGame.MapManager,
+            (8, 7), 10
+        ) ,8, 7);
+
+        
+        GamelabGame.MapManager.PlaceEntity(new Meadow("meadow_idle",
+            GamelabGame.MapManager,
+            (15, 9), 10
+        ) ,15, 9);
+
 
         // 🌲 Random trees
         SpawnTrees(25, centerX, centerY);

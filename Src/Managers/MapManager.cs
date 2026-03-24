@@ -4,6 +4,8 @@ using DreamWardUtils.Graphics;
 using Gamelab;
 using System.Collections.Generic;
 using Gamelab.Managers;
+using System.Runtime.InteropServices;
+using Microsoft.Xna.Framework.Media;
 
 public class MapManager
 {    
@@ -64,6 +66,8 @@ public class MapManager
     /// The region of the hexagon that overlaps with other hexagons
     /// </summary>
     public float ScaledOffset => TileHeight /2;
+
+    public (int,int) SheepPosition {get; set;}
     
 #endregion
 
@@ -284,6 +288,31 @@ public class MapManager
         return false;
     }
 
+    
+    /// <summary>
+    /// Places an Sheep at the given position
+    /// </summary>
+    public bool PlaceSheep(Meadow entity, int col, int row)
+    {        
+        bool occupied = _structures[col,row] != null;
+        if (occupied)
+        {
+            Console.WriteLine("Tile already occupied!");
+            AudioManager.Play("error");
+            return false;
+        }
+
+        if (entity != null){
+            entity.SetAsBuildEntity();
+            
+            _structures[col,row] = entity;
+            entity.AddSheep();
+            SheepPosition = (col,row);
+            return true;
+        }
+        return false;
+    }
+
 
     /// <summary>
     /// Places an entity defined by the Card at the given position
@@ -303,7 +332,7 @@ public class MapManager
             "sniper" => "towerSniper_idle",
             "aoe" => "towerAOE_idle",
             "fence" => "fence_idle",
-            "meadow" => "meadow_idle",
+            "meadow" => "void_idle",
             _ => null
         };
 
@@ -314,7 +343,7 @@ public class MapManager
             "sniper" => new Tower(animKey, this, (col,row), damagePerSecond: 8f, health: 100),
             "aoe" => new AreaTower(animKey, this, (col,row), damagePerSecond: 5f, health: 80),
             "fence" => new Fence(animKey, this, (col,row)),
-            "meadow" => new Meadow(animKey, this, (col,row)),
+            "meadow" => new PlacableMeadow(animKey, this, (col,row),2),
             "dreamcatcher" => new Wall(animKey, this, (col,row)),
             _ => null
         };
@@ -322,6 +351,16 @@ public class MapManager
         if (entity != null){
             entity.SetAsBuildEntity();
             _structures[col,row] = entity;
+            if(entity is PlacableMeadow placableMeadow)
+            {
+                foreach (var position in MapUtils.getSurroundingTiles(col,row))
+                {
+                    if(_structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep)
+                    {
+                        placableMeadow.ActivateMeadow(meadow.SanityGain);
+                    }
+                }
+            }
             return true;
         }
         return false;
@@ -383,6 +422,53 @@ public class MapManager
             GamelabGame.MapManager.PlaceEntity(original, tile.Item1, tile.Item2);
         }
         _polymorphedEntities.Clear();
+    }
+
+    public void TryMoveSheep(Vector2 pos)
+    {
+        (int col, int row) = GetTileFromScreenPosition(pos);
+        Entity entity = GetStructure(col,row);
+        if(entity is Meadow meadow)
+        {
+            if(GamelabGame.SanityManager.TryDeductSanity(GamelabGame.PathFindingManager.CalculateTileDistance(SheepPosition.Item1, SheepPosition.Item2, col, row)))
+            {
+                foreach (var position in MapUtils.getSurroundingTiles(col,row))
+                {
+                    if(_structures[position.Item1,position.Item2] is PlacableMeadow toActivate)
+                    {
+                        toActivate.ActivateMeadow(meadow.SanityGain);
+                    }
+                }
+                foreach (var position in MapUtils.getSurroundingTiles(SheepPosition.Item1, SheepPosition.Item2))
+                {
+                    if(_structures[position.Item1,position.Item2] is PlacableMeadow toDeactivate)
+                    {
+                        toDeactivate.DeactivateMeadow();
+                    }
+                }
+                (_structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow).RemoveSheep();
+                meadow.AddSheep();
+                SheepPosition = (col,row);
+            }
+        } 
+    }
+
+    public Meadow GetSheep()
+    {
+        return _structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+    }
+
+    public List<PlacableMeadow> GetAllMeadows()
+    {
+        List<PlacableMeadow> res = new List<PlacableMeadow>();
+        foreach (var structure in _structures)
+        {
+            if(structure is PlacableMeadow placableMeadow)
+            {
+                res.Add(placableMeadow);
+            }
+        }
+        return res;
     }
 
 #endregion

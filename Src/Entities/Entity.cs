@@ -36,7 +36,7 @@ public abstract class Entity
 
     private bool _isDaySprite = true;
 
-    private string _animName;
+    protected string _animName;
 
     /// <summary>
     /// removes health from the entity

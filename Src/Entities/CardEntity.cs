@@ -44,13 +44,13 @@ public class Rat : CardEntity
     }
 }
 
-public class Meadow : CardEntity
-{
-    public Meadow(string animName, MapManager mapManager, (int,int) pos)
-        : base(animName, mapManager, pos, 1000)
-    {
-    }
-}
+// public class Meadow : CardEntity
+// {
+//     public Meadow(string animName, MapManager mapManager, (int,int) pos)
+//         : base(animName, mapManager, pos, 1000)
+//     {
+//     }
+// }
 
 public class Fence : CardEntity
 {

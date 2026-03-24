@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Gamelab;
 using Gamelab.Screens;
 
@@ -59,7 +60,12 @@ public class SanityManager
     /// </summary>
     public void AddSanityGainedFromNewDay()
     {
-        Sanity += 10;
+        Sanity += GamelabGame.MapManager.GetSheep().SanityGain;
+        List<PlacableMeadow> meadows = GamelabGame.MapManager.GetAllMeadows();
+        foreach (var meadow in meadows)
+        {
+            Sanity += meadow.SanityGain;
+        }
         // Missing Ma
         // pManager functionality (meadows) to implement
         //for (int i = 0; i < _map_manager.Columns; i++)
