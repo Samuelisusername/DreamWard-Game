@@ -50,7 +50,7 @@ public class MapManager
     /// <summary>
     /// The offset used to draw the map
     /// </summary>
-    public Vector2 Offset {get; set;}
+    public Vector2 Offset {get; private set;}
     
     /// <summary>
     /// The width of a single tile
@@ -407,11 +407,6 @@ public class MapManager
     }
 
     private List<(Entity original, Entity polymorphed)> _polymorphedEntities = new();
-
-    public void RegisterPolymorph(Entity original, Entity polymorphed)
-    {
-        _polymorphedEntities.Add((original, polymorphed));
-    }
 
     public void RestorePolymorphedEntities()
     {

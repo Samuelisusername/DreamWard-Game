@@ -88,7 +88,7 @@ public class CombatManager
                     var structure = GamelabGame.MapManager.GetStructure(goalTile.Item1, goalTile.Item2);
                     if (structure == null || structure.IsDestroyed) continue;
 
-                    if (structure is Tent tent && GamelabGame.SanityManager != null)
+                    if (GamelabGame.SanityManager != null && structure is Tent tent)
                     {
                         // Tent damage goes through sanity — tent HP mirrors sanity
                         float damage = monster.DamagePerSecond * dt;
@@ -99,7 +99,20 @@ public class CombatManager
                             GamelabGame.SanityManager.DeductSanity(toDeduct);
                             _sanityDamageAccumulator -= toDeduct;
                         }
-                        tent.SyncHealthWithSanity();
+                        tent.SyncHealthWithSanity(); 
+                    }
+                    else if(GamelabGame.SanityManager != null && structure is Meadow meadow)
+                    {                           
+                        // Tent damage goes through sanity — tent HP mirrors sanity
+                        float damage = monster.DamagePerSecond * dt;
+                        _sanityDamageAccumulator += damage;
+                        if (_sanityDamageAccumulator >= 1f)
+                        {
+                            int toDeduct = (int)_sanityDamageAccumulator;
+                            GamelabGame.SanityManager.DeductSanity(toDeduct);
+                            _sanityDamageAccumulator -= toDeduct;
+                        }
+                        meadow.SyncHealthWithSanity(); 
                     }
                     else
                     {

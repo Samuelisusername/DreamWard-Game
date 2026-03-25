@@ -1,3 +1,4 @@
+using Autofac.Features.GeneratedFactories;
 using Gamelab;
 
 /// <summary>
@@ -6,6 +7,8 @@ using Gamelab;
 public class Meadow : Entity
 {
     public bool HasSheep{get; private set;}
+
+    public bool IsPolymorphed{get; private set;}
 
     public int SanityGain {get; private set;}
     public Meadow(string animName, MapManager mapManager, (int,int) pos, int sanityGain)
@@ -31,6 +34,42 @@ public class Meadow : Entity
         _sprite = GamelabGame.GamePhaseManager.IsDay ? 
         GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) :
         GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
+    }
+
+    public void PolymorphSheep()
+    {
+        if(HasSheep)
+        {
+            IsPolymorphed = true;
+            _animName = "rats_idle";
+            _sprite = GamelabGame.GamePhaseManager.IsDay ? 
+            GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) :
+            GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
+        }
+    }
+
+    public void UnpolymorphSheep()
+    {
+        if(HasSheep)
+        {
+            IsPolymorphed = false;
+            _animName = "sheepSmall_idle";
+            _sprite = GamelabGame.GamePhaseManager.IsDay ? 
+            GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) :
+            GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
+        }
+    }
+    
+
+    /// <summary>
+    /// Syncs the tent's HP with the current sanity value so the tent
+    /// dies exactly when sanity reaches 0.
+    /// </summary>
+    public void SyncHealthWithSanity()
+    {
+        int sanity = Gamelab.GamelabGame.SanityManager?.Sanity ?? 0;
+        _currentHealth = sanity;
+        _maxHealth = sanity > _maxHealth ? sanity : _maxHealth;
     }
 }
 

@@ -357,3 +357,11 @@
 /processor:TextureProcessor
 /build:Sprites/Start.png
 
+#begin Sprites/icon.json
+/copy:Sprites/icon.json
+
+#begin Sprites/icon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/icon.png
+

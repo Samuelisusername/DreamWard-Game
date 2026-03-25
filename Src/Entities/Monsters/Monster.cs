@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DreamWardUtils.Graphics;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 public enum MonsterType
 {
@@ -33,6 +30,8 @@ public class Monster : Entity
     // The tile this monster is trying to attack (set when blocked or when reaching goal)
     public (int,int)? AttackTarget { get; set; }
 
+    public string Facing {get; private set;}
+
     public List<(int,int)> Path
     {
         get => _path;
@@ -43,10 +42,19 @@ public class Monster : Entity
                 if (item.Item1 < 0 || item.Item1 >= _mapManager.Columns || item.Item2 < 0 || item.Item2 >= _mapManager.Rows)
                 {
                     _path = new List<(int,int)> { value[0] };
+                    Facing = "S";
                     return;
                 }
             }
             _path = value;
+            if(_path.Count > 1)
+            {
+                Facing = MapUtils.GetDirection(_path[0],_path[1]);
+            }
+            else
+            {
+                Facing = Facing ?? "S";
+            }
         }
     }
 
@@ -69,8 +77,8 @@ public class Monster : Entity
     {
         if (entity is VoidTile) return false;
         if (entity is TreeTile) return false;
-        if (entity is Meadow) return false;
-        if (entity is PlacableMeadow) return false;
+        if (entity is Meadow meadow && (!meadow.HasSheep || meadow.IsPolymorphed)) return false;
+        if (entity is PlacableMeadow) return false; //TODO: when can they attack meadows
         if (Type == MonsterType.Flying && entity is WallTile) return false;
         return true;
     }
@@ -99,6 +107,10 @@ public class Monster : Entity
         if (GoalReached) return;
         _path.RemoveAt(0);
         TilePosition = _path[0];
+        if(!GoalReached)
+        {
+            Facing = MapUtils.GetDirection(_path[0], _path[1]);
+        }
     }
 
     /// <summary>

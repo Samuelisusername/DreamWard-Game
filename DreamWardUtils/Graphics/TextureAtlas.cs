@@ -66,6 +66,8 @@ public class TextureAtlas
         _regions.Clear();
     }
 
+    private readonly List<string> _animationVariantsMonster = new List<string>{"SW", "NW", "N", "S"};
+
     public static TextureAtlas FromFile(ContentManager content, string fileName)
     {
         TextureAtlas atlas = new TextureAtlas();
@@ -227,5 +229,28 @@ public class TextureAtlas
     {
         Animation animation = GetAnimation(animationName);
         return new AnimatedSprite(animation);
+    }
+
+    public Dictionary<string, AnimatedSprite> CreateAnimatedSpriteAtlas(string animationName, Vector2 scale)
+    {
+        Dictionary<string, AnimatedSprite> res = new Dictionary<string, AnimatedSprite>();
+        AnimatedSprite sprite;
+        foreach (var variant in _animationVariantsMonster)
+        {
+            sprite =  CreateAnimatedSprite(animationName + variant);
+            sprite.Scale = scale;
+            res.Add(variant, sprite);
+        }
+
+        sprite = CreateAnimatedSprite(animationName + "NW");
+        sprite.Scale = scale;
+        sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+        res.Add("NE", sprite);
+
+        sprite = CreateAnimatedSprite(animationName + "SW");
+        sprite.Scale = scale;
+        sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+        res.Add("SE", sprite);
+        return res;
     }
 }

@@ -313,7 +313,7 @@ public class PathFindingManager
     /// </summary>
     private static bool IsPrimaryTarget(Entity target)
     {
-        return target is Tent || target is Sheep;
+        return target is Tent || (target is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed);
     }
 
     /// <summary>

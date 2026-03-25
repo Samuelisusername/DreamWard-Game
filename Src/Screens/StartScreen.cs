@@ -92,7 +92,7 @@ public class StartScreen : GamelabGameScreen
         switch (_currentState)
         {
             case MenuState.MainMenu:
-                if (mouse.WasButtonPressed(MouseButton.Left))
+                if (mouse.WasButtonReleased(MouseButton.Left))
                 {
                     for (int i = 0; i < _buttons.Length; i++)
                     {
@@ -110,7 +110,7 @@ public class StartScreen : GamelabGameScreen
 
             case MenuState.HowToPlay:
             case MenuState.Settings:
-                if (mouse.WasButtonPressed(MouseButton.Left))
+                if (mouse.WasButtonReleased(MouseButton.Left))
                 {
                     if (_buttons[0].Contains(pos))
                         _currentState = MenuState.MainMenu;

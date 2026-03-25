@@ -25,7 +25,7 @@ public class MapScreen : GamelabGameScreen
 
     // Drag
     private bool _isDrag;
-    private bool _dragStarted;
+    private bool _clickStarted;
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
     private (int,int) _selectedTile = (-1,-1);
@@ -110,68 +110,74 @@ public class MapScreen : GamelabGameScreen
             return;
         }
 
-        // Zoom before mapupdates so entity scale is synced
-        if (mouse.DeltaScrollWheelValue != 0)
+        if(Game.IsActive)
         {
-            float delta = mouse.DeltaScrollWheelValue * (-0.01f);
-            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            // Zoom before mapupdates so entity scale is synced
+            if (mouse.DeltaScrollWheelValue != 0)
+            {
+                float delta = mouse.DeltaScrollWheelValue * (-0.01f);
+                GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            }
         }
+        
 
         // Map update
         GamelabGame.MapManager.Update(gameTime);
 
-        if (GamelabGame.MapManager.TentDestroyed)
+        if(Game.IsActive)
         {
-            Game.SwitchToScreen(new GameOverScreen(Game));
-            return;
-        }
-
-
-        // Drag
-        if (mouse.WasButtonPressed(MouseButton.Left))
-        {
-            _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-            _dragStarted = true;
-        }
-
-        if (mouse.IsButtonDown(MouseButton.Left) && _dragStarted)
-        {
-            Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-            GamelabGame.MapManager.MoveMap(deltaPos);
-            if (deltaPos.Length() > 0)
+            if (GamelabGame.MapManager.TentDestroyed)
             {
-                _isDrag = true;
+                Game.SwitchToScreen(new GameOverScreen(Game));
+                return;
+            }
+
+
+            // Drag
+            if (mouse.WasButtonPressed(MouseButton.Left))
+            {
                 _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                _clickStarted = true;
             }
-        }
 
-        if (mouse.WasButtonReleased(MouseButton.Left))
-        {
-            _dragStarted = false;
-            if(GamelabGame.GamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
+            if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted)
             {
-                Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                // Navigation to CardScreen
-                if (_toCardScreenBtn.Contains(pos))
+                Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
+                GamelabGame.MapManager.MoveMap(deltaPos);
+                if (deltaPos.Length() > 0)
                 {
-                    Game.SwitchToScreen(Game.CardScreenInstance);
-                    AudioManager.Play("dragonflap");
-                    return;
+                    _isDrag = true;
+                    _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
-
-                // Check USE buttons on cards
-                if (HandleCardUseClicks(pos))
-                    return;
-
-                if (_activeMapCard != null)
-                {
-                    HandleMapCardUse(pos);
-                }
-                GamelabGame.MapManager.TryMoveSheep(pos);
             }
-            _isDrag = false;
-        }
-        
+
+            if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
+            {
+                _clickStarted = false;
+                _isDrag = false;
+                if(GamelabGame.GamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
+                {
+                    Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                    // Navigation to CardScreen
+                    if (_toCardScreenBtn.Contains(pos))
+                    {
+                        Game.SwitchToScreen(Game.CardScreenInstance);
+                        AudioManager.Play("dragonflap");
+                        return;
+                    }
+
+                    // Check USE buttons on cards
+                    if (HandleCardUseClicks(pos))
+                        return;
+
+                    if (HandleMapCardUse(pos))
+                    {
+                        return;
+                    }
+                    GamelabGame.MapManager.TryMoveSheep(pos);
+                }
+            }
+        }        
     }
 
     public override void Draw(GameTime gameTime)
@@ -387,10 +393,11 @@ public class MapScreen : GamelabGameScreen
         }
     }
 
-    private void HandleMapCardUse(Vector2 pos)
+    private bool HandleMapCardUse(Vector2 pos)
     {
+        if(_activeMapCard == null) return false;
         (int col, int row) = GamelabGame.MapManager.GetTileFromScreenPosition(pos);
-        if (col < 0) return;
+        if (col < 0) return false;
 
         if (_activeMapCard.Type == CardType.Build)
         {
@@ -403,7 +410,7 @@ public class MapScreen : GamelabGameScreen
                 _activeMapCard = null;
             }
 
-            return;
+            return success;
         }
 
         if (_activeMapCard.Type == CardType.MapAction)
@@ -415,7 +422,10 @@ public class MapScreen : GamelabGameScreen
                 GamelabGame.CardManager.UseCard(_activeMapCard); // ✅ NOW works for ALL actions
                 _activeMapCard = null;
             }
+            return success;
         }
+
+        return false;
     }
 
 
@@ -466,7 +476,7 @@ public class MapScreen : GamelabGameScreen
 
             case CardEffect.Polymorph:
                 // ✅ Keep as-is
-                if (target is Sheep)
+                if (target is Meadow meadow && meadow.HasSheep)
                 {
                     PolymorphEntity(target);
                     AudioManager.Play("qubodupRatAttack"); //probably change this audio later
@@ -481,16 +491,12 @@ public class MapScreen : GamelabGameScreen
 
     private void PolymorphEntity(Entity target)
     {
-        if (target is Sheep)
+        if (target is Meadow meadow && meadow.HasSheep)
         {
             var tile = target.TilePosition;
-            var rat = new Rat("rats_idle", GamelabGame.MapManager, tile);
 
             // Replace in entities list
-            GamelabGame.MapManager.RemoveStructure(tile.Item1, tile.Item2);
-            GamelabGame.MapManager.PlaceEntity(rat,tile.Item1, tile.Item2);
-
-            GamelabGame.MapManager.RegisterPolymorph(target, rat);
+            GamelabGame.MapManager.GetSheep().PolymorphSheep();
         }
     }
 }

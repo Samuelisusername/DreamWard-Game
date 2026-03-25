@@ -68,7 +68,7 @@ public class CardScreen : GamelabGameScreen
     {
         GamelabGame.CardManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
-        if (mouse.WasButtonPressed(MouseButton.Left))
+        if (mouse.WasButtonReleased(MouseButton.Left))
         {
             var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
             HandleClick(pos);

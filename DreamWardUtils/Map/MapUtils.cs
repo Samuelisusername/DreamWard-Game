@@ -6,6 +6,13 @@ public static class MapUtils
 {
     public static int Columns {get; private set;}
     public static int Rows {get; private set;}
+
+    public static void Setup(int columns, int rows)
+    {
+        Columns = columns;
+        Rows = rows;
+    }
+
     public static List<(int,int)> getSurroundingTiles(int col, int row)
     {
         List<(int,int)> res;
@@ -20,9 +27,11 @@ public static class MapUtils
         return res.Where(i => i .Item1 >= 0 && i.Item1 < Columns && i.Item2 >= 0 && i.Item2 < Rows).ToList();
     }
 
-    public static void Setup(int columns, int rows)
+    public static string GetDirection((int, int) from, (int,int) to)
     {
-        Columns = columns;
-        Rows = rows;
+        string WE = from.Item1 > to.Item1 ? "W" : (from.Item1 == to.Item1 ? "" : "E");
+        string NS = from.Item2 > to.Item2 ? "N" : (from.Item2 < to.Item2 ? "S" : (from.Item1 % 2 == 0 ? "S" : "N"));
+
+        return NS + WE;
     }
 }

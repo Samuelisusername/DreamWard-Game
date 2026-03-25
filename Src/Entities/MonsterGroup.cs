@@ -32,10 +32,22 @@ public class MonsterGroup
     public (int,int) TilePosition {get; protected set;}
 
     //the animation of this entity
-    protected AnimatedSprite _amalgamSprite;
+    protected Dictionary<string,AnimatedSprite> _amalgamSpriteIdle;
 
     //the animation of this entity
-    protected AnimatedSprite _normalSprite;
+    protected Dictionary<string,AnimatedSprite> _amalgamSpriteWalk;
+
+    //the animation of this entity
+    protected Dictionary<string,AnimatedSprite> _amalgamSpriteAttack;
+
+    //the animation of this entity
+    protected Dictionary<string,AnimatedSprite> _normalSpriteIdle;
+
+    //the animation of this entity
+    protected Dictionary<string,AnimatedSprite> _normalSpriteWalk;
+
+    //the animation of this entity
+    protected Dictionary<string,AnimatedSprite> _normalSpriteAttack;
 
     private bool _goalReached => Monsters.Select(i => i.GoalReached).All(j => j);
 
@@ -64,10 +76,12 @@ public class MonsterGroup
 
     public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
     {
-        _amalgamSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_amalgam_walkSW");
-        _amalgamSprite.Scale = mapManager.Scale;
-        _normalSprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walkSW");
-        _normalSprite.Scale = mapManager.Scale;
+        _amalgamSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_idle", mapManager.Scale);
+        _amalgamSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_walk", mapManager.Scale);
+        _amalgamSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_attack", mapManager.Scale);
+        _normalSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_idle", mapManager.Scale);
+        _normalSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_walk", mapManager.Scale);
+        _normalSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_attack", mapManager.Scale);
         _speed = speed;
         Monsters = new List<Monster>();
         TilePosition = tilePosition;
@@ -75,8 +89,30 @@ public class MonsterGroup
     
     public void Update(GameTime gameTime)
     {
-        _amalgamSprite.Update(gameTime);
-        _normalSprite.Update(gameTime);
+        foreach (var sprite in _amalgamSpriteIdle)
+        {
+            sprite.Value.Update(gameTime);
+        }
+        foreach (var sprite in _amalgamSpriteWalk)
+        {
+            sprite.Value.Update(gameTime);
+        }
+        foreach (var sprite in _amalgamSpriteAttack)
+        {
+            sprite.Value.Update(gameTime);
+        }
+        foreach (var sprite in _normalSpriteIdle)
+        {
+            sprite.Value.Update(gameTime);
+        }
+        foreach (var sprite in _normalSpriteWalk)
+        {
+            sprite.Value.Update(gameTime);
+        }
+        foreach (var sprite in _normalSpriteAttack)
+        {
+            sprite.Value.Update(gameTime);
+        }
         if(!_goalReached)
         {
             // Before interpolating, check if any monster is blocked by a structure it can't step on.
@@ -135,8 +171,31 @@ public class MonsterGroup
     /// <param name="scale"></param>
     public void SetScale(Vector2 scale)
     {
-        _amalgamSprite.Scale = scale;
-        _normalSprite.Scale = scale;
+        
+        foreach (var sprite in _amalgamSpriteIdle)
+        {
+            sprite.Value.Scale = scale;
+        }
+        foreach (var sprite in _amalgamSpriteWalk)
+        {
+            sprite.Value.Scale = scale;
+        }
+        foreach (var sprite in _amalgamSpriteAttack)
+        {
+            sprite.Value.Scale = scale;
+        }
+        foreach (var sprite in _normalSpriteIdle)
+        {
+            sprite.Value.Scale = scale;
+        }
+        foreach (var sprite in _normalSpriteWalk)
+        {
+            sprite.Value.Scale = scale;
+        }
+        foreach (var sprite in _normalSpriteAttack)
+        {
+            sprite.Value.Scale = scale;
+        }
     }
 
     /// <summary>
@@ -153,7 +212,16 @@ public class MonsterGroup
             Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
             Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
             Vector2 dir = goal-origin;
-            _amalgamSprite.Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _amalgamSprite.Scale);     
+            if(dir == Vector2.Zero)
+            {
+                _amalgamSpriteIdle["S"].Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _amalgamSpriteIdle["S"].Scale);
+            }
+            else
+            {
+                string key = MapUtils.GetDirection(TilePosition, tileGoal);
+                _amalgamSpriteWalk[key].Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _amalgamSpriteWalk[key].Scale);
+            }
+            
         }
 
         
@@ -161,8 +229,16 @@ public class MonsterGroup
         {
             Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
             Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
-            Vector2 dir = goal-origin;
-            _normalSprite.Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _normalSprite.Scale);     
+            Vector2 dir = goal-origin;            
+            if(dir == Vector2.Zero)
+            {
+                _normalSpriteIdle["S"].Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _normalSpriteIdle["S"].Scale);
+            }
+            else
+            {
+                string key = MapUtils.GetDirection(TilePosition, tileGoal);
+                _normalSpriteWalk[key].Draw(spriteBatch, origin + dir * _pathProgress + _localOffset * _normalSpriteWalk[key].Scale);
+            }     
         }
     }
 

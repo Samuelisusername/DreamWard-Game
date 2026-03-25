@@ -18,7 +18,7 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
-        GamelabGame.MapManager.RestorePolymorphedEntities();
+        GamelabGame.MapManager.GetSheep().UnpolymorphSheep();
         // call the SanityManger, MapManger and CardManager to set up the new day
         GamelabGame.SanityManager.AddSanityGainedFromNewDay();
         // call CardManager, how??
