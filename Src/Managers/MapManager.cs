@@ -70,7 +70,7 @@ public class MapManager
     /// <summary>
     /// The position of the Sheep on the map
     /// </summary>
-    public (int,int) SheepPosition {get; set;}
+    public (int col, int row) SheepPosition {get; set;}
     
     /// <summary>
     /// True when the tent has been destroyed by monsters
@@ -351,7 +351,7 @@ public class MapManager
     /// </summary>
     /// <param name="position"></param>
     /// <returns>returns [col,row] of the tile at position. returns [-1,-1] if the position is not on the tilemap</returns>
-    public (int,int) GetTileFromScreenPosition(Vector2 position)
+    public (int col, int pos) GetTileFromScreenPosition(Vector2 position)
     {
         position -= Offset;
         (int,int) res;
@@ -395,7 +395,7 @@ public class MapManager
     /// returns the 
     /// </summary>
     /// <returns></returns>
-    public (int,int) GetTent()
+    public (int col, int row) GetTent()
     {
         foreach (var item in Structures)
         {
