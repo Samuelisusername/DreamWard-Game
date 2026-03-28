@@ -246,4 +246,32 @@ public class CardManager
             Top3Cards.Add(template with {});
         }
     }
+
+    public Structure GetStructureFromCard(Card card, (int col, int row) pos)
+    {
+        
+        string animKey = card.SpriteName switch
+        {
+            "dreamcatcher" => "wall_idle", // map dreamcatcher to wall
+            "sniper" => "towerSniper_idle",
+            "aoe" => "towerAOE_idle",
+            "fence" => "fence_idle",
+            "meadow" => "void_idle",
+            _ => null
+        };
+
+        if (animKey == null) return null; // no matching animation
+
+        Structure structure = card.Name switch
+        {
+            "sniper" => new Tower(animKey, pos, damagePerSecond: 8f, health: 100),
+            "aoe" => new AreaTower(animKey, pos, damagePerSecond: 5f, health: 80),
+            "fence" => new Fence(animKey, pos),
+            "meadow" => new PlacableMeadow(animKey, pos,2),
+            "dreamcatcher" => new Wall(animKey, pos),
+            _ => null
+        };
+
+        return structure;
+    }
 }

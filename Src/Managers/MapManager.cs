@@ -11,6 +11,7 @@ public class MapManager
 #region Managers
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CombatManager combatManager => GamelabGame.CombatManager;
+    private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
 #endregion
     
@@ -283,27 +284,7 @@ public class MapManager
             return false;
         }
 
-        string animKey = card.SpriteName switch
-        {
-            "dreamcatcher" => "wall_idle", // map dreamcatcher to wall
-            "sniper" => "towerSniper_idle",
-            "aoe" => "towerAOE_idle",
-            "fence" => "fence_idle",
-            "meadow" => "void_idle",
-            _ => null
-        };
-
-        if (animKey == null) return false; // no matching animation
-
-        Structure structure = card.Name switch
-        {
-            "sniper" => new Tower(animKey, (pos.col, pos.row), damagePerSecond: 8f, health: 100),
-            "aoe" => new AreaTower(animKey, (pos.col, pos.row), damagePerSecond: 5f, health: 80),
-            "fence" => new Fence(animKey, (pos.col, pos.row)),
-            "meadow" => new PlacableMeadow(animKey, (pos.col, pos.row),2),
-            "dreamcatcher" => new Wall(animKey, (pos.col, pos.row)),
-            _ => null
-        };
+        Structure structure = cardManager.GetStructureFromCard(card, pos);
 
         if (structure != null){
             Structures[pos.col, pos.row] = structure;
