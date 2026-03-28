@@ -21,7 +21,7 @@ public class GamePhaseManager
         //TODO: Call the Cardmanager to set up ned day
         IsDay = true;
         DayCount += 1;
-        AudioManager.PlayMusic("day_music", GamelabGame.Instance.MasterVolume);
+        AudioManager.PlayMusic("day_music");
         checkGameOver();
     }
 
@@ -32,7 +32,7 @@ public class GamePhaseManager
     {
         combatManager.SpawnMonsters(DayCount * 3);
         IsDay = false;
-        AudioManager.PlayMusic("night_music", GamelabGame.Instance.MasterVolume);
+        AudioManager.PlayMusic("night_music");
     }
 
     public void checkGameOver()

@@ -35,7 +35,8 @@ public class StartScreen : GamelabGameScreen
     - Use action cards strategically to gain advantages.
     - During the night, watch how your defenses protect you from monsters.";
 
-    private float _volume = 0.5f;
+
+    private float _volume = AudioManager.SavedVolume;
     private Rectangle _volumeBar;
 
     public StartScreen(GamelabGame game) : base(game) { }
@@ -82,7 +83,7 @@ public class StartScreen : GamelabGameScreen
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
-        AudioManager.PlayMusic("start_music", _volume);
+        AudioManager.PlayMusic("start_music");
         if (keyboard.IsKeyDown(Keys.Escape))
             Game.Exit();
 

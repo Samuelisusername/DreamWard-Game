@@ -28,13 +28,14 @@ namespace Gamelab.Managers;
 
 public static class AudioManager
 {
+    public static float SavedVolume { get; private set; } = 0.5f;
     private static Dictionary<string, SoundEffect> _sounds = new Dictionary<string, SoundEffect>();
     private static SoundEffectInstance _currentMusic;
     private static string _currentMusicName = "";
     // ---------------------------------------------------
 // Plays background music (loops automatically and stops the old song)
 // ---------------------------------------------------
-public static void PlayMusic(string name, float volume = 1f)
+public static void PlayMusic(string name)
 {
     // ✨ THE MAGIC FIX: If this song is already playing, just let it keep playing!
     if (_currentMusicName == name) 
@@ -52,7 +53,7 @@ public static void PlayMusic(string name, float volume = 1f)
         // Start the new song
         _currentMusic = _sounds[name].CreateInstance();
         _currentMusic.IsLooped = true;
-        _currentMusic.Volume = volume;
+        _currentMusic.Volume = SavedVolume;
         _currentMusic.Play();
 
         // Remember what song we are playing now
@@ -66,8 +67,11 @@ public static void PlayMusic(string name, float volume = 1f)
 // Optional: Call this if the player changes the volume in the settings!
 public static void UpdateMusicVolume(float volume)
 {
+    SavedVolume = volume;
     if (_currentMusic != null)
         _currentMusic.Volume = volume;
+    GamelabGame.Instance.MasterVolume = volume;
+
 }
 
     // ---------------------------------------------------
