@@ -80,7 +80,40 @@ public class CombatManager
 
                     if (_towerSoundTimers[tower] <= 0f)
                     {
-                        AudioManager.Play("shoot_01");
+                        // ✅ AUDIO LOGIC: Only play the sound if the cooldown is at 0
+                    if (dealtDamageThisFrame)
+                    {
+                        if (!_towerSoundTimers.ContainsKey(tower))
+                            _towerSoundTimers[tower] = 0f;
+
+                        _towerSoundTimers[tower] -= dt;
+
+                        if (_towerSoundTimers[tower] <= 0f)
+                        {
+                            // Check the specific type of the tower to pick the sound and cooldown
+                            string soundToPlay;
+                            float cooldown;
+
+                            if (tower is AreaTower)
+                            {
+                                // The AOE tower sound
+                                soundToPlay = "AOE-tower_stomp"; 
+                                
+                                // You might want a slower cooldown for the heavy stomp! 
+                                // Adjust this number if it plays too fast.
+                                cooldown = 1.5f; 
+                            }
+                            else 
+                            {
+                                // The standard Sniper tower sound
+                                soundToPlay = "shoot_01"; 
+                                cooldown = 1.0f;
+                            }
+
+                            AudioManager.Play(soundToPlay);
+                            _towerSoundTimers[tower] = cooldown; 
+                        }
+                    }
                         
                         // Set the cooldown (1.0f = plays sound once per second)
                         // You can change this to 0.5f for faster shooting sounds!
