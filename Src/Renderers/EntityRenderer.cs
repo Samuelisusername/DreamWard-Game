@@ -1,18 +1,12 @@
 using System;
 using Microsoft.Xna.Framework;
-using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
+using Gamelab;
 
 public class EntityRenderer
 {
-    private MapManager _manager;
+    private MapManager mapManager => GamelabGame.MapManager;
     private Texture2D _pixel;
-
-    public EntityRenderer(MapManager mapManager)
-    {
-        _manager = mapManager;
-    }
 
     public void SetHealthBarTexture(Texture2D pixel)
     {
@@ -21,45 +15,45 @@ public class EntityRenderer
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        for(int i = 0; i < _manager.Rows * 2; i++)
+        for(int i = 0; i < mapManager.Rows * 2; i++)
         {
-            for(int j = i % 2; j < _manager.Columns; j += 2)
+            for(int j = i % 2; j < mapManager.Columns; j += 2)
             {
-                _manager.GetStructure(j,i/2)?.Draw(spriteBatch);
-                _manager.GetMonster(j,i/2)?.Draw(spriteBatch);
+                mapManager.GetStructure((j,i/2))?.Draw(spriteBatch);
+                mapManager.GetMonsterGroup((j,i/2))?.Draw(spriteBatch);
             }
         }
 
         if (_pixel == null) return;
 
-        Vector2 scale = _manager.Scale;
+        Vector2 scale = mapManager.Scale;
 
         // Draw HP bars for towers only
-        for(int i = 0; i < _manager.Columns; i++)
+        for(int i = 0; i < mapManager.Columns; i++)
         {
-            for(int j = 0; j < _manager.Rows; j++)
+            for(int j = 0; j < mapManager.Rows; j++)
             {
-                var structure = _manager.GetStructure(i, j);
+                var structure = mapManager.GetStructure((i, j));
                 if (structure is Tower)
                 {
-                    Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -80f);
                 }
                 else if (structure is Fence)
                 {
-                    Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -10f);
                 }
                 else if (structure is Tent)
                 {
-                    Vector2 worldPos = _manager.GetWorldPositionOfTile(i, j);
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -10f);
                 }
 
-                var group = _manager.GetMonster(i, j);
+                var group = mapManager.GetMonsterGroup((i, j));
                 if (group != null && group.Count > 0)
                 {
                     Vector2 worldPos = group.GetInterpolatedWorldPosition();

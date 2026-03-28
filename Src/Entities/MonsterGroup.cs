@@ -1,8 +1,5 @@
-
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using DreamWardUtils.Graphics;
 using Gamelab;
@@ -11,7 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 public class MonsterGroup
 {  
-
+    private MapManager mapManager => GamelabGame.MapManager;
+    
     //this is the time it takes a Monster to move from one tile to the next
     private TimeSpan _speed; 
 
@@ -51,30 +49,30 @@ public class MonsterGroup
 
     private bool _goalReached => Monsters.Select(i => i.GoalReached).All(j => j);
 
-    public int Count => Monsters.Count;
-
-    public Vector2 GetInterpolatedWorldPosition()
-    {
-        Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-        if (Monsters.Count == 0) return origin;
-        var goal = Monsters[0].GetCurrentGoal();
-        Vector2 goalPos = GamelabGame.MapManager.GetWorldPositionOfTile(goal.Item1, goal.Item2);
-        return origin + (goalPos - origin) * _pathProgress;
-    }
+    public int Count => Monsters.Count;    
 
     public float TotalCurrentHealth => Monsters.Sum(m => m.CurrentHealth);
     public float TotalMaxHealth => Monsters.Sum(m => m.MaxHealth);
+
+    public Vector2 GetInterpolatedWorldPosition()
+    {
+        Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
+        if (Monsters.Count == 0) return origin;
+        var goal = Monsters[0].GetCurrentGoal();
+        Vector2 goalPos = mapManager.GetWorldPositionOfTile(goal);
+        return origin + (goalPos - origin) * _pathProgress;
+    }
 
     public void RemoveDead()
     {
         Monsters.RemoveAll(m => m.IsDestroyed);
         if(Count == 0)
         {
-            GamelabGame.MapManager.RemoveMonsterGroup(TilePosition.Item1, TilePosition.Item2);
+            mapManager.RemoveMonsterGroup(TilePosition);
         }
     }
 
-    public MonsterGroup(MapManager mapManager, TimeSpan speed, (int,int) tilePosition)
+    public MonsterGroup(TimeSpan speed, (int,int) tilePosition)
     {
         _amalgamSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_idle", mapManager.Scale);
         _amalgamSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_walk", mapManager.Scale);
@@ -123,11 +121,11 @@ public class MonsterGroup
                 if (!monster.GoalReached)
                 {
                     var dest = monster.Path[1];
-                    Entity destStructure = GamelabGame.MapManager.GetStructure(dest.Item1, dest.Item2);
+                    Entity destStructure = mapManager.GetStructure(dest);
                     if (destStructure != null && !monster.CanStepOn(destStructure))
                     {
                         monster.AttackTarget = dest;
-                        monster.Path = new System.Collections.Generic.List<(int,int)> { monster.Path[0] };
+                        monster.Path = new List<(int,int)> { monster.Path[0] };
                     }
                 }
             }
@@ -150,13 +148,14 @@ public class MonsterGroup
             {
                 Monster monster = Monsters[i];
                 Monsters.Remove(monster);
-                (int,int) origin = monster.Path[0];
-                (int,int) dest = monster.Path[1];
                 monster.Move();
-                GamelabGame.MapManager.MoveMonster(monster, origin, dest);
                 monster.ShouldMove = false;
                 i--;
             }
+        }
+        if(Monsters.Count == 0)
+        {
+            mapManager.RemoveMonsterGroup(TilePosition);
         }
     }
 
@@ -202,15 +201,15 @@ public class MonsterGroup
     /// draw the monster
     /// </summary>
     public void Draw(SpriteBatch spriteBatch)
-    {
+    {  
         List<(int,int)> goals = Monsters.Select(i => i.GetCurrentGoal()).ToList();
         List<(int,int)> amalgamGoals = goals.Where(i => goals.Count(j => j == i) > 2).Distinct().ToList();
         List<(int,int)> singleGoals = goals.Where(i => goals.Count(j => j == i) <= 2).Distinct().ToList();
 
         foreach (var tileGoal in amalgamGoals)
         {
-            Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-            Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
+            Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
+            Vector2 goal = mapManager.GetWorldPositionOfTile(tileGoal);
             Vector2 dir = goal-origin;
             if(dir == Vector2.Zero)
             {
@@ -227,8 +226,8 @@ public class MonsterGroup
         
         foreach (var tileGoal in singleGoals)
         {
-            Vector2 origin = GamelabGame.MapManager.GetWorldPositionOfTile(TilePosition.Item1, TilePosition.Item2);
-            Vector2 goal = GamelabGame.MapManager.GetWorldPositionOfTile(tileGoal.Item1, tileGoal.Item2);
+            Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
+            Vector2 goal = mapManager.GetWorldPositionOfTile(tileGoal);
             Vector2 dir = goal-origin;            
             if(dir == Vector2.Zero)
             {
@@ -242,11 +241,11 @@ public class MonsterGroup
         }
     }
 
-    public void RandomziePath()
+    public void TakeDamage(float damage)
     {
         foreach (var monster in Monsters)
         {
-            monster.GenerateHexPath(TilePosition, (-1,-1));
+            monster.TakeDamage(damage);
         }
     }
 }

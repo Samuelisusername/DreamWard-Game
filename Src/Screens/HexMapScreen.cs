@@ -3,9 +3,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using FontStashSharp;
 using DreamWardUtils.Graphics;
-using System;
 using MonoGame.Extended.Input;
 
 
@@ -13,6 +11,7 @@ namespace Gamelab.Screens;
 
 public class HexMapScreen : GamelabGameScreen
 {
+    private MapManager mapManager => GamelabGame.MapManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private List<Entity> _entities;
@@ -27,9 +26,9 @@ public class HexMapScreen : GamelabGameScreen
         Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
         TextureRegion region = new TextureRegion(texture,0,0,128,320);
         TileSet set = new TileSet(region,64,32);
-        mapRenderer = new MapRenderer(GamelabGame.MapManager);
+        mapRenderer = new MapRenderer();
         _entities = new List<Entity>();
-        entityRenderer = new EntityRenderer(GamelabGame.MapManager);
+        entityRenderer = new EntityRenderer();
     }
 
     public override void LoadContent()
@@ -46,21 +45,21 @@ public class HexMapScreen : GamelabGameScreen
 
         if (keyboard.WasKeyPressed(Keys.Space))
         {
-            GamelabGame.MapManager.SpawnRandomMonsters();
+            //mapManager.SpawnRandomMonsters();
         }
 
         if (keyboard.WasKeyPressed(Keys.R))
         {
-            GamelabGame.MapManager.RandomizeGoal();
+            //mapManager.RandomizeGoal();
         }
 
-        GamelabGame.MapManager.Update(gameTime);
+        mapManager.Update(gameTime);
 
         if(mouse.DeltaScrollWheelValue != 0)
         {
             float delta = mouse.DeltaScrollWheelValue * (-0.01f);
-            //Move this into the GamelabGame.MapManager as a function
-            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            //Move this into the mapManager as a function
+            mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
         }
 
         if(mouse.WasButtonPressed(MouseButton.Left))
@@ -71,7 +70,7 @@ public class HexMapScreen : GamelabGameScreen
         if(mouse.IsButtonDown(MouseButton.Left))
         {
             Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-            GamelabGame.MapManager.MoveMap(deltaPos);
+            mapManager.MoveMap(deltaPos);
             if(deltaPos.Length() > 0)
             {                
                 _isDrag = true;
@@ -84,7 +83,7 @@ public class HexMapScreen : GamelabGameScreen
             if(!_isDrag)
             {
                 Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                GamelabGame.MapManager.HandleClick(pos);
+                //mapManager.HandleClick(pos);
             }
             _isDrag = false;
         }

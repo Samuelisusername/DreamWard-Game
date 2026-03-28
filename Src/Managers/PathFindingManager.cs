@@ -4,6 +4,8 @@ using Gamelab;
 
 public class PathFindingManager
 {
+    private MapManager mapManager => GamelabGame.MapManager;
+    
     private const int Step4InitialWaitTurns = 2;
 
     // Keep track of all tiles that are going to be attacked and by who
@@ -22,7 +24,7 @@ public class PathFindingManager
         _activeTargets = new List<(int, int, int, int)>();
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
-        _defenceStrength = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+        _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
     }
 
@@ -31,6 +33,7 @@ public class PathFindingManager
     /// </summary>
     public List<(int, int)> CalculatePath(Monster monster)
     {
+        //TODO: only return valid paths. it is possible that this already happens but we used to check if (smartPath != null && smartPath.Count > 0) before asigning the new path to the monster
         // --- GENERAL PATHFINDING STRATEGY ---
 
         // We define a 'primary target' as a target that reduces the player's sanity when destroyed.
@@ -61,9 +64,9 @@ public class PathFindingManager
 
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
-        int[,] minMaxDamage = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
-        (int col, int row)?[,] previousTile = new (int col, int row)?[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows]; // For path reconstruction.
-        int[,] timeToReach = new int[GamelabGame.MapManager.Columns, GamelabGame.MapManager.Rows];
+        int[,] minMaxDamage = new int[mapManager.Columns, mapManager.Rows];
+        (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
+        int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
         CalculateWeakestPaths(startTile, monster, minMaxDamage, previousTile, timeToReach, allowThroughBreakableStructures: false);
 
         var allTargets = GetAllTargetStructures(monster);
@@ -106,12 +109,12 @@ public class PathFindingManager
         foreach (var activeTarget in _activeTargets)
         {
             var targetTile = (activeTarget.col, activeTarget.row);
-            if (!IsInBounds(targetTile))
+            if (!MapUtils.IsInBounds(targetTile))
             {
                 continue;
             }
 
-            Entity targetStructure = GamelabGame.MapManager.GetStructure(targetTile.Item1, targetTile.Item2);
+            Entity targetStructure = mapManager.GetStructure(targetTile);
             if (targetStructure == null || targetStructure.IsDestroyed || !monster.CanTarget(targetStructure))
             {
                 continue;
@@ -166,7 +169,7 @@ public class PathFindingManager
                         continue;
                     }
 
-                    Entity structure = GamelabGame.MapManager.GetStructure(tile.Item1, tile.Item2);
+                    Entity structure = mapManager.GetStructure(tile);
                     if (structure != null && IsSecondaryTarget(monster, structure))
                     {
                         firstSecondary = tile;
@@ -222,11 +225,11 @@ public class PathFindingManager
         Array.Clear(_defenceStrength, 0, _defenceStrength.Length);
         _defenders.Clear();
 
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < mapManager.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < mapManager.Rows; row++)
             {
-                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
+                Entity structure = mapManager.GetStructure((col, row));
                 if (structure is not Tower tower)
                 {
                     continue;
@@ -253,9 +256,9 @@ public class PathFindingManager
     /// </summary>
     private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] minMaxDamage, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
     {
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < mapManager.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < mapManager.Rows; row++)
             {
                 minMaxDamage[col, row] = int.MaxValue;
                 previousTile[col, row] = null;
@@ -277,12 +280,12 @@ public class PathFindingManager
 
             foreach (var neighbor in Tower.GetHexNeighbors(current))
             {
-                if (!IsInBounds(neighbor))
+                if (!MapUtils.IsInBounds(neighbor))
                 {
                     continue;
                 }
 
-                Entity structureOnNeighbor = GamelabGame.MapManager.GetStructure(neighbor.Item1, neighbor.Item2);
+                Entity structureOnNeighbor = mapManager.GetStructure(neighbor);
                 if (structureOnNeighbor != null && !monster.CanStepOn(structureOnNeighbor))
                 {
                     bool isBreakableStructure = structureOnNeighbor is WallTile || structureOnNeighbor is Fence || structureOnNeighbor is Tower;
@@ -330,11 +333,11 @@ public class PathFindingManager
     private List<((int, int) Tile, Entity Target)> GetAllTargetStructures(Monster monster)
     {
         var targets = new List<((int, int), Entity)>();
-        for (int col = 0; col < GamelabGame.MapManager.Columns; col++)
+        for (int col = 0; col < mapManager.Columns; col++)
         {
-            for (int row = 0; row < GamelabGame.MapManager.Rows; row++)
+            for (int row = 0; row < mapManager.Rows; row++)
             {
-                Entity structure = GamelabGame.MapManager.GetStructure(col, row);
+                Entity structure = mapManager.GetStructure((col, row));
                 if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
                 {
                     continue;
@@ -465,14 +468,14 @@ public class PathFindingManager
     /// </summary>
     private List<(int, int)> ReconstructPath((int col, int row) startTile, (int col, int row) endTile, (int col, int row)?[,] previousTile, int[,] timeToReach)
     {
-        if (!IsInBounds(endTile) || timeToReach[endTile.col, endTile.row] == int.MaxValue)
+        if (!MapUtils.IsInBounds(endTile) || timeToReach[endTile.col, endTile.row] == int.MaxValue)
         {
             return new List<(int, int)>();
         }
 
         var path = new List<(int, int)>();
         var current = endTile;
-        int maxSteps = GamelabGame.MapManager.Columns * GamelabGame.MapManager.Rows;
+        int maxSteps = mapManager.Columns * mapManager.Rows;
 
         for (int steps = 0; steps <= maxSteps; steps++)
         {
@@ -505,35 +508,4 @@ public class PathFindingManager
             path.Insert(0, startTile);
         }
     }
-
-    private bool IsInBounds((int col, int row) tile)
-    {
-        return tile.col >= 0 && tile.col < GamelabGame.MapManager.Columns && tile.row >= 0 && tile.row < GamelabGame.MapManager.Rows;
-    }
-
-    /// <summary>
-    /// calculates the shortest distance (in number of tiles) between two tiles on the map.
-    /// does not take into account possible obstacles on the map.
-    /// </summary>
-    /// <param name="col1">the column of the first tile</param>
-    /// <param name="col2">the column of the second tile</param>
-    /// <param name="row1">the row of the first tile</param>
-    /// <param name="row2">the row of the second tile</param>
-    public int CalculateTileDistance(int col1, int row1, int col2, int row2)
-    {
-        // Map to cube coordinates
-        int q1 = col1;
-        int q2 = col2;
-        int r1 = row1 - (int)Math.Floor(col1 / 2.0);
-        int r2 = row2 - (int)Math.Floor(col2 / 2.0);
-        int s1 = -q1 - r1;
-        int s2 = -q2 - r2;
-
-        // The distance is the maximum absolute difference among the three axes
-        int delta_q = Math.Abs(q1 - q2);
-        int delta_r = Math.Abs(r1 - r2);
-        int delta_s = Math.Abs(s1 - s2);
-        return Math.Max(delta_q, Math.Max(delta_r, delta_s));
-    }
-
 }

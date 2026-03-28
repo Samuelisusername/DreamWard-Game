@@ -5,18 +5,15 @@ using Microsoft.Xna.Framework.Audio; // Crucial for SFX
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
-using FontStashSharp;
 using DreamWardUtils.Graphics;
-using System;
 using Gamelab.Managers;
-using Newtonsoft.Json.Serialization;
 
 
 namespace Gamelab.Screens;
 
 public class SoundTestScreen : GamelabGameScreen
-
 {
+    private MapManager mapManager => GamelabGame.MapManager;
     private SoundEffect _testSound;
     private SoundEffect _day_BackgroundSound;
     MapRenderer mapRenderer;
@@ -49,8 +46,8 @@ public class SoundTestScreen : GamelabGameScreen
         Texture2D texture = Content.Load<Texture2D>("Sprites/day_tiles");
         TextureRegion region = new TextureRegion(texture,0,0,128,320);
         TileSet set = new TileSet(region,64,32);
-        mapRenderer = new MapRenderer(GamelabGame.MapManager);     
-        entityRenderer = new EntityRenderer(GamelabGame.MapManager);
+        mapRenderer = new MapRenderer();     
+        entityRenderer = new EntityRenderer();
     }
 
     // NOTICE: We are using your team's custom Update method here!
@@ -66,13 +63,13 @@ public class SoundTestScreen : GamelabGameScreen
         {
             Game.Exit();
         }
-        GamelabGame.MapManager.Update(gameTime);
+        mapManager.Update(gameTime);
 
         if(mouse.DeltaScrollWheelValue != 0)
         {
             float delta = mouse.DeltaScrollWheelValue * 0.01f;
-            //Move this into the GamelabGame.MapManager as a function
-            GamelabGame.MapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            //Move this into the mapManager as a function
+            mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
         }
 
         if(mouse.WasButtonPressed(MouseButton.Left))
@@ -83,7 +80,7 @@ public class SoundTestScreen : GamelabGameScreen
         if(mouse.IsButtonDown(MouseButton.Left))
         {
             Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-            GamelabGame.MapManager.MoveMap(deltaPos);
+            mapManager.MoveMap(deltaPos);
             if(deltaPos.Length() > 0)
             {                
                 _isDrag = true;
@@ -96,7 +93,7 @@ public class SoundTestScreen : GamelabGameScreen
             if(!_isDrag)
             {
                 Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                GamelabGame.MapManager.HandleClick(pos);
+                //mapManager.HandleClick(pos);
             }
             _isDrag = false;
         }

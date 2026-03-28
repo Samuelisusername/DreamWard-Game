@@ -1,19 +1,16 @@
 using System.Collections.Generic;
-using DreamWardUtils.Graphics;
-using Microsoft.Xna.Framework;
 
 /// <summary>
 /// Tower with depth-1 hex range (own tile + immediate neighbors).
 /// Deals damage to monsters on tiles in range.
 /// </summary>
-public class Tower : Entity
+public class Tower : Structure
 {
     public float DamagePerSecond { get; set; }
     public int RangeDepth { get; protected set; }
 
-    public Tower(string animName, MapManager mapManager, (int,int) pos,
-                 float damagePerSecond = 3f, int health = 7)
-        : base(animName, mapManager, pos, health, true)
+    public Tower(string animName, (int,int) pos, float damagePerSecond = 3f, int health = 7)
+        : base(animName, pos, health)
     {
         DamagePerSecond = damagePerSecond;
         RangeDepth = 1;
@@ -35,8 +32,8 @@ public class Tower : Entity
             {
                 foreach (var neighbor in GetHexNeighbors(tile))
                 {
-                    if (neighbor.Item1 >= 0 && neighbor.Item1 < _mapManager.Columns &&
-                        neighbor.Item2 >= 0 && neighbor.Item2 < _mapManager.Rows &&
+                    if (neighbor.Item1 >= 0 && neighbor.Item1 < mapManager.Columns &&
+                        neighbor.Item2 >= 0 && neighbor.Item2 < mapManager.Rows &&
                         tiles.Add(neighbor))
                     {
                         nextFrontier.Add(neighbor);
@@ -94,9 +91,9 @@ public class Tower : Entity
 /// </summary>
 public class AreaTower : Tower
 {
-    public AreaTower(string animName, MapManager mapManager, (int,int) pos,
+    public AreaTower(string animName, (int,int) pos,
                      float damagePerSecond = 2f, int health = 7)
-        : base(animName, mapManager, pos, damagePerSecond, health)
+        : base(animName, pos, damagePerSecond, health)
     {
         RangeDepth = 2;
     }

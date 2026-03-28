@@ -1,15 +1,12 @@
-using System;
 using Gamelab;
 using Gamelab.Screens;
 using Gamelab.Managers;
 
 public class GamePhaseManager
 {
-
-    public GamePhaseManager()
-    {
-    }
-
+    private MapManager mapManager => GamelabGame.MapManager;
+    private SanityManager sanityManager => GamelabGame.SanityManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
     public bool IsDay { get; private set; } = true;
     public int DayCount { get; private set; } = 1;
 
@@ -18,12 +15,10 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
-        GamelabGame.MapManager.GetSheep().UnpolymorphSheep();
+        mapManager.GetSheep().TryUnpolymorphSheep();
         // call the SanityManger, MapManger and CardManager to set up the new day
-        GamelabGame.SanityManager.AddSanityGainedFromNewDay();
-        // call CardManager, how??
-        // I'm 50/50 on whether GamePhaseManager should call something like mapManager.StartNewDay() or
-        // if the MapManager/Renderer should just check the GamePhaseManager's IsDay property
+        sanityManager.AddSanityGainedFromNewDay();
+        //TODO: Call the Cardmanager to set up ned day
         IsDay = true;
         DayCount += 1;
         AudioManager.PlayMusic("day_music", GamelabGame.Instance.MasterVolume);
@@ -35,22 +30,22 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToNight()
     {
-        GamelabGame.CombatManager.SpawnMonsters(DayCount * 3);
+        combatManager.SpawnMonsters(DayCount * 3);
         IsDay = false;
-        // Same as above with MapManager/MapRenderer
         AudioManager.PlayMusic("night_music", GamelabGame.Instance.MasterVolume);
     }
 
     public void checkGameOver()
     {
-        if (GamelabGame.SanityManager.Sanity <= 0 || DayCount >= 10)
+        if (sanityManager.Sanity <= 0 || DayCount >= 10)
         {
+            ///TODO: if DayCount >= 10 its not game over
             EndGame();
         }
     }
 
     private void EndGame()
     {
-        GamelabGame.Instance.SwitchToScreen(new Gamelab.Screens.GameOverScreen(GamelabGame.Instance));
+        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
     }
 }

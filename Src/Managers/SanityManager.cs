@@ -5,7 +5,9 @@ using Gamelab.Screens;
 
 public class SanityManager
 {
-
+    private MapManager mapManager => GamelabGame.MapManager;
+    private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+    
     public int Sanity {get; private set;}
 
     public SanityManager()
@@ -24,10 +26,10 @@ public class SanityManager
         if (Sanity <= 0)
         {
             Sanity = 0;
-            if (GamelabGame.GamePhaseManager != null)
-                GamelabGame.GamePhaseManager.checkGameOver();
+            if (gamePhaseManager != null)
+                gamePhaseManager.checkGameOver();
             else
-                GamelabGame.Instance.SwitchToScreen(new Gamelab.Screens.GameOverScreen(GamelabGame.Instance));
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
         }
     }
 
@@ -44,42 +46,15 @@ public class SanityManager
     }
 
     /// <summary>
-    /// Adds sanity to the players total
-    /// </summary>
-    /// <param name="amount">the amount of sanity to add</param>
-    /// Not sure if this method is even needed...
-    public bool AddSanity(int amount)
-    {
-        if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
-        Sanity += amount;
-        return true;
-    }
-
-    /// <summary>
     /// Calculates the Sanity gained at the beginning of a day and adds it to the total
     /// </summary>
     public void AddSanityGainedFromNewDay()
     {
-        Sanity += GamelabGame.MapManager.GetSheep().SanityGain;
-        List<PlacableMeadow> meadows = GamelabGame.MapManager.GetAllMeadows();
+        Sanity += mapManager.GetSheep().SanityGain;
+        List<PlacableMeadow> meadows = mapManager.GetAllMeadows();
         foreach (var meadow in meadows)
         {
             Sanity += meadow.SanityGain;
         }
-        // Missing Ma
-        // pManager functionality (meadows) to implement
-        //for (int i = 0; i < _map_manager.Columns; i++)
-        //{
-        //    for (int j = 0; j < _map_manager.Rows; j++)
-        //    {
-        //        if (_map_manager.GetTile(i, j).IsMeadow)
-        //        {
-        //            int distance = _pathFindingManager.CalculateTileDistance(i, j, _map_manager.PlayerColumn, _map_manager.PlayerRow);
-        //            if (distance <= 3) AddSanity(4);
-        //            else AddSanity(2);
-        //        }
-        //        throw new notimplementedexception();
-        //    }
-        //}
     }
 }

@@ -6,8 +6,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 using MonoGame.Extended.ViewportAdapters;
-using FontStashSharp;
-using System.IO;
 using MonoGame.Extended.Input;
 
 namespace Gamelab.Screens;

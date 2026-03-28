@@ -5,13 +5,9 @@ using Gamelab;
 
 public class MapRenderer
 {
-    private MapManager _manager;
+    private MapManager mapManager => GamelabGame.MapManager;
     private const bool _draw_tile_coordinates = false; // setting to true will draw the (column, row) of each tile
 
-    public MapRenderer(MapManager manager)
-    {
-        _manager = manager;
-    }
 
     /// <summary>
     /// draws anything stationary, mainly all tiles
@@ -20,15 +16,15 @@ public class MapRenderer
     /// </summary>
     public void Draw(SpriteBatch spriteBatch)
     {
-        for(int i = 0; i < _manager.Columns; i++)
+        for(int i = 0; i < mapManager.Columns; i++)
         {
-            for(int j = 0; j < _manager.Rows; j++)
+            for(int j = 0; j < mapManager.Rows; j++)
             {
-                TextureRegion tile = _manager.GetTile(i,j);
+                TextureRegion tile = mapManager.GetTile((i,j));
                 
-                Vector2 tilePos = _manager.GetWorldPositionOfTile(i,j);
+                Vector2 tilePos = mapManager.GetWorldPositionOfTile((i,j));
 
-                tile.Draw(spriteBatch, tilePos, Color.White, 0f, Vector2.Zero, _manager.Scale, SpriteEffects.None, 1f);
+                tile.Draw(spriteBatch, tilePos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
                 if (_draw_tile_coordinates) {
                     DrawTileCoordinates(i, j, tilePos, spriteBatch);
                 }
@@ -45,12 +41,12 @@ public class MapRenderer
         string debugText = $"({column},{row})";
 
         // Center the debug text on the tile and scale it
-        int fontSize = (int)(_manager.Scale.X * 13);
+        int fontSize = (int)(mapManager.Scale.X * 13);
         var font = GamelabGame.Instance.fontSystem.GetFont(fontSize);
         var textSize = font.MeasureString(debugText);
         Vector2 textCenter = new Vector2(
-            tilePos.X + _manager.TileWidth / 2 - textSize.X / 2,
-            tilePos.Y + _manager.TileHeight / 2 - textSize.Y / 2
+            tilePos.X + mapManager.TileWidth / 2 - textSize.X / 2,
+            tilePos.Y + mapManager.TileHeight / 2 - textSize.Y / 2
         );
         font.DrawText(spriteBatch, debugText, textCenter, Color.White);
     }

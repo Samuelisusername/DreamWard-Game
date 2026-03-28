@@ -32,7 +32,7 @@ public class PathFindingManagerTests
     private static MapManager CreateTestMapManager(int columns = 8, int rows = 8)
     {
         var tileSet = new TileSet(new TextureRegion(), 1, 1);
-        return new MapManager(tileSet, columns, rows, TimeSpan.FromSeconds(1));
+        return new MapManager(tileSet, tileSet, columns, rows, TimeSpan.FromSeconds(1));
     }
 
     private static IEnumerable<TestCaseData> DistanceTestCases()
@@ -84,7 +84,7 @@ public class PathFindingManagerTests
     [TestCaseSource(nameof(DistanceTestCases))]
     public int CalculateTileDistance_ReturnsCorrectValue((int col, int row) start, (int col, int row) target)
     {
-        return _pm.CalculateTileDistance(start.col, start.row, target.col, target.row);
+        return MapUtils.CalculateTileDistance(start, target);
     }
 
     [Test]
@@ -438,36 +438,36 @@ public class PathFindingManagerTests
 
         public Tent PlaceTent((int col, int row) tile)
         {
-            var tent = new Tent(TentAnim, MapManager, tile);
-            Assert.That(MapManager.PlaceEntity(tent, tile.col, tile.row), Is.True);
+            var tent = new Tent(TentAnim, tile);
+            Assert.That(MapManager.PlaceEntity(tent, tile), Is.True);
             return tent;
         }
 
         public Sheep PlaceSheep((int col, int row) tile)
         {
-            var sheep = new Sheep(SheepAnim, MapManager, tile);
-            Assert.That(MapManager.PlaceEntity(sheep, tile.col, tile.row), Is.True);
+            var sheep = new Sheep(SheepAnim, tile);
+            Assert.That(MapManager.PlaceEntity(sheep, tile), Is.True);
             return sheep;
         }
 
         public Wall PlaceWall((int col, int row) tile)
         {
-            var wall = new Wall(WallAnim, MapManager, tile);
-            Assert.That(MapManager.PlaceEntity(wall, tile.col, tile.row), Is.True);
+            var wall = new Wall(WallAnim, tile);
+            Assert.That(MapManager.PlaceEntity(wall, tile), Is.True);
             return wall;
         }
 
         public Tower PlaceTower((int col, int row) tile)
         {
-            var tower = new Tower(TowerAnim, MapManager, tile);
-            Assert.That(MapManager.PlaceEntity(tower, tile.col, tile.row), Is.True);
+            var tower = new Tower(TowerAnim, tile);
+            Assert.That(MapManager.PlaceEntity(tower, tile), Is.True);
             return tower;
         }
 
         public WallTile PlaceWallTileStub((int col, int row) tile, int health = 100)
         {
             var wallTile = CreateUninitializedEntity<WallTile>(health);
-            Assert.That(MapManager.PlaceEntity(wallTile, tile.col, tile.row), Is.True);
+            Assert.That(MapManager.PlaceEntity(wallTile, tile), Is.True);
             return wallTile;
         }
 
@@ -482,7 +482,7 @@ public class PathFindingManagerTests
 
         public List<(int, int)> CalculatePath((int col, int row) start, MonsterType type = MonsterType.Regular)
         {
-            var monster = new Monster(MonsterAnim, MapManager, start, start, type);
+            var monster = new RegularMonster(start);
             return PathFindingManager.CalculatePath(monster);
         }
     }
@@ -493,7 +493,7 @@ public class PathFindingManagerTests
         var scenario = new PathFindingScenario();
         scenario.PlaceTent((2, 2));
 
-        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new RegularMonster((0, 0));
 
         for (int i = 0; i < 100; i++)
         {
@@ -529,7 +529,7 @@ public class PathFindingManagerTests
         var scenario = new PathFindingScenario();
         scenario.PlaceTent((6, 6));
 
-        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new RegularMonster((0, 0));
 
         List<(int, int)> firstPath = scenario.PathFindingManager.CalculatePath(monster);
         AssertValidPath(firstPath, (0, 0), (6, 6));
@@ -573,7 +573,7 @@ public class PathFindingManagerTests
         scenario.PlaceTent((2, 2));
         scenario.PlaceTower((2, 1));
 
-        var monster = new Monster(MonsterAnim, scenario.MapManager, (0, 0), (0, 0), MonsterType.Regular);
+        var monster = new RegularMonster((0, 0));
 
         const int warmupIterations = 20;
         for (int i = 0; i < warmupIterations; i++)

@@ -4,24 +4,29 @@ using DreamWardUtils.Graphics;
 using Gamelab;
 using System.Collections.Generic;
 using Gamelab.Managers;
-using System.Runtime.InteropServices;
-using Microsoft.Xna.Framework.Media;
+using System.Linq;
 
 public class MapManager
-{    
+{ 
+#region Managers
+    private SanityManager sanityManager => GamelabGame.SanityManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
+    private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+#endregion
+    
 #region storage
 
     //all the possible Textures a tile can have are held in here
-    internal readonly Dictionary<string, TileSet> _tileSets;
+    private readonly Dictionary<string, TileSet> _tileSets;
 
     //which tile of the tileset is display at this position?
     private readonly int[,] _tiles; //col first
 
     //stores which tiles has which structure on it -1 if none
-    private readonly Entity[,] _structures;//colfirst
+    public readonly Structure[,] Structures;//colfirst
     
     //stores which tiles has which monster on it -1 if none
-    private readonly MonsterGroup[,] _monsters;//colfirst
+    public readonly MonsterGroup[,] MonsterGroups;//colfirst
 
 #endregion
 
@@ -36,11 +41,6 @@ public class MapManager
     /// The number of columns of the map
     /// </summary>
     public int Columns { get; }
-    
-    /// <summary>
-    /// True when the tent has been destroyed by monsters
-    /// </summary>
-    public bool TentDestroyed { get; set; }
 
     /// <summary>
     /// The scale at which the map is rendered
@@ -67,7 +67,15 @@ public class MapManager
     /// </summary>
     public float ScaledOffset => TileHeight /2;
 
+    /// <summary>
+    /// The position of the Sheep on the map
+    /// </summary>
     public (int,int) SheepPosition {get; set;}
+    
+    /// <summary>
+    /// True when the tent has been destroyed by monsters
+    /// </summary>
+    public bool TentDestroyed { get; set; }
     
 #endregion
 
@@ -96,16 +104,12 @@ public class MapManager
         Rows = rows;
         _delay = delay;
         _tiles = new int[Columns,Rows];
-        _monsters = new MonsterGroup[Columns,Rows];
-        _structures = new Entity[Columns,Rows];
-    }
-
-    /// <summary>
-    /// Test-only constructor: uses the same TileSet for day and night.
-    /// </summary>
-    public MapManager(TileSet tileSet, int columns, int rows, TimeSpan delay)
-        : this(tileSet, tileSet, columns, rows, delay)
-    {
+        MonsterGroups = new MonsterGroup[Columns,Rows];
+        Structures = new Structure[Columns,Rows];
+        
+        FillRandomly();
+        Scale = new Vector2(4, 4);
+        MapUtils.Setup(20,20);
     }
     
     public void Update(GameTime gameTime)
@@ -117,37 +121,25 @@ public class MapManager
             _elapsed -= _delay;
             _animationOffset = (_animationOffset + 1) % 2;
         }
+
         //Update all the monsters
         for(int i = 0; i < Columns; i++)
         {
             for(int j = 0; j < Rows; j++)
             {
-                _monsters[i,j]?.Update(gameTime);
-                _structures[i,j]?.Update(gameTime);
-            }
-        }
-        //move the monsters if needed we do this in two loops to avoid updating monsters twice
-        for(int i = 0; i < Columns; i++)
-        {
-            for(int j = 0; j < Rows; j++)
-            {
-
-                _monsters[i,j]?.Move();
+                MonsterGroups[i,j]?.Update(gameTime);
+                Structures[i,j]?.Update(gameTime);
             }
         }
 
-
-        if(!GamelabGame.GamePhaseManager.IsDay)
+        //if its night manage monsters
+        if(!gamePhaseManager.IsDay)
         {
-            GamelabGame.CombatManager.ManageMoveAndAttack(gameTime);
-            foreach (var monster in _monsters)
+            combatManager.ManageMoveAndAttack(gameTime);
+            if(MonsterGroups.Cast<MonsterGroup>().All(i => i == null))
             {
-                if(monster != null)
-                {
-                    return;
-                }
+                gamePhaseManager.SwitchToDay(); 
             }
-            GamelabGame.GamePhaseManager.SwitchToDay(); 
         }
     }
 
@@ -156,121 +148,97 @@ public class MapManager
     /// <summary>
     /// returns the Tile at the position
     /// </summary>
-    public TextureRegion GetTile(int col, int row)
-    {        
-        return GamelabGame.GamePhaseManager.IsDay ? _tileSets["day"].GetTile(_tiles[col,row] + _animationOffset) :  _tileSets["night"].GetTile(_tiles[col,row] + _animationOffset);
+    public TextureRegion GetTile((int col, int row) pos)
+    {
+        return gamePhaseManager.IsDay ?
+            _tileSets["day"].GetTile(_tiles[pos.col,pos.row] + _animationOffset) :
+            _tileSets["night"].GetTile(_tiles[pos.col, pos.row] + _animationOffset);
     }
-
+    
     /// <summary>
     /// returns the world position of the tile that is asked for
     /// </summary>
-    public Vector2 GetWorldPositionOfTile(int col, int row)
+    public Vector2 GetWorldPositionOfTile((int col, int row) pos)
     {
-        float tileX = col * TileWidth - (col * ScaledOffset);
-        float tileY = col % 2 == 0 ? row * TileHeight : row * TileHeight + ScaledOffset;
+        float tileX = pos.col * TileWidth - (pos.col * ScaledOffset);
+        float tileY = pos.col % 2 == 0 ? pos.row * TileHeight : pos.row * TileHeight + ScaledOffset;
 
-        return new Vector2(tileX, tileY) + Offset; //TODO: this returns the top left corner so far mybe change to something else
+        return new Vector2(tileX, tileY) + Offset;
     }
     
-    public void AddMonster(int col, int row, int targetCol, int targetRow)
+    /// <summary>
+    /// Create a new monster at the given location
+    /// </summary>
+    public void AddNewMonster((int col, int row) pos)
     {
-        Monster newMonster = new Monster("normal_walkSW", this, (col, row), (targetCol, targetRow));
+        Monster newMonster = new RegularMonster(pos);
 
-        // // --- GenerateHexPath version (simple greedy path to target) ---
-        // if (_monsters[col, row] != null)
-        // {
-        //     _monsters[col, row].AddMonster(newMonster);
-        // }
-        // else
-        // {
-        //     MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
-        //     group.AddMonster(newMonster);
-        //     _monsters[col, row] = group;
-        // }
-
-        // --- PathFindingManager version (strategic pathfinding) ---
-        var smartPath = GamelabGame.PathFindingManager.CalculatePath(newMonster);
-        if (smartPath != null && smartPath.Count > 0)
+        if (MonsterGroups[pos.col, pos.row] != null)
         {
-            while(smartPath.Count >= 2 && smartPath[0] == smartPath[1])
-            {
-                smartPath.RemoveAt(0);
-            }
-            newMonster.Path = smartPath;
-        }
-
-        if (_monsters[col, row] != null)
-        {
-            _monsters[col, row].AddMonster(newMonster);
+            MonsterGroups[pos.col, pos.row].AddMonster(newMonster);
         }
         else
         {
-            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2), (col, row));
+            MonsterGroup group = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
             group.AddMonster(newMonster);
-            _monsters[col, row] = group;
+            MonsterGroups[pos.col, pos.row] = group;
         }       
     }
 
     /// <summary>
-    /// returns the Monster on the tile
+    /// Add an existing Monster to the position
     /// </summary>
-    public MonsterGroup GetMonster(int col, int row)
-    {        
-        return _monsters[col,row];
+    public void AddExistingMonster(Monster monster, (int col, int row) pos)
+    {
+        if(GetMonsterGroup(pos) is {} monsterGroup)
+        {
+            monsterGroup.AddMonster(monster);
+        }
+        else
+        {
+            MonsterGroups[pos.Item1,pos.Item2] = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
+            GetMonsterGroup(pos).AddMonster(monster);
+        }
     }
-
     
     /// <summary>
     /// returns the Monster on the tile
     /// </summary>
-    public MonsterGroup RemoveMonsterGroup(int col, int row)
+    public MonsterGroup GetMonsterGroup((int col, int row) pos)
     {        
-        return _monsters[col,row] = null;
+        return MonsterGroups[pos.col,pos.row];
     }
-
+    
     /// <summary>
-    /// moves the monsters in the tile speicified by origin to the tile specified by goal
+    /// returns the Monster on the tile
     /// </summary>
-    public void MoveMonster(Monster monster, (int,int) origin, (int,int) goal)
-    {
-        if(_monsters[origin.Item1,origin.Item2].Count == 0)
-        {
-            _monsters[origin.Item1,origin.Item2] = null;
-        }
-        if( _monsters[goal.Item1,goal.Item2] != null)
-        {
-            _monsters[goal.Item1,goal.Item2].AddMonster(monster);
-        }
-        else
-        {
-            _monsters[goal.Item1,goal.Item2] = new MonsterGroup(this,  TimeSpan.FromSeconds(2),goal);
-            _monsters[goal.Item1,goal.Item2].AddMonster(monster);
-        }
+    public MonsterGroup RemoveMonsterGroup((int col, int row) pos)
+    {        
+        return MonsterGroups[pos.col, pos.row] = null;
     }
 
     /// <summary>
     /// returns the structure at the given position
     /// </summary>
-    public Entity GetStructure(int col, int row)
+    public Structure GetStructure((int col, int row) pos)
     {
-        return _structures[col,row];
+        return Structures[pos.col, pos.row];
     }
 
     /// <summary>
     /// removes the structure at the given position
     /// </summary>
-    public void RemoveStructure(int col, int row)
+    public void RemoveStructure((int col, int row) pos)
     {
-        _structures[col,row] = null;
+        Structures[pos.col, pos.row] = null;
     }
-    
     
     /// <summary>
     /// Places an entity at the given position
     /// </summary>
-    public bool PlaceEntity(Entity entity, int col, int row)
+    public bool PlaceEntity(Structure structure, (int col, int row) pos)
     {        
-        bool occupied = _structures[col,row] != null;
+        bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
             Console.WriteLine("Tile already occupied!");
@@ -278,10 +246,9 @@ public class MapManager
             return false;
         }
 
-        if (entity != null){
-            entity.SetAsBuildEntity();
-            
-            _structures[col,row] = entity;
+        if (structure != null)
+        {
+            Structures[pos.col, pos.row] = structure;
 
             return true;
         }
@@ -292,34 +259,24 @@ public class MapManager
     /// <summary>
     /// Places an Sheep at the given position
     /// </summary>
-    public bool PlaceSheep(Meadow entity, int col, int row)
-    {        
-        bool occupied = _structures[col,row] != null;
-        if (occupied)
+    public bool PlaceSheep(Meadow entity, (int col, int row) pos)
+    {
+        if(!PlaceEntity(entity, pos))
         {
-            Console.WriteLine("Tile already occupied!");
-            AudioManager.Play("error");
             return false;
-        }
-
-        if (entity != null){
-            entity.SetAsBuildEntity();
-            
-            _structures[col,row] = entity;
-            entity.AddSheep();
-            SheepPosition = (col,row);
-            return true;
-        }
-        return false;
+        }        
+        entity.AddSheep();
+        SheepPosition = (pos.col, pos.row);
+        return true;
     }
 
 
     /// <summary>
     /// Places an entity defined by the Card at the given position
     /// </summary>
-    public bool PlaceEntity(Card card, int col, int row)
+    public bool PlaceEntity(Card card, (int col, int row) pos)
     {        
-        bool occupied = _structures[col,row] != null;
+        bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
             Console.WriteLine("Tile already occupied!");
@@ -338,24 +295,23 @@ public class MapManager
 
         if (animKey == null) return false; // no matching animation
 
-        Entity entity = card.Name switch
+        Structure structure = card.Name switch
         {
-            "sniper" => new Tower(animKey, this, (col,row), damagePerSecond: 8f, health: 100),
-            "aoe" => new AreaTower(animKey, this, (col,row), damagePerSecond: 5f, health: 80),
-            "fence" => new Fence(animKey, this, (col,row)),
-            "meadow" => new PlacableMeadow(animKey, this, (col,row),2),
-            "dreamcatcher" => new Wall(animKey, this, (col,row)),
+            "sniper" => new Tower(animKey, (pos.col, pos.row), damagePerSecond: 8f, health: 100),
+            "aoe" => new AreaTower(animKey, (pos.col, pos.row), damagePerSecond: 5f, health: 80),
+            "fence" => new Fence(animKey, (pos.col, pos.row)),
+            "meadow" => new PlacableMeadow(animKey, (pos.col, pos.row),2),
+            "dreamcatcher" => new Wall(animKey, (pos.col, pos.row)),
             _ => null
         };
 
-        if (entity != null){
-            entity.SetAsBuildEntity();
-            _structures[col,row] = entity;
-            if(entity is PlacableMeadow placableMeadow)
+        if (structure != null){
+            Structures[pos.col, pos.row] = structure;
+            if(structure is PlacableMeadow placableMeadow)
             {
-                foreach (var position in MapUtils.getSurroundingTiles(col,row))
+                foreach (var position in MapUtils.getSurroundingTiles(pos))
                 {
-                    if(_structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep)
+                    if(Structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep)
                     {
                         placableMeadow.ActivateMeadow(meadow.SanityGain);
                     }
@@ -369,9 +325,9 @@ public class MapManager
     /// <summary>
     /// return all entities on this tile(monstes and structures)
     /// </summary>
-    public List<Entity> GetAllEntities(int col, int row)
+    public List<Entity> GetAllEntities((int col, int row) pos)
     {
-        List<Entity> res = [GetStructure(col,row), .. GetMonster(col,row).Monsters];
+        List<Entity> res = [GetStructure(pos), .. GetMonsterGroup(pos).Monsters];
         return res;
     }
 
@@ -388,94 +344,14 @@ public class MapManager
             }
         }
     }
-
-    public (int,int) GetTileFromScreenPosition(Vector2 pos)
-    {
-        return getTileIndex(pos);
-    }
-
-    public (int,int) GetTent()
-    {
-        foreach (var item in _structures)
-        {
-            if(item as Tent is {} cool)
-            {
-                return cool.TilePosition;
-            }
-        }
-        return (-1,-1);
-    }
-
-    private List<(Entity original, Entity polymorphed)> _polymorphedEntities = new();
-
-    public void RestorePolymorphedEntities()
-    {
-        foreach (var (original, polymorphed) in _polymorphedEntities)
-        {
-            var tile = polymorphed.TilePosition;
-            GamelabGame.MapManager.RemoveStructure(tile.Item1, tile.Item2);
-            GamelabGame.MapManager.PlaceEntity(original, tile.Item1, tile.Item2);
-        }
-        _polymorphedEntities.Clear();
-    }
-
-    public void TryMoveSheep(Vector2 pos)
-    {
-        (int col, int row) = GetTileFromScreenPosition(pos);
-        Entity entity = GetStructure(col,row);
-        if(entity is Meadow meadow)
-        {
-            if(GamelabGame.SanityManager.TryDeductSanity(GamelabGame.PathFindingManager.CalculateTileDistance(SheepPosition.Item1, SheepPosition.Item2, col, row)))
-            {
-                foreach (var position in MapUtils.getSurroundingTiles(col,row))
-                {
-                    if(_structures[position.Item1,position.Item2] is PlacableMeadow toActivate)
-                    {
-                        toActivate.ActivateMeadow(meadow.SanityGain);
-                    }
-                }
-                foreach (var position in MapUtils.getSurroundingTiles(SheepPosition.Item1, SheepPosition.Item2))
-                {
-                    if(_structures[position.Item1,position.Item2] is PlacableMeadow toDeactivate)
-                    {
-                        toDeactivate.DeactivateMeadow();
-                    }
-                }
-                (_structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow).RemoveSheep();
-                meadow.AddSheep();
-                SheepPosition = (col,row);
-            }
-        } 
-    }
-
-    public Meadow GetSheep()
-    {
-        return _structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
-    }
-
-    public List<PlacableMeadow> GetAllMeadows()
-    {
-        List<PlacableMeadow> res = new List<PlacableMeadow>();
-        foreach (var structure in _structures)
-        {
-            if(structure is PlacableMeadow placableMeadow)
-            {
-                res.Add(placableMeadow);
-            }
-        }
-        return res;
-    }
-
-#endregion
     
-#region Input handling
-
+    
     /// <summary>
     /// returns the index of the tile that is at the position on screen
     /// </summary>
     /// <param name="position"></param>
     /// <returns>returns [col,row] of the tile at position. returns [-1,-1] if the position is not on the tilemap</returns>
-    private (int,int) getTileIndex(Vector2 position)
+    public (int,int) GetTileFromScreenPosition(Vector2 position)
     {
         position -= Offset;
         (int,int) res;
@@ -516,20 +392,81 @@ public class MapManager
     }
 
     /// <summary>
-    /// Handles a click om the map, does not check if the click was actually on the map so far
+    /// returns the 
     /// </summary>
-    public void HandleClick(Vector2 position)
+    /// <returns></returns>
+    public (int,int) GetTent()
     {
-        (int,int) index = getTileIndex(position);
-        if(index.Item1 >= 0)
+        foreach (var item in Structures)
         {
-            // Monster newMonster = index.Item1 % 2 == 0 ?  new Monster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_walk"), this, TimeSpan.FromSeconds(2),index) :  new Monster(GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite("normal_fight"), this, TimeSpan.FromSeconds(2),index);
-            // _monsters[index.Item1,index.Item2].Add(newMonster);
-
-            _tiles[index.Item1,index.Item2] = _tiles[index.Item1,index.Item2] > 1 ? _tiles[index.Item1,index.Item2] - 2 : _tiles[index.Item1,index.Item2] +2;
+            if(item as Tent is {} cool)
+            {
+                return cool.TilePosition;
+            }
         }
-
+        return (-1,-1);
     }
+
+    /// <summary>
+    /// tries to move the sheep to the position clicked on screen
+    /// </summary>
+    public void TryMoveSheep(Vector2 pos)
+    {
+        (int col, int row) tilePos = GetTileFromScreenPosition(pos);
+        Entity entity = GetStructure(tilePos);
+        if(entity is Meadow meadow)
+        {
+            int distance = MapUtils.CalculateTileDistance(SheepPosition, tilePos);
+            if(sanityManager.TryDeductSanity(distance))
+            {
+                foreach (var position in MapUtils.getSurroundingTiles(tilePos))
+                {
+                    if(Structures[position.Item1,position.Item2] is PlacableMeadow toActivate)
+                    {
+                        toActivate.ActivateMeadow(meadow.SanityGain);
+                    }
+                }
+                foreach (var position in MapUtils.getSurroundingTiles(SheepPosition))
+                {
+                    if(Structures[position.Item1,position.Item2] is PlacableMeadow toDeactivate)
+                    {
+                        toDeactivate.DeactivateMeadow();
+                    }
+                }
+                (Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow).RemoveSheep();
+                meadow.AddSheep();
+                SheepPosition = (tilePos.col, tilePos.row);
+            }
+        } 
+    }
+
+    /// <summary>
+    /// returns the meadow with the sheep on it
+    /// </summary>
+    public Meadow GetSheep()
+    {
+        return Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+    }
+
+    /// <summary>
+    /// returns all meadows
+    /// </summary>
+    public List<PlacableMeadow> GetAllMeadows()
+    {
+        List<PlacableMeadow> res = new List<PlacableMeadow>();
+        foreach (var structure in Structures)
+        {
+            if(structure is PlacableMeadow placableMeadow)
+            {
+                res.Add(placableMeadow);
+            }
+        }
+        return res;
+    }
+
+#endregion
+    
+#region Input handling
 
     /// <summary>
     /// Moves the map into the direction of delta
@@ -557,39 +494,9 @@ public class MapManager
         Offset += correction;
         Scale = newScale;
         //scale all the monsters
-        for(int i = 0; i < Columns; i++)
+        foreach(MonsterGroup monsterGroup in MonsterGroups)
         {
-            for(int j = 0; j < Rows; j++)
-            {
-                _monsters[i,j]?.SetScale(newScale);
-            }
-        }
-    }
-#endregion
-
-#region Testing funcs
-
-    public void SpawnRandomMonsters()
-    {
-        for(int i = 0; i < 10; i ++)
-        {
-            (int,int) index = ((int)Random.Shared.NextInt64(0,10),(int)Random.Shared.NextInt64(0,10));
-            MonsterGroup group = new MonsterGroup(this, TimeSpan.FromSeconds(2),index);
-            Monster newMonster = new Monster("normal_walkSW", this, index, (5,5));
-            group.AddMonster(newMonster);
-            _monsters[index.Item1,index.Item2] = group;
-        }
-    }
-
-
-    public void RandomizeGoal()
-    {
-         for(int i = 0; i < Columns; i++)
-        {
-            for(int j = 0; j < Rows; j++)
-            {
-                _monsters[i,j]?.RandomziePath();
-            }
+            monsterGroup?.SetScale(newScale);
         }
     }
 #endregion

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using DreamWardUtils.Graphics;
 using FontStashSharp;
-using Gamelab.Managers;
 using Gamelab.Screens;
 using Gamelab.Utils;
 using Gamelab.Utils.Logging;
@@ -62,6 +61,9 @@ public class GamelabGame : Game
     public static PathFindingManager PathFindingManager {get; private set;}
     public static SanityManager SanityManager {get; private set;}
 
+    private TileSet dayTiles;
+    private TileSet nightTiles;
+
     public GamelabGame(RunMode runMode)
     {
         Instance = this;
@@ -76,7 +78,7 @@ public class GamelabGame : Game
 
         jsonLoader = new(this, "Data");
 
-        screenManager = new ScreenManager();
+        screenManager = new();
         CardManager = new();
         CombatManager = new();
         GamePhaseManager = new();
@@ -140,17 +142,14 @@ public class GamelabGame : Game
         //load tilesets
         Texture2D textureDay = Content.Load<Texture2D>("Sprites/day_tiles");
         TextureRegion regionDay = new(textureDay, 0, 0, textureDay.Width, textureDay.Height);
-        TileSet setDay = new(regionDay, 64, 32);
+        dayTiles = new(regionDay, 64, 32);
 
         Texture2D textureNight = Content.Load<Texture2D>("Sprites/night_tiles");
         TextureRegion regionNight = new(textureNight, 0, 0, textureNight.Width, textureNight.Height);
-        TileSet setNight = new(regionNight, 64, 32);
+        nightTiles = new(regionNight, 64, 32);
 
 
-        MapManager = new MapManager(setDay, setNight, 20, 20, TimeSpan.FromMilliseconds(500));
-        MapManager.FillRandomly();
-        MapManager.Scale = new Vector2(4, 4);
-        MapUtils.Setup(20,20);
+        MapManager = new MapManager(dayTiles, nightTiles, 20, 20, TimeSpan.FromMilliseconds(500));
         
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();
@@ -191,11 +190,7 @@ public class GamelabGame : Game
         SanityManager = new();
 
         // Recreate MapManager with fresh tile data
-        var setDay = MapManager._tileSets["day"];
-        var setNight = MapManager._tileSets["night"];
-        MapManager = new MapManager(setDay, setNight, 20, 20, TimeSpan.FromMilliseconds(500));
-        MapManager.FillRandomly();
-        MapManager.Scale = new Vector2(4, 4);
+        MapManager = new MapManager(dayTiles, nightTiles, 20, 20, TimeSpan.FromMilliseconds(500));
 
         PathFindingManager = new();
     }

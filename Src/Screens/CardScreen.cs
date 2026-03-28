@@ -4,8 +4,6 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended.Screens;
-using MonoGame.Extended.ViewportAdapters;
 using MonoGame.Extended.Input;
 using Gamelab.Managers;
 
@@ -13,6 +11,8 @@ namespace Gamelab.Screens;
 
 public class CardScreen : GamelabGameScreen
 {
+    private SanityManager sanityManager => GamelabGame.SanityManager;
+    private CardManager cardManager => GamelabGame.CardManager;
     private Rectangle _toMapScreenBtn;
 
     private SpriteFont _font;
@@ -66,7 +66,7 @@ public class CardScreen : GamelabGameScreen
         Dictionary<int, GamePadState> gamePads,
         MouseStateExtended mouse)
     {
-        GamelabGame.CardManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+        cardManager.Update(gameTime);
 
         if (mouse.WasButtonReleased(MouseButton.Left))
         {
@@ -89,8 +89,8 @@ public class CardScreen : GamelabGameScreen
     {
         var l = GetLayout();
 
-        if (l.MapDeck.Contains(pos)) { GamelabGame.CardManager.DrawMapAC(l.MapDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
-        if (l.StackDeck.Contains(pos)) { GamelabGame.CardManager.DrawStackAC(l.StackDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
+        if (l.MapDeck.Contains(pos)) { cardManager.DrawMapAC(l.MapDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
+        if (l.StackDeck.Contains(pos)) { cardManager.DrawStackAC(l.StackDeck.Location.ToVector2()); AudioManager.Play("card-place"); return; }
 
         if (_toMapScreenBtn.Contains(pos))
         {
@@ -102,18 +102,18 @@ public class CardScreen : GamelabGameScreen
         for (int i = 0; i < l.Top3Rects.Count; i++)
         {
             if (l.BuyButtons[i].Contains(pos) &&
-                (GamelabGame.CardManager.DrawTop3Free || i == 0) &&
-                !GamelabGame.CardManager.BuildSlots.All(s => s.IsFilled))
+                (cardManager.DrawTop3Free || i == 0) &&
+                !cardManager.BuildSlots.All(s => s.IsFilled))
             {
-                GamelabGame.CardManager.BuyTopCard(GamelabGame.SanityManager, i);
+                cardManager.BuyTopCard(sanityManager, i);
                 AudioManager.Play("coinsplash");
                 return;
             }
         }
 
-        HandleSlotButtons(GamelabGame.CardManager.MapSlots, l.MapSlots, pos, CardType.MapAction);
-        HandleSlotButtons(GamelabGame.CardManager.StackSlots, l.StackSlots, pos, CardType.StackAction);
-        HandleSlotButtons(GamelabGame.CardManager.BuildSlots, l.BuildSlots, pos, CardType.Build);
+        HandleSlotButtons(cardManager.MapSlots, l.MapSlots, pos, CardType.MapAction);
+        HandleSlotButtons(cardManager.StackSlots, l.StackSlots, pos, CardType.StackAction);
+        HandleSlotButtons(cardManager.BuildSlots, l.BuildSlots, pos, CardType.Build);
     }
 
     // -----------------------
@@ -135,7 +135,7 @@ public class CardScreen : GamelabGameScreen
         spriteBatch.DrawString(_font, "Build Cards", l.BuildLabel, TEXT);
 
         // Sanity
-        string text = $"Sanity: {GamelabGame.SanityManager.Sanity}";
+        string text = $"Sanity: {sanityManager.Sanity}";
         var size = _font.MeasureString(text);
         spriteBatch.DrawString( _font, text,new Vector2(viewportAdapter.VirtualWidth - size.X - 20, 20),TEXT);
 
@@ -145,23 +145,23 @@ public class CardScreen : GamelabGameScreen
         DrawSprite("deck", l.BuildDeck);
 
         // Active card animation
-        if (GamelabGame.CardManager.ActiveCard != null)
+        if (cardManager.ActiveCard != null)
         {
-            DrawCard(GamelabGame.CardManager.ActiveCard, new Rectangle(
-                (int)GamelabGame.CardManager.ActiveCardStartPos.X + 20,
-                (int)GamelabGame.CardManager.ActiveCardStartPos.Y,
+            DrawCard(cardManager.ActiveCard, new Rectangle(
+                (int)cardManager.ActiveCardStartPos.X + 20,
+                (int)cardManager.ActiveCardStartPos.Y,
                 l.ActiveCard.Width, l.ActiveCard.Height
             ));
         }
 
         // TOP 3 CARDS 
-        for (int i = 0; i < GamelabGame.CardManager.Top3Cards.Count; i++)
+        for (int i = 0; i < cardManager.Top3Cards.Count; i++)
         {
             var rect = l.Top3Rects[i];
-            var card = GamelabGame.CardManager.Top3Cards[i];
+            var card = cardManager.Top3Cards[i];
             DrawCard(card, rect);
 
-            int cost = GamelabGame.CardManager.DiscountActive ? Math.Max(card.Cost - 1, 0) : card.Cost;
+            int cost = cardManager.DiscountActive ? Math.Max(card.Cost - 1, 0) : card.Cost;
 
             // Cost text
             string costText = $"Cost: {cost}";
@@ -171,7 +171,7 @@ public class CardScreen : GamelabGameScreen
                 new Vector2(rect.Center.X - size1.X / 2, costY), TEXT);
 
             // Buy button
-            if (GamelabGame.CardManager.DrawTop3Free || i == 0)
+            if (cardManager.DrawTop3Free || i == 0)
             {
                 var btn = l.BuyButtons[i];
                 btn.Y = costY + 40;
@@ -180,9 +180,9 @@ public class CardScreen : GamelabGameScreen
         }
 
         // Slots
-        DrawSlots(GamelabGame.CardManager.MapSlots, l.MapSlots, CardType.MapAction);
-        DrawSlots(GamelabGame.CardManager.StackSlots, l.StackSlots, CardType.StackAction);
-        DrawSlots(GamelabGame.CardManager.BuildSlots, l.BuildSlots, CardType.Build);
+        DrawSlots(cardManager.MapSlots, l.MapSlots, CardType.MapAction);
+        DrawSlots(cardManager.StackSlots, l.StackSlots, CardType.StackAction);
+        DrawSlots(cardManager.BuildSlots, l.BuildSlots, CardType.Build);
 
         spriteBatch.End();
     }
@@ -235,7 +235,7 @@ public class CardScreen : GamelabGameScreen
             if (type == CardType.StackAction &&
                 GetBottom(rects[i], 0).Contains(mouse))
             {
-                GamelabGame.CardManager.UseCard(slots[i].Card);
+                cardManager.UseCard(slots[i].Card);
                 return;
             }
 
