@@ -1,6 +1,8 @@
 using System;
 using Gamelab;
 using Microsoft.Xna.Framework;
+using Gamelab.Managers;
+using System.Collections.Generic;
 
 public class CombatManager
 {
@@ -10,6 +12,8 @@ public class CombatManager
     private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
 
     private float _sanityDamageAccumulator;
+
+    private Dictionary<Tower, float> _towerSoundTimers = new Dictionary<Tower, float>();
 
     /// <summary>
     /// Spawns a monster at a random edge tile that walks toward the given target tile
@@ -52,9 +56,36 @@ public class CombatManager
             if (entity is Tower tower && !tower.IsDestroyed)
             {
                 var tilesInRange = tower.GetTilesInRange();
+                bool dealtDamageThisFrame = false;
                 foreach (var tile in tilesInRange)
                 {
-                    mapManager.GetMonsterGroup(tile)?.TakeDamage(tower.DamagePerSecond * dt);
+                   // mapManager.GetMonsterGroup(tile)?.TakeDamage(tower.DamagePerSecond * dt);
+                    //possibly a grunt sound here or a laser sound or sth like that
+                    var targetGroup = mapManager.GetMonsterGroup(tile);
+                    if (targetGroup != null)
+                    {
+                        targetGroup.TakeDamage(tower.DamagePerSecond * dt);
+                        dealtDamageThisFrame = true;
+                    }
+
+                }
+                if (dealtDamageThisFrame)
+                {
+                    // Create a timer for this tower if it doesn't have one yet
+                    if (!_towerSoundTimers.ContainsKey(tower))
+                        _towerSoundTimers[tower] = 0f;
+
+                    // Tick down the timer
+                    _towerSoundTimers[tower] -= dt;
+
+                    if (_towerSoundTimers[tower] <= 0f)
+                    {
+                        AudioManager.Play("shoot_01");
+                        
+                        // Set the cooldown (1.0f = plays sound once per second)
+                        // You can change this to 0.5f for faster shooting sounds!
+                        _towerSoundTimers[tower] = 1.0f; 
+                    }
                 }
             }
         }
@@ -109,6 +140,10 @@ public class CombatManager
                 if (entity is Tent)
                 {
                     mapManager.TentDestroyed = true;
+                }
+                if (entity is Tower deadTower && _towerSoundTimers.ContainsKey(deadTower))
+                {
+                    _towerSoundTimers.Remove(deadTower);
                 }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);
