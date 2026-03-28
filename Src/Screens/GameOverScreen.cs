@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Gamelab.Managers;
 
 namespace Gamelab.Screens;
 
@@ -19,6 +20,8 @@ public class GameOverScreen : GamelabGameScreen
         _font = Content.Load<SpriteFont>("font");
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
+        AudioManager.LoadSound(Content, "gameover_voice", "Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695");
+        AudioManager.Play("gameover_voice");
     }
 
     public override void Update(GameTime gameTime)
