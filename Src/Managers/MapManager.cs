@@ -11,6 +11,7 @@ public class MapManager
 #region Managers
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CombatManager combatManager => GamelabGame.CombatManager;
+    private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
 #endregion
     
@@ -70,7 +71,7 @@ public class MapManager
     /// <summary>
     /// The position of the Sheep on the map
     /// </summary>
-    public (int,int) SheepPosition {get; set;}
+    public (int col, int row) SheepPosition {get; set;}
     
     /// <summary>
     /// True when the tent has been destroyed by monsters
@@ -283,27 +284,7 @@ public class MapManager
             return false;
         }
 
-        string animKey = card.SpriteName switch
-        {
-            "dreamcatcher" => "wall_idle", // map dreamcatcher to wall
-            "sniper" => "towerSniper_idle",
-            "aoe" => "towerAOE_idle",
-            "fence" => "fence_idle",
-            "meadow" => "void_idle",
-            _ => null
-        };
-
-        if (animKey == null) return false; // no matching animation
-
-        Structure structure = card.Name switch
-        {
-            "sniper" => new Tower(animKey, (pos.col, pos.row), damagePerSecond: 8f, health: 100),
-            "aoe" => new AreaTower(animKey, (pos.col, pos.row), damagePerSecond: 5f, health: 80),
-            "fence" => new Fence(animKey, (pos.col, pos.row)),
-            "meadow" => new PlacableMeadow(animKey, (pos.col, pos.row),2),
-            "dreamcatcher" => new Wall(animKey, (pos.col, pos.row)),
-            _ => null
-        };
+        Structure structure = cardManager.GetStructureFromCard(card, pos);
 
         if (structure != null){
             Structures[pos.col, pos.row] = structure;
@@ -351,7 +332,7 @@ public class MapManager
     /// </summary>
     /// <param name="position"></param>
     /// <returns>returns [col,row] of the tile at position. returns [-1,-1] if the position is not on the tilemap</returns>
-    public (int,int) GetTileFromScreenPosition(Vector2 position)
+    public (int col, int pos) GetTileFromScreenPosition(Vector2 position)
     {
         position -= Offset;
         (int,int) res;
@@ -395,7 +376,7 @@ public class MapManager
     /// returns the 
     /// </summary>
     /// <returns></returns>
-    public (int,int) GetTent()
+    public (int col, int row) GetTent()
     {
         foreach (var item in Structures)
         {
