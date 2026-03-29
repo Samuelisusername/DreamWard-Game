@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class CombatManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
+    private Dictionary<MonsterGroup, float> _monsterGruntTimers = new Dictionary<MonsterGroup, float>();
     
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
@@ -71,16 +72,16 @@ public class CombatManager
                 }
                 if (dealtDamageThisFrame)
                 {
-                    // Create a timer for this tower if it doesn't have one yet
+
                     if (!_towerSoundTimers.ContainsKey(tower))
                         _towerSoundTimers[tower] = 0f;
 
-                    // Tick down the timer
+
                     _towerSoundTimers[tower] -= dt;
 
                     if (_towerSoundTimers[tower] <= 0f)
                     {
-                        // ✅ AUDIO LOGIC: Only play the sound if the cooldown is at 0
+
                     if (dealtDamageThisFrame)
                     {
                         if (!_towerSoundTimers.ContainsKey(tower))
@@ -99,7 +100,7 @@ public class CombatManager
                                 // The AOE tower sound
                                 soundToPlay = "AOE-tower_stomp"; 
                                 
-                                // You might want a slower cooldown for the heavy stomp! 
+                                // You might want a slower cooldown for the heavy stomp 
                                 // Adjust this number if it plays too fast.
                                 cooldown = 1.5f; 
                             }
@@ -116,7 +117,7 @@ public class CombatManager
                     }
                         
                         // Set the cooldown (1.0f = plays sound once per second)
-                        // You can change this to 0.5f for faster shooting sounds!
+                        //change this to 0.5f for faster shooting sounds!
                         _towerSoundTimers[tower] = 1.0f; 
                     }
                 }
@@ -141,12 +142,35 @@ public class CombatManager
                     // Meadow/Tent damage goes through sanity
                     float damage = monster.DamagePerSecond * dt;
                     _sanityDamageAccumulator += damage;
+                    //sound to damage sanity
                 }
                 else
                 {
                     monster.Attack(structure, dt);
+                    //sound to damage towers / monsters 
+
+                        // --- THE NEW GRUNT COOLDOWN LOGIC ---
+                        
+                        // 1. If this group isn't in our dictionary yet, add it and set the timer to 0
+                        if (!_monsterGruntTimers.ContainsKey(monsterGroup))
+                        {
+                            _monsterGruntTimers[monsterGroup] = 0f;
+                        }
+
+                        // 2. Subtract the frame time (dt) from their personal timer
+                        _monsterGruntTimers[monsterGroup] -= dt;
+
+                        // 3. If the timer drops to zero (or below), let them grunt!
+                        if (_monsterGruntTimers[monsterGroup] <= 0f)
+                        {
+                            AudioManager.Play("grunt_03"); // Play your sound
+                            
+                            // 4. Reset the clock! Set to 1.0f for 1 second, or 2.0f for 2 seconds.
+                            _monsterGruntTimers[monsterGroup] = 1.0f; 
+                        }
+                    }   
                 }
-            }
+            
             if (_sanityDamageAccumulator >= 1f)
             {
                 int toDeduct = (int)_sanityDamageAccumulator;
