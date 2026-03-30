@@ -86,7 +86,7 @@ public class CardScreen : GamelabGameScreen
         if (keyboard.WasKeyPressed(Keys.D1)) ForceSpawnCard("sniper", cardManager.BuildSlots);
         if (keyboard.WasKeyPressed(Keys.D2)) ForceSpawnCard("aoe", cardManager.BuildSlots);
         if (keyboard.WasKeyPressed(Keys.D3)) ForceSpawnCard("meadow", cardManager.BuildSlots);
-        
+        if (keyboard.WasKeyPressed(Keys.D9)) ForceSpawnCard("dreamcatcher", cardManager.BuildSlots);
         // 4-5: Spawn Map Action Cards
         if (keyboard.WasKeyPressed(Keys.D4)) ForceSpawnCard("polymorph", cardManager.MapSlots);
         if (keyboard.WasKeyPressed(Keys.D5)) ForceSpawnCard("destroy", cardManager.MapSlots);
@@ -94,6 +94,9 @@ public class CardScreen : GamelabGameScreen
         // 6-7: Spawn Stack Action Cards
         if (keyboard.WasKeyPressed(Keys.D6)) ForceSpawnCard("shuffle", cardManager.StackSlots);
         if (keyboard.WasKeyPressed(Keys.D7)) ForceSpawnCard("discount", cardManager.StackSlots);
+
+        if (keyboard.WasKeyPressed(Keys.D8)) ForceSpawnCard("fence", cardManager.BuildSlots);
+
         #endif
     }
     private void ForceSpawnCard(string spriteName, List<CardSlot> targetSlots)
@@ -111,6 +114,8 @@ public class CardScreen : GamelabGameScreen
                 "sniper" => new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper" },
                 "aoe" => new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
                 "meadow" => new Card { Name = "meadow", Type = CardType.Build, Cost = 1, SpriteName = "meadow" },
+                "fence" => new Card{Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence"},
+                "dreamcathcer" => new Card{Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName= "dreamcatcher"},
                 
                 // Map Action Cards
                 "polymorph" => new Card { Name = "Polymorph", Type = CardType.MapAction, Effect = CardEffect.Polymorph, SpriteName = "polymorph" },
@@ -119,6 +124,7 @@ public class CardScreen : GamelabGameScreen
                 // Stack Action Cards
                 "shuffle" => new Card { Name = "Shuffle", Type = CardType.StackAction, Effect = CardEffect.Shuffle, SpriteName = "shuffle" },
                 "discount" => new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount" },
+
                 
                 // Fallback just in case
                 _ => new Card { Name = spriteName, SpriteName = spriteName }
