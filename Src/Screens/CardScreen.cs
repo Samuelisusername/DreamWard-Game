@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
+
 using Gamelab.Managers;
 
 namespace Gamelab.Screens;
@@ -79,6 +80,51 @@ public class CardScreen : GamelabGameScreen
             Game.StartScreenInstance ??= new StartScreen(Game);
             Game.SwitchToScreen(Game.StartScreenInstance);
             return;
+        }
+        #if DEBUG
+        // 1-3: Spawn Build Cards
+        if (keyboard.WasKeyPressed(Keys.D1)) ForceSpawnCard("sniper", cardManager.BuildSlots);
+        if (keyboard.WasKeyPressed(Keys.D2)) ForceSpawnCard("aoe", cardManager.BuildSlots);
+        if (keyboard.WasKeyPressed(Keys.D3)) ForceSpawnCard("meadow", cardManager.BuildSlots);
+        
+        // 4-5: Spawn Map Action Cards
+        if (keyboard.WasKeyPressed(Keys.D4)) ForceSpawnCard("polymorph", cardManager.MapSlots);
+        if (keyboard.WasKeyPressed(Keys.D5)) ForceSpawnCard("destroy", cardManager.MapSlots);
+
+        // 6-7: Spawn Stack Action Cards
+        if (keyboard.WasKeyPressed(Keys.D6)) ForceSpawnCard("shuffle", cardManager.StackSlots);
+        if (keyboard.WasKeyPressed(Keys.D7)) ForceSpawnCard("discount", cardManager.StackSlots);
+        #endif
+    }
+    private void ForceSpawnCard(string spriteName, List<CardSlot> targetSlots)
+    {
+        // Find the first slot in the target list that doesn't have a card yet
+        var emptySlot = targetSlots.FirstOrDefault(s => s.Card == null);
+        
+        if (emptySlot != null)
+        {
+            // Inject a new card directly into the UI slot.
+            // NOTE: You may need to adjust this instantiation based on the required 
+            // arguments in your actual Card.cs constructor (e.g., setting Cost or CardType).
+            Card debugCard = spriteName switch
+            {
+                "sniper" => new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper" },
+                "aoe" => new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
+                "meadow" => new Card { Name = "meadow", Type = CardType.Build, Cost = 1, SpriteName = "meadow" },
+                
+                // Map Action Cards
+                "polymorph" => new Card { Name = "Polymorph", Type = CardType.MapAction, Effect = CardEffect.Polymorph, SpriteName = "polymorph" },
+                "destroy" => new Card { Name = "Destroy", Type = CardType.MapAction, Effect = CardEffect.Destroy, SpriteName = "destroy" },
+
+                // Stack Action Cards
+                "shuffle" => new Card { Name = "Shuffle", Type = CardType.StackAction, Effect = CardEffect.Shuffle, SpriteName = "shuffle" },
+                "discount" => new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount" },
+                
+                // Fallback just in case
+                _ => new Card { Name = spriteName, SpriteName = spriteName }
+            };
+
+            emptySlot.Card = debugCard;
         }
     }
 
