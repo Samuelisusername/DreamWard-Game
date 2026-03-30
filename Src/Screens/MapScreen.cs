@@ -102,8 +102,16 @@ public class MapScreen : GamelabGameScreen
         {
             int centerX = mapManager.Columns / 2;
             int centerY = mapManager.Rows / 2;
+#if DEBUG
             AudioManager.Play("grunt_03");
             GamelabGame.GamePhaseManager.SwitchToNight();
+#else
+            if(GamelabGame.GamePhaseManager.IsDay){
+                AudioManager.Play("grunt_03");
+                GamelabGame.GamePhaseManager.SwitchToNight();
+            }
+#endif
+
         }
 
         if (keyboard.WasKeyPressed(Keys.P))

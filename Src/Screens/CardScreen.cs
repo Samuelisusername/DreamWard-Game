@@ -123,6 +123,14 @@ public class CardScreen : GamelabGameScreen
                 // Fallback just in case
                 _ => new Card { Name = spriteName, SpriteName = spriteName }
             };
+            if (debugCard.Cost > 0)
+            {
+                if (!sanityManager.TryDeductSanity(debugCard.Cost))
+                {
+                    // Optional: Play a "buzzer" or error sound here
+                    return; 
+                }
+            }
 
             emptySlot.Card = debugCard;
         }
