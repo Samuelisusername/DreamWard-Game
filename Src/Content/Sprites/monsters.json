@@ -158,30 +158,6 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 1280 },
     "sourceSize": { "w": 128, "h": 1280 },
     "duration": 200
-   },
-   "monsters 20.aseprite": {
-    "frame": { "x": 2560, "y": 0, "w": 128, "h": 1280 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 1280 },
-    "sourceSize": { "w": 128, "h": 1280 },
-    "duration": 200
-   },
-   "monsters 21.aseprite": {
-    "frame": { "x": 2688, "y": 0, "w": 128, "h": 1280 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 1280 },
-    "sourceSize": { "w": 128, "h": 1280 },
-    "duration": 200
-   },
-   "monsters 22.aseprite": {
-    "frame": { "x": 2816, "y": 0, "w": 128, "h": 1280 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 1280 },
-    "sourceSize": { "w": 128, "h": 1280 },
-    "duration": 200
    }
  },
  "meta": {
@@ -189,7 +165,7 @@
   "version": "1.3.17-dev",
   "image": "monsters.png",
   "format": "RGBA8888",
-  "size": { "w": 2944, "h": 1280 },
+  "size": { "w": 2560, "h": 1280 },
   "scale": "1",
   "frameTags": [
    { "name": "idleSW", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
@@ -204,22 +180,19 @@
    { "name": "attackNW", "from": 12, "to": 12, "direction": "forward", "color": "#000000ff" },
    { "name": "attackN", "from": 13, "to": 13, "direction": "forward", "color": "#000000ff" },
    { "name": "attackS", "from": 14, "to": 14, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergeKingSW", "from": 15, "to": 15, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergeKingNW", "from": 16, "to": 16, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergeKingN", "from": 17, "to": 17, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergeKingS", "from": 18, "to": 18, "direction": "forward", "color": "#000000ff" },
-   { "name": "merkePawnSW", "from": 19, "to": 19, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergePawnNW", "from": 20, "to": 20, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergePawnN", "from": 21, "to": 21, "direction": "forward", "color": "#000000ff" },
-   { "name": "mergePawnS", "from": 22, "to": 22, "direction": "forward", "color": "#000000ff" }
+   { "name": "mergeSW", "from": 15, "to": 15, "direction": "forward", "color": "#000000ff" },
+   { "name": "mergeNW", "from": 16, "to": 16, "direction": "forward", "color": "#000000ff" },
+   { "name": "mergeN", "from": 17, "to": 17, "direction": "forward", "color": "#000000ff" },
+   { "name": "mergeS", "from": 18, "to": 18, "direction": "forward", "color": "#000000ff" },
+   { "name": "smokeWalk", "from": 19, "to": 19, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
-   { "name": "normal_amalgam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] },
-   { "name": "monkey", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 512, "w": 128, "h": 128 } }] },
-   { "name": "strong", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 384, "w": 128, "h": 128 } }] },
-   { "name": "smol", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 128, "h": 128 } }] },
+   { "name": "fly", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] },
    { "name": "normal", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 128, "h": 128 } }] },
-   { "name": "fly", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] }
+   { "name": "smol", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 128, "h": 128 } }] },
+   { "name": "strong", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 384, "w": 128, "h": 128 } }] },
+   { "name": "monkey", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 512, "w": 128, "h": 128 } }] },
+   { "name": "normal_amalgam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] }
   ]
  }
 }
