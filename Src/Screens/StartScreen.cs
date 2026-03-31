@@ -107,6 +107,14 @@ public class StartScreen : GamelabGameScreen
                         }
                     }
                 }
+                for (int i = 0; i < _buttons.Length; i++)
+                {
+                    if (_buttons[i].Contains(pos) && !(_buttonLabels[i] == "Continue Game" && Game.MapScreenInstance == null))
+                    {
+                        GamelabGame.IsHovering = true;
+                        break;
+                    }
+                }
                 break;
 
             case MenuState.HowToPlay:
@@ -123,6 +131,8 @@ public class StartScreen : GamelabGameScreen
                         AudioManager.UpdateMusicVolume(_volume);
                     }
                 }
+                if (_buttons[0].Contains(pos) || _volumeBar.Contains(pos))
+                    GamelabGame.IsHovering = true;
                 break;
         }
     }
