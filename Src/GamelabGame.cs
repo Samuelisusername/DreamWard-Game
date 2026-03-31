@@ -8,6 +8,7 @@ using Gamelab.Utils;
 using Gamelab.Utils.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 
 namespace Gamelab;
@@ -63,6 +64,14 @@ public class GamelabGame : Game
 
     private TileSet dayTiles;
     private TileSet nightTiles;
+    private MouseCursor cursorArrow;
+    private MouseCursor cursorHover;
+    private MouseCursor cursorClick;
+
+    /// <summary>
+    /// Set to true during Update to show the hover cursor. Reset automatically each frame.
+    /// </summary>
+    public static bool IsHovering { get; set; }
 
     public GamelabGame(RunMode runMode)
     {
@@ -149,8 +158,17 @@ public class GamelabGame : Game
         nightTiles = new(regionNight, 64, 32);
 
 
+        TextureAtlas interfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
+        textureAtlas.Add("interface", interfaceAtlas);
+
+        var interfaceTexture = interfaceAtlas.Texture;
+        cursorArrow = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_arrow0").SourceRectangle, 0, 0, 2);
+        cursorHover = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
+        cursorClick = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
+        Mouse.SetCursor(cursorArrow);
+
         MapManager = new MapManager(dayTiles, nightTiles, 20, 20, TimeSpan.FromMilliseconds(500));
-        
+
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();
     }
@@ -163,7 +181,34 @@ public class GamelabGame : Game
             nextScreen = null;
         }
 
+        IsHovering = false;
         base.Update(gameTime);
+
+        var mouseState = Mouse.GetState();
+        if (IsHovering){
+            Mouse.SetCursor(cursorHover);
+            if (mouseState.LeftButton == ButtonState.Pressed)
+                Mouse.SetCursor(cursorClick);
+        }
+        else
+            Mouse.SetCursor(cursorArrow);
+    }
+
+    private MouseCursor CursorFromRegion(Texture2D source, Rectangle region, int originX, int originY, int scale = 1)
+    {
+        var src = new Color[region.Width * region.Height];
+        source.GetData(0, region, src, 0, src.Length);
+
+        int w = region.Width * scale;
+        int h = region.Height * scale;
+        var dst = new Color[w * h];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                dst[y * w + x] = src[(y / scale) * region.Width + (x / scale)];
+
+        var texture = new Texture2D(GraphicsDevice, w, h);
+        texture.SetData(dst);
+        return MouseCursor.FromTexture2D(texture, (originX + 2) * scale, originY * scale);
     }
 
     protected override void Draw(GameTime gameTime)
