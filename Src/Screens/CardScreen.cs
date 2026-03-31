@@ -82,21 +82,17 @@ public class CardScreen : GamelabGameScreen
             return;
         }
         #if DEBUG
-        // 1-3: Spawn Build Cards
         if (keyboard.WasKeyPressed(Keys.D1)) ForceSpawnCard("sniper", cardManager.BuildSlots);
         if (keyboard.WasKeyPressed(Keys.D2)) ForceSpawnCard("aoe", cardManager.BuildSlots);
         if (keyboard.WasKeyPressed(Keys.D3)) ForceSpawnCard("meadow", cardManager.BuildSlots);
-        if (keyboard.WasKeyPressed(Keys.D9)) ForceSpawnCard("dreamcatcher", cardManager.BuildSlots);
-        // 4-5: Spawn Map Action Cards
         if (keyboard.WasKeyPressed(Keys.D4)) ForceSpawnCard("polymorph", cardManager.MapSlots);
         if (keyboard.WasKeyPressed(Keys.D5)) ForceSpawnCard("destroy", cardManager.MapSlots);
-
-        // 6-7: Spawn Stack Action Cards
         if (keyboard.WasKeyPressed(Keys.D6)) ForceSpawnCard("shuffle", cardManager.StackSlots);
         if (keyboard.WasKeyPressed(Keys.D7)) ForceSpawnCard("discount", cardManager.StackSlots);
-
         if (keyboard.WasKeyPressed(Keys.D8)) ForceSpawnCard("fence", cardManager.BuildSlots);
-
+        if (keyboard.WasKeyPressed(Keys.D9)) ForceSpawnCard("dreamcatcher", cardManager.BuildSlots);
+        if (keyboard.WasKeyPressed(Keys.D0)) ForceSpawnCard("top3", cardManager.StackSlots);
+        if (keyboard.WasKeyPressed(Keys.M)) ForceSpawnCard("move", cardManager.MapSlots);
         #endif
     }
     private void ForceSpawnCard(string spriteName, List<CardSlot> targetSlots)
@@ -115,15 +111,19 @@ public class CardScreen : GamelabGameScreen
                 "aoe" => new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
                 "meadow" => new Card { Name = "meadow", Type = CardType.Build, Cost = 1, SpriteName = "meadow" },
                 "fence" => new Card{Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence"},
-                "dreamcathcer" => new Card{Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName= "dreamcatcher"},
+                "dreamcatcher" => new Card{Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName= "dreamcatcher"},
                 
                 // Map Action Cards
                 "polymorph" => new Card { Name = "Polymorph", Type = CardType.MapAction, Effect = CardEffect.Polymorph, SpriteName = "polymorph" },
                 "destroy" => new Card { Name = "Destroy", Type = CardType.MapAction, Effect = CardEffect.Destroy, SpriteName = "destroy" },
+                "move" => new Card {Name = "move", Type = CardType.MapAction, Effect = CardEffect.Move, SpriteName = "move"},
 
                 // Stack Action Cards
                 "shuffle" => new Card { Name = "Shuffle", Type = CardType.StackAction, Effect = CardEffect.Shuffle, SpriteName = "shuffle" },
                 "discount" => new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount" },
+                "top3" => new Card {Name ="top3", Type = CardType.StackAction, Effect = CardEffect.DrawTop3, SpriteName = "top3"},
+                
+
 
                 
                 // Fallback just in case
