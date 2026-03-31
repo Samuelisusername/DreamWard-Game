@@ -214,12 +214,12 @@
    { "name": "mergePawnS", "from": 22, "to": 22, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
-   { "name": "fly", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] },
-   { "name": "normal", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 128, "h": 128 } }] },
-   { "name": "smol", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 128, "h": 128 } }] },
-   { "name": "strong", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 384, "w": 128, "h": 128 } }] },
+   { "name": "normal_amalgam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] },
    { "name": "monkey", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 512, "w": 128, "h": 128 } }] },
-   { "name": "normal_amalgam", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] }
+   { "name": "strong", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 384, "w": 128, "h": 128 } }] },
+   { "name": "smol", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 256, "w": 128, "h": 128 } }] },
+   { "name": "normal", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 128, "h": 128 } }] },
+   { "name": "fly", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 128, "h": 128 } }] }
   ]
  }
 }
