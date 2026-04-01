@@ -1,48 +1,48 @@
-// using System;
-// using System.Collections.Generic;
-// using System.Diagnostics.Tracing;
-// using System.Linq;
-// using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Linq;
+using Microsoft.Xna.Framework;
 
 
-// public class MonsterGroupNew_Unfinished : Entity
-// {
-//     //all monsters of the same type
-//     //
-//     public MonsterGroupNew_Unfinished()
-//     {
-//         _monsters = [];
-//         throw new NotImplementedException();
-//     }
+public class MonsterGroupNew_Unfinished : Entity
+{
+    //all monsters of the same type
+    //
+    public MonsterGroupNew_Unfinished((int, int)tilePos, int maxHealth):base(tilePos, maxHealth)
+    {
+        _monsters = [];
+        throw new NotImplementedException();
+    }
     
-//     public List<Monster> _monsters;
-//     public MonsterType monsterType;
-//     public int size => _monsters.Count;
-//     public bool isSingle => this.size ==1;
-//     public bool isEmpty => this.size ==0; 
-//     public float health => _monsters.Sum(m => m.CurrentHealth);
-//     public float damage => _monsters.Sum(m => m.DamagePerSecond); 
-//     public string direction() // or target or next target (main point is that they have a common destination)
-//     {
-//         throw new NotImplementedException();
-//     }
-//     public void take_damage(){}
-//     public void make_damage(){}
-//     public void move(){} //they all move in unison
-//     public void addMonster(){} //if a monster is added to the pack (only valid if has the same direction or target)
-//     public void removeMonster(){} //if a monster dies or changes target
-//     public override void Update(GameTime gameTime)
-//     {
-//     // You can put monster movement or logic here later.
-//     // For now, leaving it empty is perfectly fine to fix the error!
-//     }  
-//     public override bool IsBuildEntity => false;
-//     // Depending on how it's defined in Entity.cs, this might need to be 'public' or 'protected'
-//     protected override Vector2 _localOffset => Microsoft.Xna.Framework.Vector2.Zero;
+    public List<Monster> _monsters;
+    public MonsterType monsterType;
+    public int Count => _monsters.Count;
+    public bool isSingle => this.Count ==1;
+    public bool isEmpty => this.Count ==0; 
+    public float health => _monsters.Sum(m => m.CurrentHealth);
+    public float damage => _monsters.Sum(m => m.DamagePerSecond); 
+    public string direction() // or target or next target (main point is that they have a common destination)
+    {
+        throw new NotImplementedException();
+    }
+    public void take_damage(){}
+    public void make_damage(){}
+    public void move(){} //they all move in unison
+    public void addMonster(){} //if a monster is added to the pack (only valid if has the same direction or target)
+    public void removeMonster(){} //if a monster dies or changes target
+    public override void Update(GameTime gameTime)
+    {
+    // You can put monster movement or logic here later.
+    // For now, leaving it empty is perfectly fine to fix the error!
+    }  
+    public override bool IsBuildEntity => false;
+    // Depending on how it's defined in Entity.cs, this might need to be 'public' or 'protected'
+    protected override Vector2 _localOffset => Microsoft.Xna.Framework.Vector2.Zero;
 
 
     
 
 
 
-// }
+}
