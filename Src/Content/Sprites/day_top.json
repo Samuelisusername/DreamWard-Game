@@ -1,19 +1,19 @@
 { "frames": {
    "day_top 0.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 128, "h": 2560 },
+    "frame": { "x": 0, "y": 0, "w": 128, "h": 2688 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2560 },
-    "sourceSize": { "w": 128, "h": 2560 },
-    "duration": 100
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2688 },
+    "sourceSize": { "w": 128, "h": 2688 },
+    "duration": 200
    },
    "day_top 1.aseprite": {
-    "frame": { "x": 128, "y": 0, "w": 128, "h": 2560 },
+    "frame": { "x": 128, "y": 0, "w": 128, "h": 2688 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2560 },
-    "sourceSize": { "w": 128, "h": 2560 },
-    "duration": 100
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2688 },
+    "sourceSize": { "w": 128, "h": 2688 },
+    "duration": 200
    }
  },
  "meta": {
@@ -21,12 +21,17 @@
   "version": "1.3.17-dev",
   "image": "day_top.png",
   "format": "RGBA8888",
-  "size": { "w": 256, "h": 2560 },
+  "size": { "w": 256, "h": 2688 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
+   { "name": "meadowPlaced", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2560, "w": 128, "h": 128 } }] },
+   { "name": "decoy", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2432, "w": 128, "h": 128 } }] },
+   { "name": "spikes", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2304, "w": 128, "h": 128 } }] },
+   { "name": "buff", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2176, "w": 128, "h": 128 } }] },
+   { "name": "meadowGrazed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2048, "w": 128, "h": 128 } }] },
    { "name": "treeSmall", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 768, "w": 128, "h": 128 } }] },
    { "name": "treeBig", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 640, "w": 128, "h": 128 } }] },
    { "name": "wall", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 512, "w": 128, "h": 128 } }] },
