@@ -4,11 +4,11 @@ using System.Diagnostics.Tracing;
 using System.Linq;
 
 
-public class MonsterGroup : Entity
+public class MonsterGroupNew_Unfinished : Entity
 {
     //all monsters of the same type
     //
-    public MonsterGroup()
+    public MonsterGroupNew_Unfinished()
     {
         _monsters = [];
         throw new NotImplementedException();
