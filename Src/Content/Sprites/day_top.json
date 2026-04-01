@@ -1,18 +1,18 @@
 { "frames": {
    "day_top 0.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 128, "h": 2688 },
+    "frame": { "x": 0, "y": 0, "w": 128, "h": 2816 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2688 },
-    "sourceSize": { "w": 128, "h": 2688 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2816 },
+    "sourceSize": { "w": 128, "h": 2816 },
     "duration": 200
    },
    "day_top 1.aseprite": {
-    "frame": { "x": 128, "y": 0, "w": 128, "h": 2688 },
+    "frame": { "x": 128, "y": 0, "w": 128, "h": 2816 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2688 },
-    "sourceSize": { "w": 128, "h": 2688 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 2816 },
+    "sourceSize": { "w": 128, "h": 2816 },
     "duration": 200
    }
  },
@@ -21,7 +21,7 @@
   "version": "1.3.17-dev",
   "image": "day_top.png",
   "format": "RGBA8888",
-  "size": { "w": 256, "h": 2688 },
+  "size": { "w": 256, "h": 2816 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 1, "direction": "forward", "color": "#000000ff" }
@@ -46,7 +46,8 @@
    { "name": "sheepBig", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1408, "w": 128, "h": 128 } }] },
    { "name": "rats", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1536, "w": 128, "h": 128 } }] },
    { "name": "ratKing", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1664, "w": 128, "h": 128 } }] },
-   { "name": "meadow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1792, "w": 128, "h": 128 } }] }
+   { "name": "meadow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1792, "w": 128, "h": 128 } }] },
+   { "name": "treeMid", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2689, "w": 128, "h": 127 } }] }
   ]
  }
 }
