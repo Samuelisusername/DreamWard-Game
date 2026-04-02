@@ -572,7 +572,7 @@ public class MapManager
         Offset += delta;
         Vector2 maxOffset = screenSize.ToVector2() / 2;
         Vector2 minOffset = -GetWorldPositionOfTileWithoutOffset((Columns,Rows)) + maxOffset;
-        //Offset = new Vector2(Math.Clamp(Offset.X, minOffset.X, maxOffset.X), Math.Clamp(Offset.Y, minOffset.Y, maxOffset.Y));
+        Offset = new Vector2(Math.Clamp(Offset.X, minOffset.X, maxOffset.X), Math.Clamp(Offset.Y, minOffset.Y, maxOffset.Y));
     }
 
     private Vector2 GetWorldPositionOfTileWithoutOffset((int col, int row) pos)
