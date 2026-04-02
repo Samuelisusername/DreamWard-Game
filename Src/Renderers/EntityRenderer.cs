@@ -15,6 +15,13 @@ public class EntityRenderer
 
     public void Draw(SpriteBatch spriteBatch, (int col, int row)? skipTile = null)
     {
+        for (int i = 0; i < mapManager.Rows*6; i++)
+        {
+            for (int j = i % 2; j < mapManager.Columns*3; j += 2)
+            {                
+                mapManager.GetStructure((j,i/2), true)?.Draw(spriteBatch);
+            }
+        }
         for(int i = 0; i < mapManager.Rows * 2; i++)
         {
             for(int j = i % 2; j < mapManager.Columns; j += 2)

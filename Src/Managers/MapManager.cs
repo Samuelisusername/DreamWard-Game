@@ -5,6 +5,7 @@ using Gamelab;
 using System.Collections.Generic;
 using Gamelab.Managers;
 using System.Linq;
+using Gamelab.Utils.Logging;
 
 public class MapManager
 { 
@@ -13,6 +14,8 @@ public class MapManager
     private CombatManager combatManager => GamelabGame.CombatManager;
     private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+    
+    private readonly Logger logger = new("Game");
 #endregion
     
 #region storage
@@ -22,12 +25,18 @@ public class MapManager
 
     //which tile of the tileset is display at this position?
     private readonly int[,] _tiles; //col first
+    
+    //which tile of the tileset is display at this position?
+    private readonly int[,] _exteriorTiles; //col first
 
     //stores which tiles has which structure on it -1 if none
-    public readonly Structure[,] Structures;//colfirst
+    public readonly Structure[,] Structures; //colfirst
+
+    //stores which tiles has which structure on it -1 if none
+    public readonly Structure[,] ExteriorStructures; //colfirst
     
     //stores which tiles has which monster on it -1 if none
-    public readonly MonsterGroup[,] MonsterGroups;//colfirst
+    public readonly MonsterGroup[,] MonsterGroups; //colfirst
 
 #endregion
 
@@ -105,12 +114,14 @@ public class MapManager
         Rows = rows;
         _delay = delay;
         _tiles = new int[Columns,Rows];
+        _exteriorTiles = new int[Columns*3,Rows*3];
         MonsterGroups = new MonsterGroup[Columns,Rows];
         Structures = new Structure[Columns,Rows];
+        ExteriorStructures = new Structure[Columns*3,Rows*3];
         
         FillRandomly();
         Scale = new Vector2(4, 4);
-        MapUtils.Setup(20,20);
+        MapUtils.Setup(Columns,Rows);
     }
     
     public void Update(GameTime gameTime)
@@ -132,6 +143,10 @@ public class MapManager
                 Structures[i,j]?.Update(gameTime);
             }
         }
+        foreach (var tree in ExteriorStructures)
+        {
+            tree?.Update(gameTime);
+        }
 
         //if its night manage monsters
         if(!gamePhaseManager.IsDay)
@@ -151,9 +166,17 @@ public class MapManager
     /// </summary>
     public TextureRegion GetTile((int col, int row) pos)
     {
+        if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+        {
+            pos.col -= Columns;
+            pos.row -= Rows;
+            return gamePhaseManager.IsDay ?
+                _tileSets["day"].GetTile(_tiles[pos.col,pos.row] + _animationOffset) :
+                _tileSets["night"].GetTile(_tiles[pos.col, pos.row] + _animationOffset);
+        }
         return gamePhaseManager.IsDay ?
-            _tileSets["day"].GetTile(_tiles[pos.col,pos.row] + _animationOffset) :
-            _tileSets["night"].GetTile(_tiles[pos.col, pos.row] + _animationOffset);
+                _tileSets["day"].GetTile(_exteriorTiles[pos.col,pos.row] + _animationOffset) :
+                _tileSets["night"].GetTile(_exteriorTiles[pos.col, pos.row] + _animationOffset);
     }
     
     /// <summary>
@@ -172,18 +195,21 @@ public class MapManager
     /// </summary>
     public void AddNewMonster((int col, int row) pos)
     {
-        Monster newMonster = new RegularMonster(pos);
+        if(Structures[pos.col, pos.row] == null)
+        {            
+            Monster newMonster = new RegularMonster(pos);
 
-        if (MonsterGroups[pos.col, pos.row] != null)
-        {
-            MonsterGroups[pos.col, pos.row].AddMonster(newMonster);
-        }
-        else
-        {
-            MonsterGroup group = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
-            group.AddMonster(newMonster);
-            MonsterGroups[pos.col, pos.row] = group;
-        }       
+            if (MonsterGroups[pos.col, pos.row] != null)
+            {
+                MonsterGroups[pos.col, pos.row].AddMonster(newMonster);
+            }
+            else
+            {
+                MonsterGroup group = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
+                group.AddMonster(newMonster);
+                MonsterGroups[pos.col, pos.row] = group;
+            }  
+        }     
     }
 
     /// <summary>
@@ -221,9 +247,19 @@ public class MapManager
     /// <summary>
     /// returns the structure at the given position
     /// </summary>
-    public Structure GetStructure((int col, int row) pos)
+    public Structure GetStructure((int col, int row) pos, bool wholeMap = false)
     {
-        return Structures[pos.col, pos.row];
+        if(wholeMap)
+        {        
+            if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+            {
+                pos.col -= Columns;
+                pos.row -= Rows;            
+                return Structures[pos.col, pos.row];
+            }
+            return ExteriorStructures[pos.col,pos.row];
+        }
+        return Structures[pos.col, pos.row];    
     }
 
     /// <summary>
@@ -317,13 +353,84 @@ public class MapManager
     /// </summary>
     public void FillRandomly()
     {
-        for(int i = 0; i < Columns; i++)
+        string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
+        for(int i = 0; i < Columns * 3; i++)
         {
-            for(int j = 0; j < Rows; j++)
+            for(int j = 0; j < Rows * 3; j++)
             {
-                _tiles[i,j] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
+                if(i - Columns >= 0 && i - Columns < Columns && j - Rows >= 0 && j - Rows < Rows)
+                {                        
+                    _tiles[i - Columns, j - Rows] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
+                    _exteriorTiles[i, j] = -1;
+                }
+                else
+                {
+                    _exteriorTiles[i, j] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
+                }
             }
         }
+    }
+
+    public void AddTrees(List<(int col, int row)> treePlacements)
+    {
+        int seed = Random.Shared.Next();
+        logger.Info("seed: " + seed);
+        FastNoiseLite noise = new FastNoiseLite();
+        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        noise.SetFractalOctaves(1);
+        float maxDistance = MapUtils.CalculateTileDistance(GetTent(),(-1,-1));
+
+        for(int i = 0; i < Columns * 3; i++)
+        {
+            for(int j = 0; j < Rows * 3; j++)
+            {
+                float noiseval = (noise.GetNoise(i * 10,j * 10) + 1) / 2;
+                if(!(i - Columns >= 0 && i - Columns < Columns && j - Rows >= 0 && j - Rows < Rows))
+                {                       
+                    if(noiseval < 0.2)
+                    {
+                        //check passed spawn tree replace with noise in the future
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.75 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                    }
+                    else if(noiseval < 0.6)
+                    {
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                    }
+                    else if(Random.Shared.NextDouble() < 0.25)
+                    {
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                    }
+                              
+                }
+                else
+                {   
+                    float relativeDist = MapUtils.CalculateTileDistance(GetTent(),(i-Columns,j-Rows)) / maxDistance;
+                    relativeDist = MathF.Pow(relativeDist,2);
+                    noiseval /= relativeDist;
+                    if(noiseval < 0.2)
+                    {
+                        //check passed spawn tree replace with noise in the future
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.75 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                    }
+                    else if(noiseval < 0.4)
+                    {
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                    }
+                    else if(Random.Shared.NextDouble() < 0.25 * relativeDist)
+                    {
+                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                    }
+                }
+            }
+        }
+        
+                
     }
     
     
@@ -394,6 +501,7 @@ public class MapManager
     public void TryMoveSheep(Vector2 pos)
     {
         (int col, int row) tilePos = GetTileFromScreenPosition(pos);
+        if(tilePos.row < 0 ) return;
         Entity entity = GetStructure(tilePos);
         if(entity is Meadow meadow)
         {
@@ -451,18 +559,34 @@ public class MapManager
     
 #region Input handling
 
+
+    public void InitOffset(Point screenSize)
+    {
+        Offset = -GetWorldPositionOfTileWithoutOffset((Columns/2,Rows/2)) + (screenSize.ToVector2() / 2) - new Vector2(TileWidth/2,TileHeight/2);
+    }
     /// <summary>
     /// Moves the map into the direction of delta
     /// </summary>
-    public void MoveMap(Vector2 delta)
+    public void MoveMap(Vector2 delta, Point screenSize)
     {
         Offset += delta;
+        Vector2 maxOffset = screenSize.ToVector2() / 2;
+        Vector2 minOffset = -GetWorldPositionOfTileWithoutOffset((Columns,Rows)) + maxOffset;
+        //Offset = new Vector2(Math.Clamp(Offset.X, minOffset.X, maxOffset.X), Math.Clamp(Offset.Y, minOffset.Y, maxOffset.Y));
+    }
+
+    private Vector2 GetWorldPositionOfTileWithoutOffset((int col, int row) pos)
+    {
+        float tileX = pos.col * TileWidth - (pos.col * ScaledOffset);
+        float tileY = pos.col % 2 == 0 ? pos.row * TileHeight : pos.row * TileHeight + ScaledOffset;
+
+        return new Vector2(tileX, tileY);
     }
 
     /// <summary>
     /// Zooms the map by delta, towards the focus point
     /// </summary>
-    public void Zoom(float delta, Vector2 focus)
+    public void Zoom(float delta, Vector2 focus, Point screenSize)
     {
         //where are we zooming in on?
         Vector2 oldMapPoint = focus - Offset;
@@ -474,7 +598,7 @@ public class MapManager
         Vector2 newMapPoint = oldMapPoint * scaleRatio;
         //correct the offset so that the focus point stays at the same place on screen
         Vector2 correction = oldMapPoint - newMapPoint;
-        Offset += correction;
+        MoveMap(correction, screenSize);
         Scale = newScale;
         //scale all the monsters
         foreach(MonsterGroup monsterGroup in MonsterGroups)

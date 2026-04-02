@@ -62,6 +62,8 @@ public class GamelabGame : Game
     public static PathFindingManager PathFindingManager {get; private set;}
     public static SanityManager SanityManager {get; private set;}
 
+    private (int x, int y) mapSize = (50,50);
+
     private TileSet dayTiles;
     private TileSet nightTiles;
     private MouseCursor cursorArrow;
@@ -167,8 +169,7 @@ public class GamelabGame : Game
         cursorClick = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
         Mouse.SetCursor(cursorArrow);
 
-        MapManager = new MapManager(dayTiles, nightTiles, 20, 20, TimeSpan.FromMilliseconds(500));
-
+        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y, TimeSpan.FromMilliseconds(500));
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();
     }
@@ -235,7 +236,7 @@ public class GamelabGame : Game
         SanityManager = new();
 
         // Recreate MapManager with fresh tile data
-        MapManager = new MapManager(dayTiles, nightTiles, 20, 20, TimeSpan.FromMilliseconds(500));
+        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y, TimeSpan.FromMilliseconds(500));
 
         PathFindingManager = new();
     }

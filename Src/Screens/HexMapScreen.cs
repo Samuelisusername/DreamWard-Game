@@ -59,7 +59,7 @@ public class HexMapScreen : GamelabGameScreen
         {
             float delta = mouse.DeltaScrollWheelValue * (-0.01f);
             //Move this into the mapManager as a function
-            mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            //mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
         }
 
         if(mouse.WasButtonPressed(MouseButton.Left))
@@ -70,7 +70,7 @@ public class HexMapScreen : GamelabGameScreen
         if(mouse.IsButtonDown(MouseButton.Left))
         {
             Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-            mapManager.MoveMap(deltaPos);
+            //mapManager.MoveMap(deltaPos);
             if(deltaPos.Length() > 0)
             {                
                 _isDrag = true;
