@@ -11,6 +11,8 @@ public abstract class Entity
     public (int,int) TilePosition {get; set;}
     public abstract bool IsBuildEntity { get ;}
 
+    public virtual bool CanMove => true;
+
     /// <summary>
     /// is the Entity destoryed
     /// </summary>

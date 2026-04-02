@@ -12,6 +12,8 @@ public class Tent : CardEntity
 {
     private SanityManager sanityManager => GamelabGame.SanityManager;
 
+    public override bool CanMove => false;
+
     public Tent(string animName, (int,int) pos)
         : base(animName, pos, GamelabGame.SanityManager?.Sanity ?? 100)
     {

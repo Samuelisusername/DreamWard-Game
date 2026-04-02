@@ -164,8 +164,6 @@ public class MapScreen : GamelabGameScreen
 
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _clickStarted = false;
-                _isDrag = false;
                 if(GamelabGame.GamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
                     Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
@@ -187,6 +185,8 @@ public class MapScreen : GamelabGameScreen
                     }
                     mapManager.TryMoveSheep(pos);
                 }
+                _clickStarted = false;
+                _isDrag = false;
             }
         }        
     }
@@ -424,7 +424,7 @@ public class MapScreen : GamelabGameScreen
         {
             bool success = ApplyMapAction(_activeMapCard, pos);
 
-            if (success)
+            if (success && _selectedTile == (-1,-1))
             {
                 cardManager.UseCard(_activeMapCard); // ✅ NOW works for ALL actions
                 _activeMapCard = null;
@@ -458,10 +458,10 @@ public class MapScreen : GamelabGameScreen
                 {
                     if (_selectedTile == (-1,-1))
                     {
-                        if(mapManager.GetStructure((col,row)) != null)
+                        if(mapManager.GetStructure((col,row)) is {} toMove && toMove.CanMove)
                         {
                             _selectedTile = (col,row);
-                            return false; // do not consume card yet
+                            return true; // do not consume card yet
                         }
                         return false;
                     }

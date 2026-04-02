@@ -11,6 +11,8 @@ public class Meadow : Structure
     public bool IsPolymorphed{get; private set;}
 
     public int SanityGain {get; private set;}
+
+    public override bool CanMove => false;
     public Meadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, int.MaxValue)
     {

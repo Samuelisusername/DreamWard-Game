@@ -4,6 +4,7 @@
 /// </summary>
 public class TreeTile : Structure
 {
+    public override bool CanMove => false;
     public TreeTile(string animName, (int,int) pos)
         : base(animName, pos, int.MaxValue)
     {
