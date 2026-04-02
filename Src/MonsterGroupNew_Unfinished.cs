@@ -6,11 +6,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.ExceptionServices;
+using Gamelab;
 using Microsoft.Xna.Framework;
 
 
 public class MonsterGroupNew_Unfinished : Entity
 {
+    protected MapManager mapManager => GamelabGame.MapManager;
     //all monsters of the same type
     //
     public MonsterGroupNew_Unfinished((int, int)tilePos, int maxHealth):base(tilePos, maxHealth)
@@ -18,7 +20,8 @@ public class MonsterGroupNew_Unfinished : Entity
         Monsters = [];
     }  
     //the offset to draw the monster on the tile
-    private readonly Vector2 _localOffset = new Vector2(-32,-90); //hmmmmmmmmm is this necessary now that we we have this offset thing in the monstergroup container?
+    
+    protected override Vector2 _localOffset => new Vector2(-32-90);//hmmmmmmmmm is this necessary now that we we have this offset thing in the monstergroup container?
     
     public List<Monster> Monsters{get; private set;} //private set im guessing we add monsters here and remove them here the add and remove methods are called from the Containers..
     private TimeSpan _speed;
