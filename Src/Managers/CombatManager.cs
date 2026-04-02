@@ -21,7 +21,7 @@ public class CombatManager
     /// </summary>
     public void SpawnMonsters(int count)
     {
-        for (int i = 0; i < 1000; i++)
+        for (int i = 0; i < count; i++)
         {
             (int targetCol, int targetRow) = mapManager.GetTent();
             int side = Random.Shared.Next(4);
@@ -34,7 +34,11 @@ public class CombatManager
                 default: col = Random.Shared.Next(mapManager.Columns); row = mapManager.Rows - 1;     break;
             }
             
-            mapManager.AddNewMonster((col,row));
+            if(!mapManager.AddNewMonster((col,row)))
+            {
+                i--;
+            }
+            
         }
     }
 

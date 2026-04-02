@@ -193,7 +193,7 @@ public class MapManager
     /// <summary>
     /// Create a new monster at the given location
     /// </summary>
-    public void AddNewMonster((int col, int row) pos)
+    public bool AddNewMonster((int col, int row) pos)
     {
         if(Structures[pos.col, pos.row] == null)
         {            
@@ -209,7 +209,9 @@ public class MapManager
                 group.AddMonster(newMonster);
                 MonsterGroups[pos.col, pos.row] = group;
             }  
+            return true;
         }     
+        return false;
     }
 
     /// <summary>
