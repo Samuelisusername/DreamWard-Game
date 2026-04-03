@@ -1,4 +1,5 @@
 using System;
+using System.Linq; // Added this so we can calculate max health!
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Gamelab;
@@ -23,7 +24,7 @@ public class EntityRenderer
                 if (skipTile.HasValue && skipTile.Value == tilePos)
                 continue;
                 mapManager.GetStructure((j,i/2), true)?.Draw(spriteBatch);
-                mapManager.GetMonsterGroup((tilePos.col,tilePos.row))?.Draw(spriteBatch);
+                mapManager.GetMonsterContainer((tilePos.col,tilePos.row))?.Draw(spriteBatch);
             }
         }
         for(int i = 0; i < mapManager.Rows * 2; i++)
@@ -37,7 +38,7 @@ public class EntityRenderer
 
         Vector2 scale = mapManager.Scale;
 
-        // Draw HP bars for towers only
+        // Draw HP bars
         for(int i = 0; i < mapManager.Columns; i++)
         {
             for(int j = 0; j < mapManager.Rows; j++)
@@ -49,25 +50,31 @@ public class EntityRenderer
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -80f);
                 }
-                else if (structure is Fence)
-                {
-                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, -10f);
-                }
-                else if (structure is Tent)
+                else if (structure is Fence || structure is Tent)
                 {
                     Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
                               structure.CurrentHealth, structure.MaxHealth, -10f);
                 }
 
-                var group = mapManager.GetMonsterGroup((i, j));
-                if (group != null && group.Count > 0)
+                // Look inside the Container to draw HP bars for the groups!
+                var container = mapManager.GetMonsterContainer((i, j));
+                if (container != null && !container.NoMonsters)
                 {
-                    Vector2 worldPos = group.GetInterpolatedWorldPosition();
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              group.TotalCurrentHealth, group.TotalMaxHealth, -10f);
+                    foreach (var group in container._Monstergroups)
+                    {
+                        if (!group.isEmpty)
+                        {
+                            Vector2 worldPos = group.GetInterpolatedWorldPosition();
+                            
+                            // Calculate total current and max HP for this specific group
+                            float currentHp = group.health;
+                            float maxHp = group.Monsters.Sum(m => m.MaxHealth);
+                            
+                            DrawHpBar(spriteBatch, worldPos, scale,
+                                      currentHp, maxHp, -10f);
+                        }
+                    }
                 }
             }
         }
@@ -81,8 +88,6 @@ public class EntityRenderer
         float barWidth = 37.5f * scale.X;
         float barHeight = 3f * scale.Y;
 
-        // sprite top-left is at worldPos + (-32, -90)*scale
-        // center bar on the 64px-wide sprite, place it just above the sprite top
         float spriteLeftX = worldPos.X + (-32f) * scale.X;
         float spriteCenterX = spriteLeftX + 32f * scale.X;
         float barX = spriteCenterX - barWidth / 2f + 30f * scale.X;
