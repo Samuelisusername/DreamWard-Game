@@ -116,13 +116,14 @@ public class CombatManager
             {
                 foreach (var monster in monsterGroup.Monsters)
                 {
-                    if (!monster.GoalReached) continue;
+                    if (!monster.GoalReached) continue; // git commit -m"medow with sheeps health separate from sanity but tied to the sheep. meadow is destroyed if health reaches 0 and is removed by mapmanager making it not generate any sanity points"
 
                     var goalTile = monster.AttackTarget ?? monster.TilePosition;
                     var structure = mapManager.GetStructure(goalTile);
                     if (structure == null || structure.IsDestroyed) continue;
+                    if (structure is Meadow m && !m.HasSheep) continue;
 
-                    else if(sanityManager != null && ((structure is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed) || structure is Tent))
+                    else if(sanityManager != null && structure is Tent)
                     {                           
                         float damage = monster.DamagePerSecond * dt;
                         _sanityDamageAccumulator += damage;
