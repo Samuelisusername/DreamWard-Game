@@ -235,7 +235,11 @@ public class MapManager
     /// </summary>
     public MonsterGroup GetMonsterGroup((int col, int row) pos)
     {        
-        return MonsterGroups[pos.col,pos.row];
+        if(pos.col >= 0 && pos.col < Columns && pos.row >= 0 && pos.row < Rows)
+        {
+            return MonsterGroups[pos.col,pos.row];
+        }
+        return null;
     }
     
     /// <summary>

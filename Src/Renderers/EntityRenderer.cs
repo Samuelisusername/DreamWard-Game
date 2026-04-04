@@ -20,6 +20,7 @@ public class EntityRenderer
             for (int j = i % 2; j < mapManager.Columns*3; j += 2)
             {                
                 mapManager.GetStructure((j,i/2), true)?.Draw(spriteBatch);
+                mapManager.GetMonsterGroup((j - mapManager.Columns,(i/2)-mapManager.Rows))?.Draw(spriteBatch);
             }
         }
         for(int i = 0; i < mapManager.Rows * 2; i++)
