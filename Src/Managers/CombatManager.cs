@@ -116,7 +116,7 @@ public class CombatManager
             {
                 foreach (var monster in monsterGroup.Monsters)
                 {
-                    if (!monster.GoalReached) continue; // git commit -m"medow with sheeps health separate from sanity but tied to the sheep. meadow is destroyed if health reaches 0 and is removed by mapmanager making it not generate any sanity points"
+                    if (!monster.GoalReached) continue; 
 
                     var goalTile = monster.AttackTarget ?? monster.TilePosition;
                     var structure = mapManager.GetStructure(goalTile);
