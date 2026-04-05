@@ -53,6 +53,7 @@ public class CardManager
         InitDecks();
         ShuffleAll();
         RefillBuildTop3();
+        GenerateDailyCards(1);
     }
 
     // -----------------------
@@ -60,12 +61,10 @@ public class CardManager
     // -----------------------
     private void InitSlots()
     {
-        for (int i = 0; i < 2; i++)
-        {
-            MapSlots.Add(new CardSlot());
-            StackSlots.Add(new CardSlot());
-            BuildSlots.Add(new CardSlot());
-        }
+        MapSlots.Add(new CardSlot());
+        StackSlots.Add(new CardSlot());
+        BuildSlots.Add(new CardSlot());
+        BuildSlots.Add(new CardSlot());
     }
 
     private void InitDecks()
@@ -186,6 +185,37 @@ public class CardManager
     // -----------------------
     // Helpers
     // -----------------------
+    public void GenerateDailyCards(int day)
+    {
+        // Clear old cards
+        MapSlots[0].Card = null;
+        StackSlots[0].Card = null;
+
+        // Number of cards increases with day (but only 1 slot → pick stronger/random logic)
+        int mapDraws = Math.Min(day, _mapACDeck.Count);
+        int stackDraws = Math.Min(day, _stackACDeck.Count);
+
+        // Pick final card from multiple draws (simulate "better odds")
+        Card mapCard = null;
+        for (int i = 0; i < mapDraws; i++)
+            mapCard = _mapACDeck[_random.Next(_mapACDeck.Count)];
+
+        Card stackCard = null;
+        for (int i = 0; i < stackDraws; i++)
+            stackCard = _stackACDeck[_random.Next(_stackACDeck.Count)];
+
+        MapSlots[0].Card = mapCard;
+        StackSlots[0].Card = stackCard;
+    }
+
+    public Card GetCardBySprite(string spriteName)
+    {
+        var allCards = _buildDeck.Concat(_mapACDeck).Concat(_stackACDeck);
+        var found = allCards.FirstOrDefault(c => c.SpriteName == spriteName);
+        if (found == null) return null;
+        return new Card{Name = found.Name, Type = found.Type, Cost = found.Cost, Effect = found.Effect, SpriteName = found.SpriteName};
+    }
+    
     private void PlaceCardInSlot(Card card)
     {
         foreach (var slot in GetSlots(card.Type))
