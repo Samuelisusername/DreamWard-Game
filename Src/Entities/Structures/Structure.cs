@@ -60,5 +60,20 @@ public abstract class Structure : Entity
         GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
         _sprite.Scale = mapManager.Scale;
     }
+    
+    public void DrawTransparent(SpriteBatch spriteBatch, float alpha)
+    {
+        if (_sprite == null) return;
+        _sprite.Scale = mapManager.Scale;
+
+        Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+
+        var originalColor = _sprite.Color;
+        _sprite.Color = Color.White * alpha;
+
+        _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);
+
+        _sprite.Color = originalColor;
+    }
 
 }
