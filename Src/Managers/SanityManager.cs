@@ -9,6 +9,8 @@ public class SanityManager
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     
     public int Sanity {get; private set;}
+    
+    public int sanity_ {get; private set;}
 
     public SanityManager()
     {
@@ -48,13 +50,15 @@ public class SanityManager
     /// <summary>
     /// Calculates the Sanity gained at the beginning of a day and adds it to the total
     /// </summary>
-    public void AddSanityGainedFromNewDay()
+    public int AddSanityGainedFromNewDay()
     {
+        sanity_ = Sanity;
         Sanity += mapManager.GetSheep().SanityGain;
         List<PlacableMeadow> meadows = mapManager.GetAllMeadows();
         foreach (var meadow in meadows)
         {
             Sanity += meadow.SanityGain;
         }
+        return Sanity-sanity_;
     }
 }
