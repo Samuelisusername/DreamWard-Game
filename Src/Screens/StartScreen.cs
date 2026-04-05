@@ -28,12 +28,19 @@ public class StartScreen : GamelabGameScreen
 
     private string _howToPlayText =
     @"Welcome to DreamWard!
-    - Protect yourself and your sheep.
-    - Let your sheep graze on meadows to increase your sanity.
-    - Use sanity to buy and play build cards.
-    - Build towers and fences to defend your territory.
-    - Use action cards strategically to gain advantages.
-    - During the night, watch how your defenses protect you from monsters.";
+    - CardScreen Keybinds.
+    - Build Cards: 1: Sniper, 2: AOE, 3: Meadow, 4: Dreamcatcher 5: Fence
+    - Map Cards:   6: Polymorph, 7: Destroy, 8: Move
+    - Stack Cards: 9: Shuffle, 0: Discount, q: Top3, w: Discard";
+
+    // private string _howToPlayText =
+    // @"Welcome to DreamWard!
+    // - Protect yourself and your sheep.
+    // - Let your sheep graze on meadows to increase your sanity.
+    // - Use sanity to buy and play build cards.
+    // - Build towers and fences to defend your territory.
+    // - Use action cards strategically to gain advantages.
+    // - During the night, watch how your defenses protect you from monsters.";
 
 
     private float _volume = AudioManager.SavedVolume;
