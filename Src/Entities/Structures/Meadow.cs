@@ -19,10 +19,14 @@ public class Meadow : Structure
         SanityGain = sanityGain;
     }
 
-    public void AddSheep()
+    public void AddSheep(bool isPolymorphed = false)
     {
         HasSheep = true;
-        SetAnimation("sheepSmall_idle");
+        IsPolymorphed = isPolymorphed;
+        if (IsPolymorphed)
+            SetAnimation("rats_idle");
+        else
+            SetAnimation("sheepSmall_idle");
     }
 
     public void RemoveSheep()
