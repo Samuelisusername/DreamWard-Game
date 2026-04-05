@@ -7,6 +7,7 @@ public class GamePhaseManager
     private MapManager mapManager => GamelabGame.MapManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CombatManager combatManager => GamelabGame.CombatManager;
+    private CardManager cardManager => GamelabGame.CardManager;
     public bool IsDay { get; private set; } = true;
     public int DayCount { get; private set; } = 1;
 
@@ -15,12 +16,15 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
-        mapManager.GetSheep().TryUnpolymorphSheep();
-        // call the SanityManger, MapManger and CardManager to set up the new day
-        sanityManager.AddSanityGainedFromNewDay();
-        //TODO: Call the Cardmanager to set up ned day
         IsDay = true;
         DayCount += 1;
+        mapManager.GetSheep().TryUnpolymorphSheep();
+        // call the SanityManager, MapManager and CardManager to set up the new day
+        int gained = sanityManager.AddSanityGainedFromNewDay();
+        cardManager.GenerateDailyCards(DayCount);
+        GamelabGame.Instance.MapScreenInstance?.ShowDayPopup(
+        $"Day {DayCount-1} Passed\nSanity Gained: {gained}\nDay: {DayCount}\nNew Cards!"
+        );
         AudioManager.PlayMusic("day_music");
         checkGameOver();
     }
