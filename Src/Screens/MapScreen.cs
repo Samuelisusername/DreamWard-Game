@@ -14,6 +14,7 @@ public class MapScreen : GamelabGameScreen
     private MapManager mapManager => GamelabGame.MapManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
+    private GamePhaseManager GamePhaseManager => GamelabGame.GamePhaseManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
 
@@ -25,6 +26,11 @@ public class MapScreen : GamelabGameScreen
 
     // Navigation button
     private Rectangle _toCardScreenBtn;
+    private bool _showInventory = true;
+    private Rectangle _inventoryBtn;
+    private bool _showTowerRange = false;
+    private Rectangle _towerRangeBtn;
+    private int _cardStartY = 0;
 
     // Drag
     private bool _isDrag;
@@ -32,6 +38,12 @@ public class MapScreen : GamelabGameScreen
     private Vector2 _oldPos;
     private Card _activeMapCard = null;
     private (int,int) _selectedTile = (-1,-1);
+    private (int col, int row) _hoverTile = (-1,-1);
+    private bool _showDayPopup = false;
+    private string _dayPopupText = "";
+    private float _popupTimer = 0f;
+    private Structure _previewStructure = null;
+    private Structure _hoveredStructure;
 
     private readonly Color SLOT_COLOR = new Color(0xbc, 0xb6, 0x9d);  
     private readonly Color BTN_COLOR = new Color(0xbc, 0xb6, 0x9d);  
@@ -130,6 +142,15 @@ public class MapScreen : GamelabGameScreen
                 mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
             }
         }
+
+        if (_showDayPopup)
+        {
+            _popupTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (_popupTimer <= 0f)
+            {
+                _showDayPopup = false;
+            }
+        }
         
 
         // Map update
@@ -174,7 +195,17 @@ public class MapScreen : GamelabGameScreen
                         AudioManager.Play("dragonflap");
                         return;
                     }
+                    if (_inventoryBtn.Contains(pos))
+                    {
+                        _showInventory = !_showInventory;
+                        return;
+                    }
 
+                    if (_towerRangeBtn.Contains(pos))
+                    {
+                        _showTowerRange = !_showTowerRange;
+                        return;
+                    }
                     // Check USE buttons on cards
                     if (HandleCardUseClicks(pos))
                         return;
@@ -187,6 +218,19 @@ public class MapScreen : GamelabGameScreen
                 }
                 _clickStarted = false;
                 _isDrag = false;
+            }
+            Vector2 mouseWorld = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+            _hoverTile = mapManager.GetTileFromScreenPosition(mouseWorld);
+            if (_activeMapCard != null &&
+                (_activeMapCard.Effect == CardEffect.Move ||
+                _activeMapCard.Effect == CardEffect.Destroy ||
+                _activeMapCard.Effect == CardEffect.Polymorph))
+            {
+                _hoveredStructure = mapManager.GetStructure(_hoverTile);
+            }
+            else
+            {
+                _hoveredStructure = null;
             }
         }        
     }
@@ -201,33 +245,86 @@ public class MapScreen : GamelabGameScreen
 
         // ✅ Map
         mapRenderer.Draw(spriteBatch);
-        entityRenderer.Draw(spriteBatch);
+        if (_activeMapCard != null &&
+            (_activeMapCard.Effect == CardEffect.Move ||
+            _activeMapCard.Effect == CardEffect.Destroy ||
+            _activeMapCard.Effect == CardEffect.Polymorph) &&
+            _hoverTile.col >= 0)
+        {
+            entityRenderer.Draw(spriteBatch, _hoverTile);
+        }
+        else
+        {
+            entityRenderer.Draw(spriteBatch);
+        }
+        if (_showTowerRange && GamelabGame.GamePhaseManager.IsDay)
+        {
+            DrawAllTowerRanges();
+        }
+        DrawPreview();
         
         // draw sanity
         if (sanityManager != null)
             {
                 string text = $"Sanity: {sanityManager.Sanity}";
-                spriteBatch.DrawString(_font, text,
-                    new Vector2(20, 20),
-                    TEXT_COLOR);
+                spriteBatch.DrawString(_font, text,new Vector2(20, 20),TEXT_COLOR);
+
+                string dayText = $"Day: {GamePhaseManager.DayCount}/10";
+                spriteBatch.DrawString(_font, dayText,new Vector2(20, 50),TEXT_COLOR);
+
+                string phaseText = GamePhaseManager.IsDay ? "Phase: Day" : "Phase: Night";
+                spriteBatch.DrawString(_font, phaseText,new Vector2(20, 80),TEXT_COLOR);
             }
 
         if(GamelabGame.GamePhaseManager.IsDay)
         {
             // ✅ UI (now also scaled)
             DrawButton(_toCardScreenBtn, "Cards");
+            UpdateUIButtonLayout();
+            DrawButton(_inventoryBtn, _showInventory ? "Hide Cards" : "Show Cards");
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range");
 
-            
-
-            DrawCardSlots();
+            if (_showInventory)
+            {
+                DrawCardSlots();
+            }
         }
-
+        if (_showDayPopup)
+        {
+            DrawDayPopup();
+        }
         spriteBatch.End();
     }
 
     // ------------------------
     // Draw Helpers
     // ------------------------
+
+    private void DrawDayPopup()
+    {
+        int w = (int)viewportAdapter.VirtualWidth;
+        int h = (int)viewportAdapter.VirtualHeight;
+
+        // Make the popup cover at least half the screen
+        int boxWidth = w / 2;
+        int boxHeight = h / 2;
+        Rectangle box = new(
+            w / 2 - boxWidth / 2,
+            h / 2 - boxHeight / 2,
+            boxWidth,
+            boxHeight
+        );
+
+        // Faint white background (semi-transparent)
+        spriteBatch.Draw(_dummy, box, Color.White * 0.6f);
+
+        // Bigger text
+        float scale = 1.5f; // scale up font
+        Vector2 textSize = _font.MeasureString(_dayPopupText) * scale;
+        Vector2 textPos = new Vector2(box.Center.X - textSize.X / 2, box.Center.Y - textSize.Y / 2);
+
+        spriteBatch.DrawString(_font, _dayPopupText, textPos, BTN_TEXT_COLOR, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
     private void DrawButton(Rectangle rect, string text)
     {
         spriteBatch.Draw(_dummy, rect, BTN_COLOR);
@@ -244,24 +341,27 @@ public class MapScreen : GamelabGameScreen
 
         var slots = cardManager.MapSlots.Concat(cardManager.BuildSlots).ToList();
 
-        int cardW = 80;
-        int cardH = 110;
-        int spacing = 15;
+        int cardW = 160;
+        int cardH = 220;
+        int spacing = 5; 
 
         int screenW = (int)viewportAdapter.VirtualWidth;
         int screenH = (int)viewportAdapter.VirtualHeight;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
-        int startX = screenW - totalWidth - 20;
-        int startY = screenH - cardH - 60;
 
-        // Draw rectangle surrounding all slots + buttons
+        int startX = screenW - totalWidth - 10; 
+        //int startY = screenH - cardH - 40;    
+        int startY = _cardStartY;
+
+        // ✅ Thin border (almost hugging cards)
         Rectangle borderRect = new(
-            startX - 10,
-            startY - 10,
-            totalWidth + 20,
-            cardH + 25 + 20 // card height + button height + padding
+            startX - 4,
+            startY - 4,
+            totalWidth + 8,
+            cardH + 8
         );
+
         spriteBatch.Draw(_dummy, borderRect, SLOT_BORDER_COLOR);
 
         for (int i = 0; i < slots.Count; i++)
@@ -275,16 +375,17 @@ public class MapScreen : GamelabGameScreen
                 cardH
             );
 
-            spriteBatch.Draw(_dummy, rect, SLOT_COLOR);
+            Color bgColor = (slot.Card != null && slot.Card == _activeMapCard)
+                ? BTN_TEXT_COLOR
+                : SLOT_COLOR;
+
+            spriteBatch.Draw(_dummy, rect, bgColor);
 
             if (slot.Card != null)
             {
                 spriteBatch.Draw(_cardTexture, rect,
                     _cardRegions[slot.Card.SpriteName], Color.White);
             }
-
-            Rectangle btn = new(rect.X, rect.Bottom + 5, rect.Width, 25);
-            DrawButton(btn, "USE");
         }
     }
 
@@ -292,17 +393,17 @@ public class MapScreen : GamelabGameScreen
     {
         var slots = cardManager.MapSlots.Concat(cardManager.BuildSlots).ToList();
 
-        int cardW = 80;
-        int cardH = 110;
-        int spacing = 15;
+        int cardW = 160; 
+        int cardH = 220;
+        int spacing = 5;
 
         int screenW = (int)viewportAdapter.VirtualWidth;
         int screenH = (int)viewportAdapter.VirtualHeight;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
 
-        int startX = screenW - totalWidth - 20;
-        int startY = screenH - cardH - 60;
+        int startX = screenW - totalWidth - 10;
+        int startY = screenH - cardH - 40;
 
         for (int i = 0; i < slots.Count; i++)
         {
@@ -315,26 +416,39 @@ public class MapScreen : GamelabGameScreen
                 cardH
             );
 
-            Rectangle btn = new(rect.X, rect.Bottom + 5, rect.Width, 25);
-
-            if (slot.Card != null && btn.Contains(mousePos))
+            if (slot.Card != null && rect.Contains(mousePos))
             {
                 var card = slot.Card;
 
                 if (card.Type == CardType.Build || card.Type == CardType.MapAction)
                 {
-                    _activeMapCard = card; // ✅ enter placement mode
+                    if (_activeMapCard == card)
+                    {
+                        if (_previewStructure != null && _selectedTile != (-1,-1))
+                        {
+                            mapManager.PlaceEntity(_previewStructure, _selectedTile);
+                            _previewStructure = null;
+                            _selectedTile = (-1,-1);
+                        }
+                        _activeMapCard = null;
+                    }
+                    else
+                    {
+                        _activeMapCard = card;
+                        _selectedTile = (-1, -1);
+                        _previewStructure = null;
+                    }
                 }
                 else
                 {
-                    cardManager.UseCard(card); // stack cards still instant
+                    cardManager.UseCard(card);
                 }
-                 return true;
+
+                return true;
             }
         }
         return false;
     }
-
     private void SpawnDefaultEntities()
     {
         var atlas = GamelabGame.textureAtlas["night_top"];
@@ -415,6 +529,7 @@ public class MapScreen : GamelabGameScreen
                 cardManager.UseCard(_activeMapCard);
                 AudioManager.Play("slam_02");
                 _activeMapCard = null;
+                _previewStructure = null; 
             }
 
             return success;
@@ -428,6 +543,7 @@ public class MapScreen : GamelabGameScreen
             {
                 cardManager.UseCard(_activeMapCard); // ✅ NOW works for ALL actions
                 _activeMapCard = null;
+                _previewStructure = null;
             }
             return success;
         }
@@ -446,67 +562,182 @@ public class MapScreen : GamelabGameScreen
         switch (card.Effect)
         {
             case CardEffect.Destroy:
-                // ✅ Keep as-is
-                if (target != null && target.IsBuildEntity)
+                if (mapManager.GetStructure((col, row)) is Structure toDestroy && toDestroy.CanMove)
                 {
-                    mapManager.RemoveStructure((col,row));
+                    mapManager.RemoveStructure((col, row));
                     AudioManager.Play("tower_breaking");
                     return true; // action succeeded
                 }
                 return false;
             case CardEffect.Move:
                 {
-                    if (_selectedTile == (-1,-1))
+                    if (mapManager.GetStructure((col, row)) is Structure toMove && toMove.CanMove)
                     {
-                        if(mapManager.GetStructure((col,row)) is {} toMove && toMove.CanMove)
-                        {
-                            _selectedTile = (col,row);
-                            return true; // do not consume card yet
-                        }
-                        return false;
+                        mapManager.RemoveStructure((col, row));
+                        _selectedTile = (col, row);
+                        _previewStructure = toMove;
+                        return false; 
                     }
-                    else
+
+                    if (_selectedTile != (-1, -1) && mapManager.GetStructure((col, row)) == null)
                     {
-                        Entity enitityGoal = mapManager.GetStructure((col,row));
-                        if (enitityGoal == null)
+                        var movingEntity = _previewStructure;
+                        if (movingEntity != null)
                         {
-                            Structure entityToMove = mapManager.GetStructure(_selectedTile);
-                            entityToMove.TilePosition = (col,row);
-                            mapManager.RemoveStructure(_selectedTile);
-                            mapManager.PlaceEntity(entityToMove,(col,row));
-                            _selectedTile = (-1,-1);
+                            movingEntity.TilePosition = (col, row);
+                            mapManager.PlaceEntity(movingEntity, (col, row));
+
+                            _selectedTile = (-1, -1);
+                            _previewStructure = null;
                             return true;
                         }
-                        else
-                        {
-                            return false;
-                        }
                     }
-                }
 
+                    return false;
+                }
             case CardEffect.Polymorph:
-                // ✅ Keep as-is
-                if (target is Meadow meadow && meadow.HasSheep)
+                if (target is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed)
                 {
-                    PolymorphEntity(target);
-                    AudioManager.Play("qubodupRatAttack"); //probably change this audio later
-                    return true; // polymorph succeeded
+                    meadow.PolymorphSheep();
+                    AudioManager.Play("qubodupRatAttack"); // probably change later
+                    return true; // card is consumed
                 }
                 return false;
-
             default:
                 return false;
         }
     }
 
-    private void PolymorphEntity(Entity target)
+    private void DrawPreview()
     {
-        if (target is Meadow meadow && meadow.HasSheep)
-        {
-            var tile = target.TilePosition;
+        if (_activeMapCard == null || _hoverTile.col < 0) return;
 
-            // Replace in entities list
-            mapManager.GetSheep().PolymorphSheep();
+        if (_activeMapCard.Type == CardType.Build)
+        {
+            if (_previewStructure == null || _previewStructure.TilePosition != _hoverTile)
+            {
+                _previewStructure = cardManager.GetStructureFromCard(_activeMapCard, _hoverTile);
+            }
+
+            if (_previewStructure != null)
+                DrawTransparentStructure(_previewStructure);
+                if (_previewStructure is Tower tower)
+                {
+                    DrawTowerRangePreview(tower);
+                }
+            return;
         }
+
+        Structure target = mapManager.GetStructure(_hoverTile) as Structure;
+
+        switch (_activeMapCard.Effect)
+        {
+            case CardEffect.Destroy:
+                if (target != null)
+                    DrawTransparentStructure(target);
+                break;
+
+            case CardEffect.Move:
+                // Always draw the entity at hover tile first
+                if (target != null)
+                    DrawTransparentStructure(target);
+
+                // Draw the moving entity preview if selected and tile is empty
+                if (_selectedTile != (-1, -1))
+                {
+                    Structure movingEntity = _previewStructure ?? mapManager.GetStructure(_selectedTile) as Structure;
+                    if (movingEntity != null && target == null)
+                    {
+                        // Temporarily move the entity to hover tile for drawing
+                        var oldPos = movingEntity.TilePosition;
+                        movingEntity.TilePosition = _hoverTile;
+                        DrawTransparentStructure(movingEntity);
+                        if (movingEntity is Tower tower)
+                            DrawTowerRangePreview(tower);
+                        movingEntity.TilePosition = oldPos;
+                    }
+                }
+                break;
+
+            case CardEffect.Polymorph:
+                if (target != null)
+                    DrawTransparentStructure(target);
+                break;
+        }
+    }
+    public void ShowDayPopup(string text)
+    {
+        _dayPopupText = text;
+        _showDayPopup = true;
+        _popupTimer = 3f; // seconds
+    }
+    private void DrawTransparentStructure(Structure structure)
+    {
+        if (structure == null) return;
+
+        structure.DrawTransparent(spriteBatch, 0.5f); 
+    }
+
+    private void DrawTowerRangePreview(Tower tower)
+    {
+        if (tower == null) return;
+
+        float alpha = tower is AreaTower ? 0.25f : 0.4f;
+        Color rangeColor = (tower is AreaTower ? Color.Blue : Color.Red) * alpha;
+
+        foreach (var tile in tower.GetTilesInRange())
+        {
+            if (tile.Item1 < 0 || tile.Item1 >= mapManager.Columns ||
+                tile.Item2 < 0 || tile.Item2 >= mapManager.Rows)
+                continue;
+
+            var tileTexture = mapManager.GetTile(tile);
+            Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+
+            tileTexture.Draw(spriteBatch,pos,rangeColor,0f,Vector2.Zero,mapManager.Scale,SpriteEffects.None,0.8f);
+        }
+    }
+    private void DrawAllTowerRanges()
+    {
+        for (int i = 0; i < mapManager.Columns; i++)
+        {
+            for (int j = 0; j < mapManager.Rows; j++)
+            {
+                var structure = mapManager.GetStructure((i, j));
+
+                if (structure is Tower tower)
+                {
+                    DrawTowerRangePreview(tower);
+                }
+            }
+        }
+    }
+    private void UpdateUIButtonLayout()
+    {
+        int screenW = (int)viewportAdapter.VirtualWidth;
+        int screenH = (int)viewportAdapter.VirtualHeight;
+        int margin = 20, spacing = 10;
+
+        int currentY = screenH - margin;
+
+        // -------- Cards (if visible) --------
+        int cardH = 220; // card height
+        _cardStartY = _showInventory ? currentY - cardH : currentY;
+        currentY = _cardStartY - (_showInventory ? spacing : 0);
+
+        // -------- Inventory Button --------
+        string trText = "Tower Range";
+        Vector2 trSize = _font.MeasureString(trText);
+        int invW = (int)trSize.X + 20, invH = (int)trSize.Y + 10;
+
+        currentY -= invH;
+        _inventoryBtn = new Rectangle(screenW - invW - margin, currentY, invW, invH);
+        currentY -= spacing;
+
+        // -------- Tower Range Button --------
+        int trW = (int)trSize.X + 20, trH = (int)trSize.Y + 10;
+
+        currentY -= trH;
+        _towerRangeBtn = new Rectangle(screenW - trW - margin, currentY, trW, trH);
     }
 }
