@@ -414,8 +414,10 @@ public class MapManager
                         toDeactivate.DeactivateMeadow();
                     }
                 }
-                (Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow).RemoveSheep();
-                meadow.AddSheep();
+                var oldMeadow = Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+                bool wasPolymorphed = oldMeadow.IsPolymorphed;
+                oldMeadow.RemoveSheep();
+                meadow.AddSheep(wasPolymorphed);
                 SheepPosition = (tilePos.col, tilePos.row);
             }
         } 
