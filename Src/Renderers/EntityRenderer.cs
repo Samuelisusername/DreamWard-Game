@@ -19,19 +19,17 @@ public class EntityRenderer
         {
             for (int j = i % 2; j < mapManager.Columns*3; j += 2)
             {                
+                (int col, int row) tilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
+                if (skipTile.HasValue && skipTile.Value == tilePos)
+                continue;
                 mapManager.GetStructure((j,i/2), true)?.Draw(spriteBatch);
-                mapManager.GetMonsterGroup((j - mapManager.Columns,(i/2)-mapManager.Rows))?.Draw(spriteBatch);
+                mapManager.GetMonsterGroup((tilePos.col,tilePos.row))?.Draw(spriteBatch);
             }
         }
         for(int i = 0; i < mapManager.Rows * 2; i++)
         {
             for(int j = i % 2; j < mapManager.Columns; j += 2)
             {
-                var tilePos = (j, i / 2);
-                if (skipTile.HasValue && skipTile.Value == tilePos)
-                continue;
-                mapManager.GetStructure((j,i/2))?.Draw(spriteBatch);
-                mapManager.GetMonsterGroup((j,i/2))?.Draw(spriteBatch);
             }
         }
 
