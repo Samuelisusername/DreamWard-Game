@@ -178,7 +178,7 @@ public class MapManager
     /// </summary>
     public TextureRegion GetTile((int col, int row) pos)
     {
-        if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+        if(MapUtils.IsInBounds((pos.col- Columns, pos.row - Rows)))
         {
             pos.col -= Columns;
             pos.row -= Rows;
@@ -246,7 +246,11 @@ public class MapManager
     /// </summary>
     public MonsterGroupContainer GetMonsterContainer((int col, int row) pos)
     {        
-        return MonsterContainers[pos.col, pos.row];
+        if(MapUtils.IsInBounds(pos))
+        {
+            return MonsterContainers[pos.col, pos.row];            
+        }
+        return null;
     }
 
     /// <summary>
@@ -256,10 +260,10 @@ public class MapManager
     {
         if(wholeMap)
         {        
-            if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+            if(MapUtils.IsInBounds((pos.col - Columns, pos.row - Rows)))
             {
                 pos.col -= Columns;
-                pos.row -= Rows;            
+                pos.row -= Rows;
                 return Structures[pos.col, pos.row];
             }
             return ExteriorStructures[pos.col,pos.row];

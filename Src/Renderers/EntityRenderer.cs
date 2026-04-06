@@ -27,12 +27,6 @@ public class EntityRenderer
                 mapManager.GetMonsterContainer((tilePos.col,tilePos.row))?.Draw(spriteBatch);
             }
         }
-        for(int i = 0; i < mapManager.Rows * 2; i++)
-        {
-            for(int j = i % 2; j < mapManager.Columns; j += 2)
-            {
-            }
-        }
 
         if (_pixel == null) return;
 

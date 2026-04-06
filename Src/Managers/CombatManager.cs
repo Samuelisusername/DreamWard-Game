@@ -47,11 +47,11 @@ public class CombatManager
                 case 2:  col = Random.Shared.Next(mapManager.Columns); row = 0;            break;
                 default: col = Random.Shared.Next(mapManager.Columns); row = mapManager.Rows - 1;     break;
             }
-            
-            if(!mapManager.AddNewMonster((col,row)))
-            {
-                i--;
-            }
+            mapManager.AddNewMonster((col,row));
+            // if(!)
+            // {
+            //     i--;
+            // }
             
         }
     }
