@@ -34,7 +34,11 @@ public class CombatManager
                 default: col = Random.Shared.Next(mapManager.Columns); row = mapManager.Rows - 1;     break;
             }
             
-            mapManager.AddNewMonster((col,row));
+            if(!mapManager.AddNewMonster((col,row)))
+            {
+                i--;
+            }
+            
         }
     }
 

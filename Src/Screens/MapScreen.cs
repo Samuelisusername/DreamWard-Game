@@ -51,12 +51,13 @@ public class MapScreen : GamelabGameScreen
     private readonly Color SLOT_BORDER_COLOR = new Color(0xd8, 0xd4, 0xc1); 
     private readonly Color TEXT_COLOR = new Color(0xd8, 0xd4, 0xc1);
 
+    private Point screenSize => viewportAdapter.PointToScreen(new Point(GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferWidth, GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferHeight));
+
 
     public MapScreen(GamelabGame game) : base(game)
     {
         // Map setup
         mapRenderer = new MapRenderer();
-
         entityRenderer = new EntityRenderer();
         SpawnDefaultEntities();
     }
@@ -100,14 +101,16 @@ public class MapScreen : GamelabGameScreen
 
         // Navigation button
         _toCardScreenBtn = new Rectangle((int)viewportAdapter.VirtualWidth - 150,20,130,50);
+        
+        mapManager.InitOffset(screenSize);
     }
 
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
         // Exit
-        if (keyboard.IsKeyDown(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
-            Game.Exit();
+        if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
+            Game.SwitchToScreen(Game.StartScreenInstance);
 
         // Spawn monster at edge heading toward tent
         if (keyboard.WasKeyPressed(Keys.Space))
@@ -139,7 +142,7 @@ public class MapScreen : GamelabGameScreen
             if (mouse.DeltaScrollWheelValue != 0)
             {
                 float delta = mouse.DeltaScrollWheelValue * (-0.01f);
-                mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+                mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2(), screenSize);
             }
         }
 
@@ -175,9 +178,9 @@ public class MapScreen : GamelabGameScreen
             if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted)
             {
                 Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-                mapManager.MoveMap(deltaPos);
                 if (deltaPos.Length() > 0)
                 {
+                    mapManager.MoveMap(deltaPos, screenSize);
                     _isDrag = true;
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
@@ -484,34 +487,46 @@ public class MapScreen : GamelabGameScreen
 
     private void SpawnTrees(int count, int centerX, int centerY)
     {
-        int cols = mapManager.Columns;
-        int rows = mapManager.Rows;
-        string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
-        int placed = 0;
-        int attempts = 0;
+        mapManager.AddTrees(new List<(int col, int row)>());
+        // string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
+        // for (int row = 0; row < mapManager.Rows; row++)
+        // {
+        //     for (int col = 0; col < mapManager.Columns; col++)
+        //     {
+        //         if (mapManager.GetStructure((col, row)) != null) continue;
 
-        while (placed < count && attempts < 200)
-        {
-            attempts++;
-            int col = System.Random.Shared.Next(cols);
-            int row = System.Random.Shared.Next(rows);
+        //         string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
+        //         var tree = new TreeTile(anim, (col, row));
+        //         mapManager.PlaceEntity(tree, (col, row));
+        //     }
+        // }
+        // int cols = mapManager.Columns;
+        // int rows = mapManager.Rows;
+        // int placed = 0;
+        // int attempts = 0;
 
-            // Don't place near the tent (keep a 3-tile radius clear)
-            int dx = System.Math.Abs(col - centerX);
-            int dy = System.Math.Abs(row - centerY);
-            if (dx + dy <= 3) continue;
+        // while (placed < count && attempts < 200)
+        // {
+        //     attempts++;
+        //     int col = System.Random.Shared.Next(cols);
+        //     int row = System.Random.Shared.Next(rows);
 
-            // Don't place on edges (leave room for monster spawns)
-            if (col == 0 || col == cols - 1 || row == 0 || row == rows - 1) continue;
+        //     // Don't place near the tent (keep a 3-tile radius clear)
+        //     int dx = System.Math.Abs(col - centerX);
+        //     int dy = System.Math.Abs(row - centerY);
+        //     if (dx + dy <= 3) continue;
 
-            // Don't place on occupied tiles
-            if (mapManager.GetStructure((col, row)) != null) continue;
+        //     // Don't place on edges (leave room for monster spawns)
+        //     if (col == 0 || col == cols - 1 || row == 0 || row == rows - 1) continue;
 
-            string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
-            var tree = new TreeTile(anim, (col, row));
-            mapManager.PlaceEntity(tree, (col, row));
-            placed++;
-        }
+        //     // Don't place on occupied tiles
+        //     if (mapManager.GetStructure((col, row)) != null) continue;
+
+        //     string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
+        //     var tree = new TreeTile(anim, (col, row));
+        //     mapManager.PlaceEntity(tree, (col, row));
+        //     placed++;
+        // }
     }
 
     private bool HandleMapCardUse(Vector2 pos)

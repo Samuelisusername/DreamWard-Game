@@ -391,8 +391,21 @@ public class PathFindingManagerTests
     {
         T entity = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
 
-        FieldInfo healthField = typeof(Entity).GetField("_currentHealth", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        healthField.SetValue(entity, health);
+        PropertyInfo healthProperty = typeof(Entity).GetProperty("CurrentHealth", BindingFlags.Instance | BindingFlags.Public);
+        healthProperty.GetSetMethod(nonPublic: true)?.Invoke(entity, [health]);
+
+        return entity;
+    }
+
+    private static T CreateUninitializedMonster<T>((int col, int row) startPos, int health = 100) where T : Monster
+    {
+        T entity = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+
+        PropertyInfo healthProperty = typeof(Entity).GetProperty("CurrentHealth", BindingFlags.Instance | BindingFlags.Public);
+        healthProperty.GetSetMethod(nonPublic: true)?.Invoke(entity, [health]);
+
+        PropertyInfo posProperty = typeof(Entity).GetProperty("TilePosition", BindingFlags.Instance | BindingFlags.Public);
+        posProperty.GetSetMethod()?.Invoke(entity, [startPos]);
 
         return entity;
     }
@@ -432,6 +445,8 @@ public class PathFindingManagerTests
         {
             MapManager = CreateTestMapManager(columns, rows);
             SetStaticProperty(typeof(GamelabGame), "MapManager", MapManager);
+            SetStaticProperty(typeof(GamelabGame), "SanityManager", new SanityManager());
+            SetStaticProperty(typeof(GamelabGame), "GamePhaseManager", new GamePhaseManager());
             EnsureTestTextureAtlases();
             PathFindingManager = new PathFindingManager();
         }
@@ -443,10 +458,10 @@ public class PathFindingManagerTests
             return tent;
         }
 
-        public Sheep PlaceSheep((int col, int row) tile)
+        public Meadow PlaceSheep((int col, int row) tile)
         {
-            var sheep = new Sheep(SheepAnim, tile);
-            Assert.That(MapManager.PlaceEntity(sheep, tile), Is.True);
+            var sheep = new Meadow(SheepAnim, tile, 10);
+            Assert.That(MapManager.PlaceSheep(sheep, tile), Is.True);
             return sheep;
         }
 
@@ -482,8 +497,18 @@ public class PathFindingManagerTests
 
         public List<(int, int)> CalculatePath((int col, int row) start, MonsterType type = MonsterType.Regular)
         {
-            var monster = new RegularMonster(start);
-            return PathFindingManager.CalculatePath(monster);
+            switch (type)
+            {
+                case MonsterType.Regular:
+                    var monster = CreateUninitializedMonster<RegularMonster>(start);
+                    return PathFindingManager.CalculatePath(monster);
+                case MonsterType.Flying:
+                    var flyingMonster = CreateUninitializedMonster<FlyingMonster>(start);
+                    return PathFindingManager.CalculatePath(flyingMonster);
+                default:
+                    return [];
+            }
+            
         }
     }
 
@@ -529,7 +554,7 @@ public class PathFindingManagerTests
         var scenario = new PathFindingScenario();
         scenario.PlaceTent((6, 6));
 
-        var monster = new RegularMonster((0, 0));
+        var monster = CreateUninitializedMonster<RegularMonster>((0,0));
 
         List<(int, int)> firstPath = scenario.PathFindingManager.CalculatePath(monster);
         AssertValidPath(firstPath, (0, 0), (6, 6));

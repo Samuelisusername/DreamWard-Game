@@ -16,13 +16,13 @@ public class MapRenderer
     /// </summary>
     public void Draw(SpriteBatch spriteBatch)
     {
-        for(int i = 0; i < mapManager.Columns; i++)
+        for(int i = 0; i < mapManager.Columns * 3; i++)
         {
-            for(int j = 0; j < mapManager.Rows; j++)
+            for(int j = 0; j < mapManager.Rows * 3; j++)
             {
                 TextureRegion tile = mapManager.GetTile((i,j));
                 
-                Vector2 tilePos = mapManager.GetWorldPositionOfTile((i,j));
+                Vector2 tilePos = mapManager.GetWorldPositionOfTile((i-mapManager.Columns, j-mapManager.Rows));
 
                 tile.Draw(spriteBatch, tilePos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
                 if (_draw_tile_coordinates) {
