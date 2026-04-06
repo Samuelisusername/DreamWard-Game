@@ -18,20 +18,20 @@ public class MonsterGroupContainer
 
     }
 
-    public bool NoMonsters => this.numberofgroups == 0;
-    public int numberofgroups => this._Monstergroups.Count;
-    public int numberOfMonsters() => _Monstergroups.Sum(m => m.Count); 
+    public bool NoMonsters => this.Numberofgroups == 0;
+    public int Numberofgroups => this._Monstergroups.Count;
+    public int NumberOfMonsters() => _Monstergroups.Sum(m => m.Count); 
 
-    public int how_many_monsters_of_that_type(MonsterType monstertype)
+    public int GetNumberOfMonstersByType(MonsterType monstertype)
     {   
-        return _Monstergroups.Where(g => g.monsterType == monstertype).Sum(g => g.Count);
+        return _Monstergroups.Where(g => g.MonsterType == monstertype).Sum(g => g.Count);
     }
 
-    public bool SingleMonster(MonsterType monstertype) => how_many_monsters_of_that_type(monstertype) == 1;
+    public bool SingleMonster(MonsterType monstertype) => GetNumberOfMonstersByType(monstertype) == 1;
 
-    public (int, int) position_on_tile(MonsterType MonsterGrouptype) 
+    public (int, int) PositionOnTile(MonsterType MonsterGrouptype) 
     {
-        var sorted_grouped_monstergroups = _Monstergroups.GroupBy(m => m.monsterType).OrderBy(bucket => bucket.Key).ToList();
+        var sorted_grouped_monstergroups = _Monstergroups.GroupBy(m => m.MonsterType).OrderBy(bucket => bucket.Key).ToList();
         int totalVisualGroups = sorted_grouped_monstergroups.Count;
         
         int curr_rank = 0; 
@@ -48,24 +48,24 @@ public class MonsterGroupContainer
         var target = monster.GetCurrentGoal();
         var type = monster.Type;
 
-        var matchingGroup = _Monstergroups.FirstOrDefault(g => g.monsterType == type && g.common_Next_Target() == target);
+        var matchingGroup = _Monstergroups.FirstOrDefault(g => g.MonsterType == type && g.CommonNextTarget() == target);
 
         if (matchingGroup != null)
         {
-            matchingGroup.addMonster(monster);
+            matchingGroup.AddMonster(monster);
         }
         else
         {
             var newGroup = new MonsterGroupNew_Unfinished(TilePosition, 0)
             {
-                monsterType = type
+                MonsterType = type
             };
-            newGroup.addMonster(monster);
+            newGroup.AddMonster(monster);
             _Monstergroups.Add(newGroup);
         }
     }
 
-    public void removeMonsterGroup(MonsterGroupNew_Unfinished group)
+    public void RemoveMonsterGroup(MonsterGroupNew_Unfinished group)
     {
         _Monstergroups.Remove(group);
     }
@@ -97,7 +97,7 @@ public class MonsterGroupContainer
 
             group.Update(gameTime);
 
-            if (group.isEmpty)
+            if (group.IsEmpty)
             {
                 _Monstergroups.RemoveAt(i);
             }
@@ -108,7 +108,7 @@ public class MonsterGroupContainer
     {
         for (int i = _Monstergroups.Count - 1; i >= 0; i--)
         {
-            _Monstergroups[i].move();
+            _Monstergroups[i].Move();
         }
     }
 
@@ -124,13 +124,13 @@ public class MonsterGroupContainer
             {
                 // Note: You will need to make sure MonsterGroupNew_Unfinished 
                 // has a method called 'take_damage_aoe' that damages all monsters inside it!
-                group.take_damage_aoe(damage); 
+                group.TakeDamageAOE(damage); 
             }
         }
         else
         {
             // Single Target: Just hit the first group in the container
-            _Monstergroups[0].take_damage_single_target(damage);
+            _Monstergroups[0].TakeDamageSingleTarget(damage);
         }
     }
 
@@ -140,64 +140,64 @@ public class MonsterGroupContainer
         {
             group.RemoveDead();
         }
-        _Monstergroups.RemoveAll(g => g.isEmpty);
+        _Monstergroups.RemoveAll(g => g.IsEmpty);
     }
 
     #region Visuals and Drawing
     private MapManager mapManager => GamelabGame.MapManager;
     private readonly Vector2 _localOffset = new Vector2(-32, -90);
 
-    public Dictionary<string, AnimatedSprite> _amalgamSpriteIdle;
-    public Dictionary<string, AnimatedSprite> _amalgamSpriteWalk;
-    public Dictionary<string, AnimatedSprite> _amalgamSpriteAttack;
-    public Dictionary<string, AnimatedSprite> _normalSpriteIdle;
-    public Dictionary<string, AnimatedSprite> _normalSpriteWalk;
-    public Dictionary<string, AnimatedSprite> _normalSpriteAttack;
+    public Dictionary<string, AnimatedSprite> AmalgamSpriteIdle;
+    public Dictionary<string, AnimatedSprite> AmalgamSpriteWalk;
+    public Dictionary<string, AnimatedSprite> AmalgamSpriteAttack;
+    public Dictionary<string, AnimatedSprite> NormalSpriteIdle;
+    public Dictionary<string, AnimatedSprite> NormalSpriteWalk;
+    public Dictionary<string, AnimatedSprite> NormalSpriteAttack;
 
     public void LoadSprites()
     {
-        _amalgamSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_idle", mapManager.Scale);
-        _amalgamSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_walk", mapManager.Scale);
-        _amalgamSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_attack", mapManager.Scale);
-        _normalSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_idle", mapManager.Scale);
-        _normalSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_walk", mapManager.Scale);
-        _normalSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_attack", mapManager.Scale);
+        AmalgamSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_idle", mapManager.Scale);
+        AmalgamSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_walk", mapManager.Scale);
+        AmalgamSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_amalgam_attack", mapManager.Scale);
+        NormalSpriteIdle = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_idle", mapManager.Scale);
+        NormalSpriteWalk = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_walk", mapManager.Scale);
+        NormalSpriteAttack = GamelabGame.textureAtlas["monsters"].CreateAnimatedSpriteAtlas("normal_attack", mapManager.Scale);
     }
 
     public void SetScale(Vector2 scale)
     {
-        if (_amalgamSpriteIdle == null) return; 
+        if (AmalgamSpriteIdle == null) return; 
         
-        foreach (var sprite in _amalgamSpriteIdle) sprite.Value.Scale = scale;
-        foreach (var sprite in _amalgamSpriteWalk) sprite.Value.Scale = scale;
-        foreach (var sprite in _amalgamSpriteAttack) sprite.Value.Scale = scale;
-        foreach (var sprite in _normalSpriteIdle) sprite.Value.Scale = scale;
-        foreach (var sprite in _normalSpriteWalk) sprite.Value.Scale = scale;
-        foreach (var sprite in _normalSpriteAttack) sprite.Value.Scale = scale;
+        foreach (var sprite in AmalgamSpriteIdle) sprite.Value.Scale = scale;
+        foreach (var sprite in AmalgamSpriteWalk) sprite.Value.Scale = scale;
+        foreach (var sprite in AmalgamSpriteAttack) sprite.Value.Scale = scale;
+        foreach (var sprite in NormalSpriteIdle) sprite.Value.Scale = scale;
+        foreach (var sprite in NormalSpriteWalk) sprite.Value.Scale = scale;
+        foreach (var sprite in NormalSpriteAttack) sprite.Value.Scale = scale;
     }
     public void Draw(SpriteBatch spriteBatch)
     {
-        if (_normalSpriteWalk == null || _normalSpriteWalk.Count == 0) LoadSprites();
-        if (NoMonsters || _normalSpriteWalk == null) return;
+        if (NormalSpriteWalk == null || NormalSpriteWalk.Count == 0) LoadSprites();
+        if (NoMonsters || NormalSpriteWalk == null) return;
 
         foreach (var group in _Monstergroups)
         {
-            if (group.isEmpty) continue;
+            if (group.IsEmpty) continue;
 
             Vector2 worldPos = group.GetInterpolatedWorldPosition();
             
             // 1. Get the direction using your original MapUtils method!
-            string dir = MapUtils.GetDirection(TilePosition, group.common_Next_Target());
+            string dir = MapUtils.GetDirection(TilePosition, group.CommonNextTarget());
 
             // 2. Select the right sprite (Single vs Amalgam)
             Dictionary<string, AnimatedSprite> spriteDict;
-            if (group.monsterType == MonsterType.Flying)
+            if (group.MonsterType == MonsterType.Flying)
             {
-                spriteDict = group.Count > 1 ? _amalgamSpriteWalk : _normalSpriteWalk; 
+                spriteDict = group.Count > 1 ? AmalgamSpriteWalk : NormalSpriteWalk; 
             }
             else
             {
-                spriteDict = group.Count > 1 ? _amalgamSpriteWalk : _normalSpriteWalk;
+                spriteDict = group.Count > 1 ? AmalgamSpriteWalk : NormalSpriteWalk;
             }
             
             // Fallback in case a direction name is missing or they are stationary
@@ -210,7 +210,7 @@ public class MonsterGroupContainer
             if (spriteDict.TryGetValue(dir, out var sprite))
             {
                 // Use the container's rank logic to offset them so they don't overlap perfectly
-                (int totalGroups, int rank) = position_on_tile(group.monsterType);
+                (int totalGroups, int rank) = PositionOnTile(group.MonsterType);
                 Vector2 rankOffset = new Vector2(rank * 10 * mapManager.Scale.X, 0); 
                 
                 sprite.Draw(spriteBatch, worldPos + (_localOffset * mapManager.Scale) + rankOffset);

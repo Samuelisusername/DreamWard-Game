@@ -11,7 +11,7 @@ public class MonsterGroupNew_Unfinished : Entity
     private TimeSpan _elapsed = TimeSpan.Zero;
     private float _pathProgress;
 
-    public MonsterType monsterType;
+    public MonsterType MonsterType;
     
     // The shortcut to find your MapManager
     private MapManager mapManager => GamelabGame.MapManager;
@@ -25,16 +25,14 @@ public class MonsterGroupNew_Unfinished : Entity
     // Satisfies the Entity requirement. Container handles the actual visual offset!
     protected override Vector2 _localOffset => Vector2.Zero; 
     public override bool IsBuildEntity => false;
-
-    public (int, int) TilePosition { get; protected set; }
     public int Count => Monsters.Count;
-    public bool isSingle => this.Count == 1;
-    public bool isEmpty => this.Count == 0; 
-    public float health => Monsters.Sum(m => m.CurrentHealth);
-    public float damage => Monsters.Sum(m => m.DamagePerSecond); 
+    public bool IsSingle => this.Count == 1;
+    public bool IsEmpty => this.Count == 0; 
+    public float Health => Monsters.Sum(m => m.CurrentHealth);
+    public float Damage => Monsters.Sum(m => m.DamagePerSecond); 
 
-    private bool _goalReached => Monsters.Select(i => i.GoalReached).All(j => j);
-    private bool _goalNotReached => Monsters.Select(i => i.GoalReached).All(j => !j);
+    private bool _goalReached => Monsters.All(i => i.GoalReached);
+    private bool _goalNotReached => Monsters.All(i => !i.GoalReached);
     public bool All_monsters_have_goal_reached_or_All_not_goal_reached => _goalNotReached || _goalReached;
 
     public Vector2 GetInterpolatedWorldPosition() 
@@ -52,15 +50,15 @@ public class MonsterGroupNew_Unfinished : Entity
         Monsters.RemoveAll(m => m.IsDestroyed);
     }
     
-    public (int, int) common_Next_Target()
+    public (int, int) CommonNextTarget()
     {
-        if (isEmpty) return this.TilePosition; 
+        if (IsEmpty) return this.TilePosition; 
         return Monsters[0].GetCurrentGoal();
     }
 
-    public void take_damage_aoe(float damage) 
+    public void TakeDamageAOE(float damage) 
     {
-        if (isEmpty) return;
+        if (IsEmpty) return;
         foreach(var monster in Monsters)
         {
             monster.TakeDamage(damage);
@@ -68,22 +66,22 @@ public class MonsterGroupNew_Unfinished : Entity
         RemoveDead();
     }
 
-    public void take_damage_single_target(float damage)
+    public void TakeDamageSingleTarget(float damage)
     {
-        if (isEmpty) return;
+        if (IsEmpty) return;
         Monsters[0].TakeDamage(damage);
         RemoveDead();
     }
 
-    public void make_damage(Entity target, float deltaTime)
+    public void DealDamage(Entity target, float deltaTime)
     {
-        if (isEmpty || target == null || target.IsDestroyed) return;
-        float totalDamage = this.damage * deltaTime;
+        if (IsEmpty || target == null || target.IsDestroyed) return;
+        float totalDamage = this.Damage * deltaTime;
         target.TakeDamage(totalDamage);
     }
 
     // Tells the individual monsters to actually step forward
-    public void move()
+    public void Move()
     {
         for (int i = 0; i < Monsters.Count; i++)
         {
@@ -98,15 +96,15 @@ public class MonsterGroupNew_Unfinished : Entity
         }
     } 
 
-    public void addMonster(Monster monster)
+    public void AddMonster(Monster monster)
     {
-        if (isEmpty || monster.GetCurrentGoal() == this.common_Next_Target()) 
+        if (IsEmpty || monster.GetCurrentGoal() == this.CommonNextTarget()) 
         {
             Monsters.Add(monster);
         }
     }
 
-    public void removeMonster(Monster monster)
+    public void RemoveMonster(Monster monster)
     {
         Monsters.Remove(monster);
     } 

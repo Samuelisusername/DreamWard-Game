@@ -63,12 +63,12 @@ public class EntityRenderer
                 {
                     foreach (var group in container._Monstergroups)
                     {
-                        if (!group.isEmpty)
+                        if (!group.IsEmpty)
                         {
                             Vector2 worldPos = group.GetInterpolatedWorldPosition();
                             
                             // Calculate total current and max HP for this specific group
-                            float currentHp = group.health;
+                            float currentHp = group.Health;
                             float maxHp = group.Monsters.Sum(m => m.MaxHealth);
                             
                             DrawHpBar(spriteBatch, worldPos, scale,
