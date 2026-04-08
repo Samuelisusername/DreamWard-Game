@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public class CombatManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
-    private Dictionary<MonsterGroupNew_Unfinished, float> _monsterGruntTimers = new Dictionary<MonsterGroupNew_Unfinished, float>();
+    private Dictionary<MonsterGroup, float> _monsterGruntTimers = new Dictionary<MonsterGroup, float>();
     
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
@@ -58,7 +58,12 @@ public class CombatManager
     
 
     public void ManageMoveAndAttack(GameTime gameTime)
-    {        
+    {    
+        foreach (MonsterGroupContainer container in GetAllContainers()) 
+        {
+            container.Update(gameTime);
+        }
+
         // 1. Move everything using our snapshot
         foreach (MonsterGroupContainer container in GetAllContainers()) 
         {
@@ -112,7 +117,7 @@ public class CombatManager
         // 3. Monsters Attack
         foreach (MonsterGroupContainer container in GetAllContainers())
         {
-            foreach (var monsterGroup in container._Monstergroups)
+            foreach (var monsterGroup in container.Monstergroups)
             {
                 foreach (var monster in monsterGroup.Monsters)
                 {
@@ -183,7 +188,7 @@ public class CombatManager
         {
             foreach (MonsterGroupContainer container in GetAllContainers())
             {
-                foreach (var monsterGroup in container._Monstergroups)
+                foreach (var monsterGroup in container.Monstergroups)
                 {
                     foreach (var monster in monsterGroup.Monsters)
                     {

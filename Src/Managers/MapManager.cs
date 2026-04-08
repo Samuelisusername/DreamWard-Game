@@ -149,8 +149,6 @@ public class MapManager
         {
             for(int j = 0; j < Rows; j++)
             {
-                // NEW: Update the container instead of the group
-                MonsterContainers[i,j].Update(gameTime);
                 Structures[i,j]?.Update(gameTime);
             }
         }
@@ -361,7 +359,7 @@ public class MapManager
         }
 
         // NEW: Dig into the container and grab all individual monsters
-        foreach (var group in MonsterContainers[pos.col, pos.row]._Monstergroups)
+        foreach (var group in MonsterContainers[pos.col, pos.row].Monstergroups)
         {
             res.AddRange(group.Monsters); 
         }

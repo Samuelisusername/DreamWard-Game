@@ -55,7 +55,7 @@ public class EntityRenderer
                 var container = mapManager.GetMonsterContainer((i, j));
                 if (container != null && !container.NoMonsters)
                 {
-                    foreach (var group in container._Monstergroups)
+                    foreach (var group in container.Monstergroups)
                     {
                         if (!group.IsEmpty)
                         {

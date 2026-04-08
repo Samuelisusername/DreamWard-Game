@@ -210,6 +210,28 @@ public class TextureAtlas
                         }
                         Animation newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
                         atlas.AddAnimation(animName, newAnimation);
+                        if(animName.EndsWith("NW"))
+                        {
+                            animName = animName[..^2] + "NE";
+                            frames.Clear();
+                            for(int i = from; i <= to; i++)
+                            {
+                                frames.Add(atlas.GetRegion(entityName + i.ToString()));
+                            }
+                            newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                            atlas.AddAnimation(animName, newAnimation);
+                        }
+                        else if(animName.EndsWith("SW"))
+                        {
+                            animName = animName[..^2] + "SE";
+                            frames.Clear();
+                            for(int i = from; i <= to; i++)
+                            {
+                                frames.Add(atlas.GetRegion(entityName + i.ToString()));
+                            }
+                            newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                            atlas.AddAnimation(animName, newAnimation);
+                        }
                     }
                     
                 }
