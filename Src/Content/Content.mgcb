@@ -369,12 +369,3 @@
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /build:Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695.mp3
-
-#begin Sprites/day_grass.json
-/copy:Sprites/day_grass.json
-
-#begin Sprites/day_grass.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/day_grass.png
-
