@@ -46,6 +46,9 @@ public class CardManager
     // Powers
     public bool DiscountActive {get; private set;}
     public bool DrawTop3Free {get; private set;}
+    public Card _activeMapCard = null;
+    public (int,int) _selectedTile = (-1,-1);
+    public Structure _previewStructure = null;
 
     public CardManager()
     {
@@ -304,4 +307,151 @@ public class CardManager
 
         return structure;
     }
+    public bool HandleCardUseClicks(Vector2 mousePos, int screenW, int screenH)
+    {
+        var slots = MapSlots.Concat(BuildSlots).ToList();
+
+        int cardW = 160;
+        int cardH = 220;
+        int spacing = 5;
+
+        int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
+
+        int startX = screenW - totalWidth - 10;
+        int startY = screenH - cardH - 40;
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var slot = slots[i];
+
+            Rectangle rect = new(
+                startX + i * (cardW + spacing),
+                startY,
+                cardW,
+                cardH
+            );
+
+            if (slot.Card != null && rect.Contains(mousePos))
+            {
+                var card = slot.Card;
+
+                if (card.Type == CardType.Build || card.Type == CardType.MapAction)
+                {
+                    if (_activeMapCard == card)
+                    {
+                        _activeMapCard = null;
+                        _previewStructure = null;
+                        _selectedTile = (-1,-1);
+                    }
+                    else
+                    {
+                        _activeMapCard = card;
+                        _selectedTile = (-1,-1);
+                        _previewStructure = null;
+                    }
+                }
+                else
+                {
+                    UseCard(card);
+                }
+
+                return true;
+            }
+        }
+        return false;
+    }
+    public bool HandleMapCardUse(MapManager mapManager, Vector2 pos)
+    {
+        if(_activeMapCard == null) return false;
+
+        (int col, int row) = mapManager.GetTileFromScreenPosition(pos);
+        if (col < 0) return false;
+
+        if (_activeMapCard.Type == CardType.Build)
+        {
+            bool success = mapManager.PlaceEntity(_activeMapCard, (col, row));
+
+            if (success)
+            {
+                UseCard(_activeMapCard);
+                _activeMapCard = null;
+                _previewStructure = null;
+            }
+
+            return success;
+        }
+
+        if (_activeMapCard.Type == CardType.MapAction)
+        {
+            bool success = ApplyMapAction(mapManager, _activeMapCard, pos);
+
+            if (success && _selectedTile == (-1,-1))
+            {
+                UseCard(_activeMapCard);
+                _activeMapCard = null;
+                _previewStructure = null;
+            }
+            return success;
+        }
+
+        return false;
+    }
+
+    private bool ApplyMapAction(MapManager mapManager, Card card, Vector2 mousePos)
+    {
+        (int col, int row) = mapManager.GetTileFromScreenPosition(mousePos);
+        if (col < 0) return false;
+
+        Entity target = mapManager.GetStructure((col, row));
+
+        switch (card.Effect)
+        {
+            case CardEffect.Destroy:
+                if (target is Structure toDestroy && toDestroy.CanMove)
+                {
+                    mapManager.RemoveStructure((col, row));
+                    return true;
+                }
+                return false;
+
+            case CardEffect.Move:
+            {
+                if (target is Structure toMove && toMove.CanMove)
+                {
+                    mapManager.RemoveStructure((col, row));
+                    _selectedTile = (col, row);
+                    _previewStructure = toMove;
+                    return false;
+                }
+
+                if (_selectedTile != (-1, -1) && mapManager.GetStructure((col, row)) == null)
+                {
+                    var movingEntity = _previewStructure;
+                    if (movingEntity != null)
+                    {
+                        movingEntity.TilePosition = (col, row);
+                        mapManager.PlaceEntity(movingEntity, (col, row));
+
+                        _selectedTile = (-1, -1);
+                        _previewStructure = null;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            case CardEffect.Polymorph:
+                if (target is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed)
+                {
+                    meadow.PolymorphSheep();
+                    return true;
+                }
+                return false;
+
+            default:
+                return false;
+        }
+    }
+    
 }
