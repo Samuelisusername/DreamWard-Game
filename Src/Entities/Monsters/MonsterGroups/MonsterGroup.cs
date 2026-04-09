@@ -14,7 +14,7 @@ public abstract class MonsterGroup
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
     public List<Monster> Monsters { get; private set; } 
-    protected abstract TimeSpan speed {get; }
+    protected abstract TimeSpan speed {get;}
     protected TimeSpan _elapsed = TimeSpan.Zero;
     protected float _pathProgress;
     public (int,int) TilePosition {get; set;}
@@ -55,7 +55,7 @@ public abstract class MonsterGroup
     
     public (int, int) CommonNextTarget()
     {
-        if (IsEmpty) return this.TilePosition; 
+        if (IsEmpty) return this.TilePosition;
         return Monsters[0].GetCurrentGoal();
     }
 

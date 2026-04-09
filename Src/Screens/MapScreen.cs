@@ -221,10 +221,10 @@ public class MapScreen : GamelabGameScreen
             }
             Vector2 mouseWorld = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
             _hoverTile = mapManager.GetTileFromScreenPosition(mouseWorld);
-            if (cardManager._activeMapCard != null &&
+            if (_hoverTile.col >= 0 && cardManager._activeMapCard != null &&
                 (cardManager._activeMapCard.Effect == CardEffect.Move ||
-                cardManager._activeMapCard.Effect == CardEffect.Destroy ||
-                cardManager._activeMapCard.Effect == CardEffect.Polymorph))
+                 cardManager._activeMapCard.Effect == CardEffect.Destroy ||
+                 cardManager._activeMapCard.Effect == CardEffect.Polymorph))
             {
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
             }

@@ -24,7 +24,7 @@ public class CombatManager
             for (int j = 0; j < mapManager.Rows; j++)
             {
                 var container = mapManager.GetMonsterContainer((i, j));
-                if (container != null && !container.NoMonsters)
+                if (container != null && !container.IsEmpty)
                 {
                     activeContainers.Add(container);
                 }
@@ -84,7 +84,7 @@ public class CombatManager
                     // Target the new Container!
 // NEW
                     var targetContainer = mapManager.GetMonsterContainer(tile);
-                    if (targetContainer != null && !targetContainer.NoMonsters)
+                    if (targetContainer != null && !targetContainer.IsEmpty)
                     {
                         // Check if the tower shooting is an AreaTower!
                         bool isAOE = tower is AreaTower; 

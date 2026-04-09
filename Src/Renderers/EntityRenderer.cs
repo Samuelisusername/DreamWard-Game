@@ -53,7 +53,7 @@ public class EntityRenderer
 
                 // Look inside the Container to draw HP bars for the groups!
                 var container = mapManager.GetMonsterContainer((i, j));
-                if (container != null && !container.NoMonsters)
+                if (container != null && !container.IsEmpty)
                 {
                     foreach (var group in container.Monstergroups)
                     {

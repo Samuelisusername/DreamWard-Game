@@ -162,7 +162,7 @@ public class MapManager
         {
             combatManager.ManageMoveAndAttack(gameTime);
             // NEW: Check if ALL containers on the map are entirely empty
-            if(MonsterContainers.Cast<MonsterGroupContainer>().All(c => c.NoMonsters))
+            if(MonsterContainers.Cast<MonsterGroupContainer>().All(c => c.IsEmpty))
             {
                 gamePhaseManager.SwitchToDay(); 
             }
@@ -484,7 +484,7 @@ public class MapManager
         }
 
         //check if the click is in on the map
-        if(res.Item1 >= 0 && res.Item1 < Columns && res.Item2 >= 0 && res.Item2 < Rows)
+        if(MapUtils.IsInBounds(res))
         {
             return res;
         }

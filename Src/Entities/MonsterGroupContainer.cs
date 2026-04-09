@@ -8,23 +8,17 @@ using Gamelab;
 
 public class MonsterGroupContainer 
 {   
-    public (int, int) TilePosition { get; private set; }
-    public List<MonsterGroup> Monstergroups; 
+    private (int, int) tilePosition;
+    public List<MonsterGroup> Monstergroups;
     
     public MonsterGroupContainer((int, int) tilePosition)
     {
-        TilePosition = tilePosition;
+        this.tilePosition = tilePosition;
         Monstergroups = new List<MonsterGroup>();
 
     }
 
-    public bool NoMonsters => this.Numberofgroups == 0;
-    public int Numberofgroups => this.Monstergroups.Count;
-
-    public int GetNumberOfMonstersByType(MonsterType monstertype)
-    {   
-        return Monstergroups.Where(g => g.MonsterType == monstertype).Sum(g => g.Count);
-    }
+    public bool IsEmpty => Monstergroups.Count == 0;
 
     public (int, int) PositionOnTile(MonsterType MonsterGrouptype) 
     {
@@ -57,13 +51,13 @@ public class MonsterGroupContainer
             switch (monster.Type)
             {
                 case MonsterType.Regular:
-                    newGroup =  new RegularMonsterGroup(TilePosition);
+                    newGroup =  new RegularMonsterGroup(tilePosition);
                     break;
                 case MonsterType.Flying:
-                    newGroup = new FlyingMonsterGroup(TilePosition);
+                    newGroup = new FlyingMonsterGroup(tilePosition);
                     break;
                 default:
-                 throw new Exception();
+                    throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
             }
             newGroup.AddMonster(monster);
             Monstergroups.Add(newGroup);
@@ -92,10 +86,10 @@ public class MonsterGroupContainer
         }
     }
 
-// Add "bool isAOE" to the arguments
+    // Add "bool isAOE" to the arguments
     public void TakeDamage(float damage, bool isAOE)
     {
-        if (NoMonsters) return;
+        if (IsEmpty) return;
 
         if (isAOE)
         {
@@ -110,6 +104,7 @@ public class MonsterGroupContainer
         else
         {
             // Single Target: Just hit the first group in the container
+            // TODO: single should be more consisten than this
             Monstergroups[0].TakeDamageSingleTarget(damage);
         }
     }
