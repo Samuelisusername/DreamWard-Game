@@ -118,15 +118,31 @@ public class MonsterGroupContainer
         Monstergroups.RemoveAll(g => g.IsEmpty);
     }
 
-    #region Visuals and Drawing
+#region Visuals and Drawing
     public void SetScale(Vector2 scale)
     {
         Monstergroups.ForEach(i => i.SetScale(scale));
     }
-    public void Draw(SpriteBatch spriteBatch)
+    public void DrawGround(SpriteBatch spriteBatch)
     {
-        Monstergroups.ForEach(i => i.Draw(spriteBatch, PositionOnTile(i.MonsterType)));
+        Monstergroups.ForEach(i =>
+        {
+            if(i.MonsterType != MonsterType.Flying)
+            {
+                i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
+            }
+        });
     }
     
+    public void DrawAir(SpriteBatch spriteBatch)
+    {
+        Monstergroups.ForEach(i =>
+        {
+            if(i.MonsterType == MonsterType.Flying)
+            {
+                i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
+            }
+        });
+    }
 #endregion
 }

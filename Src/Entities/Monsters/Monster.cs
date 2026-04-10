@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 public abstract class Monster : Entity
 {
     protected MapManager mapManager => GamelabGame.MapManager;
+    protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     
     // Path the monster follows from spawn to target
     private List<(int,int)> _path = new List<(int,int)>();
@@ -87,16 +88,24 @@ public abstract class Monster : Entity
     /// Steps the monster forward on its path by one tile.
     /// Called by MonsterGroup when movement timing triggers.
     /// </summary>
-    public void Move()
+    public void Move(bool shouldRecalcPath)
     {
         if (GoalReached) return;
         _path.RemoveAt(0);
-        TilePosition = _path[0];        
+        TilePosition = _path[0]; 
+        if(shouldRecalcPath)
+        {            
+            AttackTarget = null;
+            var newPath = pathFindingManager.CalculatePath(this);
+                if (newPath != null && newPath.Count > 0)
+                    Path = newPath;  
+        }       
         mapManager.AddExistingMonster(this, _path[0]);
         if(!GoalReached)
         {
             Facing = MapUtils.GetDirection(_path[0], _path[1]);
         }
+
     }
 
     /// <summary>

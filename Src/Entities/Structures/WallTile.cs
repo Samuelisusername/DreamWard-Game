@@ -4,6 +4,7 @@
 /// </summary>
 public class WallTile : Structure
 {
+    public override bool IsFlat => false;
     public WallTile(string animName, (int,int) pos, int health = 50)
         : base(animName, pos, health)
     {
