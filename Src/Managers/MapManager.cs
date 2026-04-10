@@ -206,8 +206,9 @@ public class MapManager
 /// <summary>
     /// Create a new monster at the given location
     /// </summary>
-    public void AddNewMonster((int col, int row) pos)
+    public bool AddNewMonster((int col, int row) pos)
     {
+        Structure structureOnTile = Structures[pos.col,pos.row];
         Monster newMonster;
         
         // Generate a random number between 0 and 99
@@ -225,9 +226,13 @@ public class MapManager
             // 70% chance to spawn a regular monster
             newMonster = new RegularMonster(pos);
         }
-
+        if(structureOnTile is not null && !newMonster.CanStepOn(structureOnTile))
+        {
+            return false;
+        }
         // Let the container handle sorting it into the correct group
-        MonsterContainers[pos.col, pos.row].AddExistingMonster(newMonster);      
+        MonsterContainers[pos.col, pos.row].AddExistingMonster(newMonster); 
+        return true;     
     }
 
     /// <summary>

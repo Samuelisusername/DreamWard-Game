@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
-using System.Runtime.Serialization; // This fixes the 'GamelabGame' error!
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -14,12 +13,15 @@ public abstract class MonsterGroup
 {    
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
+    protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     public List<Monster> Monsters { get; private set; } 
     protected abstract TimeSpan speed {get;}
     protected TimeSpan _elapsed = TimeSpan.Zero;
     protected float _pathProgress;
     public (int,int) TilePosition {get; set;}
     public abstract MonsterType MonsterType {get;}
+    private bool shouldRecalcPath;
+
 
     public MonsterGroup((int, int) tilePos)
     {
@@ -152,12 +154,31 @@ public abstract class MonsterGroup
             {
                 Monster monster = Monsters[i];
                 Monsters.Remove(monster); // Take it out of THIS group
-                monster.Move();        // Automatically hands it to the next tile's Container
+                monster.Move(shouldRecalcPath);        // Automatically hands it to the next tile's Container
                 monster.ShouldMove = false;
                 i--; // Adjust loop index because we removed an item
             }
         }
+        shouldRecalcPath = false;
     } 
+    
+    public void QueuePathRecalc()
+    {
+        if(_goalReached)
+        {
+            Monsters.ForEach(i =>
+            {
+                i.AttackTarget = null;
+                var newPath = pathFindingManager.CalculatePath(i);
+                if (newPath != null && newPath.Count > 0)
+                    i.Path = newPath;         
+            });
+        }
+        else
+        {
+            shouldRecalcPath = true;
+        }
+    }
 
     protected AnimatedSprite sprite;
 

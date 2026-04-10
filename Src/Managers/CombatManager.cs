@@ -47,11 +47,11 @@ public class CombatManager
                 case 2:  col = Random.Shared.Next(mapManager.Columns); row = 0;            break;
                 default: col = Random.Shared.Next(mapManager.Columns); row = mapManager.Rows - 1;     break;
             }
-            mapManager.AddNewMonster((col,row));
-            // if(!)
-            // {
-            //     i--;
-            // }
+            ;
+            if(!mapManager.AddNewMonster((col,row)))
+            {
+                i--;
+            }
             
         }
     }
@@ -190,13 +190,7 @@ public class CombatManager
             {
                 foreach (var monsterGroup in container.Monstergroups)
                 {
-                    foreach (var monster in monsterGroup.Monsters)
-                    {
-                        monster.AttackTarget = null;
-                        var newPath = pathFindingManager.CalculatePath(monster);
-                        if (newPath != null && newPath.Count > 0)
-                            monster.Path = newPath;
-                    }
+                    monsterGroup.QueuePathRecalc();
                 }
             }
         }
