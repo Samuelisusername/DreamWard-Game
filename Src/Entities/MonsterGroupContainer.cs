@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using DreamWardUtils.Graphics; 
-using Gamelab;                 
+using Microsoft.Xna.Framework.Graphics;        
 
 public class MonsterGroupContainer 
 {   
@@ -45,6 +44,7 @@ public class MonsterGroupContainer
         {
             matchingGroup.AddMonster(monster);
         }
+
         else
         {
             MonsterGroup newGroup;
@@ -62,6 +62,74 @@ public class MonsterGroupContainer
             newGroup.AddMonster(monster);
             Monstergroups.Add(newGroup);
         }
+    }
+
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup, bool shouldRecalcPath)
+    {
+        (int col, int row) oldStart = monsterGroup.TilePosition;
+        (int col, int row) oldGoal = monsterGroup.CommonNextTarget();
+
+        string oldDir = MapUtils.GetDirection(oldStart, oldGoal);
+
+        monsterGroup.Monsters.ForEach(i => i.Move(shouldRecalcPath));
+
+        List<List<Monster>> monsterLists = monsterGroup.Monsters.GroupBy(i => i.GetCurrentGoal()).Select(i => i.ToList()).ToList();
+        
+        foreach (List<Monster> monsters in monsterLists)
+        {
+            if(monsters[0].GoalReached)
+            {
+                //monster is idle add all monsters to the idle group if it exists
+                var matchingGroup = Monstergroups.FirstOrDefault(g => g.MonsterType == monsters[0].Type && g.CommonNextTarget() == tilePosition);
+
+                if (matchingGroup != null)
+                {
+                    matchingGroup.AddMonsters(monsters);
+                }
+                else
+                {
+                    MonsterGroup newGroup;
+                    switch (monsters[0].Type)
+                    {
+                        case MonsterType.Regular:
+                            newGroup =  new RegularMonsterGroup(tilePosition);
+                            break;
+                        case MonsterType.Flying:
+                            newGroup = new FlyingMonsterGroup(tilePosition);
+                            break;
+                        default:
+                            throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
+                    }
+                    newGroup.AddMonsters(monsters);
+                    Monstergroups.Add(newGroup);
+                }
+            }
+            else if(oldDir == MapUtils.GetDirection(oldGoal, monsters[0].GetCurrentGoal()))
+            {
+                //monsters move in the same direction keep them in the monstergroup
+                monsterGroup.ResetGroup(tilePosition);
+                Monstergroups.Add(monsterGroup);
+            }
+            else
+            {
+                MonsterGroup newGroup;
+                switch (monsters[0].Type)
+                {
+                    case MonsterType.Regular:
+                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Flying:
+                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        break;
+                    default:
+                        throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
+                }
+                newGroup.AddMonsters(monsters);
+                Monstergroups.Add(newGroup);
+            }
+        }
+
+        monsterGroup.Monsters.RemoveAll(i => oldDir != MapUtils.GetDirection(oldGoal, i.GetCurrentGoal()));
     }
 
    public void Update(GameTime gameTime)
@@ -82,7 +150,11 @@ public class MonsterGroupContainer
     {
         for (int i = Monstergroups.Count - 1; i >= 0; i--)
         {
-            Monstergroups[i].Move();
+            if (Monstergroups[i].Move())
+            {
+                Monstergroups.Remove(Monstergroups[i]);
+                i--;
+            }
         }
     }
 

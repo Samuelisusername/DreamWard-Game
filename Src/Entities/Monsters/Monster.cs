@@ -90,7 +90,7 @@ public abstract class Monster : Entity
     /// </summary>
     public void Move(bool shouldRecalcPath)
     {
-        if (GoalReached) return;
+        if (GoalReached || !ShouldMove) return;
         _path.RemoveAt(0);
         TilePosition = _path[0]; 
         if(shouldRecalcPath)
@@ -100,11 +100,11 @@ public abstract class Monster : Entity
                 if (newPath != null && newPath.Count > 0)
                     Path = newPath;  
         }       
-        mapManager.AddExistingMonster(this, _path[0]);
         if(!GoalReached)
         {
             Facing = MapUtils.GetDirection(_path[0], _path[1]);
         }
+        ShouldMove = false;
 
     }
 

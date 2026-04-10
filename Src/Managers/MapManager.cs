@@ -235,13 +235,9 @@ public class MapManager
         return true;     
     }
 
-    /// <summary>
-    /// Add an existing Mofnster to the position
-    /// </summary>
-    public void AddExistingMonster(Monster monster, (int col, int row) pos)
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup,  (int col, int row) pos, bool shouldRecalcPath)
     {
-        // NEW: Let the container handle it
-        MonsterContainers[pos.col, pos.row].AddExistingMonster(monster);
+        MonsterContainers[pos.col, pos.row].AddExistingMonsterGroup(monsterGroup, shouldRecalcPath);
     }
     
     /// <summary>

@@ -42,6 +42,13 @@ public abstract class MonsterGroup
     protected bool _goalReached => Monsters.All(i => i.GoalReached);
     protected bool _oldGoalReached = false;
 
+    public void ResetGroup((int,int) pos)
+    {
+        shouldRecalcPath = false;
+        _elapsed = TimeSpan.Zero;
+        TilePosition = pos;
+    }
+
     public Vector2 GetInterpolatedWorldPosition()
     {
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
@@ -92,12 +99,22 @@ public abstract class MonsterGroup
     {
         if (IsEmpty || monster.GetCurrentGoal() == this.CommonNextTarget()) 
         {
+            int oldCount = Count;
             Monsters.Add(monster);
-            if(Count == 1)
+            if(oldCount == 0 ||oldCount <= 2 && Count > 2)
             {
                 SetAnimation();
             }
-            if(Count == 3)
+        }
+    }
+
+    public void AddMonsters(List<Monster> monsters)
+    {
+        if (IsEmpty || monsters[0].GetCurrentGoal() == this.CommonNextTarget()) 
+        {
+            int oldCount = Count;
+            Monsters.AddRange(monsters);
+            if(oldCount == 0 ||oldCount <= 2 && Count > 2)
             {
                 SetAnimation();
             }
@@ -146,20 +163,14 @@ public abstract class MonsterGroup
     }
     
     // Tells the individual monsters to actually step forward
-    public void Move()
+    public bool Move()
     {
-        for (int i = 0; i < Monsters.Count; i++)
+        if(_goalReached || !Monsters.All(i => i.ShouldMove))
         {
-            if (!Monsters[i].GoalReached && Monsters[i].ShouldMove)
-            {
-                Monster monster = Monsters[i];
-                Monsters.Remove(monster); // Take it out of THIS group
-                monster.Move(shouldRecalcPath);        // Automatically hands it to the next tile's Container
-                monster.ShouldMove = false;
-                i--; // Adjust loop index because we removed an item
-            }
+            return false;
         }
-        shouldRecalcPath = false;
+        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath);
+        return true;
     } 
     
     public void QueuePathRecalc()
