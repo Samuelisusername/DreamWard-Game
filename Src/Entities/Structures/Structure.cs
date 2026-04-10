@@ -19,6 +19,8 @@ public abstract class Structure : Entity
     protected GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     protected MapManager mapManager => GamelabGame.MapManager;
 
+    public abstract bool IsFlat {get;}
+
     public Structure(string animName, (int, int) tilePos, int health = 100) : base(tilePos, health)
     {
         _animName = animName;

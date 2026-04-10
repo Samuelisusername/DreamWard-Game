@@ -13,6 +13,9 @@ public class Meadow : Structure
     public int SanityGain {get; private set;}
 
     public override bool CanMove => false;
+
+    public override bool IsFlat => true;
+
     public Meadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 50)
     {
@@ -57,6 +60,7 @@ public class Meadow : Structure
 public class PlacableMeadow : Structure
 {
     public int SanityGain {get; private set;}
+    public override bool IsFlat => true;
     public PlacableMeadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 5)
     {
