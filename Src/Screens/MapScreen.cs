@@ -14,7 +14,7 @@ public class MapScreen : GamelabGameScreen
     private MapManager mapManager => GamelabGame.MapManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
-    private GamePhaseManager GamePhaseManager => GamelabGame.GamePhaseManager;
+    private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
@@ -108,7 +108,12 @@ public class MapScreen : GamelabGameScreen
         // Exit
         if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
             Game.SwitchToScreen(Game.StartScreenInstance);
-
+        if(keyboard.WasKeyReleased(Keys.C))
+        {
+            Game.SwitchToScreen(Game.CardScreenInstance);
+            AudioManager.Play("dragonflap");
+            return;
+        }
         // Spawn monster at edge heading toward tent
         if (keyboard.WasKeyPressed(Keys.Space))
         {
@@ -116,11 +121,11 @@ public class MapScreen : GamelabGameScreen
             int centerY = mapManager.Rows / 2;
 #if DEBUG
             AudioManager.Play("grunt_03");
-            GamelabGame.GamePhaseManager.SwitchToNight();
+            gamePhaseManager.SwitchToNight();
 #else
-            if(GamelabGame.GamePhaseManager.IsDay){
+            if(gamePhaseManager.IsDay){
                 AudioManager.Play("grunt_03");
-                GamelabGame.GamePhaseManager.SwitchToNight();
+                gamePhaseManager.SwitchToNight();
             }
 #endif
 
@@ -221,10 +226,10 @@ public class MapScreen : GamelabGameScreen
             }
             Vector2 mouseWorld = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
             _hoverTile = mapManager.GetTileFromScreenPosition(mouseWorld);
-            if (cardManager._activeMapCard != null &&
+            if (_hoverTile.col >= 0 && cardManager._activeMapCard != null &&
                 (cardManager._activeMapCard.Effect == CardEffect.Move ||
-                cardManager._activeMapCard.Effect == CardEffect.Destroy ||
-                cardManager._activeMapCard.Effect == CardEffect.Polymorph))
+                 cardManager._activeMapCard.Effect == CardEffect.Destroy ||
+                 cardManager._activeMapCard.Effect == CardEffect.Polymorph))
             {
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
             }
@@ -269,10 +274,10 @@ public class MapScreen : GamelabGameScreen
                 string text = $"Sanity: {sanityManager.Sanity}";
                 spriteBatch.DrawString(_font, text,new Vector2(20, 20),TEXT_COLOR);
 
-                string dayText = $"Day: {GamePhaseManager.DayCount}/10";
+                string dayText = $"Day: {gamePhaseManager.DayCount}/10";
                 spriteBatch.DrawString(_font, dayText,new Vector2(20, 50),TEXT_COLOR);
 
-                string phaseText = GamePhaseManager.IsDay ? "Phase: Day" : "Phase: Night";
+                string phaseText = gamePhaseManager.IsDay ? "Phase: Day" : "Phase: Night";
                 spriteBatch.DrawString(_font, phaseText,new Vector2(20, 80),TEXT_COLOR);
             }
 

@@ -14,7 +14,7 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
     public Meadow(string animName, (int,int) pos, int sanityGain)
-        : base(animName, pos, int.MaxValue)
+        : base(animName, pos, 50)
     {
         SanityGain = sanityGain;
     }
@@ -52,20 +52,13 @@ public class Meadow : Structure
             SetAnimation("sheepSmall_idle");
         }
     }    
-
-    public override float CurrentHealth { get => sanityManager?.Sanity ?? 0; protected set => base.CurrentHealth = value; }
-    public override float MaxHealth
-    { 
-        get => (sanityManager?.Sanity ?? 0) > base.MaxHealth ? sanityManager?.Sanity ?? 0 : base.MaxHealth;
-        protected set => base.MaxHealth = value; 
-    }
 }
 
 public class PlacableMeadow : Structure
 {
     public int SanityGain {get; private set;}
     public PlacableMeadow(string animName, (int,int) pos, int sanityGain)
-        : base(animName, pos, int.MaxValue)
+        : base(animName, pos, 5)
     {
         SanityGain = sanityGain;
     }

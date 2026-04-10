@@ -106,29 +106,35 @@ public class CardScreen : GamelabGameScreen
             HandleClick(pos);
         }
 
-        if (keyboard.WasKeyPressed(Keys.P))
+        if (keyboard.WasKeyReleased(Keys.P))
         {
             Game.StartScreenInstance ??= new StartScreen(Game);
             Game.SwitchToScreen(Game.StartScreenInstance);
             return;
         }
+        if(keyboard.WasKeyReleased(Keys.Escape))
+        {
+            Game.SwitchToScreen(Game.MapScreenInstance);
+            AudioManager.Play("dragonflap");
+            return;
+        }
 
 #if DEBUG
         // Build cards
-        if (keyboard.WasKeyPressed(Keys.D1)) ForceSpawnCard("sniper",       cardManager.BuildSlots);
-        if (keyboard.WasKeyPressed(Keys.D2)) ForceSpawnCard("aoe",          cardManager.BuildSlots);
-        if (keyboard.WasKeyPressed(Keys.D3)) ForceSpawnCard("meadow",       cardManager.BuildSlots);
-        if (keyboard.WasKeyPressed(Keys.D4)) ForceSpawnCard("dreamcatcher", cardManager.BuildSlots);
-        if (keyboard.WasKeyPressed(Keys.D5)) ForceSpawnCard("fence",        cardManager.BuildSlots);
+        if (keyboard.WasKeyReleased(Keys.D1)) ForceSpawnCard("sniper",       cardManager.BuildSlots);
+        if (keyboard.WasKeyReleased(Keys.D2)) ForceSpawnCard("aoe",          cardManager.BuildSlots);
+        if (keyboard.WasKeyReleased(Keys.D3)) ForceSpawnCard("meadow",       cardManager.BuildSlots);
+        if (keyboard.WasKeyReleased(Keys.D4)) ForceSpawnCard("dreamcatcher", cardManager.BuildSlots);
+        if (keyboard.WasKeyReleased(Keys.D5)) ForceSpawnCard("fence",        cardManager.BuildSlots);
         // Map action cards
-        if (keyboard.WasKeyPressed(Keys.D6)) ForceSpawnCard("polymorph",    cardManager.MapSlots);
-        if (keyboard.WasKeyPressed(Keys.D7)) ForceSpawnCard("destroy",      cardManager.MapSlots);
-        if (keyboard.WasKeyPressed(Keys.D8)) ForceSpawnCard("move",         cardManager.MapSlots);
+        if (keyboard.WasKeyReleased(Keys.D6)) ForceSpawnCard("polymorph",    cardManager.MapSlots);
+        if (keyboard.WasKeyReleased(Keys.D7)) ForceSpawnCard("destroy",      cardManager.MapSlots);
+        if (keyboard.WasKeyReleased(Keys.D8)) ForceSpawnCard("move",         cardManager.MapSlots);
         // Stack action cards
-        if (keyboard.WasKeyPressed(Keys.D9)) ForceSpawnCard("shuffle",      cardManager.StackSlots);
-        if (keyboard.WasKeyPressed(Keys.D0)) ForceSpawnCard("discount",     cardManager.StackSlots);
-        if (keyboard.WasKeyPressed(Keys.Q))  ForceSpawnCard("top3",         cardManager.StackSlots);
-        if (keyboard.WasKeyPressed(Keys.W))  ForceSpawnCard("discard",      cardManager.StackSlots);
+        if (keyboard.WasKeyReleased(Keys.D9)) ForceSpawnCard("shuffle",      cardManager.StackSlots);
+        if (keyboard.WasKeyReleased(Keys.D0)) ForceSpawnCard("discount",     cardManager.StackSlots);
+        if (keyboard.WasKeyReleased(Keys.Q))  ForceSpawnCard("top3",         cardManager.StackSlots);
+        if (keyboard.WasKeyReleased(Keys.W))  ForceSpawnCard("discard",      cardManager.StackSlots);
 #endif
     }
 

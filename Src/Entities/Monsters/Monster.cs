@@ -3,11 +3,6 @@ using System.Collections.Generic;
 using Gamelab;
 using Microsoft.Xna.Framework;
 
-public enum MonsterType
-{
-    Regular,
-    Flying
-}
 
 public abstract class Monster : Entity
 {
@@ -57,7 +52,7 @@ public abstract class Monster : Entity
             }
             else
             {
-                Facing = Facing ?? "S";
+                Facing = Facing;
             }
         }
     }

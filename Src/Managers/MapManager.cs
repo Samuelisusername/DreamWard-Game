@@ -35,8 +35,8 @@ public class MapManager
     //stores which tiles has which structure on it -1 if none
     public readonly Structure[,] ExteriorStructures; //colfirst
     
-    //stores which tiles has which monster on it -1 if none
-    public readonly MonsterGroup[,] MonsterGroups; //colfirst
+    // NEW: stores the container for each tile, handling all monsters
+    public readonly MonsterGroupContainer[,] MonsterContainers; //colfirst
 
 #endregion
 
@@ -115,9 +115,19 @@ public class MapManager
         _delay = delay;
         _tiles = new int[Columns,Rows];
         _exteriorTiles = new int[Columns*3,Rows*3];
-        MonsterGroups = new MonsterGroup[Columns,Rows];
         Structures = new Structure[Columns,Rows];
         ExteriorStructures = new Structure[Columns*3,Rows*3];
+        
+        // NEW: Initialize the container grid
+        MonsterContainers = new MonsterGroupContainer[Columns,Rows];
+        for (int i = 0; i < Columns; i++)
+        {
+            for (int j = 0; j < Rows; j++)
+            {
+                // We MUST initialize an empty container for every tile to prevent null errors
+                MonsterContainers[i, j] = new MonsterGroupContainer((i, j));
+            }
+        }
         
         FillRandomly();
         Scale = new Vector2(4, 4);
@@ -134,12 +144,11 @@ public class MapManager
             _animationOffset = (_animationOffset + 1) % 2;
         }
 
-        //Update all the monsters
+        //Update all the monsters and structures
         for(int i = 0; i < Columns; i++)
         {
             for(int j = 0; j < Rows; j++)
             {
-                MonsterGroups[i,j]?.Update(gameTime);
                 Structures[i,j]?.Update(gameTime);
             }
         }
@@ -152,7 +161,8 @@ public class MapManager
         if(!gamePhaseManager.IsDay)
         {
             combatManager.ManageMoveAndAttack(gameTime);
-            if(MonsterGroups.Cast<MonsterGroup>().All(i => i == null))
+            // NEW: Check if ALL containers on the map are entirely empty
+            if(MonsterContainers.Cast<MonsterGroupContainer>().All(c => c.IsEmpty))
             {
                 gamePhaseManager.SwitchToDay(); 
             }
@@ -166,7 +176,7 @@ public class MapManager
     /// </summary>
     public TextureRegion GetTile((int col, int row) pos)
     {
-        if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+        if(MapUtils.IsInBounds((pos.col- Columns, pos.row - Rows)))
         {
             pos.col -= Columns;
             pos.row -= Rows;
@@ -193,61 +203,52 @@ public class MapManager
     /// <summary>
     /// Create a new monster at the given location
     /// </summary>
-    public bool AddNewMonster((int col, int row) pos)
+/// <summary>
+    /// Create a new monster at the given location
+    /// </summary>
+    public void AddNewMonster((int col, int row) pos)
     {
-        if(Structures[pos.col, pos.row] == null)
-        {            
-            Monster newMonster = new RegularMonster(pos);
+        Monster newMonster;
+        
+        // Generate a random number between 0 and 99
+        int roll = Random.Shared.Next(100);
 
-            if (MonsterGroups[pos.col, pos.row] != null)
-            {
-                MonsterGroups[pos.col, pos.row].AddMonster(newMonster);
-            }
-            else
-            {
-                MonsterGroup group = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
-                group.AddMonster(newMonster);
-                MonsterGroups[pos.col, pos.row] = group;
-            }  
-            return true;
-        }     
-        return false;
+        // 30% chance to spawn a flying monster
+        if (roll < 30) 
+        {
+            // NOTE: If your flying class is named something else (like AirMonster or BatMonster), 
+            // just update the class name here!
+            newMonster = new FlyingMonster(pos); 
+        }
+        else 
+        {
+            // 70% chance to spawn a regular monster
+            newMonster = new RegularMonster(pos);
+        }
+
+        // Let the container handle sorting it into the correct group
+        MonsterContainers[pos.col, pos.row].AddExistingMonster(newMonster);      
     }
 
     /// <summary>
-    /// Add an existing Monster to the position
+    /// Add an existing Mofnster to the position
     /// </summary>
     public void AddExistingMonster(Monster monster, (int col, int row) pos)
     {
-        if(GetMonsterGroup(pos) is {} monsterGroup)
-        {
-            monsterGroup.AddMonster(monster);
-        }
-        else
-        {
-            MonsterGroups[pos.Item1,pos.Item2] = new MonsterGroup(TimeSpan.FromSeconds(2), pos);
-            GetMonsterGroup(pos).AddMonster(monster);
-        }
+        // NEW: Let the container handle it
+        MonsterContainers[pos.col, pos.row].AddExistingMonster(monster);
     }
     
     /// <summary>
-    /// returns the Monster on the tile
+    /// returns the MonsterContainer on the tile
     /// </summary>
-    public MonsterGroup GetMonsterGroup((int col, int row) pos)
+    public MonsterGroupContainer GetMonsterContainer((int col, int row) pos)
     {        
-        if(pos.col >= 0 && pos.col < Columns && pos.row >= 0 && pos.row < Rows)
+        if(MapUtils.IsInBounds(pos))
         {
-            return MonsterGroups[pos.col,pos.row];
+            return MonsterContainers[pos.col, pos.row];            
         }
         return null;
-    }
-    
-    /// <summary>
-    /// returns the Monster on the tile
-    /// </summary>
-    public MonsterGroup RemoveMonsterGroup((int col, int row) pos)
-    {        
-        return MonsterGroups[pos.col, pos.row] = null;
     }
 
     /// <summary>
@@ -257,10 +258,10 @@ public class MapManager
     {
         if(wholeMap)
         {        
-            if(pos.col - Columns >= 0 && pos.col - Columns < Columns && pos.row - Rows >= 0 && pos.row - Rows < Rows)
+            if(MapUtils.IsInBounds((pos.col - Columns, pos.row - Rows)))
             {
                 pos.col -= Columns;
-                pos.row -= Rows;            
+                pos.row -= Rows;
                 return Structures[pos.col, pos.row];
             }
             return ExteriorStructures[pos.col,pos.row];
@@ -292,13 +293,11 @@ public class MapManager
         if (structure != null)
         {
             Structures[pos.col, pos.row] = structure;
-
             return true;
         }
         return false;
     }
 
-    
     /// <summary>
     /// Places an Sheep at the given position
     /// </summary>
@@ -346,11 +345,25 @@ public class MapManager
     }
 
     /// <summary>
-    /// return all entities on this tile(monstes and structures)
+    /// return all entities on this tile (monsters and structures)
     /// </summary>
     public List<Entity> GetAllEntities((int col, int row) pos)
     {
-        List<Entity> res = [GetStructure(pos), .. GetMonsterGroup(pos).Monsters];
+        List<Entity> res = new List<Entity>();
+        
+        // Add structure if there is one
+        var structure = GetStructure(pos);
+        if (structure != null)
+        {
+            res.Add(structure);
+        }
+
+        // NEW: Dig into the container and grab all individual monsters
+        foreach (var group in MonsterContainers[pos.col, pos.row].Monstergroups)
+        {
+            res.AddRange(group.Monsters); 
+        }
+
         return res;
     }
 
@@ -439,12 +452,9 @@ public class MapManager
                 
     }
     
-    
     /// <summary>
     /// returns the index of the tile that is at the position on screen
     /// </summary>
-    /// <param name="position"></param>
-    /// <returns>returns [col,row] of the tile at position. returns [-1,-1] if the position is not on the tilemap</returns>
     public (int col, int pos) GetTileFromScreenPosition(Vector2 position)
     {
         position -= Offset;
@@ -467,7 +477,6 @@ public class MapManager
             {                
                 res = (colAprox-1,rowL);
             }
-            
         }
         else
         {
@@ -475,7 +484,7 @@ public class MapManager
         }
 
         //check if the click is in on the map
-        if(res.Item1 >= 0 && res.Item1 < Columns && res.Item2 >= 0 && res.Item2 < Rows)
+        if(MapUtils.IsInBounds(res))
         {
             return res;
         }
@@ -486,9 +495,8 @@ public class MapManager
     }
 
     /// <summary>
-    /// returns the 
+    /// returns the tent
     /// </summary>
-    /// <returns></returns>
     public (int col, int row) GetTent()
     {
         foreach (var item in Structures)
@@ -606,10 +614,11 @@ public class MapManager
         Vector2 correction = oldMapPoint - newMapPoint;
         MoveMap(correction, screenSize);
         Scale = newScale;
-        //scale all the monsters
-        foreach(MonsterGroup monsterGroup in MonsterGroups)
+        
+        // NEW: scale all the monster containers
+        foreach(MonsterGroupContainer container in MonsterContainers)
         {
-            monsterGroup?.SetScale(newScale);
+            container.SetScale(newScale);
         }
     }
 #endregion
