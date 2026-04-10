@@ -3,6 +3,7 @@ using Gamelab;
 using Microsoft.Xna.Framework;
 using Gamelab.Managers;
 using System.Collections.Generic;
+using System.Linq;
 
 public class CombatManager
 {
@@ -14,6 +15,8 @@ public class CombatManager
 
     private float _sanityDamageAccumulator;
     private Dictionary<Tower, float> _towerSoundTimers = new Dictionary<Tower, float>();
+
+    private List<(int,int)> spawnableArea;
 
     // HELPER: Scans the map grid to get a snapshot of all active containers!
     private List<MonsterGroupContainer> GetAllContainers()
@@ -35,25 +38,58 @@ public class CombatManager
 
     public void SpawnMonsters(int count)
     {
+        // var list = GetSpawnableArea();
+        // foreach (var item in list)
+        // {
+        //     mapManager.PlaceEntity(new Fence("fence_idle", item),item);
+        // }
         for (int i = 0; i < count; i++)
         {
-            (int targetCol, int targetRow) = mapManager.GetTent();
-            int side = Random.Shared.Next(4);
-            int col, row;
-            switch (side)
-            {
-                case 0:  col = 0;            row = Random.Shared.Next(mapManager.Rows);    break;
-                case 1:  col = mapManager.Columns - 1;  row = Random.Shared.Next(mapManager.Rows);    break;
-                case 2:  col = Random.Shared.Next(mapManager.Columns); row = 0;            break;
-                default: col = Random.Shared.Next(mapManager.Columns); row = mapManager.Rows - 1;     break;
-            }
-            ;
-            if(!mapManager.AddNewMonster((col,row)))
+            (int, int) pos = spawnableArea[Random.Shared.Next(spawnableArea.Count)];
+            if(!mapManager.AddNewMonster(pos))
             {
                 i--;
             }
             
         }
+    }
+
+    public void GetSpawnableArea()
+    {
+        List<(int,int)> search = [mapManager.GetTent()];
+        List<(int,int)> res = [];
+        int i = 0;
+        while(i < search.Count)
+        {
+            List<(int,int)> toCheck = MapUtils.getSurroundingTiles(search[i], true);
+            int count = 0;
+            foreach ((int col, int row) tile in toCheck)
+            {
+                if(MapUtils.IsInBounds(tile))
+                {
+                    if(mapManager.GetStructure(tile) is not TreeTile && !search.Contains(tile))
+                    {
+                        search.Add(tile);
+                    }
+                }
+                else
+                {
+                    count++;
+                }
+            }
+            if(count > 0 && mapManager.GetStructure(search[i]) is not TreeTile)
+            {
+                res.Add(search[i]);
+            }
+            i++;
+        }
+
+        for (int j = 0; j < res.Count; j++)
+        {
+        
+        }
+
+        spawnableArea = res;
     }
     
 

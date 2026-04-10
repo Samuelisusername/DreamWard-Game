@@ -13,6 +13,20 @@ public static class MapUtils
         Rows = rows;
     }
 
+    public static List<(int,int)> getSurroundingTiles((int col, int row) pos, bool outOfBounds = false)
+    {
+        List<(int,int)> res;
+        if(pos.col %2 == 0)
+        {
+            res =  new List<(int, int)>{(pos.col, pos.row-1),(pos.col, pos.row+1), (pos.col-1,pos.row), (pos.col-1, pos.row-1),(pos.col+1,pos.row), (pos.col+1, pos.row-1)};
+        }
+        else
+        {
+            res  = new List<(int, int)>{(pos.col,pos.row-1),(pos.col,pos.row+1), (pos.col-1,pos.row), (pos.col-1, pos.row+1),(pos.col+1,pos.row), (pos.col+1, pos.row+1)};
+        }
+        return outOfBounds ? res : res.Where(i => i .Item1 >= 0 && i.Item1 < Columns && i.Item2 >= 0 && i.Item2 < Rows).ToList();
+    }
+    
     public static List<(int,int)> getSurroundingTiles((int col, int row) pos)
     {
         List<(int,int)> res;

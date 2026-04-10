@@ -15,6 +15,7 @@ public class MapScreen : GamelabGameScreen
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
@@ -393,6 +394,7 @@ public class MapScreen : GamelabGameScreen
     private void SpawnTrees(int count, int centerX, int centerY)
     {
         mapManager.AddTrees(new List<(int col, int row)>());
+        combatManager.GetSpawnableArea();
         // string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
         // for (int row = 0; row < mapManager.Rows; row++)
         // {
