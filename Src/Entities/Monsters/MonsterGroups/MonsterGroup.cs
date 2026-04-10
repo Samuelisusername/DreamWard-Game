@@ -4,7 +4,8 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Gamelab;
 using DreamWardUtils.Graphics;
-using Microsoft.Xna.Framework.Graphics; // This fixes the 'GamelabGame' error!
+using Microsoft.Xna.Framework.Graphics;
+using System.Runtime.Serialization; // This fixes the 'GamelabGame' error!
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -37,6 +38,7 @@ public abstract class MonsterGroup
     public float Damage => Monsters.Sum(m => m.DamagePerSecond); 
 
     protected bool _goalReached => Monsters.All(i => i.GoalReached);
+    protected bool _oldGoalReached = false;
 
     public Vector2 GetInterpolatedWorldPosition()
     {
@@ -91,23 +93,11 @@ public abstract class MonsterGroup
             Monsters.Add(monster);
             if(Count == 1)
             {
-                string type = MonsterUtils.GetMonsterTypeName(MonsterType);
-                string anim = CommonNextTarget() == TilePosition ? "idleS" : "walk";
-                string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
-                //Turn into Amalgam
-                sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+"_" + anim + direction);
-                if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
-                else sprite.SpriteEffects = SpriteEffects.None;
+                SetAnimation();
             }
             if(Count == 3)
             {
-                string type = MonsterUtils.GetMonsterTypeName(MonsterType);
-                string anim = CommonNextTarget() == TilePosition ? "idleS" : "walk";
-                string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
-                //Turn into Amalgam
-                sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+"_amalgam_" + anim + direction);
-                if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
-                else sprite.SpriteEffects = SpriteEffects.None;
+                SetAnimation();
             }
         }
     }
@@ -119,16 +109,28 @@ public abstract class MonsterGroup
         {
             Monsters.ForEach( i=>
             {
-                if(i.CanStepOn(destStructure))
+                if(i.CanTarget(destStructure))
                 {
                     i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
                     i.Path = new List<(int,int)> { i.Path[0] };
                 }
+                else
+                {
+                    throw new Exception("monster has a path through a tile it cant step on and it cant attack, not good :(");
+                }
             });
+            if(_goalReached)
+            {
+                SetAnimation();
+            }
         }
 
         if (!_goalReached)
         {
+            if(_oldGoalReached)
+            {
+                SetAnimation();
+            }
             _elapsed += gameTime.ElapsedGameTime;
             if (_elapsed >= speed)
             {
@@ -137,6 +139,7 @@ public abstract class MonsterGroup
             }
             _pathProgress = (float)(_elapsed / speed);
         }
+        _oldGoalReached = _goalReached;
         sprite.Update(gameTime);
     }
     
@@ -174,6 +177,18 @@ public abstract class MonsterGroup
     public void SetScale(Vector2 scale)
     {
         sprite.Scale = scale;
+    }
+
+    private void SetAnimation()
+    {        
+        string type = MonsterUtils.GetMonsterTypeName(MonsterType);
+        string isAmalgam = Count >2 ? "_amalgam_" : "_";
+        string anim = CommonNextTarget() == TilePosition ? "idleS" : "walk";
+        string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
+        //Turn into Amalgam
+        sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim + direction);
+        if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+        else sprite.SpriteEffects = SpriteEffects.None;
     }
 
 }

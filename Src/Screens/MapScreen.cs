@@ -108,7 +108,12 @@ public class MapScreen : GamelabGameScreen
         // Exit
         if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
             Game.SwitchToScreen(Game.StartScreenInstance);
-
+        if(keyboard.WasKeyReleased(Keys.C))
+        {
+            Game.SwitchToScreen(Game.CardScreenInstance);
+            AudioManager.Play("dragonflap");
+            return;
+        }
         // Spawn monster at edge heading toward tent
         if (keyboard.WasKeyPressed(Keys.Space))
         {
