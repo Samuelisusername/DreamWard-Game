@@ -522,7 +522,7 @@ public class MapManager
         (int col, int row) tilePos = GetTileFromScreenPosition(pos);
         if(tilePos.row < 0 ) return;
         Entity entity = GetStructure(tilePos);
-        if(entity is Meadow meadow)
+        if(entity is Meadow meadow && !meadow.HasSheep)
         {
             int distance = MapUtils.CalculateTileDistance(SheepPosition, tilePos);
             if(sanityManager.TryDeductSanity(distance))
