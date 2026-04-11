@@ -1,10 +1,10 @@
 /// <summary>
-///  Attracts Monsters
+/// Attracts Monsters
 /// </summary>
-public class Spikes : Structure
+public class Decoy : Structure
 {
     public override bool IsFlat => false;
-    public Spikes(string animName, (int,int) pos, int health = 50)
+    public Decoy(string animName, (int,int) pos, int health = 20)
         : base(animName, pos, health)
     {
     }
