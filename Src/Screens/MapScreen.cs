@@ -283,6 +283,12 @@ public class MapScreen : GamelabGameScreen
                 spriteBatch.DrawString(_font, phaseText,new Vector2(20, 80),TEXT_COLOR);
             }
 
+        spriteBatch.End();
+
+        // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
+                        transformMatrix: viewportAdapter.GetScaleMatrix());
+
         if(GamelabGame.GamePhaseManager.IsDay)
         {
             // ✅ UI (now also scaled)

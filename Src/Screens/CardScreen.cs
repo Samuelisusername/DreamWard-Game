@@ -245,7 +245,7 @@ public class CardScreen : GamelabGameScreen
     {
         base.Draw(gameTime);
         GraphicsDevice.Clear(BG);
-        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
 
         var l = GetLayout();
         float W = viewportAdapter.VirtualWidth;

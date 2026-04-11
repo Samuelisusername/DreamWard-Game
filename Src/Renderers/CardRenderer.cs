@@ -25,8 +25,8 @@ public class CardRenderer
     {
         var slots = cardManager.MapSlots.Concat(cardManager.BuildSlots).ToList();
 
-        int cardW = 160;
-        int cardH = 220;
+        int cardW = 128*2;
+        int cardH = 128*2;
         int spacing = 5;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
@@ -184,7 +184,7 @@ public class CardRenderer
 
         int currentY = screenH - margin;
 
-        int cardH = 220;
+        int cardH = 128*2;
         cardStartY = showInventory ? currentY - cardH : currentY;
         currentY = cardStartY - (showInventory ? spacing : 0);
 
