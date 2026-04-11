@@ -5,9 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 
 public class CardRenderer
 {
-    private readonly Color SLOT_COLOR = new Color(0xbc, 0xb6, 0x9d);
-    private readonly Color BTN_TEXT_COLOR = new Color(0x74, 0x70, 0x5f);
-    private readonly Color SLOT_BORDER_COLOR = new Color(0xd8, 0xd4, 0xc1);
+    private readonly Color COLOR_M = new Color(0xb9, 0xa5, 0x83);  
+    private readonly Color COLOR_D = new Color(0xa1, 0x88, 0x5b);    
+    private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
     // ------------------------
     // CARD SLOTS
@@ -25,9 +25,10 @@ public class CardRenderer
     {
         var slots = cardManager.MapSlots.Concat(cardManager.BuildSlots).ToList();
 
-        int cardW = 128*2;
-        int cardH = 128*2;
+        int cardW = 128*3/2;
+        int cardH = 128*3/2;
         int spacing = 5;
+        startY = screenH - cardH - 10;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
         int startX = screenW - totalWidth - 10;
@@ -39,7 +40,8 @@ public class CardRenderer
             cardH + 8
         );
 
-        spriteBatch.Draw(dummy, borderRect, SLOT_BORDER_COLOR);
+        spriteBatch.Draw(dummy, borderRect, COLOR_L);
+        cardManager.CardRects.Clear();
 
         for (int i = 0; i < slots.Count; i++)
         {
@@ -52,9 +54,11 @@ public class CardRenderer
                 cardH
             );
 
-            Color bgColor = (slot.Card != null && slot.Card == cardManager._activeMapCard)
-                ? BTN_TEXT_COLOR
-                : SLOT_COLOR;
+            cardManager.CardRects.Add((rect, slot.Card));
+
+            Color bgColor = (slot.Card != null && ReferenceEquals(slot.Card, cardManager._activeMapCard))
+                ? COLOR_D
+                : COLOR_M;
 
             spriteBatch.Draw(dummy, rect, bgColor);
 
@@ -178,30 +182,39 @@ public class CardRenderer
             }
         }
     }
-    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, SpriteFont font, ref int cardStartY, ref Rectangle inventoryBtn, ref Rectangle towerRangeBtn)
+    public void UpdateUIButtonLayout(
+        int screenW,
+        int screenH,
+        bool showInventory,
+        SpriteFont font,
+        ref int cardStartY,
+        ref Rectangle inventoryBtn,
+        ref Rectangle towerRangeBtn)
     {
-        int margin = 20, spacing = 10;
+        int spacing = 10;
+        int marginRight = 20;
 
-        int currentY = screenH - margin;
+        int cardH = 128 * 3 / 2;
 
-        int cardH = 128*2;
-        cardStartY = showInventory ? currentY - cardH : currentY;
-        currentY = cardStartY - (showInventory ? spacing : 0);
+        cardStartY = showInventory ? (screenH - cardH - 10) : screenH;
 
-        string trText = "Tower Range";
-        Vector2 trSize = font.MeasureString(trText);
+        int currentY = cardStartY - spacing;
 
-        int invW = (int)trSize.X + 20;
-        int invH = (int)trSize.Y + 10;
+        string text = "Tower Range";
+        Vector2 size = font.MeasureString(text);
 
-        currentY -= invH;
-        inventoryBtn = new Rectangle(screenW - invW - margin, currentY, invW, invH);
+        int btnW = (int)size.X + 20;
+        int btnH = (int)size.Y + 10;
+
+        // Inventory button (just above cards)
+        currentY -= btnH;
+        inventoryBtn = new Rectangle(screenW - btnW - marginRight, currentY, btnW, btnH);
+
+        // spacing
         currentY -= spacing;
 
-        int trW = (int)trSize.X + 20;
-        int trH = (int)trSize.Y + 10;
-
-        currentY -= trH;
-        towerRangeBtn = new Rectangle(screenW - trW - margin, currentY, trW, trH);
+        // Tower range button (above inventory)
+        currentY -= btnH;
+        towerRangeBtn = new Rectangle(screenW - btnW - marginRight, currentY, btnW, btnH);
     }
 }
