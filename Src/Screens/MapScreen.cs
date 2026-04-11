@@ -257,8 +257,10 @@ public class MapScreen : GamelabGameScreen
                     if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
                         return;
 
-                    if (cardManager.HandleMapCardUse(mapManager, pos))
+                    if (cardManager._activeMapCard != null)
                     {
+                        if (cardManager.HandleMapCardUse(mapManager, pos))
+                            return;
                         return;
                     }
                     mapManager.TryMoveSheep(pos);
