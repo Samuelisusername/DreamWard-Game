@@ -373,7 +373,7 @@ public class MapManager
     /// </summary>
     public void FillRandomly()
     {
-        string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
+        string[] treeAnims = { "treeBig_idle", "treeMid_idle", "treeSmall_idle" };
         for(int i = 0; i < Columns * 3; i++)
         {
             for(int j = 0; j < Rows * 3; j++)
@@ -410,18 +410,18 @@ public class MapManager
                     if(noiseval < 0.2)
                     {
                         //check passed spawn tree replace with noise in the future
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.75 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.55, 0.30), (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                     else if(noiseval < 0.6)
                     {
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.20, 0.45), (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                     else if(Random.Shared.NextDouble() < 0.25)
                     {
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.10, 0.35), (i-Columns, j-Rows));
+                        ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                               
                 }
@@ -433,18 +433,18 @@ public class MapManager
                     if(noiseval < 0.2)
                     {
                         //check passed spawn tree replace with noise in the future
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.75 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.55, 0.30), (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                     else if(noiseval < 0.4)
                     {
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.20, 0.45), (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                     else if(Random.Shared.NextDouble() < 0.25 * relativeDist)
                     {
-                        var tree = new TreeTile(Random.Shared.NextDouble() < 0.25 ? "treeBig_idle" : "treeSmall_idle", (i-Columns, j-Rows));
-                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;  
+                        var tree = new TreeTile(PickTreeAnim(0.10, 0.35), (i-Columns, j-Rows));
+                        Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                 }
             }
@@ -596,6 +596,18 @@ public class MapManager
         float tileY = pos.col % 2 == 0 ? pos.row * TileHeight : pos.row * TileHeight + ScaledOffset;
 
         return new Vector2(tileX, tileY);
+    }
+
+    /// <summary>
+    /// Picks a tree animation name. bigChance and midChance are cumulative probabilities [0,1].
+    /// Remainder goes to treeSmall_idle.
+    /// </summary>
+    private static string PickTreeAnim(double bigChance, double midChance)
+    {
+        double r = Random.Shared.NextDouble();
+        if (r < bigChance) return "treeBig_idle";
+        if (r < bigChance + midChance) return "treeMid_idle";
+        return "treeSmall_idle";
     }
 
     /// <summary>
