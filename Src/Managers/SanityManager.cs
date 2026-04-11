@@ -31,7 +31,7 @@ public class SanityManager
             if (gamePhaseManager != null)
                 gamePhaseManager.checkGameOver();
             else
-                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, false));
         }
     }
 
