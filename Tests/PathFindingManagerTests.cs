@@ -32,7 +32,7 @@ public class PathFindingManagerTests
     private static MapManager CreateTestMapManager(int columns = 8, int rows = 8)
     {
         var tileSet = new TileSet(new TextureRegion(), 1, 1);
-        return new MapManager(tileSet, tileSet, columns, rows, TimeSpan.FromSeconds(1));
+        return new MapManager(tileSet, tileSet, columns, rows);
     }
 
     private static IEnumerable<TestCaseData> DistanceTestCases()
