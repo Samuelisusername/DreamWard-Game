@@ -213,7 +213,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                     // Check USE buttons on cards
-                    if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
+                    if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _cardStartY))
                         return;
 
                     if (cardManager.HandleMapCardUse(mapManager, pos))

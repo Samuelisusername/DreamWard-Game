@@ -307,18 +307,17 @@ public class CardManager
 
         return structure;
     }
-    public bool HandleCardUseClicks(Vector2 mousePos, int screenW, int screenH)
+    public bool HandleCardUseClicks(Vector2 mousePos, int screenW, int screenH, int startY)
     {
         var slots = MapSlots.Concat(BuildSlots).ToList();
 
-        int cardW = 160;
-        int cardH = 220;
+        int cardW = 128 * 2;
+        int cardH = 128 * 2;
         int spacing = 5;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
 
         int startX = screenW - totalWidth - 10;
-        int startY = screenH - cardH - 40;
 
         for (int i = 0; i < slots.Count; i++)
         {
