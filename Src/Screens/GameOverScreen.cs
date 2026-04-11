@@ -10,12 +10,9 @@ public class GameOverScreen : GamelabGameScreen
     private SpriteFont _font;
     private Texture2D _pixel;
     private TimeSpan _elapsed;
-    private readonly bool _won;
+    public static bool DidWin { get; set; } = false;
     private static readonly TimeSpan ReturnDelay = TimeSpan.FromSeconds(4);
-    public GameOverScreen(GamelabGame game, bool won) : base(game)
-    {
-        _won = won;
-    }
+    public GameOverScreen(GamelabGame game) : base(game) { }
 
     public override void LoadContent()
     {
@@ -24,7 +21,7 @@ public class GameOverScreen : GamelabGameScreen
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
 
-        if (_won)
+        if (DidWin)
         {
             // AudioManager.LoadSound(Content, "win_voice", "Sounds/win");
             // AudioManager.Play("win_voice");
@@ -58,8 +55,8 @@ public class GameOverScreen : GamelabGameScreen
 
         spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix(), samplerState: SamplerState.PointClamp);
 
-        string text = _won ? "You Survived!" : "Game Over";
-        Color color = _won ? new Color(120, 220, 160) : new Color(188, 182, 157);
+        string text = DidWin ? "You Survived!" : "Game Over";
+        Color color = DidWin ? new Color(120, 220, 160) : new Color(188, 182, 157);
         Vector2 textSize = _font.MeasureString(text);
         float scale = 3f;
         Vector2 pos = new Vector2(
