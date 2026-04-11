@@ -182,6 +182,11 @@ public class TextureAtlas
                 //
                 // So we retrieve all of the <Region> elements then loop through each one
                 // and generate a new TextureRegion instance from it and add it to this atlas.
+                // Read per-frame durations in declaration order
+                var frameDurations = new List<int>();
+                foreach (JsonProperty frameProp in root.GetProperty("frames").EnumerateObject())
+                    frameDurations.Add(frameProp.Value.GetProperty("duration").GetInt32());
+
                 foreach(JsonElement entity in root.GetProperty("meta").GetProperty("slices").EnumerateArray())
                 {
                     string entityName = entity.GetProperty("name").GetString();
@@ -193,7 +198,7 @@ public class TextureAtlas
                         int width = bounds.GetProperty("w").GetInt32();
                         int height = bounds.GetProperty("h").GetInt32();
                         for(int i = 0; i < root.GetProperty("frames").GetPropertyCount(); i++)
-                        {                            
+                        {
                             atlas.AddRegion(entityName + i.ToString(), x + width * i, y, width, height);
                         }
 
@@ -203,12 +208,13 @@ public class TextureAtlas
                         string animName = entityName + "_" + anim.GetProperty("name").GetString();
                         int from = anim.GetProperty("from").GetInt32();
                         int to = anim.GetProperty("to").GetInt32();
+                        TimeSpan delay = TimeSpan.FromMilliseconds(frameDurations[from]);
                         List<TextureRegion> frames = new List<TextureRegion>();
                         for(int i = from; i <= to; i++)
                         {
                             frames.Add(atlas.GetRegion(entityName + i.ToString()));
                         }
-                        Animation newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                        Animation newAnimation = new Animation(frames, delay);
                         atlas.AddAnimation(animName, newAnimation);
                         if(animName.EndsWith("NW"))
                         {
@@ -218,7 +224,7 @@ public class TextureAtlas
                             {
                                 frames.Add(atlas.GetRegion(entityName + i.ToString()));
                             }
-                            newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                            newAnimation = new Animation(frames, delay);
                             atlas.AddAnimation(animName, newAnimation);
                         }
                         else if(animName.EndsWith("SW"))
@@ -229,11 +235,11 @@ public class TextureAtlas
                             {
                                 frames.Add(atlas.GetRegion(entityName + i.ToString()));
                             }
-                            newAnimation = new Animation(frames, TimeSpan.FromMilliseconds(100));
+                            newAnimation = new Animation(frames, delay);
                             atlas.AddAnimation(animName, newAnimation);
                         }
                     }
-                    
+
                 }
 
                 return atlas;
