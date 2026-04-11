@@ -30,7 +30,13 @@ public class GameOverScreen : GamelabGameScreen
         _elapsed += gameTime.ElapsedGameTime;
         if (_elapsed >= ReturnDelay)
         {
-            Game.SwitchToScreen(new StartScreen(Game));
+            Game.IsGameInProgress = false;
+            Game.ResetGame();
+            Game.MapScreenInstance = new MapScreen(Game);
+            Game.MapScreenInstance.Initialize();
+            Game.MapScreenInstance.LoadContent();
+            Game.StartScreenInstance ??= new StartScreen(Game);
+            Game.SwitchToScreen(Game.StartScreenInstance);
         }
     }
 
@@ -39,7 +45,7 @@ public class GameOverScreen : GamelabGameScreen
         base.Draw(gameTime);
         GraphicsDevice.Clear(new Color(8, 48, 43));
 
-        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
+        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix(), samplerState: SamplerState.PointClamp);
 
         string text = "Game Over";
         Vector2 textSize = _font.MeasureString(text);
