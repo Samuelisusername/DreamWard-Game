@@ -282,6 +282,20 @@ public class MapScreen : GamelabGameScreen
         }        
     }
 
+    /// <summary>
+    /// Draws only the map and entities without any UI. Used to render the map as a background behind other screens.
+    /// </summary>
+    public void DrawMapOnly(GameTime gameTime)
+    {
+        if (spriteBatch == null) return; // not yet initialized (screen switch pending)
+        GraphicsDevice.Clear(gamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
+        SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
+        mapRenderer.Draw(spriteBatch);
+        entityRenderer.Draw(spriteBatch);
+        spriteBatch.End();
+    }
+
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
@@ -310,7 +324,13 @@ public class MapScreen : GamelabGameScreen
             cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
         }
         cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
-        
+
+        spriteBatch.End();
+
+        // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
+                        transformMatrix: viewportAdapter.GetScaleMatrix());
+
         // draw sanity
         if (sanityManager != null)
         {
@@ -328,24 +348,18 @@ public class MapScreen : GamelabGameScreen
             int boxWidth = (int)Math.Max(size1.X, size2.X) + pad * 2;
             int boxHeight = (int)(size1.Y + size2.Y + (pos2.Y - pos1.Y - size1.Y)) + pad * 2;
 
-            Color rectColor = gamePhaseManager.IsDay 
-                ? COLOR_L 
+            Color rectColor = gamePhaseManager.IsDay
+                ? COLOR_L
                 : new Color(33, 28, 11);      // #211c0b
 
-            Color textColor = gamePhaseManager.IsDay 
-                ? COLOR_D 
+            Color textColor = gamePhaseManager.IsDay
+                ? COLOR_D
                 : new Color(214, 214, 214);   // #d6d6d6
 
             spriteBatch.Draw(_dummy, new Rectangle((int)pos1.X - pad, (int)pos1.Y - pad, boxWidth, boxHeight), rectColor);
             spriteBatch.DrawString(_font, text, pos1, textColor);
             spriteBatch.DrawString(_font, dayText, pos2, textColor);
         }
-
-        spriteBatch.End();
-
-        // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
-                        transformMatrix: viewportAdapter.GetScaleMatrix());
 
         if(gamePhaseManager.IsDay)
         {

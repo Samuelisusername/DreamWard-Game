@@ -113,11 +113,12 @@ public class StartScreen : GamelabGameScreen
                 {
                     Rectangle btnRect = _buttons[i];
                     string label = _buttonLabels[i];
-                    bool disabled = label == "Continue Game" && Game.MapScreenInstance == null;
+                    bool disabled = label == "Continue Game" && !Game.IsGameInProgress;
 
                     if (btnRect.Contains(mousePos))
                     {
-                        GamelabGame.IsHovering = true;
+                        if (!disabled)
+                            GamelabGame.IsHovering = true;
 
                         if (mouse.WasButtonReleased(MouseButton.Left) && !disabled)
                         {
@@ -165,6 +166,7 @@ public class StartScreen : GamelabGameScreen
                 Game.ResetGame();
                 Game.MapScreenInstance = new MapScreen(Game);
                 Game.CardScreenInstance = new CardScreen(Game);
+                Game.IsGameInProgress = true;
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
             case "How to Play":
@@ -182,8 +184,13 @@ public class StartScreen : GamelabGameScreen
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
-        GraphicsDevice.Clear(_bgColor);
-        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix());
+
+        if (Game.MapScreenInstance != null)
+            Game.MapScreenInstance.DrawMapOnly(gameTime);
+        else
+            GraphicsDevice.Clear(_bgColor);
+
+        spriteBatch.Begin(transformMatrix: viewportAdapter.GetScaleMatrix(), samplerState: SamplerState.PointClamp);
 
         switch (_currentState)
         {
@@ -211,7 +218,7 @@ public class StartScreen : GamelabGameScreen
         {
             string label = _buttonLabels[idx];
 
-            bool disabled = label == "Continue Game" && Game.MapScreenInstance == null;
+            bool disabled = label == "Continue Game" && !Game.IsGameInProgress;
             bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && btnRect.Contains(mousePos);
 
             if (disabled)

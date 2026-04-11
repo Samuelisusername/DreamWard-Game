@@ -29,6 +29,7 @@ public class GamelabGame : Game
     public MapScreen MapScreenInstance;
     public StartScreen StartScreenInstance;
     public float MasterVolume { get; set; } = 0.5f;
+    public bool IsGameInProgress { get; set; } = false;
 
     private readonly Logger logger = new("Game");
     public readonly GraphicsDeviceManager graphics;
@@ -172,6 +173,11 @@ public class GamelabGame : Game
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y, TimeSpan.FromMilliseconds(500));
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();
+
+        // Pre-create the map so it can be drawn behind the start screen
+        MapScreenInstance = new MapScreen(this);
+        MapScreenInstance.Initialize();
+        MapScreenInstance.LoadContent();
     }
 
     protected override void Update(GameTime gameTime)
