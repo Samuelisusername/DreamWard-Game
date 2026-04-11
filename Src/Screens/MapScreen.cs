@@ -185,7 +185,7 @@ public class MapScreen : GamelabGameScreen
         {
             if (mapManager.TentDestroyed)
             {
-                Game.SwitchToScreen(new GameOverScreen(Game));
+                Game.SwitchToScreen(new GameOverScreen(Game, false));
                 return;
             }
             if (_toCardScreenBtn.Contains(mousePos) ||
