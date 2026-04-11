@@ -49,6 +49,7 @@ public class CardManager
     public Card _activeMapCard = null;
     public (int,int) _selectedTile = (-1,-1);
     public Structure _previewStructure = null;
+    public List<(Rectangle rect, Card card)> CardRects = new();
 
     public CardManager()
     {
@@ -75,12 +76,16 @@ public class CardManager
         // Build deck (other cards commented out for combat testing)
         _buildDeck.AddRange(
         [
-            //rest commented out for testing
             new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper" },
             new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
-           // new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher" },
+            new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher" },
             new Card { Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence" },
-            new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow" }
+            new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow" },
+            //New
+            new Card { Name = "void", Type = CardType.Build, Cost = 2, SpriteName = "void" },
+            new Card { Name = "spikes", Type = CardType.Build, Cost = 1, SpriteName = "spikes" },
+            new Card { Name = "decoy", Type = CardType.Build, Cost = 2, SpriteName = "decoy" },
+            new Card { Name = "buff", Type = CardType.Build, Cost = 2, SpriteName = "buff" }
         ]);
 
         // Map action cards
@@ -290,6 +295,11 @@ public class CardManager
             "aoe" => "towerAOE_idle",
             "fence" => "fence_idle",
             "meadow" => "meadow_idle",
+            "void" => "void_idle",
+            "spikes" => "spikes_idle",
+            "decoy" => "decoy_idle",
+            "buff" => "buff_idle",
+
             _ => null
         };
 
@@ -302,21 +312,26 @@ public class CardManager
             "fence" => new Fence(animKey, pos),
             "meadow" => new PlacableMeadow(animKey, pos,2),
             "dreamcatcher" => new Wall(animKey, pos),
+            "void" => new VoidTile(animKey, pos),
+            "spikes" => new Spikes(animKey, pos,2),
+            "decoy" => new Decoy(animKey, pos,2),
+            "buff" => new Buff(animKey, pos,2),
             _ => null
         };
 
         return structure;
     }
-    public bool HandleCardUseClicks(Vector2 mousePos, int screenW, int screenH, int startY)
+    public bool HandleCardUseClicks(Vector2 mousePos, int screenW, int screenH)
     {
         var slots = MapSlots.Concat(BuildSlots).ToList();
 
-        int cardW = 128 * 2;
-        int cardH = 128 * 2;
+        int cardW = 128 * 3 / 2;
+        int cardH = 128 * 3 / 2;
         int spacing = 5;
+        int margin = 20;
+        int startY = screenH - margin - cardH;
 
         int totalWidth = slots.Count * cardW + (slots.Count - 1) * spacing;
-
         int startX = screenW - totalWidth - 10;
 
         for (int i = 0; i < slots.Count; i++)
@@ -336,16 +351,16 @@ public class CardManager
 
                 if (card.Type == CardType.Build || card.Type == CardType.MapAction)
                 {
-                    if (_activeMapCard == card)
+                    if (ReferenceEquals(_activeMapCard, card))
                     {
                         _activeMapCard = null;
                         _previewStructure = null;
-                        _selectedTile = (-1,-1);
+                        _selectedTile = (-1, -1);
                     }
                     else
                     {
                         _activeMapCard = card;
-                        _selectedTile = (-1,-1);
+                        _selectedTile = (-1, -1);
                         _previewStructure = null;
                     }
                 }
@@ -357,6 +372,7 @@ public class CardManager
                 return true;
             }
         }
+
         return false;
     }
     public bool HandleMapCardUse(MapManager mapManager, Vector2 pos)
