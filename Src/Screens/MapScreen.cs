@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -33,6 +34,9 @@ public class MapScreen : GamelabGameScreen
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
     private int _cardStartY = 0;
+    private bool _toCardsBtnPressed   = false;
+    private bool _inventoryBtnPressed  = false;
+    private bool _towerRangeBtnPressed = false;
 
     // Drag
     private bool _isDrag;
@@ -43,10 +47,11 @@ public class MapScreen : GamelabGameScreen
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
     private Structure _hoveredStructure;
- 
-    private readonly Color BTN_COLOR = new Color(0xbc, 0xb6, 0x9d);  
-    private readonly Color BTN_TEXT_COLOR = new Color(0x74, 0x70, 0x5f);    
-    private readonly Color TEXT_COLOR = new Color(0xd8, 0xd4, 0xc1);
+    private Texture2D _interfaceTexture;
+    private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
+    private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
+    private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
+    private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
     private Point screenSize => viewportAdapter.PointToScreen(new Point(GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferWidth, GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferHeight));
 
@@ -81,24 +86,35 @@ public class MapScreen : GamelabGameScreen
 
         // 1x1 white texture used by EntityRenderer to draw HP bars
         entityRenderer.SetHealthBarTexture(_dummy);
+        _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
         _cardRegions = new()
         {
-            { "sniper", new(0,0,128,128) },
-            { "aoe", new(0,128,128,128) },
-            { "dreamcatcher", new(0,256,128,128) },
-            { "fence", new(0,384,128,128) },
-            { "meadow", new(0,512,128,128) },
-            { "polymorph", new(0,1280,128,128) },
-            { "move", new(0,1408,128,128) },
-            { "destroy", new(0,1536,128,128) }
+            { "sniper",       new(0,    0, 128, 128) },
+            { "aoe",          new(0,  128, 128, 128) },
+            { "dreamcatcher", new(0,  256, 128, 128) },
+            { "fence",        new(0,  384, 128, 128) },
+            { "meadow",       new(0,  512, 128, 128) },
+            { "shuffle",      new(0,  640, 128, 128) },
+            { "discount",     new(0,  768, 128, 128) },
+            { "top3",         new(0,  896, 128, 128) },
+            { "discard",      new(0, 1024, 128, 128) },
+            { "deck",         new(0, 1152, 128, 128) },
+            { "polymorph",    new(0, 1280, 128, 128) },
+            { "move",         new(0, 1408, 128, 128) },
+            { "destroy",      new(0, 1536, 128, 128) },
+            //new
+            { "void",      new(0, 1664, 128, 128) },
+            { "spikes",      new(0, 1792, 128, 128) },
+            { "decoy",      new(0, 1920, 128, 128) },
+            { "buff",      new(0, 2048, 128, 128) }
+
         };
 
-
         // Navigation button
-        _toCardScreenBtn = new Rectangle((int)viewportAdapter.VirtualWidth - 150,20,130,50);
+        _toCardScreenBtn = new Rectangle((int)viewportAdapter.VirtualWidth - 183, 20, 163, 63);
         
         mapManager.InitOffset(screenSize);
     }
@@ -115,6 +131,9 @@ public class MapScreen : GamelabGameScreen
             AudioManager.Play("dragonflap");
             return;
         }
+        GamelabGame.IsHovering = false;
+        Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+
         // Spawn monster at edge heading toward tent
         if (keyboard.WasKeyPressed(Keys.Space))
         {
@@ -124,9 +143,9 @@ public class MapScreen : GamelabGameScreen
             AudioManager.Play("grunt_03");
             gamePhaseManager.SwitchToNight();
 #else
-            if(gamePhaseManager.IsDay){
+            if(GamelabGame.gamePhaseManager.IsDay){
                 AudioManager.Play("grunt_03");
-                gamePhaseManager.SwitchToNight();
+                GamelabGame.gamePhaseManager.SwitchToNight();
             }
 #endif
 
@@ -169,12 +188,33 @@ public class MapScreen : GamelabGameScreen
                 Game.SwitchToScreen(new GameOverScreen(Game));
                 return;
             }
+            if (_toCardScreenBtn.Contains(mousePos) ||
+                _inventoryBtn.Contains(mousePos) ||
+                _towerRangeBtn.Contains(mousePos))
+            {
+                GamelabGame.IsHovering = true;
+            }
 
+            if (_showInventory)
+            {
+                foreach (var (rect, card) in cardManager.CardRects)
+                {
+                    if (card != null && rect.Contains(mousePos))
+                    {
+                        GamelabGame.IsHovering = true;
+                        break;
+                    }
+                }
+            }
 
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
-                _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                _toCardsBtnPressed    = _toCardScreenBtn.Contains(pos);
+                _inventoryBtnPressed  = _inventoryBtn.Contains(pos);
+                _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
+                _oldPos = pos;
                 _clickStarted = true;
             }
 
@@ -191,7 +231,8 @@ public class MapScreen : GamelabGameScreen
 
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                if(GamelabGame.GamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
+                _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = false;
+                if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
                     Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                     // Navigation to CardScreen
@@ -213,7 +254,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                     // Check USE buttons on cards
-                    if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _cardStartY))
+                    if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
                         return;
 
                     if (cardManager.HandleMapCardUse(mapManager, pos))
@@ -229,8 +270,8 @@ public class MapScreen : GamelabGameScreen
             _hoverTile = mapManager.GetTileFromScreenPosition(mouseWorld);
             if (_hoverTile.col >= 0 && cardManager._activeMapCard != null &&
                 (cardManager._activeMapCard.Effect == CardEffect.Move ||
-                 cardManager._activeMapCard.Effect == CardEffect.Destroy ||
-                 cardManager._activeMapCard.Effect == CardEffect.Polymorph))
+                cardManager._activeMapCard.Effect == CardEffect.Destroy ||
+                cardManager._activeMapCard.Effect == CardEffect.Polymorph))
             {
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
             }
@@ -244,7 +285,7 @@ public class MapScreen : GamelabGameScreen
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
-        GraphicsDevice.Clear(GamelabGame.GamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
+        GraphicsDevice.Clear(gamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
 
         SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler,
@@ -264,7 +305,7 @@ public class MapScreen : GamelabGameScreen
         {
             entityRenderer.Draw(spriteBatch);
         }
-        if (_showTowerRange && GamelabGame.GamePhaseManager.IsDay)
+        if (_showTowerRange && gamePhaseManager.IsDay)
         {
             cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
         }
@@ -272,16 +313,33 @@ public class MapScreen : GamelabGameScreen
         
         // draw sanity
         if (sanityManager != null)
-            {
-                string text = $"Sanity: {sanityManager.Sanity}";
-                spriteBatch.DrawString(_font, text,new Vector2(20, 20),TEXT_COLOR);
+        {
+            string text = $"Sanity: {sanityManager.Sanity}";
+            string dayText = $"Day: {gamePhaseManager.DayCount}/10";
 
-                string dayText = $"Day: {gamePhaseManager.DayCount}/10";
-                spriteBatch.DrawString(_font, dayText,new Vector2(20, 50),TEXT_COLOR);
+            Vector2 pos1 = new Vector2(20, 20);
+            Vector2 pos2 = new Vector2(20, 70);
 
-                string phaseText = gamePhaseManager.IsDay ? "Phase: Day" : "Phase: Night";
-                spriteBatch.DrawString(_font, phaseText,new Vector2(20, 80),TEXT_COLOR);
-            }
+            int pad = 10;
+
+            Vector2 size1 = _font.MeasureString(text);
+            Vector2 size2 = _font.MeasureString(dayText);
+
+            int boxWidth = (int)Math.Max(size1.X, size2.X) + pad * 2;
+            int boxHeight = (int)(size1.Y + size2.Y + (pos2.Y - pos1.Y - size1.Y)) + pad * 2;
+
+            Color rectColor = gamePhaseManager.IsDay 
+                ? COLOR_L 
+                : new Color(33, 28, 11);      // #211c0b
+
+            Color textColor = gamePhaseManager.IsDay 
+                ? COLOR_D 
+                : new Color(214, 214, 214);   // #d6d6d6
+
+            spriteBatch.Draw(_dummy, new Rectangle((int)pos1.X - pad, (int)pos1.Y - pad, boxWidth, boxHeight), rectColor);
+            spriteBatch.DrawString(_font, text, pos1, textColor);
+            spriteBatch.DrawString(_font, dayText, pos2, textColor);
+        }
 
         spriteBatch.End();
 
@@ -289,13 +347,12 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.Begin(samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
-        if(GamelabGame.GamePhaseManager.IsDay)
+        if(gamePhaseManager.IsDay)
         {
-            // ✅ UI (now also scaled)
-            DrawButton(_toCardScreenBtn, "Cards");
+            DrawButton(_toCardScreenBtn, "Cards", _toCardsBtnPressed);
             cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
-            DrawButton(_inventoryBtn, _showInventory ? "Hide Cards" : "Show Cards");
-            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range");
+            DrawButton(_inventoryBtn,    _showInventory ? "Hide Cards" : "Show Cards", _inventoryBtnPressed);
+            DrawButton(_towerRangeBtn,   _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
 
             if (_showInventory)
             {
@@ -321,38 +378,35 @@ public class MapScreen : GamelabGameScreen
         // Make the popup cover at least half the screen
         int boxWidth = w / 2;
         int boxHeight = h / 2;
-        Rectangle box = new(
-            w / 2 - boxWidth / 2,
-            h / 2 - boxHeight / 2,
-            boxWidth,
-            boxHeight
-        );
+        Rectangle box = new(w / 2 - boxWidth / 2, h / 2 - boxHeight / 2, boxWidth, boxHeight);
 
         // Faint white background (semi-transparent)
-        spriteBatch.Draw(_dummy, box, Color.White * 0.6f);
+        spriteBatch.Draw(_dummy, box, Color.Beige * 0.6f);
 
         // Bigger text
-        float scale = 1.5f; // scale up font
+        float scale = 1.25f; // scale up font
         Vector2 textSize = _font.MeasureString(_dayPopupText) * scale;
         Vector2 textPos = new Vector2(box.Center.X - textSize.X / 2, box.Center.Y - textSize.Y / 2);
 
-        spriteBatch.DrawString(_font, _dayPopupText, textPos, BTN_TEXT_COLOR, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, _dayPopupText, textPos, COLOR_D, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
-    private void DrawButton(Rectangle rect, string text)
+    private void DrawButton(Rectangle rect, string text, bool pressed = false)
     {
-        spriteBatch.Draw(_dummy, rect, BTN_COLOR);
+        var src = pressed ? BtnPressed : BtnNormal;
+        spriteBatch.Draw(_interfaceTexture, rect, src, Color.White);
         var size = _font.MeasureString(text);
+        float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
         spriteBatch.DrawString(_font, text,
-            new Vector2(rect.Center.X - (size.X * 0.6f) / 2,
-                        rect.Center.Y - (size.Y * 0.6f) / 2),
-            BTN_TEXT_COLOR, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
+            new Vector2(rect.Center.X - size.X * sc * 0.5f,
+                        rect.Center.Y - size.Y * sc * 0.5f),
+            COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
     }
 
     public void ShowDayPopup(string text)
     {
         _dayPopupText = text;
         _showDayPopup = true;
-        _popupTimer = 3f; // seconds
+        _popupTimer = 4f; // seconds
     }
     
     private void SpawnDefaultEntities()
