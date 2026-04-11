@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace DreamWardUtils.Graphics;
@@ -16,13 +17,16 @@ public class TileSet
 
     public int Count { get; }
 
-    public TileSet(TextureRegion region, int tileWidth, int tileHeight)
+    public TimeSpan FrameDuration { get; }
+
+    public TileSet(TextureRegion region, int tileWidth, int tileHeight, TimeSpan frameDuration = default)
     {
         TileWidth = tileWidth;
         TileHeight = tileHeight;
         Columns = region.Width/tileWidth;
         Rows = region.Height/tileHeight;
         Count = Rows * Columns;
+        FrameDuration = frameDuration;
 
         _tiles = new TextureRegion[Count];
 

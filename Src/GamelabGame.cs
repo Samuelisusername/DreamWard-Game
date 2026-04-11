@@ -151,14 +151,14 @@ public class GamelabGame : Game
         TextureAtlas day_top = TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
         textureAtlas.Add("day_top", day_top);
         
-        //load tilesets
-        Texture2D textureDay = Content.Load<Texture2D>("Sprites/day_tiles");
-        TextureRegion regionDay = new(textureDay, 0, 0, textureDay.Width, textureDay.Height);
-        dayTiles = new(regionDay, 64, 32);
+        //load tilesets — read frame duration from the JSON atlas so it stays in sync with entity animations
+        var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
+        TextureRegion regionDay = new(dayTilesAtlas.Texture, 0, 0, dayTilesAtlas.Texture.Width, dayTilesAtlas.Texture.Height);
+        dayTiles = new(regionDay, 64, 32, dayTilesAtlas.GetAnimation("var0_idle").Delay);
 
-        Texture2D textureNight = Content.Load<Texture2D>("Sprites/night_tiles");
-        TextureRegion regionNight = new(textureNight, 0, 0, textureNight.Width, textureNight.Height);
-        nightTiles = new(regionNight, 64, 32);
+        var nightTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/night_tiles.json");
+        TextureRegion regionNight = new(nightTilesAtlas.Texture, 0, 0, nightTilesAtlas.Texture.Width, nightTilesAtlas.Texture.Height);
+        nightTiles = new(regionNight, 64, 32, nightTilesAtlas.GetAnimation("var0_idle").Delay);
 
 
         TextureAtlas interfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
@@ -170,7 +170,7 @@ public class GamelabGame : Game
         cursorClick = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
         Mouse.SetCursor(cursorArrow);
 
-        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y, TimeSpan.FromMilliseconds(500));
+        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
         //pathfindingManager need the MapManager on init
         PathFindingManager = new();
 
@@ -242,7 +242,7 @@ public class GamelabGame : Game
         SanityManager = new();
 
         // Recreate MapManager with fresh tile data
-        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y, TimeSpan.FromMilliseconds(500));
+        MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
 
         PathFindingManager = new();
     }

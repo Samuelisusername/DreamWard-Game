@@ -94,16 +94,13 @@ public class MapManager
     //the elapsed time since the start of the last animationframe
     private TimeSpan _elapsed;
 
-    //the delay before the animationframe changes again
-    private readonly TimeSpan _delay;
-
     //which frame of the animation are we on?
     private int _animationOffset = 0;
 
 #endregion
 
 
-    public MapManager(TileSet setDay, TileSet setNight, int columns, int rows, TimeSpan delay)
+    public MapManager(TileSet setDay, TileSet setNight, int columns, int rows)
     {
         _tileSets = new Dictionary<string, TileSet>
         {
@@ -112,7 +109,6 @@ public class MapManager
         };
         Columns = columns;
         Rows = rows;
-        _delay = delay;
         _tiles = new int[Columns,Rows];
         _exteriorTiles = new int[Columns*3,Rows*3];
         Structures = new Structure[Columns,Rows];
@@ -136,11 +132,12 @@ public class MapManager
     
     public void Update(GameTime gameTime)
     {   
-        //progress the animation
+        //progress the animation using the active tileset's frame duration from JSON
+        TimeSpan delay = _tileSets[gamePhaseManager.IsDay ? "day" : "night"].FrameDuration;
         _elapsed += gameTime.ElapsedGameTime;
-        if(_elapsed >= _delay)
+        if(_elapsed >= delay)
         {
-            _elapsed -= _delay;
+            _elapsed -= delay;
             _animationOffset = (_animationOffset + 1) % 2;
         }
 
