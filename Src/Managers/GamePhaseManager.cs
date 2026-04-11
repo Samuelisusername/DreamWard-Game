@@ -53,6 +53,7 @@ public class GamePhaseManager
 
     private void EndGame(bool won)
     {
-        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, won));
+        GameOverScreen.DidWin = won; 
+        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
     }
 }
