@@ -77,7 +77,7 @@ public class MapScreen : GamelabGameScreen
 
         AudioManager.LoadSound(Game.Content, "day_music", "Sounds/preferred_option_day");
         AudioManager.LoadSound(Game.Content, "night_music", "Sounds/creepy_demon_night_forest") ;
-        AudioManager.PlayMusic("day_music");
+        AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
 
         // Fonts and dummy texture
         _font = Content.Load<SpriteFont>("font");
