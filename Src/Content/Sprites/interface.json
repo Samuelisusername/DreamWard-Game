@@ -27,7 +27,11 @@
    { "name": "cursor_hover", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 0, "w": 16, "h": 16 } }] },
    { "name": "cursor_arrow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 16, "h": 16 } }] },
    { "name": "button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 80, "w": 80, "h": 32 } }] },
-   { "name": "backdrop", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 204, "y": 35, "w": 282, "h": 308 } }] }
+   { "name": "backdrop", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 204, "y": 35, "w": 282, "h": 308 } }] },
+   { "name": "button_normal_card", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 112, "w": 80, "h": 32 } }] },
+   { "name": "button_pressed_card", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 144, "w": 80, "h": 32 } }] },
+   { "name": "button_normal_map", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 176, "w": 80, "h": 32 } }] },
+   { "name": "button_pressed_map", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 208, "w": 80, "h": 32 } }] }
   ]
  }
 }
