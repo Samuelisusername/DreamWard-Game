@@ -178,6 +178,12 @@ public class CardScreen : GamelabGameScreen
         cardManager.Update(gameTime);
         BuildLayout();
 
+        if (keyboard.WasKeyReleased(Keys.Escape))
+        {
+            Game.SwitchToScreen(Game.MapScreenInstance);
+            return;
+        }
+
         Vector2 mp = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
         GamelabGame.IsHovering =
             _toMapBtn.Contains(mp) ||
