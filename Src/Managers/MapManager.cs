@@ -585,8 +585,14 @@ public class MapManager
     public void MoveMap(Vector2 delta, Point screenSize)
     {
         Offset += delta;
-        Vector2 maxOffset = screenSize.ToVector2() / 2;
-        Vector2 minOffset = -GetWorldPositionOfTileWithoutOffset((Columns,Rows)) + maxOffset;
+        float screenHalfX = screenSize.X / 2f;
+        float screenHalfY = screenSize.Y / 2f;
+        // Clamp rightward/downward pan so the left/top exterior borders stay one tile off-screen
+        float tileStep = TileWidth - ScaledOffset;
+        float maxX = Math.Min(screenHalfX, (Columns - 1) * tileStep);
+        float maxY = Math.Min(screenHalfY, (Rows - 1) * TileHeight);
+        Vector2 maxOffset = new Vector2(maxX, maxY);
+        Vector2 minOffset = -GetWorldPositionOfTileWithoutOffset((Columns,Rows)) + new Vector2(screenHalfX, screenHalfY);
         Offset = new Vector2(Math.Clamp(Offset.X, minOffset.X, maxOffset.X), Math.Clamp(Offset.Y, minOffset.Y, maxOffset.Y));
     }
 
