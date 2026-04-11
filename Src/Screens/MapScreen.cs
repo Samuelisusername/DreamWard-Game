@@ -143,9 +143,9 @@ public class MapScreen : GamelabGameScreen
             AudioManager.Play("grunt_03");
             gamePhaseManager.SwitchToNight();
 #else
-            if(GamelabGame.gamePhaseManager.IsDay){
+            if(gamePhaseManager.IsDay){
                 AudioManager.Play("grunt_03");
-                GamelabGame.gamePhaseManager.SwitchToNight();
+                gamePhaseManager.SwitchToNight();
             }
 #endif
 
