@@ -289,7 +289,7 @@ public class CardManager
             "sniper" => "towerSniper_idle",
             "aoe" => "towerAOE_idle",
             "fence" => "fence_idle",
-            "meadow" => "void_idle",
+            "meadow" => "meadow_idle",
             _ => null
         };
 

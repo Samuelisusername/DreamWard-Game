@@ -35,7 +35,7 @@ public class Meadow : Structure
     public void RemoveSheep()
     {
         HasSheep = false;
-        SetAnimation("bush_idle");
+        SetAnimation("meadowGrazed_idle");
     }
 
     public void PolymorphSheep()
@@ -70,11 +70,11 @@ public class PlacableMeadow : Structure
     public void ActivateMeadow(int gain)
     {
         SanityGain = gain;
-        SetAnimation("hill_idle");
+        SetAnimation("meadow_idle");
     }
     public void DeactivateMeadow()
     {
         SanityGain = 5;
-        SetAnimation("void_idle");
+        SetAnimation("meadowPlaced_idle");
     }
 }
