@@ -624,7 +624,7 @@ public class MapManager
         //where are we zooming in on?
         Vector2 oldMapPoint = focus - Offset;
         //get the new scale
-        Vector2 newScale = new Vector2(Math.Max(Scale.X * (delta > 0 ? 1.09f : 0.91f),1f), Math.Max(Scale.Y * (delta > 0 ? 1.09f : 0.91f),1f));
+        Vector2 newScale = new Vector2(Math.Clamp(Scale.X * (delta > 0 ? 1.09f : 0.91f), 1f, 8f), Math.Clamp(Scale.Y * (delta > 0 ? 1.09f : 0.91f), 1f, 8f));
         //how much did the scale change?
         Vector2 scaleRatio = newScale / Scale;
         //figure out wherere the focused point is going to be once the map is scaled

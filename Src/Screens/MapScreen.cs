@@ -246,7 +246,8 @@ public class MapScreen : GamelabGameScreen
         base.Draw(gameTime);
         GraphicsDevice.Clear(GamelabGame.GamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
 
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
+        SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        spriteBatch.Begin(samplerState: sampler,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
         // ✅ Map
