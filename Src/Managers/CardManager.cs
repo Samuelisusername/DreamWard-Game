@@ -13,6 +13,7 @@ public record Card
     public CardEffect Effect;
     public int Cost;
     public string SpriteName;
+    public int Weight;  // higher weight more common
 }
 
 public class CardSlot
@@ -50,6 +51,9 @@ public class CardManager
     public (int,int) _selectedTile = (-1,-1);
     public Structure _previewStructure = null;
     public List<(Rectangle rect, Card card)> CardRects = new();
+    private Card _lastMapCard;
+    private Card _lastStackCard;
+    private Card _lastBuildCard;
 
     public CardManager()
     {
@@ -76,33 +80,33 @@ public class CardManager
         // Build deck (other cards commented out for combat testing)
         _buildDeck.AddRange(
         [
-            new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper" },
-            new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe" },
-            new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher" },
-            new Card { Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence" },
-            new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow" },
+            new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper", Weight = 3 },
+            new Card { Name = "aoe", Type = CardType.Build, Cost = 2, SpriteName = "aoe", Weight = 2 },
+            new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher", Weight = 2 },
+            new Card { Name = "fence", Type = CardType.Build, Cost = 1, SpriteName = "fence", Weight = 3 },
+            new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow", Weight = 1 },
             //New
-            new Card { Name = "void", Type = CardType.Build, Cost = 2, SpriteName = "void" },
-            new Card { Name = "spikes", Type = CardType.Build, Cost = 1, SpriteName = "spikes" },
-            new Card { Name = "decoy", Type = CardType.Build, Cost = 2, SpriteName = "decoy" },
-            new Card { Name = "buff", Type = CardType.Build, Cost = 2, SpriteName = "buff" }
+            new Card { Name = "void", Type = CardType.Build, Cost = 2, SpriteName = "void", Weight = 2 },
+            new Card { Name = "spikes", Type = CardType.Build, Cost = 1, SpriteName = "spikes", Weight = 3 },
+            new Card { Name = "decoy", Type = CardType.Build, Cost = 2, SpriteName = "decoy", Weight = 1 },
+            new Card { Name = "buff", Type = CardType.Build, Cost = 2, SpriteName = "buff", Weight = 1 }
         ]);
 
         // Map action cards
         _mapACDeck.AddRange(
         [
-            new Card { Name = "Polymorph", Type = CardType.MapAction, Effect = CardEffect.Polymorph, SpriteName = "polymorph" },
-            new Card { Name = "Move", Type = CardType.MapAction, Effect = CardEffect.Move, SpriteName = "move" },
-            new Card { Name = "Destroy", Type = CardType.MapAction, Effect = CardEffect.Destroy, SpriteName = "destroy" }
+            new Card { Name = "Polymorph", Type = CardType.MapAction, Effect = CardEffect.Polymorph, SpriteName = "polymorph", Weight = 1 },
+            new Card { Name = "Move", Type = CardType.MapAction, Effect = CardEffect.Move, SpriteName = "move", Weight = 2 },
+            new Card { Name = "Destroy", Type = CardType.MapAction, Effect = CardEffect.Destroy, SpriteName = "destroy", Weight = 2 }
         ]);
 
         // Stack action cards
         _stackACDeck.AddRange(
         [
-            new Card { Name = "Shuffle", Type = CardType.StackAction, Effect = CardEffect.Shuffle, SpriteName = "shuffle"},
-            new Card { Name = "Discard", Type = CardType.StackAction, Effect = CardEffect.Discard, SpriteName = "discard"},
-            new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount"},
-            new Card { Name = "DrawTop3", Type = CardType.StackAction, Effect = CardEffect.DrawTop3, SpriteName = "top3"}
+            new Card { Name = "Shuffle", Type = CardType.StackAction, Effect = CardEffect.Shuffle, SpriteName = "shuffle", Weight = 2 },
+            new Card { Name = "Discard", Type = CardType.StackAction, Effect = CardEffect.Discard, SpriteName = "discard", Weight = 2 },
+            new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount", Weight = 1 },
+            new Card { Name = "DrawTop3", Type = CardType.StackAction, Effect = CardEffect.DrawTop3, SpriteName = "top3", Weight = 1 }
         ]);
     }
 
@@ -134,12 +138,12 @@ public class CardManager
         switch (cardType)
         {
             case CardType.MapAction:
-                ActiveCard = _mapACDeck[_random.Next(_mapACDeck.Count)]; // infinite deck, no removal
+                ActiveCard = GetWeightedRandom(_mapACDeck, ref _lastMapCard); 
                 ActiveCardStartPos = deckPos;
                 _timer = TimeSpan.FromSeconds(1);
                 break;
             case CardType.StackAction:                
-                ActiveCard = _stackACDeck[_random.Next(_stackACDeck.Count)]; // infinite deck, no removal
+                ActiveCard = GetWeightedRandom(_stackACDeck, ref _lastStackCard); 
                 ActiveCardStartPos = deckPos;
                 _timer = TimeSpan.FromSeconds(1);
                 break;
@@ -206,11 +210,11 @@ public class CardManager
         // Pick final card from multiple draws (simulate "better odds")
         Card mapCard = null;
         for (int i = 0; i < mapDraws; i++)
-            mapCard = _mapACDeck[_random.Next(_mapACDeck.Count)];
+            mapCard = GetWeightedRandom(_mapACDeck, ref _lastMapCard);
 
         Card stackCard = null;
         for (int i = 0; i < stackDraws; i++)
-            stackCard = _stackACDeck[_random.Next(_stackACDeck.Count)];
+            stackCard = GetWeightedRandom(_stackACDeck, ref _lastStackCard);
 
         MapSlots[0].Card = mapCard;
         StackSlots[0].Card = stackCard;
@@ -280,9 +284,39 @@ public class CardManager
     {
         while (Top3Cards.Count < 3)
         {
-            var template = _buildDeck[_random.Next(_buildDeck.Count)];
+            var template = GetWeightedRandom(_buildDeck, ref _lastBuildCard);
             Top3Cards.Add(template with {});
         }
+    }
+
+    private Card GetWeightedRandom(List<Card> deck, ref Card lastCard)
+    {
+        if (deck == null || deck.Count == 0) return null;
+
+        Card selected;
+
+        do
+        {
+            int totalWeight = deck.Sum(c => c.Weight);
+            int roll = _random.Next(totalWeight);
+
+            int cumulative = 0;
+            selected = deck[0];
+
+            foreach (var card in deck)
+            {
+                cumulative += card.Weight;
+                if (roll < cumulative)
+                {
+                    selected = card;
+                    break;
+                }
+            }
+
+        } while (deck.Count > 1 && selected == lastCard);
+
+        lastCard = selected;
+        return selected;
     }
 
     public Structure GetStructureFromCard(Card card, (int col, int row) pos)
