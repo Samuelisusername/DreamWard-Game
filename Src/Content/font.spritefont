@@ -3,7 +3,7 @@
   <Asset Type="Graphics:FontDescription">
     
     <!-- IMPORTANT -->
-    <FontName>PromptFont</FontName>
+    <FontName>PixeloidSans-lxa3y.ttf</FontName>
 
     <Size>28</Size>
     <Spacing>2</Spacing>
@@ -18,4 +18,4 @@
     </CharacterRegions>
 
   </Asset>
-</XnaContent>
+</XnaContent> 
