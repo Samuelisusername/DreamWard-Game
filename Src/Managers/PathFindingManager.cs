@@ -5,8 +5,11 @@ using Gamelab;
 public class PathFindingManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
-    
-    private const int Step4InitialWaitTurns = 2;
+
+    private const int RegularMonsterVisionRange = 6; // must be at least 2
+    private const int FlyingMonsterVisionRange = 10;
+    private const int SimplePathBaseDefenceStrength = 9;
+    private const int SimplePathDefendedDefenceStrength = 10;
 
     // Keep track of all tiles that are going to be attacked and by who
     private readonly List<(int col, int row, int timeToBeAttacked, int monsterCount)> _activeTargets;
@@ -14,6 +17,7 @@ public class PathFindingManager
     private readonly Dictionary<Monster, (int col, int row)> _monsterToTarget;
 
     private readonly int[,] _defenceStrength;
+    private readonly int[,] _simplePathDefenceStrength;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
 
     /// <summary>
@@ -25,6 +29,7 @@ public class PathFindingManager
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
+        _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
     }
 
@@ -33,169 +38,70 @@ public class PathFindingManager
     /// </summary>
     public List<(int, int)> CalculatePath(Monster monster)
     {
-        //TODO: only return valid paths. it is possible that this already happens but we used to check if (smartPath != null && smartPath.Count > 0) before asigning the new path to the monster
-        // --- GENERAL PATHFINDING STRATEGY ---
+        // Each monster type has an important property, vision range, that defines how far it can see on the map. The monster will target a structure
+        // only if it can see the structure and each tile within 2 tiles of the structure.
 
-        // We define a 'primary target' as a target that reduces the player's sanity when destroyed.
-        // All other targets are secondary targets.
+        // --- TARGET FINDING  ---
+        // A new target is selected according to the following preferences:
+        // 1. A structure less than or equal to 'visionRange - 2' tiles away (in simple airwise distance) that the monster can target
+        //    a. In case of a tie, the monster will prefer primary targets over secondary targets.
+        //    b. If there are multiple targets of the same type, the monster will pick the one with the lowest 'costToGetThere'.
+        // 2. One tile towards the center of the map (while paying a tiny little bit of attention to defenses along the way).
 
-        // We define the 'weakest path' to some target as a path that minimizes the maximum damage
-        // taken at any tile along the path to the target.
-
-        // A monster has the following preferences:
-        // 1. A primary target that can be reached without getting damaged at any point.
-        //      --> tent, sheep
-        // 2. A secondary target that can be reached without getting damaged at any point.
-        //      --> wall
-        // 3. A target that another monster is going to and that the first monster can reach at the
-        //    same time as the other monster without getting damaged *before* arriving in the
-        //    target's attack range.
-        //      --> tower
-        // 4. The first secondary target on the 'weakest path' to any of the primary targets. The
-        //    monster will wait a little bit to give the other monsters a chance to join in.
+        // --- PATH FINDING ---
+        // The sum of squared defense strength along the path is used as a measure of path cost, where defense strength is the sum of strengths of the
+        // towers defending the tile.
 
         // ------------------------------------
 
-        // Remove stale assignment for this monster before recalculating.
-        UnregisterMonsterTarget(monster);
 
-        // Update the map of how heavily each tile is defended.
+        UnregisterMonsterTarget(monster);
         UpdateDefenceStrengths();
 
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
-        int[,] minMaxDamage = new int[mapManager.Columns, mapManager.Rows];
+        int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
         (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
         int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
-        CalculateWeakestPaths(startTile, monster, minMaxDamage, previousTile, timeToReach, allowThroughBreakableStructures: false);
+        CalculateWeakestPaths(startTile, monster, _defenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
 
         var allTargets = GetAllTargetStructures(monster);
+        int visionRange = GetVisionRange(monster);
+        int maxTargetDistance = visionRange - 2;
 
-        // 1-2:
-        // Check if there is a primary (preferred) or a secondary target with minMaxDamage of 0.
-        // If so reconstruct the path to this target using previousTile and return it. Make sure to update
-        // _activeTargets (unless it's already there) and _monstersTargeting.
-        var primaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: true);
-        if (primaryZero != null)
+        var visibleTargets = allTargets.FindAll(target =>
+            MapUtils.CalculateTileDistance(startTile, target.Tile) <= maxTargetDistance &&
+            CanSeeStructureAndSurroundings(startTile, target.Tile, visionRange));
+
+        var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
+        if (bestPrimary != null)
         {
-            var primaryPath = ReconstructPath(startTile, primaryZero.Value.Tile, previousTile, timeToReach);
+            var primaryPath = ReconstructPath(startTile, bestPrimary.Value.Tile, previousTile, timeToReach);
             if (primaryPath.Count > 0)
             {
-                RegisterTarget(monster, primaryZero.Value.Tile, timeToReach[primaryZero.Value.Tile.Item1, primaryZero.Value.Tile.Item2]);
+                RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
                 return primaryPath;
             }
         }
 
-        var secondaryZero = SelectBestTarget(allTargets, minMaxDamage, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: true);
-        if (secondaryZero != null)
+        var bestSecondary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
+        if (bestSecondary != null)
         {
-            var secondaryPath = ReconstructPath(startTile, secondaryZero.Value.Tile, previousTile, timeToReach);
+            var secondaryPath = ReconstructPath(startTile, bestSecondary.Value.Tile, previousTile, timeToReach);
             if (secondaryPath.Count > 0)
             {
-                RegisterTarget(monster, secondaryZero.Value.Tile, timeToReach[secondaryZero.Value.Tile.Item1, secondaryZero.Value.Tile.Item2]);
+                RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
                 return secondaryPath;
             }
         }
 
-        
-        // 3:
-        // for col, row, time in _activeTargets:
-        //  compare minMaxDamage to _defenceStrength at the target's tile
-        //  if minMaxDamage <= _defenceStrength and timeToReach <= time:
-        //      then construct the path to this target using previousTile and return it. if you would reach
-        //      the target earlier than the time in _activeTargets, then wait the difference in time, to
-        //      arrive at the same time as the other monster. Update _activeTargets and _monstersTargeting
-        //      accordingly.
-        foreach (var activeTarget in _activeTargets)
+        var centerTile = (mapManager.Columns / 2, mapManager.Rows / 2);
+        CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
+        var centerPath = ReconstructPath(startTile, centerTile, previousTile, timeToReach);
+        if (centerPath.Count > 0)
         {
-            var targetTile = (activeTarget.col, activeTarget.row);
-            if (!MapUtils.IsInBounds(targetTile))
-            {
-                continue;
-            }
-
-            Entity targetStructure = mapManager.GetStructure(targetTile);
-            if (targetStructure == null || targetStructure.IsDestroyed || !monster.CanTarget(targetStructure))
-            {
-                continue;
-            }
-
-            int tileMinMaxDamage = minMaxDamage[targetTile.Item1, targetTile.Item2];
-            int tileTimeToReach = timeToReach[targetTile.Item1, targetTile.Item2];
-            if (tileMinMaxDamage == int.MaxValue || tileTimeToReach == int.MaxValue)
-            {
-                continue;
-            }
-
-            if (tileMinMaxDamage <= _defenceStrength[targetTile.Item1, targetTile.Item2] &&
-                tileTimeToReach <= activeTarget.timeToBeAttacked + 2)
-            {
-                var path = ReconstructPath(startTile, targetTile, previousTile, timeToReach);
-                if (path.Count == 0)
-                {
-                    continue;
-                }
-
-                //int waitTime = activeTarget.timeToBeAttacked - tileTimeToReach;
-                //for (int i = 0; i < waitTime; i++)
-                //{
-                //    path.Insert(0, startTile);
-                //}
-
-                RegisterTarget(monster, targetTile, activeTarget.timeToBeAttacked);
-                return path;
-            }
+            return centerPath;
         }
-
-        CalculateWeakestPaths(startTile, monster, minMaxDamage, previousTile, timeToReach, allowThroughBreakableStructures: true);
-        // 4:
-        // a. Look through all primary targets and find the one with the lowest minMaxDamage.
-        // b. Reconstruct the path from startTile to this primary target using the 'previous' array.
-        // c. Loop through the tiles in this path and find the first one with minMaxDamage > 0. This will
-        //    be the first secondary target on the path to the primary target.
-        // d. Reconstruct the path from startTile to the secondary target you found and return it. Update
-        //    _activeTargets and _monstersTargeting accordingly.
-        var weakestPrimary = SelectBestTarget(allTargets, minMaxDamage, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
-        if (weakestPrimary != null)
-        {
-            var pathToPrimary = ReconstructPath(startTile, weakestPrimary.Value.Tile, previousTile, timeToReach);
-            if (pathToPrimary.Count > 0)
-            {
-                (int, int)? firstSecondary = null;
-                foreach (var tile in pathToPrimary)
-                {
-                    if (minMaxDamage[tile.Item1, tile.Item2] <= 0)
-                    {
-                        continue;
-                    }
-
-                    Entity structure = mapManager.GetStructure(tile);
-                    if (structure != null && IsSecondaryTarget(monster, structure))
-                    {
-                        firstSecondary = tile;
-                        break;
-                    }
-                }
-
-                if (firstSecondary != null)
-                {
-                    var secondaryPath = ReconstructPath(startTile, firstSecondary.Value, previousTile, timeToReach);
-                    if (secondaryPath.Count > 0)
-                    {
-                        //AddInitialWait(secondaryPath, startTile, Step4InitialWaitTurns);
-                        secondaryPath.Add(firstSecondary.Value);
-                        int attackTime = timeToReach[firstSecondary.Value.Item1, firstSecondary.Value.Item2] + 1 + Step4InitialWaitTurns;
-                        RegisterTarget(monster, firstSecondary.Value, attackTime);
-                        return secondaryPath;
-                    }
-                }
-
-                //AddInitialWait(pathToPrimary, startTile, Step4InitialWaitTurns);
-                RegisterTarget(monster, weakestPrimary.Value.Tile, timeToReach[weakestPrimary.Value.Tile.Item1, weakestPrimary.Value.Tile.Item2] + Step4InitialWaitTurns);
-                return pathToPrimary;
-            }
-        }
-
         return new List<(int, int)> { startTile };
     }
 
@@ -229,6 +135,8 @@ public class PathFindingManager
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
+                _simplePathDefenceStrength[col, row] = SimplePathBaseDefenceStrength;
+
                 Entity structure = mapManager.GetStructure((col, row));
                 if (structure is not Tower tower)
                 {
@@ -238,6 +146,7 @@ public class PathFindingManager
                 foreach (var defendedTile in tower.GetTilesInRange())
                 {
                     _defenceStrength[defendedTile.Item1, defendedTile.Item2]++;
+                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] = SimplePathDefendedDefenceStrength;
                     if (!_defenders.TryGetValue(defendedTile, out var defenders))
                     {
                         defenders = new List<Entity>();
@@ -254,28 +163,29 @@ public class PathFindingManager
     /// Computes weakest paths from the start tile by minimizing maximum defense encountered.
     /// Also tracks predecessor and arrival time for each tile.
     /// </summary>
-    private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] minMaxDamage, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
+    private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] defenseStrength, int[,] costToGetThere, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
     {
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                minMaxDamage[col, row] = int.MaxValue;
+                costToGetThere[col, row] = int.MaxValue;
                 previousTile[col, row] = null;
                 timeToReach[col, row] = int.MaxValue;
             }
         }
 
-        minMaxDamage[startTile.col, startTile.row] = _defenceStrength[startTile.col, startTile.row];
+        int startDefence = defenseStrength[startTile.col, startTile.row];
+        costToGetThere[startTile.col, startTile.row] = startDefence * startDefence;
         timeToReach[startTile.col, startTile.row] = 0;
 
         var queue = new PriorityQueue<(int col, int row), (int damage, int time)>();
-        queue.Enqueue(startTile, (minMaxDamage[startTile.col, startTile.row], 0));
+        queue.Enqueue(startTile, (costToGetThere[startTile.col, startTile.row], 0));
 
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
-            int currentDamage = minMaxDamage[current.col, current.row];
+            int currentDamage = costToGetThere[current.col, current.row];
             int currentTime = timeToReach[current.col, current.row];
 
             foreach (var neighbor in Tower.GetHexNeighbors(current))
@@ -295,14 +205,15 @@ public class PathFindingManager
                     }
                 }
 
-                int nextDamage = Math.Max(currentDamage, _defenceStrength[neighbor.Item1, neighbor.Item2]);
+                int neighborDefence = defenseStrength[neighbor.Item1, neighbor.Item2];
+                int nextDamage = currentDamage + neighborDefence * neighborDefence;
                 int nextTime = currentTime + 1;
 
-                if (nextDamage < minMaxDamage[neighbor.Item1, neighbor.Item2] ||
-                    (nextDamage == minMaxDamage[neighbor.Item1, neighbor.Item2] &&
+                if (nextDamage < costToGetThere[neighbor.Item1, neighbor.Item2] ||
+                    (nextDamage == costToGetThere[neighbor.Item1, neighbor.Item2] &&
                      nextTime < timeToReach[neighbor.Item1, neighbor.Item2]))
                 {
-                    minMaxDamage[neighbor.Item1, neighbor.Item2] = nextDamage;
+                    costToGetThere[neighbor.Item1, neighbor.Item2] = nextDamage;
                     timeToReach[neighbor.Item1, neighbor.Item2] = nextTime;
                     previousTile[neighbor.Item1, neighbor.Item2] = current;
                     queue.Enqueue(neighbor, (nextDamage, nextTime));
@@ -325,6 +236,36 @@ public class PathFindingManager
     private static bool IsSecondaryTarget(Monster monster, Entity target)
     {
         return monster.CanTarget(target) && !IsPrimaryTarget(target);
+    }
+
+    private bool CanSeeStructureAndSurroundings((int col, int row) monsterTile, (int col, int row) structureTile, int visionRange)
+    {
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                if (MapUtils.CalculateTileDistance(structureTile, (col, row)) > 2)
+                {
+                    continue;
+                }
+
+                if (MapUtils.CalculateTileDistance(monsterTile, (col, row)) > visionRange)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static int GetVisionRange(Monster monster)
+    {
+        return monster.Type switch
+        {
+            MonsterType.Flying => FlyingMonsterVisionRange,
+            _ => RegularMonsterVisionRange
+        };
     }
 
     /// <summary>
@@ -355,7 +296,7 @@ public class PathFindingManager
     /// </summary>
     private ((int, int) Tile, Entity Target)? SelectBestTarget(
         List<((int, int) Tile, Entity Target)> allTargets,
-        int[,] minMaxDamage,
+        int[,] costToGetThere,
         int[,] timeToReach,
         Func<Entity, bool> selector,
         bool requireZeroDamage)
@@ -370,7 +311,7 @@ public class PathFindingManager
 
             int col = candidate.Tile.Item1;
             int row = candidate.Tile.Item2;
-            int damage = minMaxDamage[col, row];
+            int damage = costToGetThere[col, row];
             int time = timeToReach[col, row];
             if (damage == int.MaxValue || time == int.MaxValue)
             {
@@ -388,7 +329,7 @@ public class PathFindingManager
                 continue;
             }
 
-            int bestDamage = minMaxDamage[best.Value.Tile.Item1, best.Value.Tile.Item2];
+            int bestDamage = costToGetThere[best.Value.Tile.Item1, best.Value.Tile.Item2];
             int bestTime = timeToReach[best.Value.Tile.Item1, best.Value.Tile.Item2];
 
             if (damage < bestDamage || (damage == bestDamage && time < bestTime))
@@ -497,15 +438,5 @@ public class PathFindingManager
 
         return new List<(int, int)>();
     }
-
-    /// <summary>
-    /// Prepends repeated start-tile entries to make the monster wait before moving.
-    /// </summary>
-    private static void AddInitialWait(List<(int, int)> path, (int col, int row) startTile, int waitTurns)
-    {
-        for (int i = 0; i < waitTurns; i++)
-        {
-            path.Insert(0, startTile);
-        }
-    }
 }
+
