@@ -232,9 +232,9 @@ public class MapManager
         return true;     
     }
 
-    public void AddExistingMonsterGroup(MonsterGroup monsterGroup,  (int col, int row) pos, bool shouldRecalcPath)
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup,  (int col, int row) pos, bool shouldRecalcPath, TimeSpan elapsed)
     {
-        MonsterContainers[pos.col, pos.row].AddExistingMonsterGroup(monsterGroup, shouldRecalcPath);
+        MonsterContainers[pos.col, pos.row].AddExistingMonsterGroup(monsterGroup, shouldRecalcPath, elapsed);
     }
     
     /// <summary>

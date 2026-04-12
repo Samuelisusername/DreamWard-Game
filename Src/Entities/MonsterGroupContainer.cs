@@ -51,10 +51,10 @@ public class MonsterGroupContainer
             switch (monster.Type)
             {
                 case MonsterType.Regular:
-                    newGroup =  new RegularMonsterGroup(tilePosition);
+                    newGroup =  new RegularMonsterGroup(tilePosition, TimeSpan.Zero);
                     break;
                 case MonsterType.Flying:
-                    newGroup = new FlyingMonsterGroup(tilePosition);
+                    newGroup = new FlyingMonsterGroup(tilePosition, TimeSpan.Zero);
                     break;
                 default:
                     throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
@@ -64,7 +64,7 @@ public class MonsterGroupContainer
         }
     }
 
-    public void AddExistingMonsterGroup(MonsterGroup monsterGroup, bool shouldRecalcPath)
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup, bool shouldRecalcPath, TimeSpan elapsed)
     {
         (int col, int row) oldStart = monsterGroup.TilePosition;
         (int col, int row) oldGoal = monsterGroup.CommonNextTarget();
@@ -92,10 +92,10 @@ public class MonsterGroupContainer
                     switch (monsters[0].Type)
                     {
                         case MonsterType.Regular:
-                            newGroup =  new RegularMonsterGroup(tilePosition);
+                            newGroup =  new RegularMonsterGroup(tilePosition, elapsed);
                             break;
                         case MonsterType.Flying:
-                            newGroup = new FlyingMonsterGroup(tilePosition);
+                            newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
                             break;
                         default:
                             throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
@@ -112,14 +112,15 @@ public class MonsterGroupContainer
             }
             else
             {
+                // monsters change direction
                 MonsterGroup newGroup;
                 switch (monsters[0].Type)
                 {
                     case MonsterType.Regular:
-                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        newGroup =  new RegularMonsterGroup(tilePosition, elapsed);
                         break;
                     case MonsterType.Flying:
-                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
                         break;
                     default:
                         throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");

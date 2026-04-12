@@ -2,7 +2,7 @@ using System;
 
 public class RegularMonsterGroup : MonsterGroup
 {
-    public RegularMonsterGroup((int, int) tilePos) : base(tilePos)
+    public RegularMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
     {
     }
 

@@ -23,13 +23,14 @@ public abstract class MonsterGroup
     private bool shouldRecalcPath;
 
 
-    public MonsterGroup((int, int) tilePos)
+    public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
     {
         Monsters = new List<Monster>();
         TilePosition = tilePos;
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite(type+"_idleS");
         sprite.Scale = mapManager.Scale;
+        _elapsed = elapsed;
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
@@ -150,14 +151,29 @@ public abstract class MonsterGroup
             {
                 SetAnimation();
             }
-            _elapsed += gameTime.ElapsedGameTime;
-            if (_elapsed >= speed)
+        }
+        
+        _elapsed += gameTime.ElapsedGameTime;
+        if (_elapsed >= speed)
+        {
+            _elapsed -= speed;
+            if(!_goalReached)
             {
-                _elapsed -= speed;
                 Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
             }
-            _pathProgress = (float)(_elapsed / speed);
+            else if(shouldRecalcPath)
+            {                
+                Monsters.ForEach(i =>
+                {
+                    i.AttackTarget = null;
+                    var newPath = pathFindingManager.CalculatePath(i);
+                    if (newPath != null && newPath.Count > 0)
+                        i.Path = newPath;
+                });
+            }
         }
+        _pathProgress = (float)(_elapsed / speed);
+
         _oldGoalReached = _goalReached;
         sprite.Update(gameTime);
     }
@@ -169,26 +185,13 @@ public abstract class MonsterGroup
         {
             return false;
         }
-        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath);
+        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath, _elapsed);
         return true;
     } 
     
     public void QueuePathRecalc()
     {
-        if(_goalReached)
-        {
-            Monsters.ForEach(i =>
-            {
-                i.AttackTarget = null;
-                var newPath = pathFindingManager.CalculatePath(i);
-                if (newPath != null && newPath.Count > 0)
-                    i.Path = newPath;         
-            });
-        }
-        else
-        {
-            shouldRecalcPath = true;
-        }
+        shouldRecalcPath = true;
     }
 
     protected AnimatedSprite sprite;
