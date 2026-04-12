@@ -21,7 +21,7 @@ public abstract class MonsterGroup
     public (int,int) TilePosition {get; set;}
     public abstract MonsterType MonsterType {get;}
     private bool shouldRecalcPath;
-
+    public bool shouldCheckMerge;
 
     public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
     {
@@ -124,6 +124,7 @@ public abstract class MonsterGroup
 
     public void Update(GameTime gameTime)
     {
+        shouldCheckMerge = false;
         Entity destStructure = mapManager.GetStructure(CommonNextTarget());
         if (destStructure != null && !Monsters[0].CanStepOn(destStructure))
         {
@@ -161,15 +162,19 @@ public abstract class MonsterGroup
             {
                 Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
             }
-            else if(shouldRecalcPath)
-            {                
-                Monsters.ForEach(i =>
+            else 
+            {         
+                shouldCheckMerge = true;
+                if(shouldRecalcPath)
                 {
-                    i.AttackTarget = null;
-                    var newPath = pathFindingManager.CalculatePath(i);
-                    if (newPath != null && newPath.Count > 0)
-                        i.Path = newPath;
-                });
+                    Monsters.ForEach(i =>
+                    {
+                        i.AttackTarget = null;
+                        var newPath = pathFindingManager.CalculatePath(i);
+                        if (newPath != null && newPath.Count > 0)
+                            i.Path = newPath;
+                    }); 
+                }  
             }
         }
         _pathProgress = (float)(_elapsed / speed);
@@ -214,16 +219,23 @@ public abstract class MonsterGroup
         sprite.Scale = scale;
     }
 
-    private void SetAnimation()
+    private void SetAnimation(bool toMerge = false)
     {        
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
-        string anim = CommonNextTarget() == TilePosition ? "idleS" : "walk";
+        string anim = toMerge ? "merge" : CommonNextTarget() == TilePosition ? "idle" : "walk";
         string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
+        direction = direction == "" ? "S" : direction;
         //Turn into Amalgam
         sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim + direction);
         if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
         else sprite.SpriteEffects = SpriteEffects.None;
+    }
+
+    public void StartMerge()
+    {
+        //TODO: Add the merge anim once it exists
+        //SetAnimation(true);
     }
 
 }

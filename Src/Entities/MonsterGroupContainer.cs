@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Gamelab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;        
 
 public class MonsterGroupContainer 
 {   
+    private MapManager mapManager => GamelabGame.MapManager;
     private (int, int) tilePosition;
     public List<MonsterGroup> Monstergroups;
     
@@ -102,6 +104,7 @@ public class MonsterGroupContainer
                     }
                     newGroup.AddMonsters(monsters);
                     Monstergroups.Add(newGroup);
+                    newGroup.shouldCheckMerge = true;
                 }
             }
             else if(oldDir == MapUtils.GetDirection(oldGoal, monsters[0].GetCurrentGoal()))
@@ -109,6 +112,7 @@ public class MonsterGroupContainer
                 //monsters move in the same direction keep them in the monstergroup
                 monsterGroup.ResetGroup(tilePosition);
                 Monstergroups.Add(monsterGroup);
+                monsterGroup.shouldCheckMerge = true;
             }
             else
             {
@@ -127,6 +131,7 @@ public class MonsterGroupContainer
                 }
                 newGroup.AddMonsters(monsters);
                 Monstergroups.Add(newGroup);
+                newGroup.shouldCheckMerge = true;
             }
         }
 
@@ -217,5 +222,37 @@ public class MonsterGroupContainer
             }
         });
     }
+
+    public void InitMerge()
+    {
+        List<(int,int)> neighbor = MapUtils.getSurroundingTiles(tilePosition);
+        neighbor.Add(tilePosition);
+        Dictionary<MonsterType, int> counts = new Dictionary<MonsterType, int>();
+        foreach ((int col, int row) pos in neighbor)
+        {
+            foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).Monstergroups)
+            {
+                if(group.shouldCheckMerge && group.CommonNextTarget() == tilePosition )
+                {
+                    if (!counts.TryGetValue(group.MonsterType, out _))
+                    {
+                        counts.Add(group.MonsterType, 0); 
+                    }
+                    counts[group.MonsterType] += 1;
+                }
+            }
+        }
+        foreach ((int col, int row) pos in neighbor)
+        {
+            foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).Monstergroups)
+            {
+                if(counts.TryGetValue(group.MonsterType, out int value) && value > 1 && group.CommonNextTarget() == tilePosition)
+                {
+                    group.StartMerge();
+                }
+            }
+        }
+    }
+
 #endregion
 }

@@ -153,6 +153,12 @@ public class CombatManager
             container.Move();
         }
 
+        // 2. Update all the Mergeanims
+        foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+        {
+            container.InitMerge();
+        }
+
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         // 2. Towers Attack

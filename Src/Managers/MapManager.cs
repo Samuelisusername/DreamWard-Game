@@ -152,6 +152,7 @@ public class MapManager
                 Structures[i,j]?.Update(gameTime);
             }
         }
+        
         foreach (var tree in ExteriorStructures)
         {
             tree?.Update(gameTime);
