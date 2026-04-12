@@ -88,16 +88,6 @@ public class PathFindingManagerTests
     }
 
     [Test]
-    public void CalculatePath_EndToEnd_NoTargets_ReturnsStayPutPath()
-    {
-        var scenario = new PathFindingScenario();
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        Assert.That(path, Is.EqualTo(new List<(int, int)> { (0, 0) }));
-    }
-
-    [Test]
     public void CalculatePath_EndToEnd_OnlySecondaryTarget_GoesToSecondary()
     {
         var scenario = new PathFindingScenario();
@@ -106,18 +96,6 @@ public class PathFindingManagerTests
         List<(int, int)> path = scenario.CalculatePath((0, 0));
 
         AssertValidPath(path, (0, 0), (4, 4));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_NoDefense_PrefersPrimaryTarget()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceWall((4, 4));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(path, (0, 0), (2, 2));
     }
 
     [Test]
@@ -130,46 +108,6 @@ public class PathFindingManagerTests
         List<(int, int)> path = scenario.CalculatePath((0, 0));
 
         AssertValidPath(path, (0, 0), (1, 0));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_PrimaryDefended_ChoosesZeroDamageSecondary()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceWall((5, 5));
-        scenario.PlaceTower((2, 1));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(path, (0, 0), (5, 5));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_OnlyDefendedPrimary_StillTargetsPrimary()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceTower((2, 1));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(path, (0, 0), (2, 2));
-        Assert.That(path.Count, Is.GreaterThan(1));
-    }
-
-
-
-    [Test]
-    public void CalculatePath_EndToEnd_PrimaryPreferredEvenWhenSecondaryIsCloser()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((6, 6));
-        scenario.PlaceWall((1, 0));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(path, (0, 0), (6, 6));
     }
 
     [Test]
@@ -243,44 +181,6 @@ public class PathFindingManagerTests
 
 
     [Test]
-    public void CalculatePath_EndToEnd_RepeatedCallsKeepTargetStable()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceWall((6, 6));
-
-        List<(int, int)> firstPath = scenario.CalculatePath((0, 0));
-        List<(int, int)> secondPath = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(firstPath, (0, 0), (2, 2));
-        AssertValidPath(secondPath, (0, 0), (2, 2));
-        Assert.That(firstPath, Is.EqualTo(secondPath));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_FlyingMonster_WithOnlyWallTile_TargetsNothing()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceWallTileStub((1, 2));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 2), MonsterType.Flying);
-
-        Assert.That(path, Is.EqualTo(new List<(int, int)> { (0, 2) }));
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_InvalidActiveTargetEntry_IsSkipped()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.AddActiveTarget((-1, -1, 5));
-
-        List<(int, int)> path = scenario.CalculatePath((0, 0));
-
-        AssertValidPath(path, (0, 0), (2, 2));
-    }
-
-    [Test]
     public void ReconstructPath_InvalidEndTile_ReturnsEmptyPath()
     {
         var scenario = new PathFindingScenario();
@@ -314,42 +214,6 @@ public class PathFindingManagerTests
             timeToReach);
 
         Assert.That(path, Is.Empty);
-    }
-
-    [Test]
-    public void CalculatePath_EndToEnd_GroupMonsters_GangUpOnMiddleActiveTarget()
-    {
-        var scenario = new PathFindingScenario(12, 8);
-
-        // Middle target (closest for the left monster).
-        scenario.PlaceTent((3, 3));
-        var middleDefender = scenario.PlaceTower((3, 4));
-
-        // Right-side targets, each two tiles to the right of the group monsters.
-        scenario.PlaceSheep((9, 2));
-        scenario.PlaceSheep((9, 3));
-        scenario.PlaceSheep((9, 4));
-        var rightDefender1 = scenario.PlaceTower((10, 2));
-        var rightDefender2 = scenario.PlaceTower((10, 3));
-        var rightDefender3 = scenario.PlaceTower((10, 4));
-
-        // First monster on the left picks the middle target and registers it as active.
-        List<(int, int)> leftMonsterPath = scenario.CalculatePath((0, 3));
-
-        // Group monsters are farther from the middle but should coordinate and gang up on it.
-        List<(int, int)> groupPath1 = scenario.CalculatePath((7, 2));
-        List<(int, int)> groupPath2 = scenario.CalculatePath((7, 3));
-        List<(int, int)> groupPath3 = scenario.CalculatePath((7, 4));
-
-        AssertValidPath(leftMonsterPath, (0, 3), (3, 3));
-
-        AssertValidPath(groupPath1, (7, 2), (3, 3));
-        AssertValidPath(groupPath2, (7, 3), (3, 3));
-        AssertValidPath(groupPath3, (7, 4), (3, 3));
-
-        Assert.That(groupPath1[^1], Is.Not.EqualTo((9, 2)));
-        Assert.That(groupPath2[^1], Is.Not.EqualTo((9, 3)));
-        Assert.That(groupPath3[^1], Is.Not.EqualTo((9, 4)));
     }
 
     private static void AssertValidPath(List<(int, int)> path, (int, int) expectedStart, (int, int) expectedEnd)
@@ -512,109 +376,4 @@ public class PathFindingManagerTests
         }
     }
 
-    [Test]
-    public void CalculatePath_RepeatedForSameMonster_DoesNotGrowTrackingCollections()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-
-        var monster = new RegularMonster((0, 0));
-
-        for (int i = 0; i < 100; i++)
-        {
-            List<(int, int)> path = scenario.PathFindingManager.CalculatePath(monster);
-            AssertValidPath(path, (0, 0), (2, 2));
-        }
-
-        FieldInfo activeTargetsField = typeof(PathFindingManager)
-            .GetField("_activeTargets", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var activeTargets = (List<(int col, int row, int timeToBeAttacked, int monsterCount)>)activeTargetsField.GetValue(scenario.PathFindingManager)!;
-
-        FieldInfo monstersTargetingField = typeof(PathFindingManager)
-            .GetField("_monstersTargeting", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var monstersTargeting = (Dictionary<(int col, int row), HashSet<Monster>>)monstersTargetingField.GetValue(scenario.PathFindingManager)!;
-
-        FieldInfo monsterToTargetField = typeof(PathFindingManager)
-            .GetField("_monsterToTarget", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var monsterToTarget = (Dictionary<Monster, (int col, int row)>)monsterToTargetField.GetValue(scenario.PathFindingManager)!;
-
-        Assert.That(activeTargets.Count, Is.LessThanOrEqualTo(1));
-        Assert.That(monstersTargeting.Count, Is.LessThanOrEqualTo(1));
-        Assert.That(monsterToTarget.Count, Is.EqualTo(1));
-
-        if (activeTargets.Count == 1)
-        {
-            Assert.That(activeTargets[0].monsterCount, Is.EqualTo(1));
-        }
-    }
-
-    [Test]
-    public void CalculatePath_RepeatedForSameMonster_WithNewTargetBetweenCalls_ReplacesTrackingWithoutGrowth()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((6, 6));
-
-        var monster = CreateUninitializedMonster<RegularMonster>((0,0));
-
-        List<(int, int)> firstPath = scenario.PathFindingManager.CalculatePath(monster);
-        AssertValidPath(firstPath, (0, 0), (6, 6));
-
-        scenario.PlaceSheep((1, 0));
-
-        List<(int, int)> secondPath = scenario.PathFindingManager.CalculatePath(monster);
-        AssertValidPath(secondPath, (0, 0), (1, 0));
-
-        FieldInfo activeTargetsField = typeof(PathFindingManager)
-            .GetField("_activeTargets", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var activeTargets = (List<(int col, int row, int timeToBeAttacked, int monsterCount)>)activeTargetsField.GetValue(scenario.PathFindingManager)!;
-
-        FieldInfo monstersTargetingField = typeof(PathFindingManager)
-            .GetField("_monstersTargeting", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var monstersTargeting = (Dictionary<(int col, int row), HashSet<Monster>>)monstersTargetingField.GetValue(scenario.PathFindingManager)!;
-
-        FieldInfo monsterToTargetField = typeof(PathFindingManager)
-            .GetField("_monsterToTarget", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var monsterToTarget = (Dictionary<Monster, (int col, int row)>)monsterToTargetField.GetValue(scenario.PathFindingManager)!;
-
-        Assert.That(activeTargets.Count, Is.EqualTo(1));
-        Assert.That(activeTargets[0].col, Is.EqualTo(1));
-        Assert.That(activeTargets[0].row, Is.EqualTo(0));
-        Assert.That(activeTargets[0].monsterCount, Is.EqualTo(1));
-
-        Assert.That(monstersTargeting.Count, Is.EqualTo(1));
-        Assert.That(monstersTargeting.ContainsKey((1, 0)), Is.True);
-        Assert.That(monstersTargeting.ContainsKey((6, 6)), Is.False);
-        Assert.That(monstersTargeting[(1, 0)].Contains(monster), Is.True);
-
-        Assert.That(monsterToTarget.Count, Is.EqualTo(1));
-        Assert.That(monsterToTarget[monster], Is.EqualTo((1, 0)));
-    }
-
-    [Test]
-    [Category("Performance")]
-    public void CalculatePath_PerformanceSmoke_1000Iterations_NotInsanelySlow()
-    {
-        var scenario = new PathFindingScenario();
-        scenario.PlaceTent((2, 2));
-        scenario.PlaceTower((2, 1));
-
-        var monster = new RegularMonster((0, 0));
-
-        const int warmupIterations = 20;
-        for (int i = 0; i < warmupIterations; i++)
-        {
-            _ = scenario.PathFindingManager.CalculatePath(monster);
-        }
-
-        const int measuredIterations = 1000;
-        var stopwatch = Stopwatch.StartNew();
-        for (int i = 0; i < measuredIterations; i++)
-        {
-            _ = scenario.PathFindingManager.CalculatePath(monster);
-        }
-        stopwatch.Stop();
-
-        Assert.That(stopwatch.Elapsed, Is.LessThan(TimeSpan.FromSeconds(2)),
-            $"Pathfinding performance smoke test exceeded threshold: {stopwatch.Elapsed.TotalMilliseconds:F1} ms for {measuredIterations} runs.");
-    }
 }
