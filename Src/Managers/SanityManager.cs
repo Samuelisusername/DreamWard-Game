@@ -42,7 +42,7 @@ public class SanityManager
     public bool TryDeductSanity(int amount)
     {   
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
-        if (Sanity < amount) return false;
+        if (Sanity <= amount) return false;
         Sanity -= amount;
         return true;
     }
