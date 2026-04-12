@@ -6,8 +6,8 @@ public class PathFindingManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
 
-    private const int RegularMonsterVisionRange = 4; // must be at least 2
-    private const int FlyingMonsterVisionRange = 8;
+    private const int RegularMonsterVisionRange = 6; // must be at least 2
+    private const int FlyingMonsterVisionRange = 10;
     private const int SimplePathBaseDefenceStrength = 9;
     private const int SimplePathDefendedDefenceStrength = 10;
 
