@@ -41,15 +41,19 @@ public class GamePhaseManager
 
     public void checkGameOver()
     {
-        if (sanityManager.Sanity <= 0 || DayCount >= 10)
+        if (sanityManager.Sanity <= 0)
         {
-            ///TODO: if DayCount >= 10 its not game over
-            EndGame();
+            EndGame(false); // lose
+        }
+        else if (DayCount >= 10)
+        {
+            EndGame(true); // win
         }
     }
 
-    private void EndGame()
+    private void EndGame(bool won)
     {
+        GameOverScreen.DidWin = won; 
         GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
     }
 }

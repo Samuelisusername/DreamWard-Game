@@ -21,9 +21,17 @@ public class StartScreen : GamelabGameScreen
     private readonly Color _buttonTextColor = new(0x29, 0x24, 0x10); //new Color(41, 36, 16);
     private Color _buttonTextColor1;
 
+    private bool IsDay => GamelabGame.GamePhaseManager?.IsDay ?? true;
+    private Color PanelColor => IsDay
+        ? new(0xc7, 0xb8, 0x9c)   // light transparent (day)  // #03050b
+        : new(0x03,0x05,0x0b);     // dark transparent (night)
+    private Color TextColor => IsDay
+        ? new(0x29, 0x24, 0x10)           // dark text (day)
+        : new Color(0xd6, 0xd6, 0xd6);       // light text (night)
+
     private string[] _buttonLabels = { "Start New Game", "Continue Game", "How to Play", "Settings", "Quit Game" };
     private string _howToPlayText =
-    @"Welcome to DreamWard!
+    @" Welcome to DreamWard!
     - Protect yourself and your sheep.
     - Let your sheep graze on meadows to increase your sanity.
     - Use sanity to buy and play build cards.
@@ -261,7 +269,7 @@ public class StartScreen : GamelabGameScreen
         {
             Vector2 textSize = _font.MeasureString(text);
             textScale = MathF.Min(rect.Width / textSize.X * 0.6f, rect.Height / textSize.Y * 0.6f);
-            _buttonTextColor1 = _titleColor;
+            _buttonTextColor1 = TextColor;
         }
         Vector2 textSizeFinal = _font.MeasureString(text);
         Vector2 textPos = new Vector2(rect.Center.X - textSizeFinal.X * textScale / 2, rect.Center.Y - textSizeFinal.Y * textScale / 2);
@@ -304,10 +312,14 @@ public class StartScreen : GamelabGameScreen
     {
         int w = virtualScreenSize.X;
         int h = virtualScreenSize.Y;
-        DrawScaledText("How to Play", _titleColor, w / 2, 50, 2f);
+        
+        Rectangle panel = new Rectangle(w / 10, h / 6, w * 8 / 10, h * 4 / 6);
+        DrawTransparentPanel(panel);
+        
+        DrawScaledText("How to Play", TextColor, w / 2, 50, 2f);
 
         Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
-        DrawScaledParagraph(_howToPlayText, paragraphArea, _titleColor);
+        DrawScaledParagraph(_howToPlayText, paragraphArea, TextColor);
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
@@ -318,10 +330,19 @@ public class StartScreen : GamelabGameScreen
     {
         int w = virtualScreenSize.X;
         int h = virtualScreenSize.Y;
-        DrawScaledText("Settings", _titleColor, w / 2, 50, 2f);
 
-        Color barBackgroundColor = new (0x5c, 0x63, 0x40);
-        Color barFillColor = new (0x29, 0x24, 0x10);
+        Rectangle panel = new Rectangle(w / 10, h / 6, w * 8 / 10, h * 4 / 6);
+        DrawTransparentPanel(panel);
+
+        DrawScaledText("Settings", TextColor, w / 2, 50, 2f);
+
+        Color barBackgroundColor = IsDay
+            ? new Color(150, 140, 100)
+            : new Color(0x03,0x05,0x0b);
+
+        Color barFillColor = IsDay
+            ? new Color(41, 36, 16)
+            : new Color(200, 200, 200);
 
         DrawRoundedRectangle(_volumeBar, 5, barBackgroundColor, Color.Transparent);
 
@@ -331,7 +352,7 @@ public class StartScreen : GamelabGameScreen
         string volumeLabel = "Volume";
         Vector2 labelSize = _font.MeasureString(volumeLabel);
         Vector2 labelPos = new Vector2(_volumeBar.Center.X - labelSize.X / 2, _volumeBar.Y - labelSize.Y - 5);
-        spriteBatch.DrawString(_font, volumeLabel, labelPos, _titleColor);
+        spriteBatch.DrawString(_font, volumeLabel, labelPos, TextColor);
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
@@ -366,6 +387,10 @@ public class StartScreen : GamelabGameScreen
         float scale = Math.Min(scaleX, scaleY);
         Vector2 pos = new Vector2(area.X + area.Width / 2 - size.X * scale / 2, area.Y + area.Height / 2 - size.Y * scale / 2);
         spriteBatch.DrawString(_font, text, pos, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+    private void DrawTransparentPanel(Rectangle rect)
+    {
+        spriteBatch.Draw(_pixel, rect, PanelColor * 0.5f);
     }
 }
 

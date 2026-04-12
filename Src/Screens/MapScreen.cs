@@ -77,7 +77,6 @@ public class MapScreen : GamelabGameScreen
 
         AudioManager.LoadSound(Game.Content, "day_music", "Sounds/preferred_option_day");
         AudioManager.LoadSound(Game.Content, "night_music", "Sounds/creepy_demon_night_forest") ;
-        AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
 
         // Fonts and dummy texture
         _font = Content.Load<SpriteFont>("font");
@@ -122,6 +121,7 @@ public class MapScreen : GamelabGameScreen
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
+        AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
         // Exit
         if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
             Game.SwitchToScreen(Game.StartScreenInstance);
@@ -257,8 +257,10 @@ public class MapScreen : GamelabGameScreen
                     if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
                         return;
 
-                    if (cardManager.HandleMapCardUse(mapManager, pos))
+                    if (cardManager._activeMapCard != null)
                     {
+                        if (cardManager.HandleMapCardUse(mapManager, pos))
+                            return;
                         return;
                     }
                     mapManager.TryMoveSheep(pos);
