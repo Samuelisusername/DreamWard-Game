@@ -113,6 +113,9 @@ public class MapManager
         _exteriorTiles = new int[Columns*3,Rows*3];
         Structures = new Structure[Columns,Rows];
         ExteriorStructures = new Structure[Columns*3,Rows*3];
+        #if DEBUG
+        Debug = new bool[Columns,Rows];
+        #endif
         
         // NEW: Initialize the container grid
         MonsterContainers = new MonsterGroupContainer[Columns,Rows];
@@ -283,7 +286,7 @@ public class MapManager
         bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
-            Console.WriteLine("Tile already occupied!");
+            Console.WriteLine("Tile already occupied! " + pos);
             AudioManager.Play("error");
             return false;
         }
@@ -392,7 +395,7 @@ public class MapManager
     {
         int seed = Random.Shared.Next();
         logger.Info("seed: " + seed);
-        FastNoiseLite noise = new FastNoiseLite();
+        FastNoiseLite noise = new FastNoiseLite(seed);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         noise.SetFractalOctaves(1);
         float maxDistance = MapUtils.CalculateTileDistance(GetTent(),(-1,-1));
@@ -404,20 +407,19 @@ public class MapManager
                 float noiseval = (noise.GetNoise(i * 10,j * 10) + 1) / 2;
                 if(!(i - Columns >= 0 && i - Columns < Columns && j - Rows >= 0 && j - Rows < Rows))
                 {                       
-                    if(noiseval < 0.2)
+                    if(noiseval < 0.4)
                     {
-                        //check passed spawn tree replace with noise in the future
-                        var tree = new TreeTile(PickTreeAnim(0.55, 0.30), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.60, 0.40), (i-Columns, j-Rows));
                         ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
-                    else if(noiseval < 0.6)
+                    else if(noiseval < 0.7)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.20, 0.45), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.30, 0.65), (i-Columns, j-Rows));
                         ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                     else if(Random.Shared.NextDouble() < 0.25)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.10, 0.35), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.01, 0.55), (i-Columns, j-Rows));
                         ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                               
@@ -425,22 +427,22 @@ public class MapManager
                 else
                 {   
                     float relativeDist = MapUtils.CalculateTileDistance(GetTent(),(i-Columns,j-Rows)) / maxDistance;
-                    relativeDist = MathF.Pow(relativeDist,2);
+                    relativeDist = MathF.Pow(relativeDist,2.125f);
                     noiseval /= relativeDist;
-                    if(noiseval < 0.2)
+                    if(noiseval < 0.3)
                     {
                         //check passed spawn tree replace with noise in the future
-                        var tree = new TreeTile(PickTreeAnim(0.55, 0.30), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.4, 0.4), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
-                    else if(noiseval < 0.4)
+                    else if(noiseval < 0.5)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.20, 0.45), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.1, 0.45), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                     else if(Random.Shared.NextDouble() < 0.25 * relativeDist)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.10, 0.35), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickTreeAnim(0.0, 0.35), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                 }
@@ -638,4 +640,10 @@ public class MapManager
         }
     }
 #endregion
+
+#if DEBUG
+public bool[,] Debug{get; private set;}
+
+#endif
+
 }
