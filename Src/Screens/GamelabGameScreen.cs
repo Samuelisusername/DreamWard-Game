@@ -23,8 +23,8 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
     {
         base.Initialize();
 
-        // Simplify rendering on different screen sizes by using a virtual resolution, scaling it to fit the actual window size, and applying letterboxing if needed to maintain the aspect ratio
-        viewportAdapter = new BoxingViewportAdapter(Game.Window, GraphicsDevice, virtualScreenSize.X, virtualScreenSize.Y);
+        // Scale the virtual resolution to fill the full window/screen without letterboxing
+        viewportAdapter = new ScalingViewportAdapter(GraphicsDevice, virtualScreenSize.X, virtualScreenSize.Y);
         viewportAdapter.Reset();
 
         spriteBatch = new SpriteBatch(GraphicsDevice);
