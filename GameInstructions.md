@@ -24,20 +24,25 @@ Gamepad is not supported.
 | Action | Keyboard | 
 | ------ | -------- | 
 |start night| spacebar | 
-|pause  | P |
-|quit   | esc |
+|pause  | P or esc |
+|quit   | esc + esc |
 
 
 | Card | Action | Use on... |
 | ------ | -------- |--| 
-| Tower of one Destruction| Single target 'sniper' tower | free tile| 
-| Tower of many Destruction  | area of effect tower | free tile |
-| Dream Catcher | wall against flying enemy | free tile |
-| Fence | wall normal enemy | free tile |
-| Meadow | sanity generation | free tile |
-| Shuffle | reorders shop cards | shop |
-| Discount | next shop card is cheaper | shop |
-| Top 3 | don't have to buy top card | shop |
-| Discard | shop cards are redrawn | shop |
-| Polymorph | make enemies ignore sheep | sheep |
-| Move | move a placed tile | existing tile, then free tile |
+| Piercer of Veils | Single target 'sniper' tower | free tile| 
+| Banisher of Horrors  | area of effect tower | free tile |
+| Catcher of Dreams | wall against flying enemy | free tile |
+| Warden of Thresholds | wall normal enemy | free tile |
+| Meadow of Slumber | sanity generation | free tile |
+| Shuffler of Fates | reorders shop cards | shop |
+| Discounter of Burdens | next shop card is cheaper | shop |
+| Choice of Illusions | don't have to buy top card | shop |
+| Burning of Hands | shop cards are redrawn | shop |
+| Vermin of Shadows | make enemies ignore sheep | sheep |
+| Shifter of Roots | move a placed tile | existing tile, then free tile |
+| Forgetter of Visions | destroy a placed tile | existing tile |
+| Absence of Field | intraversible void tile | free tile |
+| Bed of Thorns | damaging thorns tile | free tile |
+| Lure of Phantoms | lures nightmares | free tile |
+| Kindle of Resolve | Buff tower | free tile |
