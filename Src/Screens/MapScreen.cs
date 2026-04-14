@@ -111,13 +111,19 @@ public class MapScreen : GamelabGameScreen
             { "buff",      new(0, 2048, 128, 128) }
 
         };
-
-        // Navigation button
-        _toCardScreenBtn = new Rectangle((int)viewportAdapter.VirtualWidth - 183, 20, 163, 63);
         
         mapManager.InitOffset(screenSize);
     }
-
+    private void update_card_button()
+    {
+        int vw = viewportAdapter.VirtualWidth;
+        int vh = viewportAdapter.VirtualHeight;
+        _toCardScreenBtn = new Rectangle(vw-183, 20, 163, 63);
+        if (gamePhaseManager.IsDay)
+        {
+            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
+        }
+    }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
@@ -125,7 +131,7 @@ public class MapScreen : GamelabGameScreen
                 
         GamelabGame.IsHovering = false;
         Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-
+        update_card_button();
         
 
         if(Game.IsActive)
@@ -370,7 +376,7 @@ public class MapScreen : GamelabGameScreen
         if(gamePhaseManager.IsDay)
         {
             DrawButton(_toCardScreenBtn, "Cards", _toCardsBtnPressed);
-            cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
+            //cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
             DrawButton(_inventoryBtn,    _showInventory ? "Hide Cards" : "Show Cards", _inventoryBtnPressed);
             DrawButton(_towerRangeBtn,   _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
 
