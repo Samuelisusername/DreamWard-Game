@@ -290,7 +290,7 @@ public class MapScreen : GamelabGameScreen
     public void DrawMapOnly(GameTime gameTime)
     {
         if (spriteBatch == null) return; // not yet initialized (screen switch pending)
-        GraphicsDevice.Clear(gamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
+        GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
         SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch);
