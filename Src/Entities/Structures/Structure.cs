@@ -49,6 +49,17 @@ public abstract class Structure : Entity
     public void Draw(SpriteBatch spriteBatch)
     {
         if (_sprite == null) return;
+        #if DEBUG
+        if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
+        {
+            _sprite.Color = Color.Red;
+        }
+        else
+        {
+            _sprite.Color = Color.White;
+        }
+
+        #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
         _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);

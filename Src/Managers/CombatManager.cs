@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Gamelab.Managers;
 using System.Collections.Generic;
 using System.Linq;
+using Gamelab.Utils.Logging;
 
 public class CombatManager
 {
@@ -17,6 +18,8 @@ public class CombatManager
     private Dictionary<Tower, float> _towerSoundTimers = new Dictionary<Tower, float>();
 
     private List<(int,int)> spawnableArea;
+
+    private Logger logger = new Logger("Combat Manager");
 
     // HELPER: Scans the map grid to get a snapshot of all active containers!
     private List<MonsterGroupContainer> GetAllContainers()
@@ -38,10 +41,9 @@ public class CombatManager
 
     public void SpawnMonsters(int count)
     {
-        // var list = GetSpawnableArea();
-        // foreach (var item in list)
+        // foreach (var item in spawnableArea)
         // {
-        //     mapManager.PlaceEntity(new Fence("fence_idle", item),item);
+        //     mapManager.Debug[item.Item1, item.Item2] = true;
         // }
         for (int i = 0; i < count; i++)
         {
@@ -54,39 +56,84 @@ public class CombatManager
         }
     }
 
+    /// <summary>
+    /// Gets the spawnable area of the map, these are all the tiles
+    /// that are bordering the mpBorder or a tree that is connected to the mapborder by other trees
+    /// </summary>
     public void GetSpawnableArea()
     {
-        List<(int,int)> search = [mapManager.GetTent()];
+        bool[,] canSpawn = new bool[mapManager.Columns,mapManager.Rows];
+        (int col, int row) tentPos = mapManager.GetTent();
+        canSpawn[tentPos.col, tentPos.row] = true;
+        List<(int,int)> search = [tentPos];        
         List<(int,int)> res = [];
-        int i = 0;
-        while(i < search.Count)
+        //bfs to find all the spawnable tiles connected to the tent dialated by one tile 
+        while(search.Count > 0)
         {
-            List<(int,int)> toCheck = MapUtils.getSurroundingTiles(search[i], true);
-            int count = 0;
+            List<(int,int)> toCheck = MapUtils.getSurroundingTiles(search[0], true);
             foreach ((int col, int row) tile in toCheck)
             {
                 if(MapUtils.IsInBounds(tile))
                 {
-                    if(mapManager.GetStructure(tile) is not TreeTile && !search.Contains(tile))
+                    if(mapManager.GetStructure(tile) is not TreeTile && !canSpawn[tile.col, tile.row])
                     {
+                        // logger.Info($"tile: {tile} got added by: {search[0]}");
                         search.Add(tile);
                     }
-                }
-                else
-                {
-                    count++;
+                    canSpawn[tile.col, tile.row] = true;
                 }
             }
-            if(count > 0 && mapManager.GetStructure(search[i]) is not TreeTile)
+            search.RemoveAt(0);
+        }
+        
+        //find all the trees that are connected to the border of the map and run BFS on the trees to mark them as unspawnable area
+        for(int i = 0; i < mapManager.Columns; i++)
+        {
+            for(int j = 0; j < mapManager.Rows; j++)
             {
-                res.Add(search[i]);
+                if(canSpawn[i,j])
+                {
+                    List<(int col, int row)> toCheck = MapUtils.getSurroundingTiles((i,j), true);
+                    if(toCheck.Any(k => !MapUtils.IsInBounds(k) || !canSpawn[k.col,k.row]) && mapManager.GetStructure((i,j)) is TreeTile)
+                    {
+                        //found a tree on the edge/ in a big cluster so do bfs to find all the trees in that group
+                        canSpawn[i,j] = false;
+                        search = [(i,j)];
+                        while(search.Count > 0)
+                        {                            
+                            List<(int,int)> neighbors = MapUtils.getSurroundingTiles(search[0], true);
+                            foreach ((int col, int row) tile in neighbors)
+                            {
+                                if(MapUtils.IsInBounds(tile))
+                                {
+                                    if(mapManager.GetStructure(tile) is TreeTile && canSpawn[tile.col, tile.row])
+                                    {
+                                        search.Add(tile);
+                                        canSpawn[tile.col, tile.row] = false;
+                                    }
+                                }
+                            }
+                            search.RemoveAt(0);
+                        }
+                    }
+                }
             }
-            i++;
         }
 
-        for (int j = 0; j < res.Count; j++)
+        //take the border of the spawnable area and save it as the spawnable tiles
+        for(int i = 0; i < mapManager.Columns; i++)
         {
-        
+            for(int j = 0; j < mapManager.Rows; j++)
+            {
+                if(canSpawn[i,j])
+                {
+                    List<(int col, int row)> toCheck = MapUtils.getSurroundingTiles((i,j), true);
+                    if(toCheck.Any(k => !MapUtils.IsInBounds(k) || !canSpawn[k.col,k.row]))
+                    {
+                        res.Add((i,j));
+                    }
+                }
+            }
         }
 
         spawnableArea = res;
@@ -104,6 +151,12 @@ public class CombatManager
         foreach (MonsterGroupContainer container in GetAllContainers()) 
         {
             container.Move();
+        }
+
+        // 2. Update all the Mergeanims
+        foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+        {
+            container.InitMerge();
         }
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;

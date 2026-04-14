@@ -23,11 +23,22 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
     {
         base.Initialize();
 
-        // Simplify rendering on different screen sizes by using a virtual resolution, scaling it to fit the actual window size, and applying letterboxing if needed to maintain the aspect ratio
-        viewportAdapter = new BoxingViewportAdapter(Game.Window, GraphicsDevice, virtualScreenSize.X, virtualScreenSize.Y);
-        viewportAdapter.Reset();
+        RebuildViewportAdapter();
+        Game.Window.ClientSizeChanged += (_, _) => RebuildViewportAdapter();
 
         spriteBatch = new SpriteBatch(GraphicsDevice);
+    }
+
+    private void RebuildViewportAdapter()
+    {
+        var pp = GraphicsDevice.PresentationParameters;
+        float screenAspect = (float)pp.BackBufferWidth / pp.BackBufferHeight;
+        int virtualHeight = 1080;
+        int virtualWidth = (int)Math.Round(virtualHeight * screenAspect);
+        virtualScreenSize = new Point(virtualWidth, virtualHeight);
+
+        viewportAdapter = new ScalingViewportAdapter(GraphicsDevice, virtualWidth, virtualHeight);
+        viewportAdapter.Reset();
     }
 
     public override void Update(GameTime gameTime)

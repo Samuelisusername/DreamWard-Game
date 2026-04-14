@@ -21,15 +21,16 @@ public abstract class MonsterGroup
     public (int,int) TilePosition {get; set;}
     public abstract MonsterType MonsterType {get;}
     private bool shouldRecalcPath;
+    public bool shouldCheckMerge;
 
-
-    public MonsterGroup((int, int) tilePos)
+    public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
     {
         Monsters = new List<Monster>();
         TilePosition = tilePos;
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite(type+"_idleS");
         sprite.Scale = mapManager.Scale;
+        _elapsed = elapsed;
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
@@ -123,6 +124,7 @@ public abstract class MonsterGroup
 
     public void Update(GameTime gameTime)
     {
+        shouldCheckMerge = false;
         Entity destStructure = mapManager.GetStructure(CommonNextTarget());
         if (destStructure != null && !Monsters[0].CanStepOn(destStructure))
         {
@@ -150,14 +152,33 @@ public abstract class MonsterGroup
             {
                 SetAnimation();
             }
-            _elapsed += gameTime.ElapsedGameTime;
-            if (_elapsed >= speed)
+        }
+        
+        _elapsed += gameTime.ElapsedGameTime;
+        if (_elapsed >= speed)
+        {
+            _elapsed -= speed;
+            if(!_goalReached)
             {
-                _elapsed -= speed;
                 Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
             }
-            _pathProgress = (float)(_elapsed / speed);
+            else 
+            {         
+                shouldCheckMerge = true;
+                if(shouldRecalcPath)
+                {
+                    Monsters.ForEach(i =>
+                    {
+                        i.AttackTarget = null;
+                        var newPath = pathFindingManager.CalculatePath(i);
+                        if (newPath != null && newPath.Count > 0)
+                            i.Path = newPath;
+                    }); 
+                }  
+            }
         }
+        _pathProgress = (float)(_elapsed / speed);
+
         _oldGoalReached = _goalReached;
         sprite.Update(gameTime);
     }
@@ -169,26 +190,13 @@ public abstract class MonsterGroup
         {
             return false;
         }
-        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath);
+        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath, _elapsed);
         return true;
     } 
     
     public void QueuePathRecalc()
     {
-        if(_goalReached)
-        {
-            Monsters.ForEach(i =>
-            {
-                i.AttackTarget = null;
-                var newPath = pathFindingManager.CalculatePath(i);
-                if (newPath != null && newPath.Count > 0)
-                    i.Path = newPath;         
-            });
-        }
-        else
-        {
-            shouldRecalcPath = true;
-        }
+        shouldRecalcPath = true;
     }
 
     protected AnimatedSprite sprite;
@@ -211,16 +219,23 @@ public abstract class MonsterGroup
         sprite.Scale = scale;
     }
 
-    private void SetAnimation()
+    private void SetAnimation(bool toMerge = false)
     {        
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
-        string anim = CommonNextTarget() == TilePosition ? "idleS" : "walk";
+        string anim = toMerge ? "merge" : CommonNextTarget() == TilePosition ? "idle" : "walk";
         string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
+        direction = direction == "" ? "S" : direction;
         //Turn into Amalgam
         sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim + direction);
         if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
         else sprite.SpriteEffects = SpriteEffects.None;
+    }
+
+    public void StartMerge()
+    {
+        //TODO: Add the merge anim once it exists
+        //SetAnimation(true);
     }
 
 }

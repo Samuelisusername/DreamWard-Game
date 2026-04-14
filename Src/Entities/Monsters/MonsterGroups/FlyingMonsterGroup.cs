@@ -2,7 +2,7 @@ using System;
 
 public class FlyingMonsterGroup : MonsterGroup
 {
-    public FlyingMonsterGroup((int, int) tilePos) : base(tilePos)
+    public FlyingMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
     {
     }
 

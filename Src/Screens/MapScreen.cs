@@ -122,44 +122,41 @@ public class MapScreen : GamelabGameScreen
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
         AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
-        // Exit
-        if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
-            Game.SwitchToScreen(Game.StartScreenInstance);
-        if(keyboard.WasKeyReleased(Keys.C))
-        {
-            Game.SwitchToScreen(Game.CardScreenInstance);
-            AudioManager.Play("dragonflap");
-            return;
-        }
+                
         GamelabGame.IsHovering = false;
         Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
 
-        // Spawn monster at edge heading toward tent
-        if (keyboard.WasKeyPressed(Keys.Space))
-        {
-            int centerX = mapManager.Columns / 2;
-            int centerY = mapManager.Rows / 2;
-#if DEBUG
-            AudioManager.Play("grunt_03");
-            gamePhaseManager.SwitchToNight();
-#else
-            if(gamePhaseManager.IsDay){
-                AudioManager.Play("grunt_03");
-                gamePhaseManager.SwitchToNight();
-            }
-#endif
-
-        }
-
-        if (keyboard.WasKeyPressed(Keys.P))
-        {
-            Game.StartScreenInstance ??= new StartScreen(Game);
-            Game.SwitchToScreen(Game.StartScreenInstance);
-            return;
-        }
+        
 
         if(Game.IsActive)
         {
+            // Exit
+            if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
+            Game.SwitchToScreen(Game.StartScreenInstance);
+
+            // Spawn monster at edge heading toward tent
+            if (keyboard.WasKeyPressed(Keys.Space))
+            {
+                int centerX = mapManager.Columns / 2;
+                int centerY = mapManager.Rows / 2;
+    #if DEBUG
+                AudioManager.Play("grunt_03");
+                gamePhaseManager.SwitchToNight();
+    #else
+                if(gamePhaseManager.IsDay){
+                    AudioManager.Play("grunt_03");
+                    gamePhaseManager.SwitchToNight();
+                }
+    #endif
+
+            }
+
+            if (keyboard.WasKeyPressed(Keys.P))
+            {
+                Game.StartScreenInstance ??= new StartScreen(Game);
+                Game.SwitchToScreen(Game.StartScreenInstance);
+                return;
+            }
             // Zoom before mapupdates so entity scale is synced
             if (mouse.DeltaScrollWheelValue != 0)
             {
@@ -205,6 +202,13 @@ public class MapScreen : GamelabGameScreen
                         break;
                     }
                 }
+            }
+
+            if(gamePhaseManager.IsDay && keyboard.WasKeyReleased(Keys.C))
+            {
+                Game.SwitchToScreen(Game.CardScreenInstance);
+                AudioManager.Play("dragonflap");
+                return;
             }
 
             // Drag

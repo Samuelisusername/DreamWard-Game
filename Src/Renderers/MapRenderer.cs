@@ -21,12 +21,22 @@ public class MapRenderer
             for(int j = 0; j < mapManager.Rows * 3; j++)
             {
                 TextureRegion tile = mapManager.GetTile((i,j));
-                
+
                 Vector2 tilePos = mapManager.GetWorldPositionOfTile((i-mapManager.Columns, j-mapManager.Rows));
+                #if DEBUG
+                if(MapUtils.IsInBounds((i-mapManager.Columns, j-mapManager.Rows)) && mapManager.Debug[i-mapManager.Columns, j-mapManager.Rows])
+                {
+                    tile.Draw(spriteBatch, tilePos, Color.Red, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                    if (_draw_tile_coordinates) {
+                        DrawTileCoordinates(i-mapManager.Columns, j-mapManager.Rows, tilePos, spriteBatch);
+                    }
+                    continue;
+                }
+                #endif
 
                 tile.Draw(spriteBatch, tilePos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
                 if (_draw_tile_coordinates) {
-                    DrawTileCoordinates(i, j, tilePos, spriteBatch);
+                    DrawTileCoordinates(i-mapManager.Columns, j-mapManager.Rows, tilePos, spriteBatch);
                 }
                 
             }            
