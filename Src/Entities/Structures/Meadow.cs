@@ -20,19 +20,20 @@ public class Meadow : Structure
     public Meadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 50)
     {
-        SanityGain = sanityGain;        
+        SanityGain = sanityGain;
+        float lerpConst = .25f;
         
         if(SanityGain == 10)
         {
-            _sprite.Color = Color.Red;
+            _sprite.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
         }
         else if(SanityGain == 15)
-        {            
-            _sprite.Color = Color.Blue;
+        {
+            _sprite.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
         }
         else if(SanityGain == 20)
-        {            
-            _sprite.Color = Color.Orange;
+        {
+            _sprite.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
         }
     }
 
