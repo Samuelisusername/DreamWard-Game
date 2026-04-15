@@ -62,7 +62,7 @@ public class MapScreen : GamelabGameScreen
         mapRenderer = new MapRenderer();
         entityRenderer = new EntityRenderer();
         cardRenderer = new CardRenderer(); 
-        SpawnDefaultEntities();
+        mapManager.fillMap();
     }
 
     public override void LoadContent()
@@ -435,91 +435,4 @@ public class MapScreen : GamelabGameScreen
         _popupTimer = 4f; // seconds
     }
     
-    private void SpawnDefaultEntities()
-    {
-        var atlas = GamelabGame.textureAtlas["night_top"];
-
-        int centerX = mapManager.Columns / 2;
-        int centerY = mapManager.Rows / 2;
-
-        // 🏕️ Tent at center
-        mapManager.PlaceEntity(new Tent("tent_idle",
-            (centerX, centerY)
-        ), (centerX, centerY));
-
-        Meadow starterMeadow = new Meadow("meadow_idle",
-            (centerX + 1, centerY), 5
-        );
-
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY + 1)), (centerX, centerY + 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY - 1)), (centerX, centerY - 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY - 1)), (centerX-1, centerY - 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY )), (centerX-1, centerY ));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY -1)), (centerX + 1, centerY -1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY)), (centerX + 2, centerY ));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY + 1)), (centerX + 2, centerY + 1));
-
-
-        // 🐑 Sheep next to tent
-        mapManager.PlaceSheep(starterMeadow ,(centerX + 1, centerY));
-
-        mapManager.PlaceEntity(new Meadow("meadow_idle",
-            (8, 7), 10
-        ) ,(8, 7));
-
-        
-        mapManager.PlaceEntity(new Meadow("meadow_idle",
-            (15, 9), 10
-        ) ,(15, 9));
-
-
-        // 🌲 Random trees
-        SpawnTrees(25, centerX, centerY);
-    }
-
-    private void SpawnTrees(int count, int centerX, int centerY)
-    {
-        mapManager.AddTrees(new List<(int col, int row)>());
-        combatManager.GetSpawnableArea();
-        // string[] treeAnims = { "treeBig_idle", "treeSmall_idle" };
-        // for (int row = 0; row < mapManager.Rows; row++)
-        // {
-        //     for (int col = 0; col < mapManager.Columns; col++)
-        //     {
-        //         if (mapManager.GetStructure((col, row)) != null) continue;
-
-        //         string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
-        //         var tree = new TreeTile(anim, (col, row));
-        //         mapManager.PlaceEntity(tree, (col, row));
-        //     }
-        // }
-        // int cols = mapManager.Columns;
-        // int rows = mapManager.Rows;
-        // int placed = 0;
-        // int attempts = 0;
-
-        // while (placed < count && attempts < 200)
-        // {
-        //     attempts++;
-        //     int col = System.Random.Shared.Next(cols);
-        //     int row = System.Random.Shared.Next(rows);
-
-        //     // Don't place near the tent (keep a 3-tile radius clear)
-        //     int dx = System.Math.Abs(col - centerX);
-        //     int dy = System.Math.Abs(row - centerY);
-        //     if (dx + dy <= 3) continue;
-
-        //     // Don't place on edges (leave room for monster spawns)
-        //     if (col == 0 || col == cols - 1 || row == 0 || row == rows - 1) continue;
-
-        //     // Don't place on occupied tiles
-        //     if (mapManager.GetStructure((col, row)) != null) continue;
-
-        //     string anim = treeAnims[System.Random.Shared.Next(treeAnims.Length)];
-        //     var tree = new TreeTile(anim, (col, row));
-        //     mapManager.PlaceEntity(tree, (col, row));
-        //     placed++;
-        // }
-    }
 }

@@ -63,7 +63,7 @@ public class GamelabGame : Game
     public static PathFindingManager PathFindingManager {get; private set;}
     public static SanityManager SanityManager {get; private set;}
 
-    private (int x, int y) mapSize = (20,20);
+    private (int x, int y) mapSize = (30,30);
 
     private TileSet dayTiles;
     private TileSet nightTiles;

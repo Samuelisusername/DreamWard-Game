@@ -1,4 +1,5 @@
 using Gamelab;
+using Microsoft.Xna.Framework;
 
 /// <summary>
 /// A Meadow Tile Entity it can have a sheep on it or not
@@ -19,7 +20,20 @@ public class Meadow : Structure
     public Meadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 50)
     {
-        SanityGain = sanityGain;
+        SanityGain = sanityGain;        
+        
+        if(SanityGain == 10)
+        {
+            _sprite.Color = Color.Red;
+        }
+        else if(SanityGain == 15)
+        {            
+            _sprite.Color = Color.Blue;
+        }
+        else if(SanityGain == 20)
+        {            
+            _sprite.Color = Color.Orange;
+        }
     }
 
     public void AddSheep(bool isPolymorphed = false)

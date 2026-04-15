@@ -69,7 +69,7 @@ public class CombatManager
         //bfs to find all the spawnable tiles connected to the tent dialated by one tile 
         while(search.Count > 0)
         {
-            List<(int,int)> toCheck = MapUtils.getSurroundingTiles(search[0], true);
+            List<(int,int)> toCheck = MapUtils.GetSurroundingTiles(search[0], true);
             foreach ((int col, int row) tile in toCheck)
             {
                 if(MapUtils.IsInBounds(tile))
@@ -92,7 +92,7 @@ public class CombatManager
             {
                 if(canSpawn[i,j])
                 {
-                    List<(int col, int row)> toCheck = MapUtils.getSurroundingTiles((i,j), true);
+                    List<(int col, int row)> toCheck = MapUtils.GetSurroundingTiles((i,j), true);
                     if(toCheck.Any(k => !MapUtils.IsInBounds(k) || !canSpawn[k.col,k.row]) && mapManager.GetStructure((i,j)) is TreeTile)
                     {
                         //found a tree on the edge/ in a big cluster so do bfs to find all the trees in that group
@@ -100,7 +100,7 @@ public class CombatManager
                         search = [(i,j)];
                         while(search.Count > 0)
                         {                            
-                            List<(int,int)> neighbors = MapUtils.getSurroundingTiles(search[0], true);
+                            List<(int,int)> neighbors = MapUtils.GetSurroundingTiles(search[0], true);
                             foreach ((int col, int row) tile in neighbors)
                             {
                                 if(MapUtils.IsInBounds(tile))
@@ -126,7 +126,7 @@ public class CombatManager
             {
                 if(canSpawn[i,j])
                 {
-                    List<(int col, int row)> toCheck = MapUtils.getSurroundingTiles((i,j), true);
+                    List<(int col, int row)> toCheck = MapUtils.GetSurroundingTiles((i,j), true);
                     if(toCheck.Any(k => !MapUtils.IsInBounds(k) || !canSpawn[k.col,k.row]))
                     {
                         res.Add((i,j));

@@ -50,13 +50,10 @@ public abstract class Structure : Entity
     {
         if (_sprite == null) return;
         #if DEBUG
+        
         if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
         {
             _sprite.Color = Color.Red;
-        }
-        else
-        {
-            _sprite.Color = Color.White;
         }
 
         #endif

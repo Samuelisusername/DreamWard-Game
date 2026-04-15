@@ -287,7 +287,7 @@ public class MapManager
         bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
-            Console.WriteLine("Tile already occupied! " + pos);
+            logger.Info("Tile already occupied! " + pos);
             AudioManager.Play("error");
             return false;
         }
@@ -333,7 +333,7 @@ public class MapManager
             Structures[pos.col, pos.row] = structure;
             if(structure is PlacableMeadow placableMeadow)
             {
-                foreach (var position in MapUtils.getSurroundingTiles(pos))
+                foreach (var position in MapUtils.GetSurroundingTiles(pos))
                 {
                     if(Structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep)
                     {
@@ -392,7 +392,40 @@ public class MapManager
         }
     }
 
-    public void AddTrees(List<(int col, int row)> treePlacements)
+    public void fillMap()
+    {
+        int centerX = Columns / 2;
+        int centerY = Rows / 2;
+
+        // 🏕️ Tent at center
+        PlaceEntity(new Tent("tent_idle",
+            (centerX, centerY)
+        ), (centerX, centerY));
+
+        Meadow starterMeadow = new Meadow("meadow_idle",
+            (centerX + 1, centerY), 5
+        );
+
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY + 1)), (centerX, centerY + 1));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY - 1)), (centerX, centerY - 1));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY - 1)), (centerX-1, centerY - 1));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY )), (centerX-1, centerY ));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY -1)), (centerX + 1, centerY -1));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY)), (centerX + 2, centerY ));
+        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY + 1)), (centerX + 2, centerY + 1));
+
+
+        // 🐑 Sheep next to tent
+        PlaceSheep(starterMeadow ,(centerX + 1, centerY));
+
+        // 🌲 Random trees
+        AddTrees();
+        combatManager.GetSpawnableArea();
+        AddMeadows();
+    }
+
+    public void AddTrees()
     {
         int seed = Random.Shared.Next();
         logger.Info("seed: " + seed);
@@ -448,11 +481,66 @@ public class MapManager
                     }
                 }
             }
-        }
-        
-                
+        }       
     }
     
+    private void AddMeadows()
+    {
+        (int col, int row) tent = GetTent();
+
+        List<(int,int)> firstZone = MapUtils.GetSurroundingCircle(tent,4,5);        
+        int randomIndexFirst = Random.Shared.Next(firstZone.Count);
+        for(int i = 0; i < 3; i++)
+        {
+            randomIndexFirst += firstZone.Count/3;
+            randomIndexFirst %= firstZone.Count;
+            (int,int) newPos = firstZone[randomIndexFirst];
+            Meadow m = new Meadow("meadow_idle", newPos, 10);
+            while(!PlaceEntity(m ,newPos))
+            {
+                randomIndexFirst++;
+                randomIndexFirst %= firstZone.Count;
+                newPos = firstZone[randomIndexFirst];
+                m = new Meadow("meadow_idle", newPos, 10);
+            }
+        }
+
+
+        List<(int,int)> secondZone = MapUtils.GetSurroundingCircle(tent,7,8);        
+        int randomIndexSecond = Random.Shared.Next(secondZone.Count);
+        for(int i = 0; i < 3; i++)
+        {            
+            randomIndexSecond += secondZone.Count/3;
+            randomIndexSecond %= secondZone.Count;
+            (int,int) newPos = secondZone[randomIndexSecond];
+            Meadow m = new Meadow("meadow_idle", newPos, 15);
+            while(!PlaceEntity(m ,newPos))
+            {
+                randomIndexSecond++;
+                randomIndexSecond %= secondZone.Count;
+                newPos = secondZone[randomIndexSecond];
+                m = new Meadow("meadow_idle", newPos, 15);
+            }
+        }
+
+        List<(int,int)> thirdZone = MapUtils.GetSurroundingCircle(tent,10,11);
+        int randomIndexThird = Random.Shared.Next(thirdZone.Count);
+        for(int i = 0; i < 3; i++)
+        {            
+            randomIndexThird += thirdZone.Count/3;
+            randomIndexThird %= thirdZone.Count;
+            (int,int) newPos = thirdZone[randomIndexThird];
+            Meadow m = new Meadow("meadow_idle", newPos, 20);
+            while(!PlaceEntity(m ,newPos))
+            {
+                randomIndexThird++;
+                randomIndexThird %= thirdZone.Count;
+                newPos = thirdZone[randomIndexThird];
+                m = new Meadow("meadow_idle", newPos, 20);
+            }
+        }
+    }
+
     /// <summary>
     /// returns the index of the tile that is at the position on screen
     /// </summary>
@@ -536,14 +624,14 @@ public class MapManager
             int distance = MapUtils.CalculateTileDistance(SheepPosition, tilePos);
             if(sanityManager.TryDeductSanity(distance))
             {
-                foreach (var position in MapUtils.getSurroundingTiles(tilePos))
+                foreach (var position in MapUtils.GetSurroundingTiles(tilePos))
                 {
                     if(Structures[position.Item1,position.Item2] is PlacableMeadow toActivate)
                     {
                         toActivate.ActivateMeadow(meadow.SanityGain);
                     }
                 }
-                foreach (var position in MapUtils.getSurroundingTiles(SheepPosition))
+                foreach (var position in MapUtils.GetSurroundingTiles(SheepPosition))
                 {
                     if(Structures[position.Item1,position.Item2] is PlacableMeadow toDeactivate)
                     {

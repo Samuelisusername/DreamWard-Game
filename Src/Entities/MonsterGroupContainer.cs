@@ -238,7 +238,7 @@ public class MonsterGroupContainer
 
     public void InitMerge()
     {
-        List<(int,int)> neighbor = MapUtils.getSurroundingTiles(tilePosition);
+        List<(int,int)> neighbor = MapUtils.GetSurroundingTiles(tilePosition);
         neighbor.Add(tilePosition);
         Dictionary<MonsterType, int> counts = new Dictionary<MonsterType, int>();
         foreach ((int col, int row) pos in neighbor)

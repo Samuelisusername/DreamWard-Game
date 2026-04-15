@@ -13,10 +13,10 @@ public static class MapUtils
         Rows = rows;
     }
 
-    public static List<(int,int)> getSurroundingTiles((int col, int row) pos, bool outOfBounds = false)
+    public static List<(int,int)> GetSurroundingTiles((int col, int row) pos, bool outOfBounds = false)
     {
         List<(int,int)> res;
-        if(pos.col %2 == 0)
+        if(pos.col % 2 == 0)
         {
             res =  new List<(int, int)>{(pos.col, pos.row-1),(pos.col, pos.row+1), (pos.col-1,pos.row), (pos.col-1, pos.row-1),(pos.col+1,pos.row), (pos.col+1, pos.row-1)};
         }
@@ -25,6 +25,39 @@ public static class MapUtils
             res  = new List<(int, int)>{(pos.col,pos.row-1),(pos.col,pos.row+1), (pos.col-1,pos.row), (pos.col-1, pos.row+1),(pos.col+1,pos.row), (pos.col+1, pos.row+1)};
         }
         return outOfBounds ? res : res.Where(i => i.Item1 >= 0 && i.Item1 < Columns && i.Item2 >= 0 && i.Item2 < Rows).ToList();
+    }
+    
+    /// <summary>
+    /// Gets all the tiles in the circle orround pos, from is inclusive distance, to is exclusive distance
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <param name="from">inclusive</param>
+    /// <param name="to"></param>
+    /// <returns></returns>
+    public static List<(int,int)> GetSurroundingCircle((int col, int row) pos, int from, int to)
+    {
+        List<(int,int)> res = new List<(int,int)>();
+        List<(int,int)> frontier = new List<(int,int)> { pos };        
+        res.Add(pos);
+
+        for (int i = 0; i < to -1; i++)
+        {
+            List<(int,int)> nextFrontier = new List<(int,int)>();
+            foreach (var tile in frontier)
+            {
+                foreach (var neighbor in GetSurroundingTiles(tile))
+                {
+                    if (IsInBounds(neighbor) && !res.Contains(neighbor))
+                    {
+                        res.Add(neighbor);
+                        nextFrontier.Add(neighbor);
+                    }
+                }
+            }
+            frontier = nextFrontier;
+        }
+
+        return res.Where(i => CalculateTileDistance(i, pos) >= from).ToList();
     }
 
     public static string GetDirection((int, int) from, (int,int) to)
