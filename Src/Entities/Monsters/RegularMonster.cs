@@ -18,6 +18,7 @@ public class RegularMonster : Monster
         if (entity is TreeTile) return false;        
         if (entity is Meadow meadow && (!meadow.HasSheep || meadow.IsPolymorphed)) return false;
         if (entity is PlacableMeadow) return false; //TODO: when can they attack meadows
+        if (entity is Spikes) return false;
         return true;
     }
 
@@ -27,7 +28,7 @@ public class RegularMonster : Monster
         if (entity is TreeTile) return false;
         if (entity is WallTile) return false;
         if (entity is Fence) return false;
-        if (entity is Tower) return false;
+        if (entity is Tower && entity is not Spikes) return false;
         return true;
     }
 }

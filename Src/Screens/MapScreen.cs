@@ -273,7 +273,7 @@ public class MapScreen : GamelabGameScreen
                             return;
                         return;
                     }
-                    mapManager.TryMoveSheep(pos);
+                    mapManager.HandleMapClick(pos);
                 }
                 _clickStarted = false;
                 _isDrag = false;

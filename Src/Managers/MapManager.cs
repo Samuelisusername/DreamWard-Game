@@ -456,16 +456,16 @@ public class MapManager
     /// <summary>
     /// returns the index of the tile that is at the position on screen
     /// </summary>
-    public (int col, int pos) GetTileFromScreenPosition(Vector2 position)
+    public (int col, int pos) GetTileFromScreenPosition(Vector2 position, bool wholeMap = false)
     {
         position -= Offset;
-        (int,int) res;
+        (int col, int row) res;
         //get the approximate column of the click
         int colAprox = (int)(position.X / (TileWidth - ScaledOffset));
         int isOddRow = colAprox % 2;
         //get the row if aprox is correct and the row if approx was shifter to the right
         int row = isOddRow  == 0? (int)Math.Floor(position.Y/TileHeight) : (int)Math.Floor((position.Y - ScaledOffset)/TileHeight);
-        int rowL = isOddRow  == 1? (int)Math.Floor(position.Y/TileHeight) : (int)Math.Floor((position.Y - ScaledOffset)/TileHeight);
+        int rowL = isOddRow * isOddRow == 1? (int)Math.Floor(position.Y/TileHeight) : (int)Math.Floor((position.Y - ScaledOffset)/TileHeight);
         float normalizedX = position.X - (colAprox*(TileWidth - (16*Scale.X)));
         if(normalizedX < ScaledOffset)
         {
@@ -484,15 +484,22 @@ public class MapManager
             res = (colAprox,row);            
         }
 
-        //check if the click is in on the map
-        if(MapUtils.IsInBounds(res))
+        if(wholeMap)
         {
-            return res;
+            return (res.col + Columns, res.row + Rows);
         }
         else
         {
-            return (-1,-1);
-        }
+            //check if the click is in on the map
+            if(MapUtils.IsInBounds(res))
+            {
+                return res;
+            }
+            else
+            {
+                return (-1,-1);
+            }
+        }        
     }
 
     /// <summary>
@@ -510,13 +517,19 @@ public class MapManager
         return (-1,-1);
     }
 
+    public void HandleMapClick(Vector2 pos)
+    {
+        TryMoveSheep(pos);
+        ShakeTree(pos);
+    }
+
     /// <summary>
     /// tries to move the sheep to the position clicked on screen
     /// </summary>
     public void TryMoveSheep(Vector2 pos)
     {
         (int col, int row) tilePos = GetTileFromScreenPosition(pos);
-        if(tilePos.row < 0 ) return;
+        if(tilePos.col < 0) return;
         Entity entity = GetStructure(tilePos);
         if(entity is Meadow meadow && !meadow.HasSheep)
         {
@@ -543,7 +556,17 @@ public class MapManager
                 meadow.AddSheep(wasPolymorphed);
                 SheepPosition = (tilePos.col, tilePos.row);
             }
-        } 
+        }
+    }
+
+    public void ShakeTree(Vector2 pos)
+    {
+        (int col, int row) tilePos = GetTileFromScreenPosition(pos, true);
+        Entity entity = GetStructure(tilePos, true);
+        if(entity is TreeTile tree)
+        {
+            tree.Shake();
+        }
     }
 
     /// <summary>

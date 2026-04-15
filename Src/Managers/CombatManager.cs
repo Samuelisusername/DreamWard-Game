@@ -51,8 +51,7 @@ public class CombatManager
             if(!mapManager.AddNewMonster(pos))
             {
                 i--;
-            }
-            
+            }            
         }
     }
 
@@ -177,9 +176,10 @@ public class CombatManager
                     {
                         // Check if the tower shooting is an AreaTower!
                         bool isAOE = tower is AreaTower; 
+                        bool isSpike = tower is Spikes;
                         
                         // Pass that info into the container
-                        targetContainer.TakeDamage(tower.DamagePerSecond * dt, isAOE); 
+                        targetContainer.TakeDamage(tower.DamagePerSecond * dt, isAOE, isSpike); 
                         dealtDamageThisFrame = true;
                     }
                 }

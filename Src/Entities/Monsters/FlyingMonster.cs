@@ -14,6 +14,7 @@ public class FlyingMonster : Monster
         if (entity is Meadow meadow && (!meadow.HasSheep || meadow.IsPolymorphed)) return false;
         if (entity is PlacableMeadow) return false; //TODO: when can they attack meadows
         if (entity is WallTile) return false;
+        if (entity is Spikes) return false;
         return true;
     }
 

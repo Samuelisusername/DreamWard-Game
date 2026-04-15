@@ -165,7 +165,7 @@ public class MonsterGroupContainer
     }
 
     // Add "bool isAOE" to the arguments
-    public void TakeDamage(float damage, bool isAOE)
+    public void TakeDamage(float damage, bool isAOE, bool isSpike)
     {
         if (IsEmpty) return;
 
@@ -179,7 +179,20 @@ public class MonsterGroupContainer
                 group.TakeDamageAOE(damage); 
             }
         }
-        else
+        else if(isSpike)
+        {
+            //spike all non flyiers take damage
+            foreach (var group in Monstergroups)
+            {
+                // Note: You will need to make sure MonsterGroupNew_Unfinished 
+                // has a method called 'take_damage_aoe' that damages all monsters inside it!
+                if(group.MonsterType != MonsterType.Flying)
+                {
+                    group.TakeDamageAOE(damage);   
+                }
+            }
+        }
+        else 
         {
             // Single Target: Just hit the first group in the container
             // TODO: single should be more consisten than this

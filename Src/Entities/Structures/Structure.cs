@@ -35,8 +35,8 @@ public abstract class Structure : Entity
         if(gamePhaseManager.IsDay != _isDaySprite)
         {
             _isDaySprite = !_isDaySprite;
-            _sprite = _isDaySprite ? GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) :
-            GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
+            _sprite.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top"].GetAnimation(_animName) :
+            GamelabGame.textureAtlas["night_top"].GetAnimation(_animName);
         }
         if (_sprite != null)
             _sprite.Scale = mapManager.Scale;

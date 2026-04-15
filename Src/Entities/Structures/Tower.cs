@@ -14,7 +14,7 @@ public class Tower : Structure
         : base(animName, pos, health)
     {
         DamagePerSecond = damagePerSecond;
-        RangeDepth = 1;
+        RangeDepth = 2;
     }
 
     /// <summary>
@@ -96,6 +96,6 @@ public class AreaTower : Tower
                      float damagePerSecond = 2f, int health = 7)
         : base(animName, pos, damagePerSecond, health)
     {
-        RangeDepth = 2;
+        RangeDepth = 1;
     }
 }

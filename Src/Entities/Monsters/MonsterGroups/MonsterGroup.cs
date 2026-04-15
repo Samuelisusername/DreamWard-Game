@@ -173,7 +173,8 @@ public abstract class MonsterGroup
                         var newPath = pathFindingManager.CalculatePath(i);
                         if (newPath != null && newPath.Count > 0)
                             i.Path = newPath;
-                    }); 
+                    });
+                    SetAnimation();
                 }  
             }
         }
