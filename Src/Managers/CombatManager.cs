@@ -17,8 +17,8 @@ public class CombatManager
     private float _sanityDamageAccumulator;
     private Dictionary<Tower, float> _towerSoundTimers = new Dictionary<Tower, float>();
 
-    private List<(int,int)> spawnableArea;
-
+    public List<(int,int)> SpawnableArea {get; private set;}
+    public List<(int,int)> PlayingField {get; private set;}
     private Logger logger = new Logger("Combat Manager");
 
     // HELPER: Scans the map grid to get a snapshot of all active containers!
@@ -47,7 +47,7 @@ public class CombatManager
         // }
         for (int i = 0; i < count; i++)
         {
-            (int, int) pos = spawnableArea[Random.Shared.Next(spawnableArea.Count)];
+            (int, int) pos = SpawnableArea[Random.Shared.Next(SpawnableArea.Count)];
             if(!mapManager.AddNewMonster(pos))
             {
                 i--;
@@ -119,6 +119,20 @@ public class CombatManager
             }
         }
 
+        PlayingField = new List<(int, int)>();
+        for(int i = 0; i < mapManager.Columns; i++)
+        {
+            for(int j = 0; j < mapManager.Rows; j++)
+            {
+                if(canSpawn[i,j])
+                {
+                    PlayingField.Add((i,j));
+                }
+            }
+        }
+
+        
+
         //take the border of the spawnable area and save it as the spawnable tiles
         for(int i = 0; i < mapManager.Columns; i++)
         {
@@ -135,7 +149,7 @@ public class CombatManager
             }
         }
 
-        spawnableArea = res;
+        SpawnableArea = res;
     }
     
 

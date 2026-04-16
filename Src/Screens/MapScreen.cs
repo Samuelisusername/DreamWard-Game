@@ -312,7 +312,8 @@ public class MapScreen : GamelabGameScreen
     public override void Draw(GameTime gameTime)
     {
         base.Draw(gameTime);
-        GraphicsDevice.Clear(gamePhaseManager.IsDay ? Color.CornflowerBlue : Color.Black);
+        float currentMin = (float)mapManager.TotalFallTime.TotalSeconds < 1.0f ? 0 : (float)mapManager.TotalFallTime.TotalSeconds / (float)mapManager.MaxTotalFallTime.TotalSeconds;
+        GraphicsDevice.Clear(Color.Lerp(Color.CornflowerBlue, Color.Black, currentMin));
 
         SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler,
