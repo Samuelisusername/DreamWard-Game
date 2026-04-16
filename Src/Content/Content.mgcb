@@ -1,4 +1,3 @@
-
 #----------------------------- Global Properties ----------------------------#
 
 /outputDir:bin/$(Platform)
@@ -265,45 +264,6 @@
 /processor:TextureProcessor
 /build:Sprites/daypalette.png
 
-#begin Sprites/interface.json
-/copy:Sprites/interface.json
-
-#begin Sprites/night_tiles.json
-/copy:Sprites/night_tiles.json
-
-#begin Sprites/day_tiles.json
-/copy:Sprites/day_tiles.json
-
-#begin Sprites/day_top.json
-/copy:Sprites/day_top.json
-
-#begin Sprites/night_player.json
-/copy:Sprites/night_player.json
-
-#begin Sprites/cards.json
-/copy:Sprites/cards.json
-
-#begin Sprites/cards.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/cards.png
-
-#begin Sprites/interface.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/interface.png
-
-#begin Sprites/day_player.json
-/copy:Sprites/day_player.json
-
-#begin Sprites/night_top.json
-/copy:Sprites/night_top.json
-
-#begin Sprites/nightpalette.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/nightpalette.png
-
 #begin Sprites/monsters_alternative.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -340,12 +300,6 @@
 /processorParam:Quality=Best
 /build:Sounds/action_cards/error.wav
 
-#begin Sounds/creepy_demon_night_forest.mp3
-/importer:Mp3Importer
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/creepy_demon_night_forest.mp3
-
 #begin Sounds/start_screen.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -369,6 +323,126 @@
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
 /build:Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695.mp3
+
 #begin PixeloidSans-lxa3y.ttf
 /copy:PixeloidSans-lxa3y.ttf
 
+#begin Sounds/rustle/rustle01.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle01.wav
+
+#begin Sounds/rustle/rustle02.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle02.wav
+
+#begin Sounds/rustle/rustle03.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle03.wav
+
+#begin Sounds/rustle/rustle04.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle04.wav
+
+#begin Sounds/rustle/rustle05.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle05.wav
+
+#begin Sounds/rustle/rustle06.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle06.wav
+
+#begin Sounds/rustle/rustle07.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle07.wav
+
+#begin Sounds/rustle/rustle08.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle08.wav
+
+#begin Sounds/rustle/rustle09.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle09.wav
+
+#begin Sounds/rustle/rustle10.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle10.wav
+
+#begin Sounds/rustle/rustle11.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle11.wav
+
+#begin Sounds/rustle/rustle12.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle12.wav
+
+#begin Sounds/rustle/rustle13.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle13.wav
+
+#begin Sounds/rustle/rustle14.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle14.wav
+
+#begin Sounds/rustle/rustle15.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle15.wav
+
+#begin Sounds/rustle/rustle16.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle16.wav
+
+#begin Sounds/rustle/rustle17.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle17.wav
+
+#begin Sounds/rustle/rustle18.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle18.wav
+
+#begin Sounds/rustle/rustle19.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle19.wav
+
+#begin Sounds/rustle/rustle20.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/rustle/rustle20.wav

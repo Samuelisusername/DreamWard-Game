@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DreamWardUtils.Graphics;
+using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
@@ -43,6 +44,9 @@ public class TreeTile : Structure
             currentRot = Random.Shared.Next((int)currentRot/2,(int)currentRot);
         }
         shakeRotations.Add(0);
+        Random random = new Random();
+        int nr = random.Next(1,21);
+        AudioManager.Play($"rustle{nr:D2}");
     }
 
     public override void Update(GameTime gameTime)

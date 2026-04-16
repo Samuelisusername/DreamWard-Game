@@ -74,6 +74,7 @@ public class MapScreen : GamelabGameScreen
         AudioManager.LoadAllSounds(Game.Content, "Sounds/action_cards");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/buildings");
         AudioManager.LoadAllSounds(Game.Content, "Sounds/demons");
+        AudioManager.LoadAllSounds(Game.Content,"Sounds/rustle");
 
         AudioManager.LoadSound(Game.Content, "day_music", "Sounds/preferred_option_day");
         AudioManager.LoadSound(Game.Content, "night_music", "Sounds/creepy_demon_night_forest") ;
