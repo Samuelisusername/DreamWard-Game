@@ -143,7 +143,8 @@ public class CardRenderer
     private void DrawTransparentStructure(SpriteBatch spriteBatch, Structure structure)
     {
         if (structure == null) return;
-        structure.DrawTransparent(spriteBatch, 0.5f);
+        structure.DrawBase(spriteBatch, alpha: 0.5f);
+        structure.Draw(spriteBatch, alpha: 0.5f);
     }
 
     public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower)

@@ -13,7 +13,6 @@ public class Tent : CardEntity
     private SanityManager sanityManager => GamelabGame.SanityManager;
 
     public override bool CanMove => false;
-    public override bool IsFlat => true;
 
     public Tent(string animName, (int,int) pos)
         : base(animName, pos, GamelabGame.SanityManager?.Sanity ?? 100)
@@ -30,7 +29,6 @@ public class Tent : CardEntity
 
 public class Sheep : CardEntity
 {
-    public override bool IsFlat => false;
     public Sheep(string animName, (int,int) pos)
         : base(animName, pos, 12)
     {
@@ -39,7 +37,6 @@ public class Sheep : CardEntity
 
 public class Rat : CardEntity
 {
-    public override bool IsFlat => false;
     public Rat(string animName, (int,int) pos)
         : base(animName, pos, 12)
     {
@@ -56,7 +53,6 @@ public class Rat : CardEntity
 
 public class Fence : CardEntity
 {
-    public override bool IsFlat => false;
     public Fence(string animName, (int,int) pos)
         : base(animName, pos, 15)
     {
@@ -65,7 +61,6 @@ public class Fence : CardEntity
 
 public class Wall : CardEntity
 {
-    public override bool IsFlat => false;
     public Wall(string animName, (int,int) pos)
         : base(animName, pos, 10)
     {

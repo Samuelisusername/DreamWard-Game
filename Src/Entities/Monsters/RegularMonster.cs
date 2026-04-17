@@ -30,6 +30,10 @@ public class RegularMonster : Monster
         if (entity is Wall) return false;
         if (entity is Fence) return false;
         if (entity is Tower && entity is not Spikes) return false;
+        if (entity is Meadow meadow && meadow.HasSheep) return false;
+        if (entity is Buff) return false;
+        if (entity is Decoy) return false;
+        // if (entity is Tent) return false; Once pathfinding is updated uncomment this
         return true;
     }
 }

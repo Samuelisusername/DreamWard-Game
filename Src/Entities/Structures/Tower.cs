@@ -6,7 +6,6 @@ using System.Collections.Generic;
 /// </summary>
 public class Tower : Structure
 {
-    public override bool IsFlat => false;
     public float DamagePerSecond { get; set; }
     public int RangeDepth { get; protected set; }
 

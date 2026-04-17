@@ -78,24 +78,12 @@ public class MapRenderer
                     if (skipTile.HasValue && skipTile.Value == localTilePos) continue;
 
                     //BASEDRAWING                
-                    Structure s = mapManager.GetStructure(globalTilePos, true);                
-                    if(s?.IsFlat ?? false)
-                    {
-                        s.Draw(spriteBatch, offset, offsetProgressInv);
-                    }
-
-                    //GROUNDEDMONSTERDRAWING                
-                    mapManager.GetMonsterContainer(localTilePos)?.DrawGround(spriteBatch);
+                    Structure s = mapManager.GetStructure(globalTilePos, true);
+                    s?.DrawBase(spriteBatch, offset, offsetProgressInv);
 
                     //TOPDRAWING
                     s = mapManager.GetStructure(globalTilePos, true);
-                    if(!(s?.IsFlat ?? true))
-                    {
-                        s.Draw(spriteBatch, offset, offsetProgressInv);
-                    }
-
-                    //FLYINGMONSTERDRWAING
-                    mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);
+                    s?.Draw(spriteBatch, offset, offsetProgressInv);
 
                 }            
             }
@@ -140,6 +128,10 @@ public class MapRenderer
                     tile.Draw(spriteBatch, worldPos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
 
                     #endif
+
+                    //BASEDRAWING                
+                    Structure s = mapManager.GetStructure(globalTilePos, true);
+                    s?.DrawBase(spriteBatch);
                 }            
             }
             
@@ -157,26 +149,30 @@ public class MapRenderer
                         continue;
                     }
 
-                    //check if we draw the entity
-                    if (skipTile.HasValue && skipTile.Value == localTilePos) continue;
-
-                    //BASEDRAWING                
-                    Structure s = mapManager.GetStructure(globalTilePos, true);                
-                    if(s?.IsFlat ?? false)
-                    {
-                        s.Draw(spriteBatch);
-                    }
-
                     //GROUNDEDMONSTERDRAWING                
                     mapManager.GetMonsterContainer(localTilePos)?.DrawGround(spriteBatch);
 
                     //TOPDRAWING
-                    s = mapManager.GetStructure(globalTilePos, true);
-                    if(!(s?.IsFlat ?? true))
-                    {
-                        s.Draw(spriteBatch);
-                    }
+                    Structure s = mapManager.GetStructure(globalTilePos, true);
+                    s?.Draw(spriteBatch);
 
+                    //FLYINGMONSTERDRWAING
+                    mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);
+                }
+            }
+            
+            for (int i = 0; i < mapManager.Rows*6; i++)
+            {
+                for (int j = i % 2; j < mapManager.Columns*3; j += 2)
+                {       
+                    
+                    (int col, int row) localTilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
+
+                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
+                    {
+                        continue;
+                    }
+                    
                     //FLYINGMONSTERDRWAING
                     mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);
                 }
