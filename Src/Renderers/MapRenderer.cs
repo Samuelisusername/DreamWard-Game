@@ -47,14 +47,14 @@ public class MapRenderer
                         //if the tile is outside the playing fild add the falling offset
                         offset = mapManager.TilesOfsets[globalTilePos.col, globalTilePos.row];
                         offsetProgressInv = 1-(Math.Clamp((float)mapManager.FallTimer[globalTilePos.col, globalTilePos.row].TotalSeconds, 0 , (float)mapManager.MaxFallTime.TotalSeconds)/ (float)mapManager.MaxFallTime.TotalSeconds);
-                    }
-                    
+                    }                    
+                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos) + (offset * mapManager.Scale);
+                    if(!screen.Contains(worldPos)) continue;
+
                     // TILEDRAWING
 
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
-                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos) + (offset * mapManager.Scale);
-                    if(!screen.Contains(worldPos)) continue;
 
                     #if DEBUG
                     if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
@@ -100,6 +100,8 @@ public class MapRenderer
                 {
                     // the tileposition in the array
                     (int col, int row) localTilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
+                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos);
+                    if(!screen.Contains(worldPos)) continue;
                     (int col, int row) globalTilePos = (j, i/2);
                     
                     if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
@@ -110,7 +112,6 @@ public class MapRenderer
                     // TILEDRAWING
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
-                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos);
 
                     #if DEBUG
                     if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
