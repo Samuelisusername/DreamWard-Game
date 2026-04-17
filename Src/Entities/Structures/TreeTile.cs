@@ -26,8 +26,9 @@ public class TreeTile : Structure
     public TreeTile(string animName, (int,int) pos)
         : base(animName, pos, int.MaxValue)
     {
-        _spriteTop.SpriteEffects = Random.Shared.NextDouble() < 0.5 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-        _spriteBase.SpriteEffects = Random.Shared.NextDouble() < 0.5 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        var flip = Random.Shared.NextDouble() < 0.5 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        _spriteTop.SpriteEffects = flip;
+        _spriteBase.SpriteEffects = flip;
         _spriteTop.Origin =  new Vector2(64, 128-16);
         _spriteBase.Origin =  new Vector2(64, 128-16);
     }
