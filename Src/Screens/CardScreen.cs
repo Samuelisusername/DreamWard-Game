@@ -22,6 +22,7 @@ public class CardScreen : GamelabGameScreen
     private int  _selectedTop3Index = -1;
     private int  _selectedSlotIndex = -1;
     private DateTime _lastStackClick = DateTime.MinValue;
+    private Vector2 _mouseDownPos = new Vector2(-1, -1);
     private const double DoubleClickMs = 350;
     private Rectangle _buyBtnRect;
 
@@ -193,15 +194,20 @@ public class CardScreen : GamelabGameScreen
 
         if (mouse.WasButtonPressed(MouseButton.Left))
         {
+
             var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+            _mouseDownPos = pos;
             _toMapBtnPressed = _toMapBtn.Contains(pos);
             _buyBtnPressed = _buyBtnRect.Contains(pos);
+
         }
         if (mouse.WasButtonReleased(MouseButton.Left))
         {
+
             _toMapBtnPressed = false; 
             _buyBtnPressed = false;
-            HandleClick(viewportAdapter.PointToScreen(mouse.Position).ToVector2());
+            HandleClick(viewportAdapter.PointToScreen(mouse.Position).ToVector2(), _mouseDownPos);
+            _mouseDownPos = new Vector2(-1, -1);
         }
         if (keyboard.WasKeyReleased(Keys.P))
         {
@@ -244,9 +250,9 @@ public class CardScreen : GamelabGameScreen
     }
 
     // ── Click handling ────────────────────────────────────────────────────────
-    private void HandleClick(Vector2 pos)
+    private void HandleClick(Vector2 pos, Vector2 downpos)
     {
-        if (_toMapBtn.Contains(pos))
+        if (_toMapBtn.Contains(pos) && _toMapBtn.Contains(downpos))
         {
             Game.SwitchToScreen(Game.MapScreenInstance);
             AudioManager.Play("dragonflap");
@@ -254,7 +260,7 @@ public class CardScreen : GamelabGameScreen
         }
 
         // Stack card double-click
-        if (cardManager.StackSlots[0].Card != null && _l.StackCard.Contains(pos))
+        if (cardManager.StackSlots[0].Card != null && _l.StackCard.Contains(pos) && _l.StackCard.Contains(downpos))
         {
             var now = DateTime.UtcNow;
             bool isDouble = (now - _lastStackClick).TotalMilliseconds <= DoubleClickMs;
@@ -263,11 +269,11 @@ public class CardScreen : GamelabGameScreen
             return;
         }
 
-        if (_l.MapCard.Contains(pos)) return;
+        if (_l.MapCard.Contains(pos)&&_l.MapCard.Contains(downpos)) return;
 
         // Buy button
         if (_selectedTop3Index >= 0 && (_selectedTop3Index == 0 || cardManager.DrawTop3Free)
-            && _buyBtnRect.Contains(pos))
+            && _buyBtnRect.Contains(pos) && _buyBtnRect.Contains(downpos))
         {
             if (!cardManager.BuildSlots.All(s => s.IsFilled))
             {
@@ -292,7 +298,7 @@ public class CardScreen : GamelabGameScreen
         // Build slot selection
         for (int i = 0; i < _l.BuildSlots.Count; i++)
         {
-            if (_l.BuildSlots[i].Contains(pos))
+            if (_l.BuildSlots[i].Contains(pos) && _l.BuildSlots[i].Contains(downpos))
             {
                 _selectedSlotIndex = _selectedSlotIndex == i ? -1 : i;
                 _selectedTop3Index = -1;
