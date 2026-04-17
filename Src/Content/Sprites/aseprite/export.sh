@@ -4,6 +4,9 @@ for f in *.aseprite; do
   --data "../${f%.aseprite}.json" --list-slices --list-tags
 done
 
+jq '.meta += {"oneShotTransition": [{"from": "mergeSW", "to": "smokeWalk"}, {"from": "mergeNW", "to": "smokeWalk"}, {"from": "mergeN", "to": "smokeWalk"}, {"from": "mergeS", "to": "smokeWalk"}]}' ../monsters.json > /tmp/monsters_tmp.json \
+&& mv /tmp/monsters_tmp.json ../monsters.json
+
 # important that the layer part is before the file part
 aseprite -b --ignore-layer flat --ignore-layer meadow --ignore-layer shadow \
   day_top.aseprite --color-mode rgb \
