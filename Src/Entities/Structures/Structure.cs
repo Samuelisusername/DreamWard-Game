@@ -66,7 +66,7 @@ public abstract class Structure : Entity
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        _spriteTop.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _spriteTop.Scale), alpha);
+        _spriteTop.Draw(spriteBatch, worldPos + (_localOffset * _spriteTop.Scale + offset), alpha);
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public abstract class Structure : Entity
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        _spriteBase.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _spriteBase.Scale), alpha);
+        _spriteBase.Draw(spriteBatch, worldPos + (_localOffset * _spriteBase.Scale + offset), alpha);
     }
 
     protected void SetAnimation(string animName)

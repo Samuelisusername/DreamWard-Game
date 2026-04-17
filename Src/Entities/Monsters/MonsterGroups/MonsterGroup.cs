@@ -22,6 +22,7 @@ public abstract class MonsterGroup
     public abstract MonsterType MonsterType {get;}
     private bool shouldRecalcPath;
     public bool shouldCheckMerge;
+    public bool IsNew {get; set;}
 
     public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
     {
@@ -31,6 +32,8 @@ public abstract class MonsterGroup
         sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite(type+"_idleS");
         sprite.Scale = mapManager.Scale;
         _elapsed = elapsed;
+        _pathProgress = (float)(_elapsed/speed);
+        IsNew = true;
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
@@ -42,11 +45,11 @@ public abstract class MonsterGroup
 
     protected bool _goalReached => Monsters.All(i => i.GoalReached);
     protected bool _oldGoalReached = false;
+    private bool isMerging;
 
     public void ResetGroup((int,int) pos)
     {
         shouldRecalcPath = false;
-        _elapsed = TimeSpan.Zero;
         TilePosition = pos;
     }
 
@@ -155,6 +158,11 @@ public abstract class MonsterGroup
         }
         
         _elapsed += gameTime.ElapsedGameTime;
+        if(isMerging && (speed - _elapsed).TotalMilliseconds < 625)
+        {
+            SetAnimation("rebuild");
+            isMerging = false;
+        }
         if (_elapsed >= speed)
         {
             _elapsed -= speed;
@@ -220,11 +228,11 @@ public abstract class MonsterGroup
         sprite.Scale = scale;
     }
 
-    private void SetAnimation(bool toMerge = false)
-    {        
+    private void SetAnimation(string anim = null)
+    {
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
-        string anim = toMerge ? "merge" : CommonNextTarget() == TilePosition ? "idle" : "walk";
+        anim ??= CommonNextTarget() == TilePosition ? "idle" : "walk";
         string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
         direction = direction == "" ? "S" : direction;
         //Turn into Amalgam
@@ -236,7 +244,9 @@ public abstract class MonsterGroup
     public void StartMerge()
     {
         //TODO: Add the merge anim once it exists
-        //SetAnimation(true);
+        SetAnimation("merge");
+        //GamelabGame.GameSpeed = 0.1f;
+        isMerging = true;
     }
 
 }

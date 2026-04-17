@@ -101,7 +101,7 @@ public class MapManager
 
     public TimeSpan[,] FallTimer;
 
-    public TimeSpan MaxFallTime = TimeSpan.FromSeconds(1);
+    public TimeSpan MaxFallTime = TimeSpan.FromSeconds(0.5f);
 
     public TimeSpan MaxTotalFallTime;
     public TimeSpan TotalFallTime;
@@ -413,7 +413,7 @@ public class MapManager
         }
 
         // NEW: Dig into the container and grab all individual monsters
-        foreach (var group in MonsterContainers[pos.col, pos.row].Monstergroups)
+        foreach (var group in MonsterContainers[pos.col, pos.row].MonsterGroups)
         {
             res.AddRange(group.Monsters); 
         }
@@ -829,6 +829,8 @@ public class MapManager
                 TilesOfsets[i,j] = Vector2.Zero;
             }
         }
+        MaxTotalFallTime = TimeSpan.FromSeconds(1f);
+        TotalFallTime = TimeSpan.Zero;
     }
 
 #endregion

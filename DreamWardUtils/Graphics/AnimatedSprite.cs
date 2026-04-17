@@ -18,6 +18,7 @@ public class AnimatedSprite : Sprite
         set
         {
             _animation = value;
+            _elapsed = TimeSpan.Zero;
             Region = _animation.Frames[0];
         }
     }
@@ -37,7 +38,14 @@ public class AnimatedSprite : Sprite
         {
             _elapsed -= _animation.Delay;
             _currentFrame = (_currentFrame +1) % _animation.Frames.Count;
-            Region = _animation.Frames[_currentFrame];
+            if(_currentFrame == 0 && _animation.IsOneShot)
+            {
+                Animation = Animation.NextAnimation;
+            }
+            else
+            {
+                Region = _animation.Frames[_currentFrame];
+            }
         }
     }
 }

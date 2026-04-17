@@ -9,16 +9,22 @@ public class Animation
 
     public TimeSpan Delay { get; set; }
 
+    public bool IsOneShot {get; set;}
+
+    public Animation NextAnimation {get;set;}
+
     public Animation()
     {
         Frames = new List<TextureRegion>();
         Delay = TimeSpan.FromMilliseconds(100);
     }
 
-    public Animation(List<TextureRegion> frames, TimeSpan delay)
+    public Animation(List<TextureRegion> frames, TimeSpan delay, bool isOneShot = false, Animation nextAnimation = null)
     {
         Frames = frames;
         Delay = delay;
+        IsOneShot = isOneShot;
+        NextAnimation = nextAnimation;
     }
 
 }

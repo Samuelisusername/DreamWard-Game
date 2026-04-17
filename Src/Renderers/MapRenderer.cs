@@ -48,7 +48,7 @@ public class MapRenderer
                         offset = mapManager.TilesOfsets[globalTilePos.col, globalTilePos.row];
                         offsetProgressInv = 1-(Math.Clamp((float)mapManager.FallTimer[globalTilePos.col, globalTilePos.row].TotalSeconds, 0 , (float)mapManager.MaxFallTime.TotalSeconds)/ (float)mapManager.MaxFallTime.TotalSeconds);
                     }                    
-                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos) + (offset * mapManager.Scale);
+                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos) + offset;
                     if(!screen.Contains(worldPos)) continue;
 
                     // TILEDRAWING

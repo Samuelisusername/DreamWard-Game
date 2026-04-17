@@ -146,6 +146,30 @@ public class GamelabGame : Game
         textureAtlas = new();
         TextureAtlas monsters = TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
         textureAtlas.Add("monsters", monsters);
+        monsters.GetAnimation("normal_mergeS").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeS").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_mergeSW").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeSW").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_mergeNW").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeNW").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_mergeN").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeN").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_mergeNE").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeNE").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_mergeSE").IsOneShot = true;
+        monsters.GetAnimation("normal_mergeSE").NextAnimation = monsters.GetAnimation("normal_smokeWalk");
+        monsters.GetAnimation("normal_rebuildS").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildS").NextAnimation = monsters.GetAnimation("normal_walkS");
+        monsters.GetAnimation("normal_rebuildSW").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildSW").NextAnimation = monsters.GetAnimation("normal_walkSW");
+        monsters.GetAnimation("normal_rebuildNW").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildNW").NextAnimation = monsters.GetAnimation("normal_walkNW");
+        monsters.GetAnimation("normal_rebuildN").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildN").NextAnimation = monsters.GetAnimation("normal_walkN");
+        monsters.GetAnimation("normal_rebuildNE").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildNE").NextAnimation = monsters.GetAnimation("normal_walkNE");
+        monsters.GetAnimation("normal_rebuildSE").IsOneShot = true;
+        monsters.GetAnimation("normal_rebuildSE").NextAnimation = monsters.GetAnimation("normal_walkSE");
         TextureAtlas night_top = TextureAtlas.FromJsonFile(Content, "Sprites/night_top.json");
         textureAtlas.Add("night_top", night_top);
         TextureAtlas night_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/night_top_base.json");
@@ -183,9 +207,11 @@ public class GamelabGame : Game
         MapScreenInstance.Initialize();
         MapScreenInstance.LoadContent();
     }
+    public static float GameSpeed = 1f;
 
     protected override void Update(GameTime gameTime)
     {
+        gameTime.ElapsedGameTime *= GameSpeed;
         if (nextScreen != null)
         {
             SwitchToScreenImmediately(nextScreen);

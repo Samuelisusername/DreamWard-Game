@@ -44,6 +44,8 @@ public class CombatManager
         // {
         //     mapManager.Debug[item.Item1, item.Item2] = true;
         // }
+        // mapManager.AddNewMonster((6,15));
+        // mapManager.AddNewMonster((6,16));
         for (int i = 0; i < count; i++)
         {
             (int, int) pos = SpawnableArea[Random.Shared.Next(SpawnableArea.Count)];
@@ -51,6 +53,12 @@ public class CombatManager
             {
                 i--;
             }            
+        }    
+
+        // 2. Update all the Mergeanims
+        foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+        {
+            container.InitMerge();
         }
     }
 
@@ -165,6 +173,12 @@ public class CombatManager
             container.Move();
         }
 
+        // 1. Move everything using our snapshot
+        foreach (MonsterGroupContainer container in GetAllContainers()) 
+        {
+            container.CleanUpGroups();
+        }
+
         // 2. Update all the Mergeanims
         foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
         {
@@ -185,7 +199,7 @@ public class CombatManager
         // 3. Monsters Attack
         foreach (MonsterGroupContainer container in GetAllContainers())
         {
-            foreach (var monsterGroup in container.Monstergroups)
+            foreach (var monsterGroup in container.MonsterGroups)
             {
                 foreach (var monster in monsterGroup.Monsters)
                 {
@@ -252,7 +266,7 @@ public class CombatManager
         {
             foreach (MonsterGroupContainer container in GetAllContainers())
             {
-                foreach (var monsterGroup in container.Monstergroups)
+                foreach (var monsterGroup in container.MonsterGroups)
                 {
                     monsterGroup.QueuePathRecalc();
                 }

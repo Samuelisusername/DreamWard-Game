@@ -216,6 +216,12 @@ public class TextureAtlas
                         }
                         Animation newAnimation = new Animation(frames, delay);
                         atlas.AddAnimation(animName, newAnimation);
+                        if(animName.Contains("merge"))
+                        {
+                            newAnimation = new Animation(frames.ToList(), delay);
+                            newAnimation.Frames.Reverse();
+                            atlas.AddAnimation(animName.Replace("merge", "rebuild"), newAnimation);
+                        }
                         if(animName.EndsWith("NW"))
                         {
                             animName = animName[..^2] + "NE";
@@ -226,6 +232,12 @@ public class TextureAtlas
                             }
                             newAnimation = new Animation(frames, delay);
                             atlas.AddAnimation(animName, newAnimation);
+                            if(animName.Contains("merge"))
+                            {
+                                newAnimation = new Animation(frames.ToList(), delay);
+                                newAnimation.Frames.Reverse();
+                                atlas.AddAnimation(animName.Replace("merge", "rebuild"), newAnimation);
+                            }
                         }
                         else if(animName.EndsWith("SW"))
                         {
@@ -237,6 +249,12 @@ public class TextureAtlas
                             }
                             newAnimation = new Animation(frames, delay);
                             atlas.AddAnimation(animName, newAnimation);
+                            if(animName.Contains("merge"))
+                            {                                
+                                newAnimation = new Animation(frames.ToList(), delay);
+                                newAnimation.Frames.Reverse();
+                                atlas.AddAnimation(animName.Replace("merge", "rebuild"), newAnimation);
+                            }
                         }
                     }
 
