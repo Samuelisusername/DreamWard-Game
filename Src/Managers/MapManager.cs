@@ -147,7 +147,7 @@ public class MapManager
         }
         
         FillRandomly();
-        Scale = new Vector2(4, 4);
+        Scale = new Vector2(1, 1);
         MapUtils.Setup(Columns,Rows);
     }
     
@@ -454,9 +454,7 @@ public class MapManager
             (centerX, centerY)
         ), (centerX, centerY));
 
-        Meadow starterMeadow = new Meadow("meadow_idle",
-            (centerX + 1, centerY), 5
-        );
+        Meadow starterMeadow = new Meadow((centerX + 1, centerY), 5);
 
         // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY + 1)), (centerX, centerY + 1));
         // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY - 1)), (centerX, centerY - 1));
@@ -547,13 +545,13 @@ public class MapManager
             randomIndexFirst += firstZone.Count/3;
             randomIndexFirst %= firstZone.Count;
             (int,int) newPos = firstZone[randomIndexFirst];
-            Meadow m = new Meadow("meadow_idle", newPos, 10);
+            Meadow m = new Meadow(newPos, 10);
             while(!PlaceEntity(m ,newPos))
             {
                 randomIndexFirst++;
                 randomIndexFirst %= firstZone.Count;
                 newPos = firstZone[randomIndexFirst];
-                m = new Meadow("meadow_idle", newPos, 10);
+                m = new Meadow(newPos, 10);
             }
         }
 
@@ -565,13 +563,13 @@ public class MapManager
             randomIndexSecond += secondZone.Count/3;
             randomIndexSecond %= secondZone.Count;
             (int,int) newPos = secondZone[randomIndexSecond];
-            Meadow m = new Meadow("meadow_idle", newPos, 15);
+            Meadow m = new Meadow(newPos, 15);
             while(!PlaceEntity(m ,newPos))
             {
                 randomIndexSecond++;
                 randomIndexSecond %= secondZone.Count;
                 newPos = secondZone[randomIndexSecond];
-                m = new Meadow("meadow_idle", newPos, 15);
+                m = new Meadow(newPos, 15);
             }
         }
 
@@ -582,13 +580,13 @@ public class MapManager
             randomIndexThird += thirdZone.Count/3;
             randomIndexThird %= thirdZone.Count;
             (int,int) newPos = thirdZone[randomIndexThird];
-            Meadow m = new Meadow("meadow_idle", newPos, 20);
+            Meadow m = new Meadow(newPos, 20);
             while(!PlaceEntity(m ,newPos))
             {
                 randomIndexThird++;
                 randomIndexThird %= thirdZone.Count;
                 newPos = thirdZone[randomIndexThird];
-                m = new Meadow("meadow_idle", newPos, 20);
+                m = new Meadow(newPos, 20);
             }
         }
     }

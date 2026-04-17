@@ -15,7 +15,6 @@ public class CombatManager
     private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
 
     private float _sanityDamageAccumulator;
-    private Dictionary<Tower, float> _towerSoundTimers = new Dictionary<Tower, float>();
 
     public List<(int,int)> SpawnableArea {get; private set;}
     public List<(int,int)> PlayingField {get; private set;}
@@ -179,41 +178,7 @@ public class CombatManager
         {
             if (entity is Tower tower && !tower.IsDestroyed)
             {
-                var tilesInRange = tower.GetTilesInRange();
-                bool dealtDamageThisFrame = false;
-                foreach (var tile in tilesInRange)
-                {
-                    // Target the new Container!
-// NEW
-                    var targetContainer = mapManager.GetMonsterContainer(tile);
-                    if (targetContainer != null && !targetContainer.IsEmpty)
-                    {
-                        // Check if the tower shooting is an AreaTower!
-                        bool isAOE = tower is AreaTower; 
-                        bool isSpike = tower is Spikes;
-                        
-                        // Pass that info into the container
-                        targetContainer.TakeDamage(tower.DamagePerSecond * dt, isAOE, isSpike); 
-                        dealtDamageThisFrame = true;
-                    }
-                }
-                
-                if (dealtDamageThisFrame)
-                {
-                    if (!_towerSoundTimers.ContainsKey(tower))
-                        _towerSoundTimers[tower] = 0f;
-
-                    _towerSoundTimers[tower] -= dt;
-
-                    if (_towerSoundTimers[tower] <= 0f)
-                    {
-                        string soundToPlay = tower is AreaTower ? "AOE-tower_stomp" : "shoot_01"; 
-                        float cooldown = tower is AreaTower ? 1.5f : 1.0f;
-
-                        AudioManager.Play(soundToPlay);
-                        _towerSoundTimers[tower] = cooldown; 
-                    }
-                }
+                tower.Attack(dt);
             }
         }
 
@@ -278,10 +243,6 @@ public class CombatManager
             {
                 if (entity is Tent) mapManager.TentDestroyed = true;
                 
-                if (entity is Tower deadTower && _towerSoundTimers.ContainsKey(deadTower))
-                {
-                    _towerSoundTimers.Remove(deadTower);
-                }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);
             }

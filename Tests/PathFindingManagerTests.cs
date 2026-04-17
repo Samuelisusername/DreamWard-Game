@@ -17,6 +17,7 @@ public class PathFindingManagerTests
     private const string WallAnim = "wall_idle";
     private const string TowerAnim = "towerSniper_idle";
     private const string MonsterAnim = "normal_walkSW";
+    private const string MeadowAnim = "meadow_idle";
 
     private PathFindingManager _pm;
 
@@ -232,7 +233,7 @@ public class PathFindingManagerTests
                 continue;
             }
 
-            var validNeighbors = Tower.GetHexNeighbors(previous);
+            var validNeighbors = MapUtils.GetSurroundingTiles(previous);
             Assert.That(validNeighbors.Contains(current), Is.True,
                 $"Invalid step from {previous} to {current} at index {i}.");
         }
@@ -285,11 +286,14 @@ public class PathFindingManagerTests
         atlas.AddAnimation(WallAnim, animation);
         atlas.AddAnimation(TowerAnim, animation);
         atlas.AddAnimation(MonsterAnim, animation);
+        atlas.AddAnimation(MeadowAnim, animation);
 
         GamelabGame.textureAtlas = new Dictionary<string, TextureAtlas>
         {
             ["day_top"] = atlas,
+            ["day_top_base"] = atlas,
             ["night_top"] = atlas,
+            ["night_top_base"] = atlas,
             ["monsters"] = atlas
         };
     }
@@ -324,21 +328,21 @@ public class PathFindingManagerTests
 
         public Meadow PlaceSheep((int col, int row) tile)
         {
-            var sheep = new Meadow(SheepAnim, tile, 10);
+            var sheep = new Meadow(tile, 10);
             Assert.That(MapManager.PlaceSheep(sheep, tile), Is.True);
             return sheep;
         }
 
         public Wall PlaceWall((int col, int row) tile)
         {
-            var wall = new Wall(WallAnim, tile);
+            var wall = new Wall(tile);
             Assert.That(MapManager.PlaceEntity(wall, tile), Is.True);
             return wall;
         }
 
         public Tower PlaceTower((int col, int row) tile)
         {
-            var tower = new Tower(TowerAnim, tile);
+            var tower = new SniperTower(tile);
             Assert.That(MapManager.PlaceEntity(tower, tile), Is.True);
             return tower;
         }

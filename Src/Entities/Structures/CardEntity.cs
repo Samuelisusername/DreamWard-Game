@@ -53,16 +53,16 @@ public class Rat : CardEntity
 
 public class Fence : CardEntity
 {
-    public Fence(string animName, (int,int) pos)
-        : base(animName, pos, 15)
+    public Fence((int,int) pos)
+        : base("fence_idle", pos, 15)
     {
     }
 }
 
 public class Wall : CardEntity
 {
-    public Wall(string animName, (int,int) pos)
-        : base(animName, pos, 10)
+    public Wall((int,int) pos)
+        : base("wall_idle", pos, 10)
     {
     }
 }

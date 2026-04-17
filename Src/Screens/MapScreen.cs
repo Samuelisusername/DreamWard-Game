@@ -245,36 +245,35 @@ public class MapScreen : GamelabGameScreen
                 _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = false;
                 if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
-                    Vector2 pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                     // Navigation to CardScreen
-                    if (_toCardScreenBtn.Contains(pos))
+                    if (_toCardScreenBtn.Contains(mousePos))
                     {
                         Game.SwitchToScreen(Game.CardScreenInstance);
                         AudioManager.Play("dragonflap");
                         return;
                     }
-                    if (_inventoryBtn.Contains(pos))
+                    if (_inventoryBtn.Contains(mousePos))
                     {
                         _showInventory = !_showInventory;
                         return;
                     }
 
-                    if (_towerRangeBtn.Contains(pos))
+                    if (_towerRangeBtn.Contains(mousePos))
                     {
                         _showTowerRange = !_showTowerRange;
                         return;
                     }
                     // Check USE buttons on cards
-                    if (cardManager.HandleCardUseClicks(pos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
+                    if (cardManager.HandleCardUseClicks(mousePos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
                         return;
 
                     if (cardManager._activeMapCard != null)
                     {
-                        if (cardManager.HandleMapCardUse(mapManager, pos))
+                        if (cardManager.HandleMapCardUse(mapManager, mousePos))
                             return;
                         return;
                     }
-                    mapManager.HandleMapClick(pos);
+                    mapManager.HandleMapClick(mousePos);
                 }
                 _clickStarted = false;
                 _isDrag = false;
@@ -304,7 +303,7 @@ public class MapScreen : GamelabGameScreen
         GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
         SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
-        mapRenderer.Draw(spriteBatch);
+        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         entityRenderer.Draw(spriteBatch);
         spriteBatch.End();
     }
@@ -320,7 +319,7 @@ public class MapScreen : GamelabGameScreen
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
         // ✅ Map
-        mapRenderer.Draw(spriteBatch);
+        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         if (cardManager._activeMapCard != null &&
             (cardManager._activeMapCard.Effect == CardEffect.Move ||
             cardManager._activeMapCard.Effect == CardEffect.Destroy ||

@@ -321,35 +321,17 @@ public class CardManager
 
     public Structure GetStructureFromCard(Card card, (int col, int row) pos)
     {
-        
-        string animKey = card.SpriteName switch
-        {
-            "dreamcatcher" => "wall_idle", // map dreamcatcher to wall
-            "sniper" => "towerSniper_idle",
-            "aoe" => "towerAOE_idle",
-            "fence" => "fence_idle",
-            "meadow" => "meadow_idle",
-            "void" => "void_idle",
-            "spikes" => "spikes_idle",
-            "decoy" => "decoy_idle",
-            "buff" => "buff_idle",
-
-            _ => null
-        };
-
-        if (animKey == null) return null; // no matching animation
-
         Structure structure = card.Name switch
         {
-            "sniper" => new Tower(animKey, pos, damagePerSecond: 8f, health: 100),
-            "aoe" => new AreaTower(animKey, pos, damagePerSecond: 5f, health: 80),
-            "fence" => new Fence(animKey, pos),
-            "meadow" => new PlacableMeadow(animKey, pos,2),
-            "dreamcatcher" => new Wall(animKey, pos),
-            "void" => new VoidTile(animKey, pos),
-            "spikes" => new Spikes(animKey, pos,2),
-            "decoy" => new Decoy(animKey, pos,2),
-            "buff" => new Buff(animKey, pos,2),
+            "sniper" => new SniperTower(pos, health: 100),
+            "aoe" => new AreaTower(pos, health: 80),
+            "fence" => new Fence(pos),
+            "meadow" => new PlacableMeadow(pos,2),
+            "dreamcatcher" => new Wall(pos),
+            "void" => new VoidTile(pos),
+            "spikes" => new Spike(pos,2),
+            "decoy" => new Decoy(pos,2),
+            "buff" => new Buff(pos,2),
             _ => null
         };
 

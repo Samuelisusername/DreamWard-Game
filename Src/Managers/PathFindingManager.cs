@@ -188,7 +188,7 @@ public class PathFindingManager
             int currentDamage = costToGetThere[current.col, current.row];
             int currentTime = timeToReach[current.col, current.row];
 
-            foreach (var neighbor in Tower.GetHexNeighbors(current))
+            foreach (var neighbor in MapUtils.GetSurroundingTiles(current))
             {
                 if (!MapUtils.IsInBounds(neighbor))
                 {

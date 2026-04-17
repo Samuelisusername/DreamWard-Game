@@ -15,8 +15,8 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
 
-    public Meadow(string animName, (int,int) pos, int sanityGain)
-        : base(animName, pos, 50)
+    public Meadow((int,int) pos, int sanityGain)
+        : base("meadow_idle", pos, 50)
     {
         SanityGain = sanityGain;
         float lerpConst = .25f;
@@ -76,8 +76,8 @@ public class Meadow : Structure
 public class PlacableMeadow : Structure
 {
     public int SanityGain {get; private set;}
-    public PlacableMeadow(string animName, (int,int) pos, int sanityGain)
-        : base(animName, pos, 5)
+    public PlacableMeadow((int,int) pos, int sanityGain)
+        : base("meadow_idle", pos, 5)
     {
         SanityGain = sanityGain;
     }

@@ -3,8 +3,8 @@
 /// </summary>
 public class Decoy : Structure
 {
-    public Decoy(string animName, (int,int) pos, int health = 20)
-        : base(animName, pos, health)
+    public Decoy((int,int) pos, int health = 20)
+        : base("decoy_idle", pos, health)
     {
     }
 }

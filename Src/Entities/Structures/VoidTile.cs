@@ -3,8 +3,8 @@
 /// </summary>
 public class VoidTile : Structure
 {
-    public VoidTile(string animName, (int,int) pos)
-        : base(animName, pos, int.MaxValue)
+    public VoidTile((int,int) pos)
+        : base("void_idle", pos, int.MaxValue)
     {
     }
 }

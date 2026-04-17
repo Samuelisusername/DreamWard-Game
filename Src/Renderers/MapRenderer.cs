@@ -17,8 +17,11 @@ public class MapRenderer
     /// (e.g. meadows, void tiles, fences, etc, and any static defence tiles).
     /// To get the tiles and entites to draw it calles the MapManager.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, (int col, int row)? skipTile = null)
+    public void Draw(SpriteBatch spriteBatch, Rectangle screen, (int col, int row)? skipTile = null)
     {
+        int oX = 128 * (int)mapManager.Scale.X;
+        int oY = 128 * (int)mapManager.Scale.Y;
+        screen = new Rectangle(screen.X - oX , screen.Y - oY, screen.Width + 2*oX, screen.Height + 2*oY);
         if(gamePhaseManager.IsDay)
         {
             for (int i = 0; i < mapManager.Rows*6; i++)
@@ -50,26 +53,27 @@ public class MapRenderer
 
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
-                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos);
+                    Vector2 worldPos  = mapManager.GetWorldPositionOfTile(localTilePos) + (offset * mapManager.Scale);
+                    if(!screen.Contains(worldPos)) continue;
 
                     #if DEBUG
                     if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
                     {
-                        tile.Draw(spriteBatch, worldPos + (offset * mapManager.Scale), Color.Red * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                        tile.Draw(spriteBatch, worldPos, Color.Red * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
                         if (_draw_tile_coordinates) {
                             DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
                         }
                     }
                     else
                     {
-                        tile.Draw(spriteBatch, worldPos + (offset * mapManager.Scale), Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                        tile.Draw(spriteBatch, worldPos, Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
                         if (_draw_tile_coordinates) {
                             DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
                         }
                     }
                     #else
 
-                    tile.Draw(spriteBatch, worldPos + (offset * mapManager.Scale), Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                    tile.Draw(spriteBatch, worldPos, Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
 
                     #endif
 

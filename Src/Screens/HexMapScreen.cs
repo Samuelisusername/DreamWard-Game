@@ -95,7 +95,7 @@ public class HexMapScreen : GamelabGameScreen
         // Scale to fit the virtual screen size to the actual window size
         spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
 
-        mapRenderer.Draw(spriteBatch);
+        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
 
         entityRenderer.Draw(spriteBatch);
 

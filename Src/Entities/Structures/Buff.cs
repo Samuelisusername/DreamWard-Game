@@ -3,8 +3,8 @@
 /// </summary>
 public class Buff : Structure
 {
-    public Buff(string animName, (int,int) pos, int health = 20)
-        : base(animName, pos, health)
+    public Buff((int,int) pos, int health = 20)
+        : base("buff_idle", pos, health)
     {
     }
 }
