@@ -27,6 +27,7 @@ public class GamePhaseManager
         );
         AudioManager.PlayMusic("day_music");
         checkGameOver();
+        mapManager.ResetFall();
     }
 
     /// <summary>
@@ -34,6 +35,11 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToNight()
     {
+        mapManager.StartFalling();
+    }
+
+    public void FinishSwitchToNight()
+    {        
         combatManager.SpawnMonsters(DayCount * 3);
         IsDay = false;
         AudioManager.PlayMusic("night_music");

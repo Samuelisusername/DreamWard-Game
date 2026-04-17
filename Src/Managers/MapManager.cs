@@ -97,6 +97,22 @@ public class MapManager
     //which frame of the animation are we on?
     private int _animationOffset = 0;
 
+    public bool isFalling {get; set;} = false;
+
+    public TimeSpan[,] FallTimer;
+
+    public TimeSpan MaxFallTime = TimeSpan.FromSeconds(1);
+
+    public TimeSpan MaxTotalFallTime;
+    public TimeSpan TotalFallTime;
+
+    private float fallSpeed = 1000; //units per second
+
+    private float shakeMax = 0.2f; //shaketime max in seconds
+    private float shakeOffset = 0.05f; //shaketime max in seconds
+
+    public Vector2[,] TilesOfsets {get; set;}
+
 #endregion
 
 
@@ -113,6 +129,8 @@ public class MapManager
         _exteriorTiles = new int[Columns*3,Rows*3];
         Structures = new Structure[Columns,Rows];
         ExteriorStructures = new Structure[Columns*3,Rows*3];
+        TilesOfsets = new Vector2[Columns*3,Rows*3];
+        FallTimer = new TimeSpan[Columns*3,Rows*3];
         #if DEBUG
         Debug = new bool[Columns,Rows];
         #endif
@@ -142,6 +160,40 @@ public class MapManager
         {
             _elapsed -= delay;
             _animationOffset = (_animationOffset + 1) % 2;
+        }
+        if(isFalling)
+        {
+            TotalFallTime += gameTime.ElapsedGameTime;
+            for (int i = 0; i < Columns * 3; i++)
+            {
+                for (int j = 0; j < Rows*3; j++)
+                {
+                    if(FallTimer[i,j] > TimeSpan.Zero)
+                    {
+                        //falling phase
+                        FallTimer[i,j] += gameTime.ElapsedGameTime;
+                        TilesOfsets[i,j] = Vector2.UnitY * (float)FallTimer[i,j].TotalSeconds * fallSpeed * Scale;
+                    }
+                    else
+                    {
+                        //shaking phase
+                        FallTimer[i,j] += gameTime.ElapsedGameTime;
+                        if(FallTimer[i,j] > TimeSpan.Zero)
+                        {
+                            TilesOfsets[i,j] = Vector2.UnitY * (float)FallTimer[i,j].TotalSeconds * fallSpeed * Scale;
+                        }
+                        else
+                        {
+                            TilesOfsets[i,j] = new Vector2((float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble()) * Math.Clamp((float)-FallTimer[i,j].TotalSeconds, 0.0f, 4.0f) * Scale;
+                        }
+                    }
+                }
+            }
+            if(FallTimer.Cast<TimeSpan>().All(i => i > MaxFallTime))
+            {
+                isFalling = false;
+                gamePhaseManager.FinishSwitchToNight();
+            }
         }
 
         //Update all the monsters and structures
@@ -751,6 +803,36 @@ public class MapManager
             container.SetScale(newScale);
         }
     }
+#endregion
+
+#region Animation
+
+    public void StartFalling()
+    {
+        isFalling = true;
+        for (int i = 0; i < Columns * 3; i++)
+        {
+            for (int j = 0; j < Rows*3; j++)
+            {
+                int dist = MapUtils.CalculateTileDistance((i - Columns,j-Rows), GetTent());
+                FallTimer[i,j] = TimeSpan.FromSeconds(-((shakeMax * (float)Random.Shared.NextDouble()) + (Math.Min(dist, 25) * shakeOffset)));
+            }
+        }
+        MaxTotalFallTime = -FallTimer.Cast<TimeSpan>().MaxBy(i => -i + MaxFallTime) + MaxFallTime;
+        TotalFallTime = TimeSpan.Zero;
+    }
+
+    public void ResetFall()
+    {
+        for (int i = 0; i < Columns * 3; i++)
+        {
+            for (int j = 0; j < Rows*3; j++)
+            {
+                TilesOfsets[i,j] = Vector2.Zero;
+            }
+        }
+    }
+
 #endregion
 
 #if DEBUG

@@ -16,47 +16,10 @@ public class EntityRenderer
 
     public void Draw(SpriteBatch spriteBatch, (int col, int row)? skipTile = null)
     {
-        //draw all structures without height
-        for (int i = 0; i < mapManager.Rows*6; i++)
-        {
-            for (int j = i % 2; j < mapManager.Columns*3; j += 2)
-            {                
-                (int col, int row) tilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
-                if (skipTile.HasValue && skipTile.Value == tilePos) continue;
-                Structure s = mapManager.GetStructure((j,i/2), true);
-                if(s?.IsFlat ?? false)
-                {
-                    s.Draw(spriteBatch);
-                }
-            }
-        }
+        // we only draw monsters here since they dont fall        
+        // 1. grounded monsters
+        // 2. flying monsers
 
-        //draw all monsters on the ground and structures with height 
-        for (int i = 0; i < mapManager.Rows*6; i++)
-        {
-            for (int j = i % 2; j < mapManager.Columns*3; j += 2)
-            {                
-                (int col, int row) tilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
-                if (skipTile.HasValue && skipTile.Value == tilePos) continue;
-                Structure s = mapManager.GetStructure((j,i/2), true);
-                if(!(s?.IsFlat ?? true))
-                {
-                    s.Draw(spriteBatch);
-                }
-                mapManager.GetMonsterContainer((tilePos.col,tilePos.row))?.DrawGround(spriteBatch);
-            }
-        }
-
-        //draw all monsters above ground
-        for (int i = 0; i < mapManager.Rows*6; i++)
-        {
-            for (int j = i % 2; j < mapManager.Columns*3; j += 2)
-            {                
-                (int col, int row) tilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
-                if (skipTile.HasValue && skipTile.Value == tilePos) continue;
-                mapManager.GetMonsterContainer((tilePos.col,tilePos.row))?.DrawAir(spriteBatch);
-            }
-        }
 
         if (_pixel == null) return;
 

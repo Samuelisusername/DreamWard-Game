@@ -27,6 +27,7 @@ public class RegularMonster : Monster
         if (entity is VoidTile ) return false;
         if (entity is TreeTile) return false;
         if (entity is WallTile) return false;
+        if (entity is Wall) return false;
         if (entity is Fence) return false;
         if (entity is Tower && entity is not Spikes) return false;
         return true;

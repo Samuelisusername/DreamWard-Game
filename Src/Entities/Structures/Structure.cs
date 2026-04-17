@@ -46,7 +46,7 @@ public abstract class Structure : Entity
     /// <summary>
     /// draws the entity
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch)
+    public void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
     {
         if (_sprite == null) return;
         #if DEBUG
@@ -59,7 +59,7 @@ public abstract class Structure : Entity
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);
+        _sprite.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _sprite.Scale), alpha);
     }
 
     protected void SetAnimation(string animName)
