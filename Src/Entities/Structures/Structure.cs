@@ -6,7 +6,8 @@ using Microsoft.Xna.Framework.Graphics;
 public abstract class Structure : Entity
 {
     //the animation of this entity
-    protected AnimatedSprite _sprite;
+    protected AnimatedSprite _spriteTop;
+    protected AnimatedSprite _spriteBase;
 
     private bool _isDaySprite = true;
     
@@ -19,15 +20,16 @@ public abstract class Structure : Entity
     protected GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     protected MapManager mapManager => GamelabGame.MapManager;
 
-    public abstract bool IsFlat {get;}
-
     public Structure(string animName, (int, int) tilePos, int health = 100) : base(tilePos, health)
     {
         _animName = animName;
-        _sprite = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);
+        _spriteTop = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);
+        _spriteBase = GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName);
 
-        if (_sprite != null)
-            _sprite.Scale = mapManager.Scale;
+        if (_spriteTop != null)
+            _spriteTop.Scale = mapManager.Scale;
+        if (_spriteBase != null)
+            _spriteBase.Scale = mapManager.Scale;
     }
 
     public override void Update(GameTime gameTime)
@@ -35,12 +37,17 @@ public abstract class Structure : Entity
         if(gamePhaseManager.IsDay != _isDaySprite)
         {
             _isDaySprite = !_isDaySprite;
-            _sprite.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top"].GetAnimation(_animName) :
+            _spriteTop.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top"].GetAnimation(_animName) :
             GamelabGame.textureAtlas["night_top"].GetAnimation(_animName);
+            _spriteBase.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top_base"].GetAnimation(_animName) :
+            GamelabGame.textureAtlas["night_top_base"].GetAnimation(_animName);
         }
-        if (_sprite != null)
-            _sprite.Scale = mapManager.Scale;
-        _sprite.Update(gameTime);
+        if (_spriteTop != null)
+            _spriteTop.Scale = mapManager.Scale;
+        if (_spriteBase != null)
+            _spriteBase.Scale = mapManager.Scale;
+        _spriteTop.Update(gameTime);
+        _spriteBase.Update(gameTime);
     }    
 
     /// <summary>
@@ -48,42 +55,49 @@ public abstract class Structure : Entity
     /// </summary>
     public void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
     {
-        if (_sprite == null) return;
+        if (_spriteTop == null) return;
         #if DEBUG
         
         if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
         {
-            _sprite.Color = Color.Red;
+            _spriteTop.Color = Color.Red;
         }
 
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        _sprite.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _sprite.Scale), alpha);
+        _spriteTop.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _spriteTop.Scale), alpha);
+    }
+
+    /// <summary>
+    /// draws the entity
+    /// </summary>
+    public void DrawBase(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
+    {
+        if (_spriteBase == null) return;
+        #if DEBUG
+        
+        if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
+        {
+            _spriteBase.Color = Color.Red;
+        }
+
+        #endif
+
+        Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+        _spriteBase.Draw(spriteBatch, worldPos + ((_localOffset + offset) * _spriteBase.Scale), alpha);
     }
 
     protected void SetAnimation(string animName)
     {
         _animName = animName;
-        _sprite = gamePhaseManager.IsDay ? 
+        _spriteTop = gamePhaseManager.IsDay ? 
         GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(_animName) :
         GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(_animName);
-        _sprite.Scale = mapManager.Scale;
+        _spriteTop.Scale = mapManager.Scale;
+        _spriteBase = gamePhaseManager.IsDay ? 
+        GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(_animName) :
+        GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(_animName);
+        _spriteBase.Scale = mapManager.Scale;
     }
-    
-    public void DrawTransparent(SpriteBatch spriteBatch, float alpha)
-    {
-        if (_sprite == null) return;
-        _sprite.Scale = mapManager.Scale;
-
-        Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-
-        var originalColor = _sprite.Color;
-        _sprite.Color = Color.White * alpha;
-
-        _sprite.Draw(spriteBatch, worldPos + _localOffset * _sprite.Scale);
-
-        _sprite.Color = originalColor;
-    }
-
 }

@@ -15,8 +15,6 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
 
-    public override bool IsFlat => true;
-
     public Meadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 50)
     {
@@ -25,15 +23,18 @@ public class Meadow : Structure
         
         if(SanityGain == 10)
         {
-            _sprite.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
+            _spriteTop.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
+            _spriteBase.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
         }
         else if(SanityGain == 15)
         {
-            _sprite.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
+            _spriteTop.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
+            _spriteBase.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
         }
         else if(SanityGain == 20)
         {
-            _sprite.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
+            _spriteTop.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
+            _spriteBase.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
         }
     }
 
@@ -75,7 +76,6 @@ public class Meadow : Structure
 public class PlacableMeadow : Structure
 {
     public int SanityGain {get; private set;}
-    public override bool IsFlat => true;
     public PlacableMeadow(string animName, (int,int) pos, int sanityGain)
         : base(animName, pos, 5)
     {

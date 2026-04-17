@@ -446,3 +446,27 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/rustle/rustle20.wav
+#begin Sprites/night_top_base.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/night_top_base.png
+
+#begin Sprites/day_top_base.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/day_top_base.png
+
+#begin Sprites/night_background.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/night_background.png
+
+#begin Sprites/night_background.json
+/copy:Sprites/night_background.json
+
+#begin Sprites/night_top_base.json
+/copy:Sprites/night_top_base.json
+
+#begin Sprites/day_top_base.json
+/copy:Sprites/day_top_base.json
+

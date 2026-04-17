@@ -148,8 +148,12 @@ public class GamelabGame : Game
         textureAtlas.Add("monsters", monsters);
         TextureAtlas night_top = TextureAtlas.FromJsonFile(Content, "Sprites/night_top.json");
         textureAtlas.Add("night_top", night_top);
+        TextureAtlas night_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/night_top_base.json");
+        textureAtlas.Add("night_top_base", night_top_base);
         TextureAtlas day_top = TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
         textureAtlas.Add("day_top", day_top);
+        TextureAtlas day_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/day_top_base.json");
+        textureAtlas.Add("day_top_base", day_top_base);
         
         //load tilesets — read frame duration from the JSON atlas so it stays in sync with entity animations
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
