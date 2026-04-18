@@ -191,6 +191,10 @@ public class MapScreen : GamelabGameScreen
             {
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
             }
+            if(keyboard.WasKeyReleased(Keys.D))
+            {
+                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
+            }
             if (mapManager.TentDestroyed)
             {
                 Game.SwitchToScreen(new GameOverScreen(Game));

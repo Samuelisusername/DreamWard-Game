@@ -1294,29 +1294,57 @@
         "color": "#000000ff"
       },
       {
-        "name": "mergeSW",
+        "name": "spawnSW",
         "from": 32,
         "to": 36,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "mergeNW",
+        "name": "mergeSW",
+        "from": 36,
+        "to": 36,
+        "direction": "forward",
+        "color": "#000000ff"
+      },
+      {
+        "name": "spawnNW",
         "from": 37,
         "to": 41,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "mergeN",
+        "name": "mergeNW",
+        "from": 41,
+        "to": 41,
+        "direction": "forward",
+        "color": "#000000ff"
+      },
+      {
+        "name": "spawnN",
         "from": 42,
         "to": 46,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "mergeS",
+        "name": "mergeN",
+        "from": 46,
+        "to": 46,
+        "direction": "forward",
+        "color": "#000000ff"
+      },
+      {
+        "name": "spawnS",
         "from": 47,
+        "to": 51,
+        "direction": "forward",
+        "color": "#000000ff"
+      },
+      {
+        "name": "mergeS",
+        "from": 51,
         "to": 51,
         "direction": "forward",
         "color": "#000000ff"
@@ -1331,119 +1359,14 @@
     ],
     "slices": [
       {
-        "name": "monkey_amalgam",
+        "name": "fly",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 1152,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "strong_amalgam",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 1024,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "smol_amalgam",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 896,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "fly_amalgam",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 768,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "normal_amalgam",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 640,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "monkey",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 512,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "strong",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 384,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "smol",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 256,
+              "y": 0,
               "w": 128,
               "h": 128
             }
@@ -1466,14 +1389,119 @@
         ]
       },
       {
-        "name": "fly",
+        "name": "smol",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 0,
+              "y": 256,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "strong",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 384,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "monkey",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 512,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "normal_amalgam",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 640,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "fly_amalgam",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 768,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "smol_amalgam",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 896,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "strong_amalgam",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 1024,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "monkey_amalgam",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 1152,
               "w": 128,
               "h": 128
             }
