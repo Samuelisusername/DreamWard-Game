@@ -76,9 +76,15 @@ public class GamelabGame : Game
     /// </summary>
     public static bool IsHovering { get; set; }
 
-    public GamelabGame(RunMode runMode)
+    public static Random Rng { get; private set; }
+    public static int Seed { get; private set; }
+
+    public GamelabGame(RunMode runMode, int? seed = null)
     {
         Instance = this;
+
+        Seed = seed ?? new Random().Next();
+        Rng = new Random(Seed);
 
         this.runMode = runMode;
 
@@ -102,7 +108,6 @@ public class GamelabGame : Game
     {
         base.Initialize();
 
-        //TODO: Replace with actual game name
         Window.Title = "DreamWard";
         IsMouseVisible = true;
 

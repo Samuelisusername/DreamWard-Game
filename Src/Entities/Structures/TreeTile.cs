@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Gamelab;
 using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -26,7 +27,7 @@ public class TreeTile : Structure
     public TreeTile(string animName, (int,int) pos)
         : base(animName, pos, int.MaxValue)
     {
-        var flip = Random.Shared.NextDouble() < 0.5 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+        var flip = GamelabGame.Rng.NextDouble() < 0.5 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
         _spriteTop.SpriteEffects = flip;
         _spriteBase.SpriteEffects = flip;
         _spriteTop.Origin =  new Vector2(64, 128-16);
@@ -41,11 +42,10 @@ public class TreeTile : Structure
         {
             float add = (currentRot/360.0f) * MathHelper.TwoPi;
             shakeRotations.Add(shakeRotations.Count % 2 == 0 ? add : -add);
-            currentRot = Random.Shared.Next((int)currentRot/2,(int)currentRot);
+            currentRot = GamelabGame.Rng.Next((int)currentRot/2,(int)currentRot);
         }
         shakeRotations.Add(0);
-        Random random = new Random();
-        int nr = random.Next(1,21);
+        int nr = GamelabGame.Rng.Next(1,21);
         AudioManager.Play($"rustle{nr:D2}");
     }
 

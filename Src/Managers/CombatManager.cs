@@ -48,7 +48,7 @@ public class CombatManager
         // mapManager.AddNewMonster((6,16));
         for (int i = 0; i < count; i++)
         {
-            (int, int) pos = SpawnableArea[Random.Shared.Next(SpawnableArea.Count)];
+            (int, int) pos = SpawnableArea[GamelabGame.Rng.Next(SpawnableArea.Count)];
             if(!mapManager.AddNewMonster(pos))
             {
                 i--;

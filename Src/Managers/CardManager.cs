@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gamelab;
 using Microsoft.Xna.Framework;
 
 public enum CardType { MapAction, StackAction, Build }
@@ -24,7 +25,7 @@ public class CardSlot
 
 public class CardManager
 {
-    private Random _random = new Random();
+    private Random _random => GamelabGame.Rng;
 
     // Decks
     private List<Card> _mapACDeck = new();

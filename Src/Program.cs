@@ -25,13 +25,17 @@ public static class Program
         var cmd = new RootCommand();
 
         var runCICDTestOption = new Option<bool>("--run-cicd-test");
+        var seedOption = new Option<int?>("--seed") { Description = "Random seed for deterministic gameplay" };
         cmd.Add(runCICDTestOption);
+        cmd.Add(seedOption);
 
         var options = cmd.Parse(args);
 
         var runCICDTest = options.GetValue(runCICDTestOption);
+        var seed = options.GetValue(seedOption);
 
-        game = new GamelabGame(runMode);
+        game = new GamelabGame(runMode, seed);
+        logger.Info($"Using seed: {GamelabGame.Seed}");
 
         if (runCICDTest)
         {
