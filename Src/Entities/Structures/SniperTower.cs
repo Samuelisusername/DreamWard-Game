@@ -6,5 +6,5 @@ public class SniperTower : Tower
 
     protected override float damagePerSecond => 8f;
 
-    protected override int rangeDepth => 1;
+    protected override int rangeDepth => 2;
 }

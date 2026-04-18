@@ -327,17 +327,19 @@ public class MapScreen : GamelabGameScreen
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
         // ✅ Map
-        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
+        
         if (cardManager._activeMapCard != null &&
             (cardManager._activeMapCard.Effect == CardEffect.Move ||
             cardManager._activeMapCard.Effect == CardEffect.Destroy ||
             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile);
             entityRenderer.Draw(spriteBatch, _hoverTile);
         }
         else
         {
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
             entityRenderer.Draw(spriteBatch);
         }
         if (_showTowerRange && gamePhaseManager.IsDay)
