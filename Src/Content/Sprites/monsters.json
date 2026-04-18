@@ -1520,15 +1520,11 @@
       },
       {
         "from": "rebuildSW",
-        "to": "idleSW"
+        "to": "walkSW"
       },
       {
         "from": "rebuildIdleSW",
         "to": "idleSW"
-      },
-      {
-        "from": "rebuildSW",
-        "to": "attackSW"
       },
       {
         "from": "rebuildIdleSW",
@@ -1544,15 +1540,11 @@
       },
       {
         "from": "rebuildNW",
-        "to": "idleNW"
+        "to": "walkNW"
       },
       {
         "from": "rebuildIdleNW",
         "to": "idleNW"
-      },
-      {
-        "from": "rebuildNW",
-        "to": "attackNW"
       },
       {
         "from": "rebuildIdleNW",
@@ -1568,15 +1560,11 @@
       },
       {
         "from": "rebuildN",
-        "to": "idleN"
+        "to": "walkN"
       },
       {
         "from": "rebuildIdleN",
         "to": "idleN"
-      },
-      {
-        "from": "rebuildN",
-        "to": "attackN"
       },
       {
         "from": "rebuildIdleN",
@@ -1592,15 +1580,11 @@
       },
       {
         "from": "rebuildNE",
-        "to": "idleNE"
+        "to": "walkNE"
       },
       {
         "from": "rebuildIdleNE",
         "to": "idleNE"
-      },
-      {
-        "from": "rebuildNE",
-        "to": "attackNE"
       },
       {
         "from": "rebuildIdleNE",
@@ -1616,15 +1600,11 @@
       },
       {
         "from": "rebuildSE",
-        "to": "idleSE"
+        "to": "walkSE"
       },
       {
         "from": "rebuildIdleSE",
         "to": "idleSE"
-      },
-      {
-        "from": "rebuildSE",
-        "to": "attackSE"
       },
       {
         "from": "rebuildIdleSE",
@@ -1640,15 +1620,11 @@
       },
       {
         "from": "rebuildS",
-        "to": "idleS"
+        "to": "walkS"
       },
       {
         "from": "rebuildIdleS",
         "to": "idleS"
-      },
-      {
-        "from": "rebuildS",
-        "to": "attackS"
       },
       {
         "from": "rebuildIdleS",
