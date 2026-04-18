@@ -49,4 +49,9 @@
   <ItemGroup>
     <ProjectReference Include="..\DreamWardUtils\DreamWardUtils.csproj" />
   </ItemGroup>
+  <Target Name="ExportSprites" BeforeTargets="Build">
+    <Exec Command="python3 export.py"
+          WorkingDirectory="$(MSBuildProjectDirectory)/Content/Sprites/aseprite"
+          Condition="'$(ExportSprites)' == 'true'" />
+  </Target>
 </Project>
