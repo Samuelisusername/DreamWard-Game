@@ -187,6 +187,7 @@ public class MapScreen : GamelabGameScreen
 
         if(Game.IsActive)
         {
+            cardManager._previewStructure?.Update(gameTime);
             if(keyboard.WasKeyReleased(Keys.S))
             {
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
