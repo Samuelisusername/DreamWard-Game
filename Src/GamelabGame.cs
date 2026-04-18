@@ -77,13 +77,13 @@ public class GamelabGame : Game
     public static bool IsHovering { get; set; }
 
     public static Random Rng { get; private set; }
-    public static int Seed { get; private set; }
+    public static int Seed { get; private set; } = 100;
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {
         Instance = this;
 
-        Seed = seed ?? new Random().Next();
+        Seed = seed ?? (Seed == 0 ? new Random().Next(): Seed);
         Rng = new Random(Seed);
 
         this.runMode = runMode;
@@ -271,6 +271,7 @@ public class GamelabGame : Game
     /// </summary>
     public void ResetGame()
     {
+        Rng = new Random(Seed);
         CardManager = new();
         CombatManager = new();
         GamePhaseManager = new();

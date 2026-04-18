@@ -149,16 +149,13 @@ public abstract class MonsterGroup
             }
         }
 
-        if (!_goalReached)
+        if (_goalReached != _oldGoalReached)
         {
-            if(_oldGoalReached)
-            {
-                SetAnimation();
-            }
+            SetAnimation();
         }
         
         _elapsed += gameTime.ElapsedGameTime;
-        if(isMerging && (speed - _elapsed).TotalMilliseconds < 625)
+        if(isMerging && (speed - _elapsed).TotalMilliseconds < 125)
         {
             SetAnimation("rebuild");
             isMerging = false;

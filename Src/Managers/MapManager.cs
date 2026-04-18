@@ -477,7 +477,7 @@ public class MapManager
 
     public void AddTrees()
     {
-        int noiseSeed = GamelabGame.Rng.Next();
+        int noiseSeed = GamelabGame.Seed;
         FastNoiseLite noise = new FastNoiseLite(noiseSeed);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         noise.SetFractalOctaves(1);
