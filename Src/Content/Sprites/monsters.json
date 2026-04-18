@@ -1359,14 +1359,14 @@
     ],
     "slices": [
       {
-        "name": "fly",
+        "name": "monkey_amalgam",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 0,
+              "y": 640,
               "w": 128,
               "h": 128
             }
@@ -1374,14 +1374,14 @@
         ]
       },
       {
-        "name": "normal",
+        "name": "strong_amalgam",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 128,
+              "y": 640,
               "w": 128,
               "h": 128
             }
@@ -1389,14 +1389,14 @@
         ]
       },
       {
-        "name": "smol",
+        "name": "smol_amalgam",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 256,
+              "y": 640,
               "w": 128,
               "h": 128
             }
@@ -1404,29 +1404,14 @@
         ]
       },
       {
-        "name": "strong",
+        "name": "fly_amalgam",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 384,
-              "w": 128,
-              "h": 128
-            }
-          }
-        ]
-      },
-      {
-        "name": "monkey",
-        "color": "#0000ffff",
-        "keys": [
-          {
-            "frame": 0,
-            "bounds": {
-              "x": 0,
-              "y": 512,
+              "y": 640,
               "w": 128,
               "h": 128
             }
@@ -1449,14 +1434,14 @@
         ]
       },
       {
-        "name": "fly_amalgam",
+        "name": "monkey",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 768,
+              "y": 512,
               "w": 128,
               "h": 128
             }
@@ -1464,14 +1449,14 @@
         ]
       },
       {
-        "name": "smol_amalgam",
+        "name": "strong",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 896,
+              "y": 384,
               "w": 128,
               "h": 128
             }
@@ -1479,14 +1464,14 @@
         ]
       },
       {
-        "name": "strong_amalgam",
+        "name": "smol",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 1024,
+              "y": 256,
               "w": 128,
               "h": 128
             }
@@ -1494,14 +1479,29 @@
         ]
       },
       {
-        "name": "monkey_amalgam",
+        "name": "normal",
         "color": "#0000ffff",
         "keys": [
           {
             "frame": 0,
             "bounds": {
               "x": 0,
-              "y": 1152,
+              "y": 128,
+              "w": 128,
+              "h": 128
+            }
+          }
+        ]
+      },
+      {
+        "name": "fly",
+        "color": "#0000ffff",
+        "keys": [
+          {
+            "frame": 0,
+            "bounds": {
+              "x": 0,
+              "y": 0,
               "w": 128,
               "h": 128
             }
@@ -1515,16 +1515,144 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleSW",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildSW",
+        "to": "idleSW"
+      },
+      {
+        "from": "rebuildIdleSW",
+        "to": "idleSW"
+      },
+      {
+        "from": "rebuildSW",
+        "to": "attackSW"
+      },
+      {
+        "from": "rebuildIdleSW",
+        "to": "attackSW"
+      },
+      {
         "from": "mergeNW",
         "to": "smokeWalk"
+      },
+      {
+        "from": "mergeIdleNW",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildNW",
+        "to": "idleNW"
+      },
+      {
+        "from": "rebuildIdleNW",
+        "to": "idleNW"
+      },
+      {
+        "from": "rebuildNW",
+        "to": "attackNW"
+      },
+      {
+        "from": "rebuildIdleNW",
+        "to": "attackNW"
       },
       {
         "from": "mergeN",
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleN",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildN",
+        "to": "idleN"
+      },
+      {
+        "from": "rebuildIdleN",
+        "to": "idleN"
+      },
+      {
+        "from": "rebuildN",
+        "to": "attackN"
+      },
+      {
+        "from": "rebuildIdleN",
+        "to": "attackN"
+      },
+      {
+        "from": "mergeNE",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "mergeIdleNE",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildNE",
+        "to": "idleNE"
+      },
+      {
+        "from": "rebuildIdleNE",
+        "to": "idleNE"
+      },
+      {
+        "from": "rebuildNE",
+        "to": "attackNE"
+      },
+      {
+        "from": "rebuildIdleNE",
+        "to": "attackNE"
+      },
+      {
+        "from": "mergeSE",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "mergeIdleSE",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildSE",
+        "to": "idleSE"
+      },
+      {
+        "from": "rebuildIdleSE",
+        "to": "idleSE"
+      },
+      {
+        "from": "rebuildSE",
+        "to": "attackSE"
+      },
+      {
+        "from": "rebuildIdleSE",
+        "to": "attackSE"
+      },
+      {
         "from": "mergeS",
         "to": "smokeWalk"
+      },
+      {
+        "from": "mergeIdleS",
+        "to": "smokeWalk"
+      },
+      {
+        "from": "rebuildS",
+        "to": "idleS"
+      },
+      {
+        "from": "rebuildIdleS",
+        "to": "idleS"
+      },
+      {
+        "from": "rebuildS",
+        "to": "attackS"
+      },
+      {
+        "from": "rebuildIdleS",
+        "to": "attackS"
       }
     ]
   }
