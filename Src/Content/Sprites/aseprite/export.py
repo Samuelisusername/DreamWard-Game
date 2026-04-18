@@ -26,27 +26,23 @@ data["meta"]["oneShotTransition"] = [
     for transition in [
         {"from": f"merge{d}",        "to": "smokeWalk"},
         {"from": f"mergeIdle{d}",    "to": "smokeWalk"},
-        {"from": f"rebuild{d}",      "to": f"idle{d}"},
+        {"from": f"rebuild{d}",      "to": f"walk{d}"},
         {"from": f"rebuildIdle{d}",  "to": f"idle{d}"},
-        {"from": f"rebuild{d}",      "to": f"attack{d}"},
         {"from": f"rebuildIdle{d}",  "to": f"attack{d}"},
     ]
 ]
 
-
-
-
 with open("../monsters.json", "w") as f:
     json.dump(data, f, indent=2)
 
-# day_top: without flat/meadow/shadow layers → sheet only (no json)
+# important that the layer part is before the file part
+# json is already exported earlier
 run_aseprite(
     "--ignore-layer", "flat", "--ignore-layer", "meadow", "--ignore-layer", "shadow",
     "day_top.aseprite", "--color-mode", "rgb",
     "--sheet", "../day_top.png", "--sheet-type", "horizontal",
 )
 
-# day_top_base: flat/meadow/shadow layers only → sheet + json
 run_aseprite(
     "--layer", "flat", "--layer", "meadow", "--layer", "shadow",
     "day_top.aseprite", "--color-mode", "rgb",
@@ -54,14 +50,12 @@ run_aseprite(
     "--data", "../day_top_base.json", "--list-slices", "--list-tags",
 )
 
-# night_top: without flat/meadow/shadow layers → sheet only
 run_aseprite(
     "--ignore-layer", "flat", "--ignore-layer", "meadow", "--ignore-layer", "shadow",
     "night_top.aseprite", "--color-mode", "rgb",
     "--sheet", "../night_top.png", "--sheet-type", "horizontal",
 )
 
-# night_top_base: flat/meadow/shadow layers only → sheet + json
 run_aseprite(
     "--layer", "flat", "--layer", "meadow", "--layer", "shadow",
     "night_top.aseprite", "--color-mode", "rgb",
