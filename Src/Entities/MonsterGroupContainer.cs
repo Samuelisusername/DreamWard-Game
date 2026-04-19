@@ -241,11 +241,23 @@ public class MonsterGroupContainer
     {
         MonsterGroups.ForEach(i => i.SetScale(scale));
     }
+
+    public void DrawShadow(SpriteBatch spriteBatch)
+    {
+        MonsterGroups.ForEach(i =>
+        {
+            if(i.MonsterType == MonsterType.Flying)
+            {
+                (i as FlyingMonsterGroup).DrawShadow(spriteBatch, PositionOnTile(i.MonsterType));
+            }
+        });
+    }
+
     public void DrawGround(SpriteBatch spriteBatch)
     {
         MonsterGroups.ForEach(i =>
         {
-            if(i.MonsterType != MonsterType.Flying)
+            if(i.isGrounded)
             {
                 i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
             }
@@ -256,7 +268,7 @@ public class MonsterGroupContainer
     {
         MonsterGroups.ForEach(i =>
         {
-            if(i.MonsterType == MonsterType.Flying)
+            if(!i.isGrounded)
             {
                 i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
             }

@@ -154,7 +154,8 @@ public class MapRenderer
                         continue;
                     }
 
-                    //GROUNDEDMONSTERDRAWING                
+                    //GROUNDEDMONSTERDRAWING               
+                    mapManager.GetMonsterContainer(localTilePos)?.DrawShadow(spriteBatch); 
                     mapManager.GetMonsterContainer(localTilePos)?.DrawGround(spriteBatch);
 
                     //TOPDRAWING
@@ -162,7 +163,7 @@ public class MapRenderer
                     s?.Draw(spriteBatch);
 
                     //FLYINGMONSTERDRWAING
-                    mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);
+                    //mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);
                 }
             }
             

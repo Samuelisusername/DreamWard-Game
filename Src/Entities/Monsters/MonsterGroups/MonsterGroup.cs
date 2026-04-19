@@ -47,13 +47,15 @@ public abstract class MonsterGroup
     protected bool _oldGoalReached = false;
     private bool isMerging;
 
+    public abstract bool isGrounded {get;}
+
     public void ResetGroup((int,int) pos)
     {
         shouldRecalcPath = false;
         TilePosition = pos;
     }
 
-    public Vector2 GetInterpolatedWorldPosition()
+    public virtual Vector2 GetInterpolatedWorldPosition()
     {
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
         if (Monsters.Count == 0) return origin;
@@ -65,7 +67,12 @@ public abstract class MonsterGroup
 
     public void RemoveDead() 
     {
+        int oldCount = Count;
         Monsters.RemoveAll(m => m.IsDestroyed);
+        if(Count <= 2 && oldCount > 2)
+        {
+            SetAnimation();
+        }
     }
     
     public (int, int) CommonNextTarget()
@@ -213,7 +220,7 @@ public abstract class MonsterGroup
 
     protected AnimatedSprite sprite;
 
-    public void Draw(SpriteBatch spriteBatch, (int totalGroups, int rank) posOnTile)
+    public virtual void Draw(SpriteBatch spriteBatch, (int totalGroups, int rank) posOnTile)
     {
         if (IsEmpty) return;
 

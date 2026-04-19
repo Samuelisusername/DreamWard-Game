@@ -2,6 +2,7 @@ using System;
 
 public class RegularMonsterGroup : MonsterGroup
 {
+    public override bool isGrounded => true;
     public RegularMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
     {
     }

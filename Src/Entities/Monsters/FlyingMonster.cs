@@ -21,7 +21,7 @@ public class FlyingMonster : Monster
     public override bool CanStepOn(Entity entity)
     {
         if (entity is TreeTile) return false;
-        if (entity is Wall) return false;
+        //if (entity is Wall) return false; TODO: Once pathfinding is updated uncomment this
         return true;
     }
     

@@ -19,7 +19,7 @@ public abstract class Tower : Structure
 
     public virtual void Attack(float dt)
     {
-        var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth);
+        var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth + 1);
         bool dealtDamageThisFrame = false;
         foreach (var tile in tilesInRange)
         {
@@ -30,6 +30,10 @@ public abstract class Tower : Structure
                 // Pass that info into the container
                 targetContainer.TakeDamage(damagePerSecond * dt, this is AreaTower, this is Spike); 
                 dealtDamageThisFrame = true;
+                if(this is SniperTower)
+                {
+                    break;
+                }
             }
         }
         
