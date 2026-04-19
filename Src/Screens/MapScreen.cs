@@ -30,6 +30,7 @@ public class MapScreen : GamelabGameScreen
     private Rectangle _tutorial_btn;
     private int _tutorial_step = 0;
     private bool _tutorial_btn_pressed = false; 
+    private int _lastAudioStep = -1;
 
 
     // Cards
@@ -535,6 +536,11 @@ public class MapScreen : GamelabGameScreen
     }
     else if (speaker == "Sheep")
     {
+        if (_lastAudioStep != _tutorial_step)
+        {
+            AudioManager.Play("sheep_baa");
+            _lastAudioStep = _tutorial_step; // Remember that we played it
+        }
         currentPortraitTex = _dayTopTexture;
         currentSourceRect = _sheepPortraitRect;
         portraitScale = 4f; // 5x bigger than the old 0.8f!
@@ -543,9 +549,15 @@ public class MapScreen : GamelabGameScreen
         float scaledWidth = currentSourceRect.Width * portraitScale;
         float scaledHeight = currentSourceRect.Height * portraitScale;
         
-        portraitX = dialogRect.Right - (int)scaledWidth; // Align to the right edge
+        portraitX = dialogRect.Right - (int)scaledWidth +201; // Align to the right edge
         portraitY = dialogRect.Bottom - (int)scaledHeight; // Anchor to the bottom of the dialog box
         textOffsetX = 20; // Text stays on the left
+
+    }
+if (speaker == "Human" && _lastAudioStep != _tutorial_step)
+    {
+        AudioManager.Play("grunt_03");
+        _lastAudioStep = _tutorial_step;
     }
 
     // Draw the portrait
