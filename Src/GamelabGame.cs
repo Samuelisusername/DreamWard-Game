@@ -77,7 +77,7 @@ public class GamelabGame : Game
     public static bool IsHovering { get; set; }
 
     public static Random Rng { get; private set; }
-    public static int Seed { get; private set; } = 100;
+    public static int Seed { get; private set; } = 0;
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {
