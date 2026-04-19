@@ -1,9 +1,16 @@
 import json
+import shutil
 import subprocess
 
 MERGE_DIRS = ["SW", "NW", "N", "NE", "SE", "S"]
 
+ASEPRITE_AVAILABLE = shutil.which("aseprite") is not None
+if not ASEPRITE_AVAILABLE:
+    print("WARNING: aseprite not found. skipping sprite export, JSON patching only")
+
 def run_aseprite(*args):
+    if not ASEPRITE_AVAILABLE:
+        return
     subprocess.run(["aseprite", "-b", *args], check=True)
 
 # Export all aseprite files
