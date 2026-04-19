@@ -195,7 +195,7 @@ public class GamelabGame : Game
 
     protected override void Update(GameTime gameTime)
     {
-        gameTime.ElapsedGameTime *= GameSpeed;
+        GameTime time = new GameTime(gameTime.TotalGameTime, gameTime.ElapsedGameTime * GameSpeed);
         if (nextScreen != null)
         {
             SwitchToScreenImmediately(nextScreen);
@@ -203,7 +203,7 @@ public class GamelabGame : Game
         }
 
         IsHovering = false;
-        base.Update(gameTime);
+        base.Update(time);
 
         var mouseState = Mouse.GetState();
         if (IsHovering){
