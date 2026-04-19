@@ -31,6 +31,9 @@ public class MapScreen : GamelabGameScreen
     private int _tutorial_step = 0;
     private bool _tutorial_btn_pressed = false; 
     private int _lastAudioStep = -1;
+    private float _textTimer = 0f;
+    private int _charIndex = 0;
+    private int _previousTutorialStep = -1;
 
 
     // Cards
@@ -435,7 +438,8 @@ public class MapScreen : GamelabGameScreen
         }
         if (_is_active_tutorial)
         {
-            DrawTutorialState();
+
+            DrawTutorialState(gameTime);
         }
         if (_showDayPopup)
         {
@@ -447,7 +451,36 @@ public class MapScreen : GamelabGameScreen
     // ------------------------
     // Draw Helpers
     // ------------------------
-   private void DrawTutorialState()
+    private string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
+{
+    // Remove any hardcoded newlines you might have left in your strings
+    text = text.Replace("\n", " "); 
+    
+    string[] words = text.Split(' ');
+    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+    float lineWidth = 0f;
+    float spaceWidth = font.MeasureString(" ").X * scale;
+
+    foreach (string word in words)
+    {
+        Vector2 size = font.MeasureString(word) * scale;
+
+        if (lineWidth + size.X < maxLineWidth)
+        {
+            sb.Append(word + " ");
+            lineWidth += size.X + spaceWidth;
+        }
+        else
+        {
+            // The word is too long, push it to the next line!
+            sb.Append("\n" + word + " ");
+            lineWidth = size.X + spaceWidth;
+        }
+    }
+
+    return sb.ToString();
+}
+private void DrawTutorialState(GameTime gameTime)
 {
     int vw = (int)viewportAdapter.VirtualWidth;
     int vh = (int)viewportAdapter.VirtualHeight;
@@ -468,7 +501,7 @@ public class MapScreen : GamelabGameScreen
             break;
         case 1:
             speaker = "Sheep";
-            text = "Oh good, you're awake! Last night when you were sleeping,\ndemons came and attacked me and you.\nPlease build some defenses before the next night starts.";
+            text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you. Please build some defenses before the next night starts.";
             break;
         case 2:
             speaker = "Human";
@@ -476,14 +509,14 @@ public class MapScreen : GamelabGameScreen
             break;
         case 3:
             speaker = "Sheep";
-            text = "Your sleep monsters went for your sanity and they also tried to eat me.\nThe monsters want to attack sanity points. To do that they need to reach\nyour tent. And they attack me too because I produce sanity each morning\nfor you, if I survive the night.";
+            text = "Your sleep monsters went for your sanity and they also tried to eat me. The monsters want to attack sanity points. To do that they need to reach your tent. And they attack me too because I produce sanity each morning for you, if I survive the night.";
             
             // EXACT math to match your Sanity UI box perfectly
             string sanityText = $"Sanity: {sanityManager.Sanity}";
             string dayText = $"Day: {gamePhaseManager.DayCount}/10";
             Vector2 s1 = _font.MeasureString(sanityText);
             Vector2 s2 = _font.MeasureString(dayText);
-            int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; // 20 is pad * 2
+            int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; 
             int boxHeight = (int)(s1.Y + s2.Y + (70 - 20 - s1.Y)) + 20;
             
             highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
@@ -496,29 +529,24 @@ public class MapScreen : GamelabGameScreen
         var h = highlightBox.Value;
         int border = 4;
         Color hc = Color.Yellow;
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); // Top
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     // Bottom
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      // Left
-        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);                           // Right
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); 
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      
+        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);                           
     }
 
     // --- Draw the clean Dialog Box ---
     int dialogHeight = 140;
     Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
     
-    // Draw outer light border
     spriteBatch.Draw(_dummy, dialogRect, COLOR_L); 
-    // Draw inner dark border
     spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
-    // Draw inner fill
     spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
 
     // --- Determine Speaker Portrait ---
     Texture2D currentPortraitTex = null;
     Rectangle currentSourceRect = Rectangle.Empty;
     float portraitScale = 1f;
-    
-    // Variables to dynamically place the portrait and text
     int portraitX = 0;
     int portraitY = 0;
     int textOffsetX = 20; 
@@ -527,45 +555,76 @@ public class MapScreen : GamelabGameScreen
     {
         currentPortraitTex = _dayPlayerTexture;
         currentSourceRect = _humanPortraitRect;
-        portraitScale = 3f; // Scale up the tiny 16x32 human
+        portraitScale = 3f; 
         
-        // Put the Human on the left
         portraitX = dialogRect.X + 20;
         portraitY = dialogRect.Y + 20;
-        textOffsetX = 140; // Shift text right so it doesn't cover the human
+        textOffsetX = 140; 
     }
     else if (speaker == "Sheep")
     {
-        if (_lastAudioStep != _tutorial_step)
-        {
-            AudioManager.Play("sheep_baa");
-            _lastAudioStep = _tutorial_step; // Remember that we played it
-        }
         currentPortraitTex = _dayTopTexture;
         currentSourceRect = _sheepPortraitRect;
-        portraitScale = 4f; // 5x bigger than the old 0.8f!
+        portraitScale = 4f; 
         
-        // Put the giant Sheep on the right
         float scaledWidth = currentSourceRect.Width * portraitScale;
         float scaledHeight = currentSourceRect.Height * portraitScale;
         
-        portraitX = dialogRect.Right - (int)scaledWidth +201; // Align to the right edge
-        portraitY = dialogRect.Bottom - (int)scaledHeight; // Anchor to the bottom of the dialog box
-        textOffsetX = 20; // Text stays on the left
-
+        portraitX = dialogRect.Right - (int)scaledWidth + 201; 
+        portraitY = dialogRect.Bottom - (int)scaledHeight; 
+        textOffsetX = 20; 
     }
-if (speaker == "Human" && _lastAudioStep != _tutorial_step)
+
+    // --- Typewriter & Audio Logic ---
+    float textScale = 0.5f; 
+    float maxTextWidth = (speaker == "Sheep") 
+        ? portraitX - (dialogRect.X + textOffsetX) - 20 
+        : dialogRect.Right - (dialogRect.X + textOffsetX) - 20;
+
+    string wrappedText = WrapText(_font, text, maxTextWidth, textScale);
+
+    // If the dialog step changed, reset the typewriter
+    if (_previousTutorialStep != _tutorial_step)
     {
-        AudioManager.Play("grunt_03");
-        _lastAudioStep = _tutorial_step;
+        _charIndex = 0;
+        _textTimer = 0f;
+        _previousTutorialStep = _tutorial_step;
     }
 
-    // Draw the portrait
+    bool isTyping = _charIndex < wrappedText.Length;
+
+    if (isTyping)
+    {
+        _textTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float timePerChar = 0.03f; // <-- Change this to make typing faster or slower
+
+        while (_textTimer >= timePerChar && _charIndex < wrappedText.Length)
+        {
+            _charIndex++;
+            _textTimer -= timePerChar;
+            int frequency = speaker == "Human" ? 10:30; //frequency of soundeffects for human and sheep
+
+            // Audio Blips! Play sound every 4 letters (and don't play on spaces/newlines)
+            if (_charIndex % frequency == 4 && wrappedText[_charIndex - 1] != ' ' && wrappedText[_charIndex - 1] != '\n')
+            {
+                if (speaker == "Sheep") AudioManager.Play("sheep_baa");
+                else if (speaker == "Human") AudioManager.Play("grunt_03");
+            }
+        }
+    }
+
+    // Only draw the characters we have revealed so far!
+    string textToDraw = wrappedText.Substring(0, _charIndex);
+
+    // --- Portrait Bouncing Logic ---
+    // If typing, bounce up and down using a Sine wave. If done typing, sit still (0).
+    int bounceOffset = isTyping ? (int)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 20) * 4) : 0;
+
     if (currentPortraitTex != null)
     {
         spriteBatch.Draw(
             currentPortraitTex, 
-            new Vector2(portraitX, portraitY), 
+            new Vector2(portraitX, portraitY + bounceOffset), // Adding the bounce here!
             currentSourceRect, 
             Color.White, 
             0f, 
@@ -577,25 +636,22 @@ if (speaker == "Human" && _lastAudioStep != _tutorial_step)
     }
 
     // --- Draw the Text ---
-    float textScale = 0.5f; 
-
-    // Draw Speaker Name
     spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
-    
-    // Draw Dialogue Text
-    spriteBatch.DrawString(_font, text, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+    spriteBatch.DrawString(_font, textToDraw, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
 
     // Draw "Click to continue" hint
     string hint = "(Click anywhere to continue)";
     Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
-    
-    // Nudge the hint to the left if the sheep is currently taking up the right side!
     int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X - 20 : dialogRect.Right - (int)hintSize.X - 20;
     
-    spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 20), Color.DarkOliveGreen, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+    // Optional extra flair: make the "Click to continue" blink when typing is done!
+    if (!isTyping)
+    {
+        float pulse = (float)Math.Abs(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3));
+        spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 20), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+    }
 }
-
-    private void DrawDayPopup()
+  private void DrawDayPopup()
     {
         int w = (int)viewportAdapter.VirtualWidth;
         int h = (int)viewportAdapter.VirtualHeight;
