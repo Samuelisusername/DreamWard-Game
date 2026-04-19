@@ -73,6 +73,12 @@ public abstract class MonsterGroup
         if (IsEmpty) return this.TilePosition;
         return Monsters[0].GetCurrentGoal();
     }
+    
+    public (int, int)? CommonAttackTarget()
+    {
+        if (IsEmpty) return null;
+        return Monsters[0].AttackTarget;
+    }
 
     public void TakeDamageAOE(float damage)
     {
@@ -229,11 +235,23 @@ public abstract class MonsterGroup
     {
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
-        anim ??= CommonNextTarget() == TilePosition ? "idle" : "walk";
+        
         string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
         direction = direction == "" ? "S" : direction;
+        switch (anim)
+        {
+            case "merge":
+                anim = CommonNextTarget() == TilePosition ? "mergeIdle" + direction + "_smokeWalk" : "merge" + direction + "_smokeWalk";
+                break;
+            case "rebuild":
+                anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "rebuildIdle" + direction + "_idle" + direction : "rebuildIdle" + direction + "_attack" + direction) : "rebuild" + direction + "_walk" + direction;
+                break;
+            default:
+                anim = CommonNextTarget() == TilePosition ? "idle" + direction : "walk" + direction;
+            break;
+        }
         //Turn into Amalgam
-        sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim + direction);
+        sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim );
         if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
         else sprite.SpriteEffects = SpriteEffects.None;
     }

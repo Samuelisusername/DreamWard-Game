@@ -201,7 +201,6 @@ public class TextureAtlas
                         {
                             atlas.AddRegion(entityName + i.ToString(), x + width * i, y, width, height);
                         }
-
                     }
                     foreach(JsonElement anim in root.GetProperty("meta").GetProperty("frameTags").EnumerateArray())
                     {
@@ -257,7 +256,17 @@ public class TextureAtlas
                             }
                         }
                     }
-
+                    JsonElement oneShots;
+                    if(root.GetProperty("meta").TryGetProperty("oneShotTransition", out oneShots))
+                    {
+                        foreach(JsonElement oneShot in oneShots.EnumerateArray())
+                        {
+                            string from = oneShot.GetProperty("from").GetString();
+                            string to = oneShot.GetProperty("to").GetString();
+                            Animation oneShotAnim = atlas.GetAnimation(entityName + "_" + from.Replace("Idle","")).GetOneShotAnimation(atlas.GetAnimation(entityName + "_" + to));
+                            atlas.AddAnimation(entityName + "_" +from + "_" + to, oneShotAnim);
+                        } 
+                    }
                 }
 
                 return atlas;

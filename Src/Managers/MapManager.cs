@@ -184,7 +184,7 @@ public class MapManager
                         }
                         else
                         {
-                            TilesOfsets[i,j] = new Vector2((float)GamelabGame.Rng.NextDouble(), (float)GamelabGame.Rng.NextDouble()) * Math.Clamp((float)-FallTimer[i,j].TotalSeconds, 0.0f, 4.0f) * Scale;
+                            TilesOfsets[i,j] = new Vector2((float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble()) * Math.Clamp((float)-FallTimer[i,j].TotalSeconds, 0.0f, 4.0f) * Scale;
                         }
                     }
                 }
@@ -433,12 +433,12 @@ public class MapManager
             {
                 if(i - Columns >= 0 && i - Columns < Columns && j - Rows >= 0 && j - Rows < Rows)
                 {                        
-                    _tiles[i - Columns, j - Rows] = GamelabGame.Rng.Next(0,_tileSets["day"].Count / 2) * 2;
+                    _tiles[i - Columns, j - Rows] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
                     _exteriorTiles[i, j] = -1;
                 }
                 else
                 {
-                    _exteriorTiles[i, j] = GamelabGame.Rng.Next(0,_tileSets["day"].Count / 2) * 2;
+                    _exteriorTiles[i, j] = Random.Shared.Next(0,_tileSets["day"].Count / 2) * 2;
                 }
             }
         }
@@ -770,7 +770,7 @@ public class MapManager
     /// </summary>
     private static string PickTreeAnim(double bigChance, double midChance)
     {
-        double r = GamelabGame.Rng.NextDouble();
+        double r = Random.Shared.NextDouble();
         if (r < bigChance) return "treeBig_idle";
         if (r < bigChance + midChance) return "treeMid_idle";
         return "treeSmall_idle";
@@ -812,7 +812,7 @@ public class MapManager
             for (int j = 0; j < Rows*3; j++)
             {
                 int dist = MapUtils.CalculateTileDistance((i - Columns,j-Rows), GetTent());
-                FallTimer[i,j] = TimeSpan.FromSeconds(-((shakeMax * (float)GamelabGame.Rng.NextDouble()) + (Math.Min(dist, 25) * shakeOffset)));
+                FallTimer[i,j] = TimeSpan.FromSeconds(-((shakeMax * (float)Random.Shared.NextDouble()) + (Math.Min(dist, 25) * shakeOffset)));
             }
         }
         MaxTotalFallTime = -FallTimer.Cast<TimeSpan>().MaxBy(i => -i + MaxFallTime) + MaxFallTime;

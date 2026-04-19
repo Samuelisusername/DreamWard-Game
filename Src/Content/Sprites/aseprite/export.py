@@ -31,10 +31,12 @@ data["meta"]["oneShotTransition"] = [
     transition
     for d in MERGE_DIRS
     for transition in [
-        {"from": f"merge{d}",   "to": "smokeWalk"},
-        {"from": f"rebuild{d}", "to": f"walk{d}"},
-        {"from": f"rebuild{d}", "to": f"idle{d}"},
-        {"from": f"rebuild{d}", "to": f"attack{d}"},
+        {"from": f"merge{d}",        "to": "smokeWalk"},
+        {"from": f"mergeIdle{d}",    "to": "smokeWalk"},
+        {"from": f"rebuild{d}",      "to": f"walk{d}"},
+        {"from": f"rebuildIdle{d}",  "to": f"idle{d}"},
+        {"from": f"rebuildIdle{d}",  "to": f"attack{d}"},
+
     ]
 ]
 

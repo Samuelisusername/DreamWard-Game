@@ -1515,15 +1515,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleSW",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildSW",
         "to": "walkSW"
       },
       {
-        "from": "rebuildSW",
+        "from": "rebuildIdleSW",
         "to": "idleSW"
       },
       {
-        "from": "rebuildSW",
+        "from": "rebuildIdleSW",
         "to": "attackSW"
       },
       {
@@ -1531,15 +1535,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleNW",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildNW",
         "to": "walkNW"
       },
       {
-        "from": "rebuildNW",
+        "from": "rebuildIdleNW",
         "to": "idleNW"
       },
       {
-        "from": "rebuildNW",
+        "from": "rebuildIdleNW",
         "to": "attackNW"
       },
       {
@@ -1547,15 +1555,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleN",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildN",
         "to": "walkN"
       },
       {
-        "from": "rebuildN",
+        "from": "rebuildIdleN",
         "to": "idleN"
       },
       {
-        "from": "rebuildN",
+        "from": "rebuildIdleN",
         "to": "attackN"
       },
       {
@@ -1563,15 +1575,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleNE",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildNE",
         "to": "walkNE"
       },
       {
-        "from": "rebuildNE",
+        "from": "rebuildIdleNE",
         "to": "idleNE"
       },
       {
-        "from": "rebuildNE",
+        "from": "rebuildIdleNE",
         "to": "attackNE"
       },
       {
@@ -1579,15 +1595,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleSE",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildSE",
         "to": "walkSE"
       },
       {
-        "from": "rebuildSE",
+        "from": "rebuildIdleSE",
         "to": "idleSE"
       },
       {
-        "from": "rebuildSE",
+        "from": "rebuildIdleSE",
         "to": "attackSE"
       },
       {
@@ -1595,15 +1615,19 @@
         "to": "smokeWalk"
       },
       {
+        "from": "mergeIdleS",
+        "to": "smokeWalk"
+      },
+      {
         "from": "rebuildS",
         "to": "walkS"
       },
       {
-        "from": "rebuildS",
+        "from": "rebuildIdleS",
         "to": "idleS"
       },
       {
-        "from": "rebuildS",
+        "from": "rebuildIdleS",
         "to": "attackS"
       }
     ]

@@ -27,4 +27,9 @@ public class Animation
         NextAnimation = nextAnimation;
     }
 
+    public Animation GetOneShotAnimation(Animation nextAnimation)
+    {
+        return new Animation(Frames, Delay, true, nextAnimation);
+    }
+
 }
