@@ -1,3 +1,4 @@
+
 #----------------------------- Global Properties ----------------------------#
 
 /outputDir:bin/$(Platform)
@@ -16,14 +17,36 @@
 #begin Data/example.json
 /copy:Data/example.json
 
+#begin font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:font.spritefont
+
+#begin PixeloidSans-lxa3y.ttf
+/copy:PixeloidSans-lxa3y.ttf
+
 #begin promptfont.ttf
 /copy:promptfont.ttf
+
+#begin Sounds/action_cards/card-place.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/action_cards/card-place.wav
 
 #begin Sounds/action_cards/coinsplash.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/action_cards/coinsplash.wav
+
+#begin Sounds/action_cards/error.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/action_cards/error.wav
 
 #begin Sounds/action_cards/shuffle.wav
 /importer:WavImporter
@@ -109,223 +132,23 @@
 /processorParam:Quality=Best
 /build:Sounds/demons/scream_01.wav
 
-#begin Sounds/preferred_option_day.mp3
-/importer:Mp3Importer
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/preferred_option_day.mp3
-
-#begin Sounds/sheep_baa.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/sheep_baa.wav
-
-#begin Sounds/shuffle.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/shuffle.wav
-
-#begin Sprites/day_player.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/day_player.png
-
-#begin Sprites/day_tiles.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/day_tiles.png
-
-#begin Sprites/day_top.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/day_top.png
-
-#begin Sprites/monsters.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/monsters.png
-
-#begin Sprites/night_player.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/night_player.png
-
-#begin Sprites/night_tiles.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/night_tiles.png
-
-#begin Sprites/night_top.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/night_top.png
-
-#begin Sprites/monsters.json
-/copy:Sprites/monsters.json
-
-#begin Sprites/night_top.json
-/copy:Sprites/night_top.json
-
-#begin Sprites/nightpalette.json
-/copy:Sprites/nightpalette.json
-
-#begin Sprites/day_tiles.json
-/copy:Sprites/day_tiles.json
-
-#begin Sprites/daypalette.json
-/copy:Sprites/daypalette.json
-
-#begin Sprites/interface.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/interface.png
-
-#begin Sprites/night_tiles.json
-/copy:Sprites/night_tiles.json
-
-#begin Sprites/cards.json
-/copy:Sprites/cards.json
-
-#begin Sprites/day_top.json
-/copy:Sprites/day_top.json
-
-#begin Sprites/cards.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/cards.png
-
-#begin Sprites/nightpalette.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/nightpalette.png
-
-#begin Sprites/day_player.json
-/copy:Sprites/day_player.json
-
-#begin Sprites/night_player.json
-/copy:Sprites/night_player.json
-
-#begin Sprites/interface.json
-/copy:Sprites/interface.json
-
-#begin Sprites/daypalette.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/daypalette.png
-
-#begin Sprites/monsters_alternative.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/monsters_alternative.png
-
-#begin font.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/build:font.spritefont
-
-#begin Sprites/night_top-atlas-definition.xml
-/copy:Sprites/night_top-atlas-definition.xml
-
-#begin Sprites/night_top_alternative.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/night_top_alternative.png
-
 #begin Sounds/dragonflap.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/dragonflap.wav
 
-#begin Sounds/action_cards/card-place.wav
-/importer:WavImporter
+#begin Sounds/preferred_option_day.mp3
+/importer:Mp3Importer
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/action_cards/card-place.wav
-
-#begin Sounds/action_cards/error.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/action_cards/error.wav
-
-#begin Sounds/start_screen.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Sounds/start_screen.wav
-
-#begin Sprites/Start.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/Start.png
-
-#begin Sprites/icon.json
-/copy:Sprites/icon.json
-
-#begin Sprites/icon.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/icon.png
+/build:Sounds/preferred_option_day.mp3
 
 #begin Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
+/processorParam:Quality=Best
 /build:Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695.mp3
-
-#begin PixeloidSans-lxa3y.ttf
-/copy:PixeloidSans-lxa3y.ttf
 
 #begin Sounds/rustle/rustle01.wav
 /importer:WavImporter
@@ -446,27 +269,298 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Sounds/rustle/rustle20.wav
-#begin Sprites/night_top_base.png
+
+#begin Sounds/sheep_baa.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/sheep_baa.wav
+
+#begin Sounds/shuffle.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/shuffle.wav
+
+#begin Sounds/start_screen.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/start_screen.wav
+
+#begin Sprites/cards.json
+/copy:Sprites/cards.json
+
+#begin Sprites/cards.png
 /importer:TextureImporter
 /processor:TextureProcessor
-/build:Sprites/night_top_base.png
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/cards.png
+
+#begin Sprites/day_player.json
+/copy:Sprites/day_player.json
+
+#begin Sprites/day_player.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day_player.png
+
+#begin Sprites/day_tiles.json
+/copy:Sprites/day_tiles.json
+
+#begin Sprites/day_tiles.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day_tiles.png
+
+#begin Sprites/day_top_base.json
+/copy:Sprites/day_top_base.json
 
 #begin Sprites/day_top_base.png
 /importer:TextureImporter
 /processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
 /build:Sprites/day_top_base.png
 
-#begin Sprites/night_background.png
+#begin Sprites/day_top.json
+/copy:Sprites/day_top.json
+
+#begin Sprites/day_top.png
 /importer:TextureImporter
 /processor:TextureProcessor
-/build:Sprites/night_background.png
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day_top.png
+
+#begin Sprites/daypalette.json
+/copy:Sprites/daypalette.json
+
+#begin Sprites/daypalette.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/daypalette.png
+
+#begin Sprites/icon.json
+/copy:Sprites/icon.json
+
+#begin Sprites/icon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/icon.png
+
+#begin Sprites/interface.json
+/copy:Sprites/interface.json
+
+#begin Sprites/interface.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/interface.png
+
+#begin Sprites/monsters_alternative.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/monsters_alternative.png
+
+#begin Sprites/monsters.json
+/copy:Sprites/monsters.json
+
+#begin Sprites/monsters.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/monsters.png
 
 #begin Sprites/night_background.json
 /copy:Sprites/night_background.json
 
+#begin Sprites/night_background.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_background.png
+
+#begin Sprites/night_player.json
+/copy:Sprites/night_player.json
+
+#begin Sprites/night_player.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_player.png
+
+#begin Sprites/night_tiles.json
+/copy:Sprites/night_tiles.json
+
+#begin Sprites/night_tiles.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_tiles.png
+
+#begin Sprites/night_top_alternative.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_top_alternative.png
+
 #begin Sprites/night_top_base.json
 /copy:Sprites/night_top_base.json
 
-#begin Sprites/day_top_base.json
-/copy:Sprites/day_top_base.json
+#begin Sprites/night_top_base.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_top_base.png
+
+#begin Sprites/night_top-atlas-definition.xml
+/copy:Sprites/night_top-atlas-definition.xml
+
+#begin Sprites/night_top.json
+/copy:Sprites/night_top.json
+
+#begin Sprites/night_top.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/night_top.png
+
+#begin Sprites/nightpalette.json
+/copy:Sprites/nightpalette.json
+
+#begin Sprites/nightpalette.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/nightpalette.png
+
+#begin Sprites/shadowDummy.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/shadowDummy.png
+
+#begin Sprites/Start.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/Start.png
 
