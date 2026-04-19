@@ -20,6 +20,12 @@ public class MapScreen : GamelabGameScreen
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
+    private Texture2D _dayTopTexture;
+    private Texture2D _dayPlayerTexture;
+
+    // The exact coordinates from your JSON files
+    private readonly Rectangle _sheepPortraitRect = new Rectangle(0, 1408, 128, 128); 
+    private readonly Rectangle _humanPortraitRect = new Rectangle(0, 0, 16, 32);
     private bool _is_active_tutorial = false;
     private Rectangle _tutorial_btn;
     private int _tutorial_step = 0;
@@ -82,11 +88,15 @@ public class MapScreen : GamelabGameScreen
 
         AudioManager.LoadSound(Game.Content, "day_music", "Sounds/preferred_option_day");
         AudioManager.LoadSound(Game.Content, "night_music", "Sounds/creepy_demon_night_forest") ;
+        
 
         // Fonts and dummy texture
         _font = Content.Load<SpriteFont>("font");
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
         _dummy.SetData(new[] { Color.White });
+        // texture for tutorial 
+        _dayTopTexture = Content.Load<Texture2D>("Sprites/day_top");
+        _dayPlayerTexture = Content.Load<Texture2D>("Sprites/day_player");
 
         // 1x1 white texture used by EntityRenderer to draw HP bars
         entityRenderer.SetHealthBarTexture(_dummy);
@@ -502,20 +512,75 @@ public class MapScreen : GamelabGameScreen
     // Draw inner fill
     spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
 
+    // --- Determine Speaker Portrait ---
+    Texture2D currentPortraitTex = null;
+    Rectangle currentSourceRect = Rectangle.Empty;
+    float portraitScale = 1f;
+    
+    // Variables to dynamically place the portrait and text
+    int portraitX = 0;
+    int portraitY = 0;
+    int textOffsetX = 20; 
+
+    if (speaker == "Human")
+    {
+        currentPortraitTex = _dayPlayerTexture;
+        currentSourceRect = _humanPortraitRect;
+        portraitScale = 3f; // Scale up the tiny 16x32 human
+        
+        // Put the Human on the left
+        portraitX = dialogRect.X + 20;
+        portraitY = dialogRect.Y + 20;
+        textOffsetX = 140; // Shift text right so it doesn't cover the human
+    }
+    else if (speaker == "Sheep")
+    {
+        currentPortraitTex = _dayTopTexture;
+        currentSourceRect = _sheepPortraitRect;
+        portraitScale = 4f; // 5x bigger than the old 0.8f!
+        
+        // Put the giant Sheep on the right
+        float scaledWidth = currentSourceRect.Width * portraitScale;
+        float scaledHeight = currentSourceRect.Height * portraitScale;
+        
+        portraitX = dialogRect.Right - (int)scaledWidth; // Align to the right edge
+        portraitY = dialogRect.Bottom - (int)scaledHeight; // Anchor to the bottom of the dialog box
+        textOffsetX = 20; // Text stays on the left
+    }
+
+    // Draw the portrait
+    if (currentPortraitTex != null)
+    {
+        spriteBatch.Draw(
+            currentPortraitTex, 
+            new Vector2(portraitX, portraitY), 
+            currentSourceRect, 
+            Color.White, 
+            0f, 
+            Vector2.Zero, 
+            portraitScale, 
+            SpriteEffects.None, 
+            0f
+        );
+    }
+
     // --- Draw the Text ---
-    // Scale variable: Change this if the text is still slightly too big or too small!
     float textScale = 0.5f; 
 
-    // Draw Speaker Name (slightly larger)
-    spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + 20, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
+    // Draw Speaker Name
+    spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
     
     // Draw Dialogue Text
-    spriteBatch.DrawString(_font, text, new Vector2(dialogRect.X + 20, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+    spriteBatch.DrawString(_font, text, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
 
     // Draw "Click to continue" hint
     string hint = "(Click anywhere to continue)";
     Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
-    spriteBatch.DrawString(_font, hint, new Vector2(dialogRect.Right - hintSize.X - 20, dialogRect.Bottom - 20), Color.DarkOliveGreen, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+    
+    // Nudge the hint to the left if the sheep is currently taking up the right side!
+    int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X - 20 : dialogRect.Right - (int)hintSize.X - 20;
+    
+    spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 20), Color.DarkOliveGreen, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 }
 
     private void DrawDayPopup()
