@@ -35,7 +35,6 @@ public static class Program
         var seed = options.GetValue(seedOption);
 
         game = new GamelabGame(runMode, seed);
-        logger.Info($"Using seed: {GamelabGame.Seed}");
 
         if (runCICDTest)
         {

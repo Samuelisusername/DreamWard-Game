@@ -77,13 +77,16 @@ public class GamelabGame : Game
     public static bool IsHovering { get; set; }
 
     public static Random Rng { get; private set; }
-    public static int Seed { get; private set; } = 0;
+    public static int Seed { get; private set; }
+    
+    private int setSeed = 0; //set this to override seed
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {
         Instance = this;
 
-        Seed = seed ?? (Seed == 0 ? new Random().Next(): Seed);
+        setSeed = seed ?? setSeed;
+        Seed = setSeed == 0 ? new Random().Next(): setSeed;
         Rng = new Random(Seed);
 
         this.runMode = runMode;
@@ -247,7 +250,9 @@ public class GamelabGame : Game
     /// </summary>
     public void ResetGame()
     {
+        Seed = setSeed == 0 ? new Random().Next(): setSeed;
         Rng = new Random(Seed);
+        logger.Info($"Using seed: {Seed}");
         CardManager = new();
         CombatManager = new();
         GamePhaseManager = new();
