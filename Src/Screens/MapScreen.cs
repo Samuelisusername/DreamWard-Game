@@ -20,6 +20,10 @@ public class MapScreen : GamelabGameScreen
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
+    private bool _is_active_tutorial = false;
+    private Rectangle _tutorial_btn;
+    private int _tutorial_step = 0;
+    private bool _tutorial_btn_pressed = false; 
 
 
     // Cards
@@ -120,6 +124,7 @@ public class MapScreen : GamelabGameScreen
         int vw = viewportAdapter.VirtualWidth;
         int vh = viewportAdapter.VirtualHeight;
         _toCardScreenBtn = new Rectangle(vw-183, 20, 163, 63);
+        _tutorial_btn = new Rectangle(vw-183, 80, 163, 63);
         if (gamePhaseManager.IsDay)
         {
             cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
@@ -254,6 +259,25 @@ public class MapScreen : GamelabGameScreen
                 _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = false;
                 if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
+                    if (_tutorial_btn.Contains(mousePos))
+                    {
+                        _is_active_tutorial = !_is_active_tutorial;
+                        _tutorial_step = 0; 
+                        AudioManager.Play("dragonflap");
+                        _clickStarted = false;
+                        return;
+                    }
+                    if (_is_active_tutorial)
+                    {
+                        _tutorial_step++;
+                        //reached tutorial end
+                        if(_tutorial_step == 4) //4 tutorial steps for the moment, change this later based on tutorial
+                        {  
+                           _is_active_tutorial = false; 
+                        }
+                        _clickStarted = false; 
+                        return;
+                    }
                     // Navigation to CardScreen
                     if (_toCardScreenBtn.Contains(mousePos))
                     {
@@ -391,11 +415,16 @@ public class MapScreen : GamelabGameScreen
             //cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
             DrawButton(_inventoryBtn,    _showInventory ? "Hide Cards" : "Show Cards", _inventoryBtnPressed);
             DrawButton(_towerRangeBtn,   _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
+            DrawButton(_tutorial_btn, _is_active_tutorial? "close tutorial" : "Tutorial", _tutorial_btn_pressed);
 
             if (_showInventory)
             {
                 cardRenderer.DrawCardSlots(spriteBatch, _dummy, _cardTexture, _cardRegions, _font, cardManager, _cardStartY, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight);
             }
+        }
+        if (_is_active_tutorial)
+        {
+            DrawTutorialState();
         }
         if (_showDayPopup)
         {
@@ -407,6 +436,87 @@ public class MapScreen : GamelabGameScreen
     // ------------------------
     // Draw Helpers
     // ------------------------
+   private void DrawTutorialState()
+{
+    int vw = (int)viewportAdapter.VirtualWidth;
+    int vh = (int)viewportAdapter.VirtualHeight;
+
+    // Darken the background slightly to focus on the tutorial
+    spriteBatch.Draw(_dummy, new Rectangle(0, 0, vw, vh), Color.Black * 0.4f);
+
+    string speaker = "";
+    string text = "";
+    Rectangle? highlightBox = null;
+
+    // Load the dialogue based on the current step
+    switch (_tutorial_step)
+    {
+        case 0:
+            speaker = "Human";
+            text = "Huh... where am I? What is happening?";
+            break;
+        case 1:
+            speaker = "Sheep";
+            text = "Oh good, you're awake! Last night when you were sleeping,\ndemons came and attacked me and you.\nPlease build some defenses before the next night starts.";
+            break;
+        case 2:
+            speaker = "Human";
+            text = "Did they do something to us?";
+            break;
+        case 3:
+            speaker = "Sheep";
+            text = "Your sleep monsters went for your sanity and they also tried to eat me.\nThe monsters want to attack sanity points. To do that they need to reach\nyour tent. And they attack me too because I produce sanity each morning\nfor you, if I survive the night.";
+            
+            // EXACT math to match your Sanity UI box perfectly
+            string sanityText = $"Sanity: {sanityManager.Sanity}";
+            string dayText = $"Day: {gamePhaseManager.DayCount}/10";
+            Vector2 s1 = _font.MeasureString(sanityText);
+            Vector2 s2 = _font.MeasureString(dayText);
+            int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; // 20 is pad * 2
+            int boxHeight = (int)(s1.Y + s2.Y + (70 - 20 - s1.Y)) + 20;
+            
+            highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
+            break;
+    }
+
+    // Draw the Highlight Border (if any)
+    if (highlightBox.HasValue)
+    {
+        var h = highlightBox.Value;
+        int border = 4;
+        Color hc = Color.Yellow;
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); // Top
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     // Bottom
+        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      // Left
+        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);                           // Right
+    }
+
+    // --- Draw the clean Dialog Box ---
+    int dialogHeight = 140;
+    Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
+    
+    // Draw outer light border
+    spriteBatch.Draw(_dummy, dialogRect, COLOR_L); 
+    // Draw inner dark border
+    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
+    // Draw inner fill
+    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
+
+    // --- Draw the Text ---
+    // Scale variable: Change this if the text is still slightly too big or too small!
+    float textScale = 0.5f; 
+
+    // Draw Speaker Name (slightly larger)
+    spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + 20, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
+    
+    // Draw Dialogue Text
+    spriteBatch.DrawString(_font, text, new Vector2(dialogRect.X + 20, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+
+    // Draw "Click to continue" hint
+    string hint = "(Click anywhere to continue)";
+    Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
+    spriteBatch.DrawString(_font, hint, new Vector2(dialogRect.Right - hintSize.X - 20, dialogRect.Bottom - 20), Color.DarkOliveGreen, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+}
 
     private void DrawDayPopup()
     {
