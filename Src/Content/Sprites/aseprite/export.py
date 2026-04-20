@@ -43,6 +43,11 @@ data["meta"]["oneShotTransition"] = [
 with open("../monsters.json", "w") as f:
     json.dump(data, f, indent=2)
 
+run_aseprite(
+    "icon.aseprite", "--color-mode", "rgb",
+    "--sheet", "../../../Icon.ico", "--sheet-type", "horizontal",
+)
+
 # important that the layer part is before the file part
 # json is already exported earlier
 run_aseprite(
