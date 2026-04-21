@@ -923,6 +923,7 @@ public class MapManager
             for (int j = 0; j < Rows*3; j++)
             {
                 TilesOfsets[i,j] = Vector2.Zero;
+                FallTimer[i,j] = TimeSpan.Zero;
             }
         }
         MaxTotalFallTime = TimeSpan.FromSeconds(1f);
