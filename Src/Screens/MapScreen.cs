@@ -401,6 +401,41 @@ public class MapScreen : GamelabGameScreen
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
             entityRenderer.Draw(spriteBatch);
+            if (_is_active_tutorial && (_tutorial_step == 6 || _tutorial_step == 7))
+            {
+                float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
+                Color highlightColor = Color.Yellow * (0.3f + pulse * 0.4f);
+
+                for (int col = 0; col < mapManager.Columns; col++)
+                {
+                    for (int row = 0; row < mapManager.Rows; row++)
+                    {
+                        // 1. Check if the structure on this tile is a Meadow
+                        // Use GetStructure with the (col, row) tuple
+                        var structure = mapManager.GetStructure((col, row));
+
+                        if (structure is Meadow) 
+                        {
+                            // 2. Get the actual screen/world position for the hex
+                            Vector2 tilePos = mapManager.GetWorldPositionOfTile((col, row));
+                            
+                            // 3. Create a rectangle based on the tile's calculated position and size
+                            Rectangle tileRect = new Rectangle(
+                                (int)tilePos.X, 
+                                (int)tilePos.Y, 
+                                (int)mapManager.TileWidth, 
+                                (int)mapManager.TileHeight
+                            );
+
+                            // 4. Draw the highlight
+                            spriteBatch.Draw(_dummy, tileRect, highlightColor);
+                        }
+                    }
+                }
+            }
+
+
+            
         }
         if (_showTowerRange && gamePhaseManager.IsDay)
         {
@@ -590,6 +625,8 @@ else
             break;
         case 6:
             speaker = "Sheep";
+            
+            _targetZoom = 1.0f;
             text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
             break;
         case 7: 
