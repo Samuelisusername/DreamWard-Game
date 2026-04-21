@@ -142,7 +142,7 @@ public abstract class MonsterGroup
     {
         shouldCheckMerge = false;
         Entity destStructure = mapManager.GetStructure(CommonNextTarget());
-        if (destStructure != null && !Monsters[0].CanStepOn(destStructure))
+        if (destStructure != null /*&& !Monsters[0].CanStepOn(destStructure)*/)
         {
             Monsters.ForEach( i=>
             {
@@ -151,15 +151,11 @@ public abstract class MonsterGroup
                     i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
                     i.Path = new List<(int,int)> { i.Path[0] };
                 }
-                else
-                {
-                    throw new Exception("monster has a path through a tile it cant step on and it cant attack, not good :(");
-                }
+                // else
+                // {
+                //     throw new Exception("monster has a path through a tile it cant step on and it cant attack, not good :(");
+                // }
             });
-            if(_goalReached)
-            {
-                SetAnimation();
-            }
         }
 
         if (_goalReached != _oldGoalReached)
@@ -243,7 +239,7 @@ public abstract class MonsterGroup
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
         
-        string direction = MapUtils.GetDirection(TilePosition, CommonNextTarget());
+        string direction = MapUtils.GetDirection(TilePosition, CommonAttackTarget() ?? CommonNextTarget());
         direction = direction == "" ? "S" : direction;
         switch (anim)
         {
@@ -254,7 +250,7 @@ public abstract class MonsterGroup
                 anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "rebuildIdle" + direction + "_idle" + direction : "rebuildIdle" + direction + "_attack" + direction) : "rebuild" + direction + "_walk" + direction;
                 break;
             default:
-                anim = CommonNextTarget() == TilePosition ? "idle" + direction : "walk" + direction;
+                anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "idle" + direction :  "attack" + direction) : "walk" + direction;
             break;
         }
         //Turn into Amalgam
