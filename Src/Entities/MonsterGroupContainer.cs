@@ -60,6 +60,9 @@ public class MonsterGroupContainer
                 case MonsterType.Flying:
                     newGroup = new FlyingMonsterGroup(tilePosition, TimeSpan.Zero);
                     break;
+                case MonsterType.Small:
+                    newGroup = new SmallMonsterGroup(tilePosition, TimeSpan.Zero);
+                    break;
                 default:
                     throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
             }
@@ -78,6 +81,23 @@ public class MonsterGroupContainer
         string oldDir = MapUtils.GetDirection(oldStart, oldGoal);
 
         monsterGroup.Monsters.ForEach(i => i.Move(shouldRecalcPath));
+
+        
+        
+        //if monster can attack structure on its way, do so
+        Entity destStructure = mapManager.GetStructure(monsterGroup.CommonNextTarget());
+        if (destStructure != null /*&& !Monsters[0].CanStepOn(destStructure)*/)
+        {
+            monsterGroup.Monsters.ForEach( i=>
+            {
+                if(i.CanTarget(destStructure))
+                {
+                    i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
+                    i.Path = new List<(int,int)> { i.Path[0] };
+                }
+            });
+        }
+
 
         List<List<Monster>> monsterLists = monsterGroup.Monsters.GroupBy(i => i.GetCurrentGoal()).Select(i => i.ToList()).ToList();
         
@@ -102,6 +122,9 @@ public class MonsterGroupContainer
                             break;
                         case MonsterType.Flying:
                             newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
+                            break;
+                        case MonsterType.Small:
+                            newGroup = new SmallMonsterGroup(tilePosition, elapsed);
                             break;
                         default:
                             throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
@@ -129,6 +152,9 @@ public class MonsterGroupContainer
                         break;
                     case MonsterType.Flying:
                         newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
+                        break;
+                    case MonsterType.Small:
+                        newGroup = new SmallMonsterGroup(tilePosition, elapsed);
                         break;
                     default:
                         throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");

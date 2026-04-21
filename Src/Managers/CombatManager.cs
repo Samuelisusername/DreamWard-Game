@@ -38,7 +38,7 @@ public class CombatManager
         return activeContainers;
     }
 
-    public void SpawnMonsters(int count)
+    public void SpawnMonsters(int count, int level)
     {
         // foreach (var item in spawnableArea)
         // {
@@ -49,7 +49,7 @@ public class CombatManager
         for (int i = 0; i < count; i++)
         {
             (int, int) pos = SpawnableArea[GamelabGame.Rng.Next(SpawnableArea.Count)];
-            if(!mapManager.AddNewMonster(pos))
+            if(!mapManager.AddNewMonster(pos, level))
             {
                 i--;
             }            

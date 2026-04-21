@@ -5,8 +5,6 @@ public class FlyingMonster : Monster
 
     public override MonsterType Type => MonsterType.Flying;
 
-    public override string Name => "Flying";
-
     public override bool CanTarget(Entity entity)
     {
         if (entity is VoidTile) return false;

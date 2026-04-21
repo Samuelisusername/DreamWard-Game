@@ -141,22 +141,6 @@ public abstract class MonsterGroup
     public void Update(GameTime gameTime)
     {
         shouldCheckMerge = false;
-        Entity destStructure = mapManager.GetStructure(CommonNextTarget());
-        if (destStructure != null /*&& !Monsters[0].CanStepOn(destStructure)*/)
-        {
-            Monsters.ForEach( i=>
-            {
-                if(i.CanTarget(destStructure))
-                {
-                    i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
-                    i.Path = new List<(int,int)> { i.Path[0] };
-                }
-                // else
-                // {
-                //     throw new Exception("monster has a path through a tile it cant step on and it cant attack, not good :(");
-                // }
-            });
-        }
 
         if (_goalReached != _oldGoalReached)
         {

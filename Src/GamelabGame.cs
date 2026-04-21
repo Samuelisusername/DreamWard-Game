@@ -79,7 +79,7 @@ public class GamelabGame : Game
     public static Random Rng { get; private set; }
     public static int Seed { get; private set; }
     
-    private int setSeed = 0; //1036804964; //set this to override seed
+    private int setSeed = 0;//1029531291; //1330672853; //1036804964; //set this to override seed
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {

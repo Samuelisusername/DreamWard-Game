@@ -18,9 +18,6 @@ public abstract class Monster : Entity
     // The type of this monster (Regular or Flying)
     public abstract MonsterType Type { get; } 
 
-    // Display name of this monster
-    public abstract string Name { get; }
-
     // Has the monster reached the end of its path
     public bool GoalReached => _path.Count <= 1;
 
