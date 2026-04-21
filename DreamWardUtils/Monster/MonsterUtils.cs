@@ -3,7 +3,9 @@ using System;
 public enum MonsterType
 {
     Regular,
-    Flying
+    Flying,
+    Small,
+    Big
 }
 
 public static class MonsterUtils
@@ -16,6 +18,10 @@ public static class MonsterUtils
                 return "normal";
             case MonsterType.Flying:
                 return "fly";
+            case MonsterType.Small:
+                return "smol";
+            case MonsterType.Big:
+                return "strong";
             default:
                 throw new ArgumentOutOfRangeException("cant translate type yet add it on MonsterUtils.cs");
         }

@@ -5,8 +5,6 @@ public class RegularMonster : Monster
 
     public override MonsterType Type => MonsterType.Regular;
 
-    public override string Name => "Regular";
-
     
     public RegularMonster((int, int) startTile,  int health = 30) : base(startTile, health)
     {

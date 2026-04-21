@@ -259,25 +259,122 @@ public class MapManager
 /// <summary>
     /// Create a new monster at the given location
     /// </summary>
-    public bool AddNewMonster((int col, int row) pos)
+    public bool AddNewMonster((int col, int row) pos, int level)
     {
         Structure structureOnTile = Structures[pos.col,pos.row];
-        Monster newMonster;
+        Monster newMonster = null;
         
         // Generate a random number between 0 and 99
         int roll = GamelabGame.Rng.Next(100);
 
-        // 30% chance to spawn a flying monster
-        if (roll < 30) 
+        //TODO: move this logic to the combat manager and probably make less random
+        switch (level)
         {
-            // NOTE: If your flying class is named something else (like AirMonster or BatMonster), 
-            // just update the class name here!
-            newMonster = new FlyingMonster(pos); 
-        }
-        else 
-        {
-            // 70% chance to spawn a regular monster
-            newMonster = new RegularMonster(pos);
+            case 1:
+                newMonster = new RegularMonster(pos);
+                break;
+            case 2:
+                newMonster = new RegularMonster(pos);
+                break;
+            case 3:
+                if (roll < 30)
+                {
+                    newMonster = new FlyingMonster(pos); 
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 4:
+                if (roll < 50)
+                {
+                    newMonster = new FlyingMonster(pos); 
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 5:
+                if (roll < 30)
+                {
+                    newMonster = new SmallMonster(pos); 
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 6:
+                if (roll < 50)
+                {
+                    newMonster = new SmallMonster(pos); 
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 7:
+                if (roll < 90)
+                {
+                    newMonster = new SmallMonster(pos); 
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 8:
+                if (roll < 20)
+                {
+                    newMonster = new FlyingMonster(pos); 
+                }
+                else if(roll < 70)
+                {
+                    newMonster = new SmallMonster(pos);
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 9:
+                if (roll < 30)
+                {
+                    newMonster = new FlyingMonster(pos); 
+                }
+                else if(roll < 60)
+                {
+                    newMonster = new SmallMonster(pos);
+                }
+                else 
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                break;
+            case 10:
+                if(roll < 10)
+                {
+                    newMonster = new BigMonster(pos); 
+                }
+                else if(roll < 60)
+                {
+                    newMonster = new SmallMonster(pos);
+                }
+                else if(roll < 80)
+                {
+                    newMonster = new RegularMonster(pos);
+                }
+                else if(roll < 80)
+                {
+                    newMonster = new FlyingMonster(pos);
+                }
+                break;
+            default:
+                newMonster = new BigMonster(pos); 
+                break;
         }
         if(structureOnTile is not null && !newMonster.CanStepOn(structureOnTile))
         {
@@ -827,6 +924,7 @@ public class MapManager
             for (int j = 0; j < Rows*3; j++)
             {
                 TilesOfsets[i,j] = Vector2.Zero;
+                FallTimer[i,j] = TimeSpan.Zero;
             }
         }
         MaxTotalFallTime = TimeSpan.FromSeconds(1f);
