@@ -12,6 +12,8 @@ public class StartScreen : GamelabGameScreen
     private SpriteFont _font;
     private Texture2D _pixel;
     private Texture2D _interfaceTexture;
+    private Texture2D _dayInterfaceTexture;
+    private Texture2D InterfaceTexture => IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private Rectangle[] _buttons;
     private Rectangle _volumeBar;
 
@@ -57,6 +59,7 @@ public class StartScreen : GamelabGameScreen
         _pixel.SetData(new[] { Color.White });
 
         _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
+        _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
 
         UpdateLayout();
         _previousState = _currentState;
@@ -256,7 +259,7 @@ public class StartScreen : GamelabGameScreen
         float scaleX = rect.Width / (float)sourceRect.Width;
         float scaleY = rect.Height / (float)sourceRect.Height;
 
-        spriteBatch.Draw(_interfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.White, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
+        spriteBatch.Draw(InterfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.White, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
 
         float textScale;
 
@@ -282,7 +285,7 @@ public class StartScreen : GamelabGameScreen
         float scaleX = rect.Width / (float)sourceRect.Width;
         float scaleY = rect.Height / (float)sourceRect.Height;
 
-        spriteBatch.Draw(_interfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.Gray * 0.6f, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
+        spriteBatch.Draw(InterfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.Gray * 0.6f, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
 
         float textScale = GetMenuButtonTextScale(rect);
         Vector2 textSize = _font.MeasureString(text);
@@ -305,7 +308,7 @@ public class StartScreen : GamelabGameScreen
         Vector2 pos = new Vector2((vw - size.X) / 2, (vh - size.Y) / 2);
         Rectangle destRect = new Rectangle((int)pos.X, (int)pos.Y, (int)size.X, (int)size.Y);
 
-        spriteBatch.Draw(_interfaceTexture, destRect, sourceRect, Color.White);
+        spriteBatch.Draw(InterfaceTexture, destRect, sourceRect, Color.White);
     }
 
     private void DrawHowToPlay()
