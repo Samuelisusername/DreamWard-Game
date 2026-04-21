@@ -142,7 +142,7 @@ public abstract class MonsterGroup
     {
         shouldCheckMerge = false;
 
-        if (_goalReached != _oldGoalReached)
+        if (_goalReached != _oldGoalReached && !isMerging)
         {
             SetAnimation();
         }
