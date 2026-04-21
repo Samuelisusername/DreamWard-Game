@@ -578,7 +578,8 @@ else
             break;
         case 4: 
             speaker = "Human";
-            text = "Oh no, I hope you are okay. Why did they attack you, oh wise sheep?";
+            text = "Oh no, I hope you are okay. Why did they attack you?";
+            _targetZoom = 1.7f;
             break;
         case 5: 
             speaker = "Sheep";
@@ -586,16 +587,25 @@ else
             break;
         case 6:
             speaker = "Sheep";
-            text = "I like to graze on meadows far away. On the red tile I produce x sanity for you, on the blue ones xy and on the green ones xyz! The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
+            text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
             break;
         case 7: 
             speaker = "Sheep";
-            text = " you can move me to the other meadows by clicking on the sheep on the map and then clicking on another meadow.";
+            text = "You can move me to the other meadows by clicking on the sheep on the map and then clicking on another meadow.";
             break;
         case 8: 
             speaker = "Sheep";
             text = "you should also place defenses to defend us";
             break;
+        case 9: 
+            speaker = "Human";
+            text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
+            break;
+        case 10: 
+            speaker = "Sheep"; 
+            text = "Okay cool! For any more tipps and infos you can click on tiles like meadows, cards and defense towers. Good Luck!";
+            break;
+
         default:
             speaker = (_tutorial_step%2==0)?"sheep" : "Human";
             text = "DREAMWARD!!!!";
@@ -713,7 +723,7 @@ else
     {
         string hint = "(Click anywhere to continue)";
         Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
-        int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X - 20 : dialogRect.Right - (int)hintSize.X - 20;
+        int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X +160  : dialogRect.Right - (int)hintSize.X - 80;
         float pulse = (float)Math.Abs(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3));
         spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 80), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
     }
