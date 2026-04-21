@@ -29,6 +29,8 @@ public class CardScreen : GamelabGameScreen
     // Layout cache — rebuilt each frame inside BuildLayout()
     private Layout _l;
     private Texture2D _interfaceTexture;
+    private Texture2D _dayInterfaceTexture;
+    private Texture2D InterfaceTexture => GamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private static readonly Rectangle BtnNormal  = new(0, 112, 80, 32);
     private static readonly Rectangle BtnPressed = new(0, 144, 80, 32);
     private bool _buyBtnPressed = false;
@@ -99,6 +101,7 @@ public class CardScreen : GamelabGameScreen
         _font        = Content.Load<SpriteFont>("font");
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
         _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
+        _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
         _dummy       = new Texture2D(GraphicsDevice, 1, 1);
         _dummy.SetData(new[] { Color.White });
     }
@@ -414,7 +417,7 @@ public class CardScreen : GamelabGameScreen
     private void DrawButton(Rectangle rect, string label, bool pressed = false)
     {
         var srcRect = pressed ? BtnPressed : BtnNormal;
-        spriteBatch.Draw(_interfaceTexture, rect, srcRect, Color.White);
+        spriteBatch.Draw(InterfaceTexture, rect, srcRect, Color.White);
 
         var sz  = _font.MeasureString(label);
         float sc = Math.Min(rect.Width / sz.X * 0.6f, rect.Height / sz.Y * 0.6f);

@@ -63,6 +63,8 @@ public class MapScreen : GamelabGameScreen
     private float _popupTimer = 0f;
     private Structure _hoveredStructure;
     private Texture2D _interfaceTexture;
+    private Texture2D _dayInterfaceTexture;
+    private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
     private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
     private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
@@ -106,6 +108,7 @@ public class MapScreen : GamelabGameScreen
         // 1x1 white texture used by EntityRenderer to draw HP bars
         entityRenderer.SetHealthBarTexture(_dummy);
         _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
+        _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
@@ -754,7 +757,7 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
     private void DrawButton(Rectangle rect, string text, bool pressed = false)
     {
         var src = pressed ? BtnPressed : BtnNormal;
-        spriteBatch.Draw(_interfaceTexture, rect, src, Color.White);
+        spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
         var size = _font.MeasureString(text);
         float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
         spriteBatch.DrawString(_font, text,

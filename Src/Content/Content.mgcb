@@ -551,4 +551,11 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
+#begin Sprites/day_interface.json
+/copy:Sprites/day_interface.json
+
+#begin Sprites/day_interface.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/day_interface.png
 
