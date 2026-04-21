@@ -32,6 +32,7 @@ public class MapScreen : GamelabGameScreen
     private bool _tutorial_btn_pressed = false; 
     private int _lastAudioStep = -1;
     private float _textTimer = 0f;
+    private float _zoomTimer = 0f;
     private int _charIndex = 0;
     private int _previousTutorialStep = -1;
 
@@ -159,21 +160,38 @@ public class MapScreen : GamelabGameScreen
             // Exit
             if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
             Game.SwitchToScreen(Game.StartScreenInstance);
-
+            
             // Spawn monster at edge heading toward tent
+            
             if (keyboard.WasKeyPressed(Keys.Space))
+            
             {
-                int centerX = mapManager.Columns / 2;
-                int centerY = mapManager.Rows / 2;
+                    if (_is_active_tutorial)
+                    {
+                        _tutorial_step++;
+                        //reached tutorial end
+                        if(_tutorial_step == 15) //4 tutorial steps for the moment, change this later based on tutorial
+                        {  
+                           _is_active_tutorial = false; 
+                        }
+                        _clickStarted = false; 
+                        return;
+                    }
+                else
+                {
+                    int centerX = mapManager.Columns / 2;
+                    int centerY = mapManager.Rows / 2;
     #if DEBUG
-                AudioManager.Play("grunt_03");
-                gamePhaseManager.SwitchToNight();
-    #else
-                if(gamePhaseManager.IsDay){
                     AudioManager.Play("grunt_03");
                     gamePhaseManager.SwitchToNight();
-                }
+    #else
+                    if(gamePhaseManager.IsDay){
+                        AudioManager.Play("grunt_03");
+                        gamePhaseManager.SwitchToNight();
+                    }
     #endif
+                }
+
 
             }
 
@@ -285,7 +303,7 @@ public class MapScreen : GamelabGameScreen
                     {
                         _tutorial_step++;
                         //reached tutorial end
-                        if(_tutorial_step == 4) //4 tutorial steps for the moment, change this later based on tutorial
+                        if(_tutorial_step == 15) //4 tutorial steps for the moment, change this later based on tutorial
                         {  
                            _is_active_tutorial = false; 
                         }
@@ -480,28 +498,65 @@ public class MapScreen : GamelabGameScreen
 
     return sb.ToString();
 }
+private float _targetZoom = 1.0f; // Add this variable to your class fields at the top
+
 private void DrawTutorialState(GameTime gameTime)
 {
     int vw = (int)viewportAdapter.VirtualWidth;
     int vh = (int)viewportAdapter.VirtualHeight;
+    float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-    // Darken the background slightly to focus on the tutorial
+    // --- 1. SMOOTH ZOOM LOGIC ---
+    // Instead of a loop, we check if we are at the target. If not, we zoom slightly.
+    // Adjust 0.05f to change the speed (smaller = slower).
+// --- 1. SMOOTH ZOOM LOGIC ---
+// --- 1. SMOOTH ZOOM LOGIC ---
+float zoomSpeed = 1.5f; // Adjust this to make the overall transition faster or slower
+if (Math.Abs(mapManager.Scale.X - _targetZoom) > 0.05f)
+{
+    // 1. Calculate how much we WANT to zoom this frame
+    float amountToMove = zoomSpeed * deltaTime;
+    
+    // 2. Add it to our timer (acting as an accumulator)
+    _zoomTimer += amountToMove;
+
+    // 3. Only call the expensive/jumpy Zoom method when the accumulator 
+    // reaches a 'threshold' (0.1). This creates a rhythmic, consistent pulse.
+    if (_zoomTimer >= 0.1f)
+    {
+        Vector2 screenCenter = new Vector2(vw / 2f, vh / 2f);
+        float direction = mapManager.Scale.X < _targetZoom ? 1f : -1f;
+        
+        mapManager.Zoom(direction, screenCenter, screenSize);
+        
+        // 4. Subtract the threshold rather than setting to 0 
+        // to keep the remainder for the next frame (prevents stutter)
+        _zoomTimer -= 0.1f; 
+    }
+}
+else 
+{
+    _zoomTimer = 0f; // Reset when we are at the target
+}
+
+    // Darken the background
     spriteBatch.Draw(_dummy, new Rectangle(0, 0, vw, vh), Color.Black * 0.4f);
 
     string speaker = "";
     string text = "";
     Rectangle? highlightBox = null;
 
-    // Load the dialogue based on the current step
+    // --- 2. TUTORIAL STEPS ---
     switch (_tutorial_step)
     {
         case 0:
             speaker = "Human";
             text = "Huh... where am I? What is happening?";
+            _targetZoom = 1.7f; // Zoom in close to the player
             break;
         case 1:
             speaker = "Sheep";
-            text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you. Please build some defenses before the next night starts.";
+            text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you.";
             break;
         case 2:
             speaker = "Human";
@@ -509,33 +564,69 @@ private void DrawTutorialState(GameTime gameTime)
             break;
         case 3:
             speaker = "Sheep";
-            text = "Your sleep monsters went for your sanity and they also tried to eat me. The monsters want to attack sanity points. To do that they need to reach your tent. And they attack me too because I produce sanity each morning for you, if I survive the night.";
-            
-            // EXACT math to match your Sanity UI box perfectly
+            text = "The sleep monsters come from the forest at night and wanted to attack sanity points at your tent. They also tried to eat me.";
+            _targetZoom = 1.0f; // Zoom back out to see the UI
+
+            // Calculate Sanity UI Highlight
             string sanityText = $"Sanity: {sanityManager.Sanity}";
             string dayText = $"Day: {gamePhaseManager.DayCount}/10";
             Vector2 s1 = _font.MeasureString(sanityText);
             Vector2 s2 = _font.MeasureString(dayText);
             int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; 
-            int boxHeight = (int)(s1.Y + s2.Y + (70 - 20 - s1.Y)) + 20;
-            
+            int boxHeight = (int)(s1.Y + s2.Y + 30) + 20;
             highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
             break;
+        case 4: 
+            speaker = "Human";
+            text = "Oh no, I hope you are okay. Why did they attack you, oh wise sheep?";
+            break;
+        case 5: 
+            speaker = "Sheep";
+            text = "The monsters attack your sanity and I produce sanity each morning, if I survive the night";
+            break;
+        case 6:
+            speaker = "Sheep";
+            text = "I like to graze on meadows far away. On the red tile I produce x sanity for you, on the blue ones xy and on the green ones xyz! The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
+            break;
+        case 7: 
+            speaker = "Sheep";
+            text = " you can move me to the other meadows by clicking on the sheep on the map and then clicking on another meadow.";
+            break;
+        case 8: 
+            speaker = "Sheep";
+            text = "you should also place defenses to defend us";
+            break;
+        default:
+            speaker = (_tutorial_step%2==0)?"sheep" : "Human";
+            text = "DREAMWARD!!!!";
+            break;
+
+
+
+
     }
 
-    // Draw the Highlight Border (if any)
+    // --- 3. DRAW HIGHLIGHT & ARROW ---
     if (highlightBox.HasValue)
     {
-        var h = highlightBox.Value;
+        Rectangle h = highlightBox.Value;
         int border = 4;
         Color hc = Color.Yellow;
+
+        // Draw Border
         spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); 
         spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     
         spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      
-        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);                           
+        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);
+
+        // Draw Bouncing Arrow pointing at the box
+        // We place it to the right of the box and make it bob left/right
+        float bounce = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 12) * 8;
+        Vector2 arrowPos = new Vector2(h.Right + 30 + bounce, h.Center.Y);
+        DrawPointerArrow(arrowPos, hc);
     }
 
-    // --- Draw the clean Dialog Box ---
+    // --- 4. DIALOG BOX UI ---
     int dialogHeight = 140;
     Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
     
@@ -543,7 +634,7 @@ private void DrawTutorialState(GameTime gameTime)
     spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
     spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
 
-    // --- Determine Speaker Portrait ---
+    // Portrait Logic
     Texture2D currentPortraitTex = null;
     Rectangle currentSourceRect = Rectangle.Empty;
     float portraitScale = 1f;
@@ -556,7 +647,6 @@ private void DrawTutorialState(GameTime gameTime)
         currentPortraitTex = _dayPlayerTexture;
         currentSourceRect = _humanPortraitRect;
         portraitScale = 3f; 
-        
         portraitX = dialogRect.X + 20;
         portraitY = dialogRect.Y + 20;
         textOffsetX = 140; 
@@ -566,16 +656,14 @@ private void DrawTutorialState(GameTime gameTime)
         currentPortraitTex = _dayTopTexture;
         currentSourceRect = _sheepPortraitRect;
         portraitScale = 4f; 
-        
         float scaledWidth = currentSourceRect.Width * portraitScale;
         float scaledHeight = currentSourceRect.Height * portraitScale;
-        
         portraitX = dialogRect.Right - (int)scaledWidth + 201; 
         portraitY = dialogRect.Bottom - (int)scaledHeight; 
         textOffsetX = 20; 
     }
 
-    // --- Typewriter & Audio Logic ---
+    // Typewriter Logic
     float textScale = 0.5f; 
     float maxTextWidth = (speaker == "Sheep") 
         ? portraitX - (dialogRect.X + textOffsetX) - 20 
@@ -583,7 +671,6 @@ private void DrawTutorialState(GameTime gameTime)
 
     string wrappedText = WrapText(_font, text, maxTextWidth, textScale);
 
-    // If the dialog step changed, reset the typewriter
     if (_previousTutorialStep != _tutorial_step)
     {
         _charIndex = 0;
@@ -592,19 +679,15 @@ private void DrawTutorialState(GameTime gameTime)
     }
 
     bool isTyping = _charIndex < wrappedText.Length;
-
     if (isTyping)
     {
-        _textTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-        float timePerChar = 0.03f; // <-- Change this to make typing faster or slower
-
+        _textTimer += deltaTime;
+        float timePerChar = 0.03f;
         while (_textTimer >= timePerChar && _charIndex < wrappedText.Length)
         {
             _charIndex++;
             _textTimer -= timePerChar;
-            int frequency = speaker == "Human" ? 10:30; //frequency of soundeffects for human and sheep
-
-            // Audio Blips! Play sound every 4 letters (and don't play on spaces/newlines)
+            int frequency = speaker == "Human" ? 10 : 30;
             if (_charIndex % frequency == 4 && wrappedText[_charIndex - 1] != ' ' && wrappedText[_charIndex - 1] != '\n')
             {
                 if (speaker == "Sheep") AudioManager.Play("sheep_baa");
@@ -613,43 +696,40 @@ private void DrawTutorialState(GameTime gameTime)
         }
     }
 
-    // Only draw the characters we have revealed so far!
     string textToDraw = wrappedText.Substring(0, _charIndex);
-
-    // --- Portrait Bouncing Logic ---
-    // If typing, bounce up and down using a Sine wave. If done typing, sit still (0).
     int bounceOffset = isTyping ? (int)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 20) * 4) : 0;
 
     if (currentPortraitTex != null)
     {
-        spriteBatch.Draw(
-            currentPortraitTex, 
-            new Vector2(portraitX, portraitY + bounceOffset), // Adding the bounce here!
-            currentSourceRect, 
-            Color.White, 
-            0f, 
-            Vector2.Zero, 
-            portraitScale, 
-            SpriteEffects.None, 
-            0f
-        );
+        spriteBatch.Draw(currentPortraitTex, new Vector2(portraitX, portraitY + bounceOffset), 
+            currentSourceRect, Color.White, 0f, Vector2.Zero, portraitScale, SpriteEffects.None, 0f);
     }
 
-    // --- Draw the Text ---
     spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
     spriteBatch.DrawString(_font, textToDraw, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
 
-    // Draw "Click to continue" hint
-    string hint = "(Click anywhere to continue)";
-    Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
-    int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X - 20 : dialogRect.Right - (int)hintSize.X - 20;
-    
-    // Optional extra flair: make the "Click to continue" blink when typing is done!
+    // "Click to continue"
     if (!isTyping)
     {
+        string hint = "(Click anywhere to continue)";
+        Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
+        int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X - 20 : dialogRect.Right - (int)hintSize.X - 20;
         float pulse = (float)Math.Abs(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3));
-        spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 20), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 80), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
     }
+}
+
+/// <summary>
+/// Draws a simple pixel-art arrow pointing left ( <--- )
+/// </summary>
+private void DrawPointerArrow(Vector2 tipPos, Color color)
+{
+    // Shaft
+    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X, (int)tipPos.Y - 4, 30, 8), color);
+    // Head (Triangle-ish)
+    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 6, (int)tipPos.Y - 12, 6, 24), color);
+    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 12, (int)tipPos.Y - 8, 6, 16), color);
+    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 18, (int)tipPos.Y - 4, 6, 8), color);
 }
   private void DrawDayPopup()
     {
