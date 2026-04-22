@@ -7,4 +7,6 @@ public class VoidTile : Structure
         : base("void_idle", pos, int.MaxValue)
     {
     }
+    
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }

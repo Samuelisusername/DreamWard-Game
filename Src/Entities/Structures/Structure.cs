@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using DreamWardUtils.Graphics;
 using Gamelab;
 using Microsoft.Xna.Framework;
@@ -100,4 +102,64 @@ public abstract class Structure : Entity
         GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(_animName);
         _spriteBase.Scale = mapManager.Scale;
     }
+
+    #region statcard
+
+    protected Texture2D _dummy = GamelabGame.DummyText;
+    protected SpriteFont _font = GamelabGame.Font;
+    protected abstract (string label, string info)[] infos {get;}
+
+    protected virtual string bottomText => null;
+
+    public bool ShouldDrawCard {get; set;}
+    
+    protected readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
+    protected readonly Color COLOR_G = new Color(0x7d, 0x64, 0x48);
+    protected readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
+
+    public virtual void DrawCard(SpriteBatch spriteBatch)
+    {
+        if(!ShouldDrawCard) return;
+        
+        Color rectColor = gamePhaseManager.IsDay
+            ? COLOR_L
+            : new Color(33, 28, 11);      // #211c0b
+
+        Color textColor = gamePhaseManager.IsDay
+            ? COLOR_D
+            : new Color(214, 214, 214); 
+
+        Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+        int pad = 10;
+        int midPad = 50;
+        int heightPad = 50;
+        int boxWidth = (int)infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad;
+        int boxHeight = (int)infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + (pad * (infos.Length + 1));
+        if(bottomText != null)
+        {
+            boxWidth = Math.Max(boxWidth, (int)_font.MeasureString(bottomText).X + 2 * pad);
+            boxHeight += (int)_font.MeasureString(bottomText).Y + heightPad;
+        }
+        int left = (int)(worldPos.X + (31.5f * mapManager.Scale.X)) - boxWidth/2;
+        int top = (int)(worldPos.Y - (64 * mapManager.Scale.X) - boxHeight);
+
+
+        spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
+        int yOffset = pad;
+        for (int i = 0; i < infos.Length; i++)
+        {
+            Vector2 posLabel = new(left + pad, top + yOffset);
+            spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor);
+            Vector2 posInfo = new(left + boxWidth - pad - _font.MeasureString(infos[i].info).X, posLabel.Y);
+            spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor);
+            yOffset += (int)_font.MeasureString(infos[i].info).Y + pad;
+        }
+        if(bottomText != null)
+        {
+            Vector2 pos = new (worldPos.X + (31.5f * mapManager.Scale.X) - _font.MeasureString(bottomText).X/2, top + yOffset - pad + heightPad);
+            spriteBatch.DrawString(_font, bottomText, pos, textColor);
+        }
+    }
+
+    #endregion
 }

@@ -206,27 +206,30 @@ public class MapScreen : GamelabGameScreen
 
         if(Game.IsActive)
         {
-            cardManager._previewStructure?.Update(gameTime);
-            if(keyboard.WasKeyReleased(Keys.S))
-            {
-                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
-            }
-            if(keyboard.WasKeyReleased(Keys.D))
-            {
-                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
-            }
+            //Gameover
             if (mapManager.TentDestroyed)
             {
                 Game.SwitchToScreen(new GameOverScreen(Game));
                 return;
             }
+            cardManager._previewStructure?.Update(gameTime);
+            //Speedup
+            if(keyboard.WasKeyReleased(Keys.S))
+            {
+                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
+            }
+            //Slowdown
+            if(keyboard.WasKeyReleased(Keys.D))
+            {
+                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
+            }
+            //set cursor state
             if (_toCardScreenBtn.Contains(mousePos) ||
                 _inventoryBtn.Contains(mousePos) ||
                 _towerRangeBtn.Contains(mousePos))
             {
                 GamelabGame.IsHovering = true;
             }
-
             if (_showInventory)
             {
                 foreach (var (rect, card) in cardManager.CardRects)
@@ -238,12 +241,36 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-
+            
+            //switch to cards
             if(gamePhaseManager.IsDay && keyboard.WasKeyReleased(Keys.C))
             {
                 Game.SwitchToScreen(Game.CardScreenInstance);
                 AudioManager.Play("dragonflap");
                 return;
+            }
+            
+            //set the hovered tile
+            _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
+            if (_hoverTile.col >= 0)
+            {
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = false;
+                }
+                _hoveredStructure = mapManager.GetStructure(_hoverTile);
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = true;
+                }
+            }
+            else
+            {
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = false;
+                }
+                _hoveredStructure = null;
             }
 
             // Drag
@@ -266,13 +293,22 @@ public class MapScreen : GamelabGameScreen
                     _isDrag = true;
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
+                if(!_isDrag && _hoveredStructure is Meadow grazingSpot)
+                {
+                    if(grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                    {
+                        mapManager.TryMoveSheep(mousePos);
+                    }
+                }
             }
 
+            //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
                 _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = false;
                 if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
+                    //start tutorial
                     if (_tutorial_btn.Contains(mousePos))
                     {
                         _is_active_tutorial = !_is_active_tutorial;
@@ -281,6 +317,7 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false;
                         return;
                     }
+                    //progress tutorial
                     if (_is_active_tutorial)
                     {
                         _tutorial_step++;
@@ -299,12 +336,13 @@ public class MapScreen : GamelabGameScreen
                         AudioManager.Play("dragonflap");
                         return;
                     }
+                    //toggle show cards
                     if (_inventoryBtn.Contains(mousePos))
                     {
                         _showInventory = !_showInventory;
                         return;
                     }
-
+                    //toggle show towerrange
                     if (_towerRangeBtn.Contains(mousePos))
                     {
                         _showTowerRange = !_showTowerRange;
@@ -324,19 +362,6 @@ public class MapScreen : GamelabGameScreen
                 }
                 _clickStarted = false;
                 _isDrag = false;
-            }
-            Vector2 mouseWorld = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-            _hoverTile = mapManager.GetTileFromScreenPosition(mouseWorld);
-            if (_hoverTile.col >= 0 && cardManager._activeMapCard != null &&
-                (cardManager._activeMapCard.Effect == CardEffect.Move ||
-                cardManager._activeMapCard.Effect == CardEffect.Destroy ||
-                cardManager._activeMapCard.Effect == CardEffect.Polymorph))
-            {
-                _hoveredStructure = mapManager.GetStructure(_hoverTile);
-            }
-            else
-            {
-                _hoveredStructure = null;
             }
         }        
     }

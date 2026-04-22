@@ -25,31 +25,9 @@ public class Tent : CardEntity
         get => (sanityManager?.Sanity ?? 0) > base.MaxHealth ? sanityManager?.Sanity ?? 0 : base.MaxHealth;
         protected set => base.MaxHealth = value; 
     }
-}
 
-public class Sheep : CardEntity
-{
-    public Sheep(string animName, (int,int) pos)
-        : base(animName, pos, 12)
-    {
-    }
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }
-
-public class Rat : CardEntity
-{
-    public Rat(string animName, (int,int) pos)
-        : base(animName, pos, 12)
-    {
-    }
-}
-
-// public class Meadow : CardEntity
-// {
-//     public Meadow(string animName, MapManager mapManager, (int,int) pos)
-//         : base(animName, mapManager, pos, 1000)
-//     {
-//     }
-// }
 
 public class Fence : CardEntity
 {
@@ -57,6 +35,8 @@ public class Fence : CardEntity
         : base("fence_idle", pos, 15)
     {
     }
+
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }
 
 public class Wall : CardEntity
@@ -65,5 +45,7 @@ public class Wall : CardEntity
         : base("wall_idle", pos, 10)
     {
     }
+
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }
 

@@ -7,4 +7,6 @@ public class Buff : Structure
         : base("buff_idle", pos, health)
     {
     }
+
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }

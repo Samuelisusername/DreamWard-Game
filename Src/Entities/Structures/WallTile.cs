@@ -8,4 +8,7 @@ public class WallTile : Structure
         : base(animName, pos, health)
     {
     }
+
+    
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }

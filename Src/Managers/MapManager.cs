@@ -450,7 +450,7 @@ public class MapManager
     }
 
     /// <summary>
-    /// Places an Sheep at the given position
+    /// Places a Sheep at the given position
     /// </summary>
     public bool PlaceSheep(Meadow entity, (int col, int row) pos)
     {
@@ -753,7 +753,6 @@ public class MapManager
 
     public void HandleMapClick(Vector2 pos)
     {
-        TryMoveSheep(pos);
         ShakeTree(pos);
     }
 

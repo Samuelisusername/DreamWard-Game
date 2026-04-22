@@ -86,8 +86,10 @@ public class MapRenderer
                     s?.DrawBase(spriteBatch, offset, offsetProgressInv);
 
                     //TOPDRAWING
-                    s = mapManager.GetStructure(globalTilePos, true);
                     s?.Draw(spriteBatch, offset, offsetProgressInv);
+
+                    //POPUPDRAWING
+                    s?.DrawCard(spriteBatch);
 
                 }            
             }

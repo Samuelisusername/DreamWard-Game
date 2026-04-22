@@ -7,4 +7,6 @@ public class Decoy : Structure
         : base("decoy_idle", pos, health)
     {
     }
+
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }

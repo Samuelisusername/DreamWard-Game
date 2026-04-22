@@ -36,6 +36,9 @@ public class GamelabGame : Game
     public readonly ScreenManager screenManager;
     public readonly FontSystem fontSystem = new();
 
+    public static Texture2D DummyText;
+    public static SpriteFont Font;
+
     /// <summary>
     /// The directory where the compiled content files are available during runtime
     /// </summary>
@@ -162,6 +165,11 @@ public class GamelabGame : Game
         textureAtlas.Add("day_top", day_top);
         TextureAtlas day_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/day_top_base.json");
         textureAtlas.Add("day_top_base", day_top_base);
+        
+        DummyText = new Texture2D(GraphicsDevice, 1, 1);
+        DummyText.SetData(new[] { Color.White });
+        
+        Font = Content.Load<SpriteFont>("infoFont");
         
         //load tilesets — read frame duration from the JSON atlas so it stays in sync with entity animations
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");

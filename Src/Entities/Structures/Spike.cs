@@ -8,4 +8,5 @@ public class Spike : Tower
     protected override float damagePerSecond => 2f;
 
     protected override int rangeDepth => 0;
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 }
