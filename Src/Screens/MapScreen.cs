@@ -270,30 +270,7 @@ public class MapScreen : GamelabGameScreen
                 AudioManager.Play("dragonflap");
                 return;
             }
-            
-            //set the hovered tile
-            _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
-            if (_hoverTile.col >= 0)
-            {
-                if(_hoveredStructure != null)
-                {
-                    _hoveredStructure.ShouldDrawCard = false;
-                }
-                _hoveredStructure = mapManager.GetStructure(_hoverTile);
-                if(_hoveredStructure != null)
-                {
-                    _hoveredStructure.ShouldDrawCard = true;
-                }
-            }
-            else
-            {
-                if(_hoveredStructure != null)
-                {
-                    _hoveredStructure.ShouldDrawCard = false;
-                }
-                _hoveredStructure = null;
-            }
-
+                       
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
@@ -321,6 +298,29 @@ public class MapScreen : GamelabGameScreen
                         mapManager.TryMoveSheep(mousePos);
                     }
                 }
+            }
+
+            //set the hovered tile
+            _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
+            if (_hoverTile.col >= 0)
+            {
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = false;
+                }
+                _hoveredStructure = mapManager.GetStructure(_hoverTile);
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = true;
+                }
+            }
+            else
+            {
+                if(_hoveredStructure != null)
+                {
+                    _hoveredStructure.ShouldDrawCard = false;
+                }
+                _hoveredStructure = null;
             }
 
             //handle click
