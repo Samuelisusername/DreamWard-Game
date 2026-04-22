@@ -21,10 +21,12 @@ public class Meadow : Structure
 
     protected override string bottomText => "Click and hold to move sheep here";
 
-    protected TimeSpan timeToMove = TimeSpan.FromSeconds(2.5f);
+    protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
 
     private bool resetSanity = true;
+    private TimeSpan _cantAffordFlash = TimeSpan.Zero;
+    private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
     public Meadow((int,int) pos, int sanityGain)
         : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos, 50)
@@ -49,6 +51,8 @@ public class Meadow : Structure
         // }
     }
 
+    public void TriggerCantAffordFlash() => _cantAffordFlash = FlashDuration;
+
     public override void Update(GameTime gameTime)
     {
         base.Update(gameTime);
@@ -57,6 +61,8 @@ public class Meadow : Structure
             moveProgress = TimeSpan.Zero;
         }
         resetSanity = true;
+        if(_cantAffordFlash > TimeSpan.Zero)
+            _cantAffordFlash -= gameTime.ElapsedGameTime;
     }
 
     public void AddSheep(bool isPolymorphed = false)
@@ -161,9 +167,16 @@ public class Meadow : Structure
         {
             float textW = _font.MeasureString(bottomText).X * sx;
             var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-            if(mapManager.GetSheep() != null) {
+            int barH = (int)MathF.Round(_font.MeasureString(bottomText).Y * sy);
+            if(_cantAffordFlash > TimeSpan.Zero)
+            {
+                float t = (float)(_cantAffordFlash / FlashDuration);
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, (int)textW, barH), Color.Red * (t * 0.6f));
+            }
+            else if(mapManager.GetSheep() != null)
+            {
                 int fillW = (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
-                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, (int)MathF.Round(_font.MeasureString(bottomText).Y * sy)), loadColor * 0.5f);
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), loadColor * 0.5f);
             }
             spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
