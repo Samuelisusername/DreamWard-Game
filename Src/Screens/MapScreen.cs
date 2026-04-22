@@ -49,6 +49,7 @@ public class MapScreen : GamelabGameScreen
     private Rectangle _inventoryBtn;
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
+    private bool _offsetInitialized = false;
     private int _cardStartY = 0;
     private bool _toCardsBtnPressed   = false;
     private bool _inventoryBtnPressed  = false;
@@ -136,7 +137,11 @@ public class MapScreen : GamelabGameScreen
 
         };
         
-        mapManager.InitOffset(screenSize);
+        if (!_offsetInitialized)
+        {
+            mapManager.InitOffset(screenSize);
+            _offsetInitialized = true;
+        }
     }
     private void update_card_button()
     {
@@ -492,6 +497,9 @@ public class MapScreen : GamelabGameScreen
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
             DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
         }
+
+        // Draw info card in point clamp batch so text is crisp at all zoom levels
+        _hoveredStructure?.DrawCard(spriteBatch);
 
         // draw sanity
         if (sanityManager != null)

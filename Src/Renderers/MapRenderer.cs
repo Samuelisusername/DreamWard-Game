@@ -88,9 +88,6 @@ public class MapRenderer
                     //TOPDRAWING
                     s?.Draw(spriteBatch, offset, offsetProgressInv);
 
-                    //POPUPDRAWING
-                    s?.DrawCard(spriteBatch);
-
                 }            
             }
         }

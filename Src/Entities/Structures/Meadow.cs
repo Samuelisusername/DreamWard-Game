@@ -132,7 +132,7 @@ public class Meadow : Structure
             boxHeight += (int)_font.MeasureString(bottomText).Y + heightPad;
         }
         int left = (int)(worldPos.X + (31.5f * mapManager.Scale.X)) - boxWidth/2;
-        int top = (int)(worldPos.Y - (64 * mapManager.Scale.X) - boxHeight);
+        int top = (int)(worldPos.Y - 64 - boxHeight);
 
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);

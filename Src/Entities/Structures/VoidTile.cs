@@ -8,5 +8,5 @@ public class VoidTile : Structure
     {
     }
     
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    protected override (string, string)[] infos => [("Health:", "No")];
 }
