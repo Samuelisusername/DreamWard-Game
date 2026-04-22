@@ -14,7 +14,7 @@ public class SanityManager
 
     public SanityManager()
     {
-        Sanity = 5000; // initialize sanity at the beginning of the game
+        Sanity = 20; // initialize sanity at the beginning of the game
     }
 
     /// <summary>
