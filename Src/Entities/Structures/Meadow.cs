@@ -17,7 +17,7 @@ public class Meadow : Structure
     public int SanityGain {get; private set;}
 
     public override bool CanMove => false;
-    protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition)}")];
+    protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")];
 
     protected override string bottomText => "Click and hold to move sheep here";
 

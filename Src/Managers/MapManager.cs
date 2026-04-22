@@ -80,6 +80,8 @@ public class MapManager
     /// </summary>
     public float ScaledOffset => TileHeight /2;
 
+    public const float MoveCostMultiplier = 1.7f;
+
     /// <summary>
     /// The position of the Sheep on the map
     /// </summary>
@@ -641,9 +643,9 @@ public class MapManager
     
     private void AddMeadows()
     {
-        (int col, int row) tent = GetTent();
+        (int col, int row) sheepStart = SheepPosition;
 
-        List<(int,int)> firstZone = MapUtils.GetSurroundingCircle(tent,4,5);        
+        List<(int,int)> firstZone = MapUtils.GetSurroundingCircle(sheepStart,4,5);        
         int randomIndexFirst = GamelabGame.Rng.Next(firstZone.Count);
         for(int i = 0; i < 3; i++)
         {
@@ -661,7 +663,7 @@ public class MapManager
         }
 
 
-        List<(int,int)> secondZone = MapUtils.GetSurroundingCircle(tent,7,8);        
+        List<(int,int)> secondZone = MapUtils.GetSurroundingCircle(sheepStart,7,8);        
         int randomIndexSecond = GamelabGame.Rng.Next(secondZone.Count);
         for(int i = 0; i < 3; i++)
         {            
@@ -678,7 +680,7 @@ public class MapManager
             }
         }
 
-        List<(int,int)> thirdZone = MapUtils.GetSurroundingCircle(tent,10,11);
+        List<(int,int)> thirdZone = MapUtils.GetSurroundingCircle(sheepStart,10,11);
         int randomIndexThird = GamelabGame.Rng.Next(thirdZone.Count);
         for(int i = 0; i < 3; i++)
         {            
@@ -778,7 +780,8 @@ public class MapManager
         if(entity is Meadow meadow && !meadow.HasSheep)
         {
             int distance = MapUtils.CalculateTileDistance(SheepPosition, tilePos);
-            if(sanityManager.TryDeductSanity(distance))
+            int cost = (int)MathF.Floor(distance * MapManager.MoveCostMultiplier);
+            if(sanityManager.TryDeductSanity(cost))
             {
                 foreach (var position in MapUtils.GetSurroundingTiles(tilePos))
                 {
