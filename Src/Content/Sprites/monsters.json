@@ -1700,6 +1700,174 @@
         "h": 1280
       },
       "duration": 125
+    },
+    "monsters 81.aseprite": {
+      "frame": {
+        "x": 10368,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 82.aseprite": {
+      "frame": {
+        "x": 10496,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 83.aseprite": {
+      "frame": {
+        "x": 10624,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 84.aseprite": {
+      "frame": {
+        "x": 10752,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 85.aseprite": {
+      "frame": {
+        "x": 10880,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 86.aseprite": {
+      "frame": {
+        "x": 11008,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 87.aseprite": {
+      "frame": {
+        "x": 11136,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
+    },
+    "monsters 88.aseprite": {
+      "frame": {
+        "x": 11264,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 1280
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 1280
+      },
+      "duration": 125
     }
   },
   "meta": {
@@ -1708,7 +1876,7 @@
     "image": "monsters.png",
     "format": "RGBA8888",
     "size": {
-      "w": 10368,
+      "w": 11392,
       "h": 1280
     },
     "scale": "1",
@@ -1744,119 +1912,119 @@
       {
         "name": "walkSW",
         "from": 4,
-        "to": 7,
-        "direction": "forward",
-        "color": "#000000ff"
-      },
-      {
-        "name": "walkNW",
-        "from": 8,
         "to": 11,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "walkN",
+        "name": "walkNW",
         "from": 12,
         "to": 19,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "walkS",
+        "name": "walkN",
         "from": 20,
         "to": 27,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
-        "name": "attackSW",
+        "name": "walkS",
         "from": 28,
-        "to": 34,
+        "to": 35,
+        "direction": "forward",
+        "color": "#000000ff"
+      },
+      {
+        "name": "attackSW",
+        "from": 36,
+        "to": 42,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "attackNW",
-        "from": 35,
-        "to": 41,
+        "from": 43,
+        "to": 49,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "attackN",
-        "from": 42,
-        "to": 48,
+        "from": 50,
+        "to": 56,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "attackS",
-        "from": 49,
-        "to": 55,
+        "from": 57,
+        "to": 63,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "spawnSW",
-        "from": 56,
-        "to": 60,
+        "from": 64,
+        "to": 68,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "mergeSW",
-        "from": 60,
-        "to": 60,
+        "from": 68,
+        "to": 68,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "spawnNW",
-        "from": 61,
-        "to": 65,
+        "from": 69,
+        "to": 73,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "mergeNW",
-        "from": 65,
-        "to": 65,
+        "from": 73,
+        "to": 73,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "spawnN",
-        "from": 66,
-        "to": 70,
+        "from": 74,
+        "to": 78,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "mergeN",
-        "from": 70,
-        "to": 70,
+        "from": 78,
+        "to": 78,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "spawnS",
-        "from": 71,
-        "to": 75,
+        "from": 79,
+        "to": 83,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "mergeS",
-        "from": 75,
-        "to": 75,
+        "from": 83,
+        "to": 83,
         "direction": "forward",
         "color": "#000000ff"
       },
       {
         "name": "smokeWalk",
-        "from": 76,
-        "to": 80,
+        "from": 84,
+        "to": 88,
         "direction": "forward",
         "color": "#000000ff"
       }
