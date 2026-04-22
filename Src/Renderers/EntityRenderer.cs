@@ -52,7 +52,7 @@ public class EntityRenderer
                     {
                         if (!group.IsEmpty)
                         {
-                            Vector2 worldPos = group.GetInterpolatedWorldPosition();
+                            Vector2 worldPos = group.GetInterpolatedWorldPosition()  + ((group.LocalOffset + new Vector2(32,90)) * mapManager.Scale);
                             
                             // Calculate total current and max HP for this specific group
                             float currentHp = group.Health;

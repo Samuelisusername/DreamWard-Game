@@ -274,7 +274,7 @@ public class MonsterGroupContainer
         {
             if(i.MonsterType == MonsterType.Flying)
             {
-                (i as FlyingMonsterGroup).DrawShadow(spriteBatch, PositionOnTile(i.MonsterType));
+                (i as FlyingMonsterGroup).DrawShadow(spriteBatch);
             }
         });
     }
@@ -285,7 +285,7 @@ public class MonsterGroupContainer
         {
             if(i.isGrounded)
             {
-                i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
+                i.Draw(spriteBatch);
             }
         });
     }
@@ -296,7 +296,7 @@ public class MonsterGroupContainer
         {
             if(!i.isGrounded)
             {
-                i.Draw(spriteBatch, PositionOnTile(i.MonsterType));
+                i.Draw(spriteBatch);
             }
         });
     }

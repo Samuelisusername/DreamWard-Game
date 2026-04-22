@@ -762,6 +762,8 @@ public class MapManager
     /// </summary>
     public void TryMoveSheep(Vector2 pos)
     {
+        var oldMeadow = Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+        if(oldMeadow == null) return;
         (int col, int row) tilePos = GetTileFromScreenPosition(pos);
         if(tilePos.col < 0) return;
         Entity entity = GetStructure(tilePos);
@@ -784,7 +786,6 @@ public class MapManager
                         toDeactivate.DeactivateMeadow();
                     }
                 }
-                var oldMeadow = Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
                 bool wasPolymorphed = oldMeadow.IsPolymorphed;
                 oldMeadow.RemoveSheep();
                 meadow.AddSheep(wasPolymorphed);

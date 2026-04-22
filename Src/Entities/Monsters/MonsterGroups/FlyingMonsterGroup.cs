@@ -17,6 +17,8 @@ public class FlyingMonsterGroup : MonsterGroup
 
     protected override TimeSpan speed => TimeSpan.FromSeconds(2);
 
+
+    public override Vector2 LocalOffset => new Vector2(-44, -90);
     public override Vector2 GetInterpolatedWorldPosition()
     {
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
@@ -37,7 +39,7 @@ public class FlyingMonsterGroup : MonsterGroup
         return origin + (goalPos - origin) * _pathProgress;
     }
 
-    public void DrawShadow(SpriteBatch spriteBatch, (int totalGroups, int rank) posOnTile)
+    public void DrawShadow(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)
     {
         if (IsEmpty) return;
 
@@ -45,13 +47,13 @@ public class FlyingMonsterGroup : MonsterGroup
         Vector2 shadowPos = base.GetInterpolatedWorldPosition();
         
         // Use the container's rank logic to offset them so they don't overlap perfectly
-        Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
+        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
         //sprite.Draw(spriteBatch, worldPos + (_localOffset * mapManager.Scale) + rankOffset);
         //sprite.Draw(spriteBatch, shadowPos + (_localOffset * mapManager.Scale) + rankOffset);
         
         spriteBatch.Draw(shadow,
-        shadowPos +  (_localOffset * mapManager.Scale) + rankOffset,
+        shadowPos +  (LocalOffset * mapManager.Scale),
         new Rectangle(0,0,128,128),
         Color.White * 0.2f,
         0,
@@ -61,7 +63,7 @@ public class FlyingMonsterGroup : MonsterGroup
         0);
     }
 
-    public override void Draw(SpriteBatch spriteBatch, (int totalGroups, int rank) posOnTile)
+    public override void Draw(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)
     {
         if (IsEmpty) return;
 
@@ -69,9 +71,9 @@ public class FlyingMonsterGroup : MonsterGroup
         Vector2 shadowPos = base.GetInterpolatedWorldPosition();
         
         // Use the container's rank logic to offset them so they don't overlap perfectly
-        Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
+        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
-        sprite.Draw(spriteBatch, worldPos + (_localOffset * mapManager.Scale) + rankOffset);
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale));
         //sprite.Draw(spriteBatch, shadowPos + (_localOffset * mapManager.Scale) + rankOffset);
         
     }

@@ -14,7 +14,7 @@ public class SanityManager
 
     public SanityManager()
     {
-        Sanity = 20; // initialize sanity at the beginning of the game
+        Sanity = 5000; // initialize sanity at the beginning of the game
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class SanityManager
     public int AddSanityGainedFromNewDay()
     {
         sanity_ = Sanity;
-        Sanity += mapManager.GetSheep().SanityGain;
+        Sanity += mapManager.GetSheep()?.SanityGain ?? 0;
         List<PlacableMeadow> meadows = mapManager.GetAllMeadows();
         foreach (var meadow in meadows)
         {

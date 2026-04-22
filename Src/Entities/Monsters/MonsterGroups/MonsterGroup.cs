@@ -37,7 +37,7 @@ public abstract class MonsterGroup
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
-    protected Vector2 _localOffset => new Vector2(-32, -90);
+    public abstract Vector2 LocalOffset {get;}
     public int Count => Monsters.Count;
     public bool IsEmpty => this.Count == 0; 
     public float Health => Monsters.Sum(m => m.CurrentHealth);
@@ -200,16 +200,16 @@ public abstract class MonsterGroup
 
     protected AnimatedSprite sprite;
 
-    public virtual void Draw(SpriteBatch spriteBatch, (int totalGroups, int rank) posOnTile)
+    public virtual void Draw(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)
     {
         if (IsEmpty) return;
 
         Vector2 worldPos = GetInterpolatedWorldPosition();
         
         // Use the container's rank logic to offset them so they don't overlap perfectly
-        Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0); 
+        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0); 
         
-        sprite.Draw(spriteBatch, worldPos + (_localOffset * mapManager.Scale) + rankOffset);
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale));
         
     }
 

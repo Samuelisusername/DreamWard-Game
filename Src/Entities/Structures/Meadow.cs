@@ -71,7 +71,7 @@ public class Meadow : Structure
 
     public bool AddProgress(TimeSpan delta)
     {
-        if(HasSheep) return false;
+        if(HasSheep || mapManager.GetSheep() == null) return false;
         resetSanity = false;
         moveProgress += delta;
         if(moveProgress > timeToMove)
@@ -148,9 +148,12 @@ public class Meadow : Structure
         if(bottomText != null)
         {
             Vector2 pos = new (worldPos.X + (31.5f * mapManager.Scale.X) - _font.MeasureString(bottomText).X/2, top + yOffset - pad + heightPad);
-            Point size = _font.MeasureString(bottomText).ToPoint();
-            size.X = (int)(size.X * (moveProgress / timeToMove));
-            spriteBatch.Draw(_dummy, new Rectangle(pos.ToPoint(), size), loadColor * 0.5f);
+            if(mapManager.GetSheep() != null)
+            {                
+                Point size = _font.MeasureString(bottomText).ToPoint();
+                size.X = (int)(size.X * (moveProgress / timeToMove));
+                spriteBatch.Draw(_dummy, new Rectangle(pos.ToPoint(), size), loadColor * 0.5f);
+            }
             spriteBatch.DrawString(_font, bottomText, pos, textColor);
         }
     }
@@ -163,7 +166,7 @@ public class PlacableMeadow : Structure
     protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 
     public PlacableMeadow((int,int) pos, int sanityGain)
-        : base("meadow_placed_idle", pos, 5)
+        : base("meadowPlaced_idle", pos, 5)
     {
         SanityGain = sanityGain;
     }

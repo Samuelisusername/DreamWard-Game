@@ -18,7 +18,7 @@ public class GamePhaseManager
     {
         IsDay = true;
         DayCount += 1;
-        mapManager.GetSheep().TryUnpolymorphSheep();
+        mapManager.GetSheep()?.TryUnpolymorphSheep();
         // call the SanityManager, MapManager and CardManager to set up the new day
         int gained = sanityManager.AddSanityGainedFromNewDay();
         cardManager.GenerateDailyCards(DayCount);
