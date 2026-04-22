@@ -27,26 +27,26 @@ public class Meadow : Structure
     private bool resetSanity = true;
 
     public Meadow((int,int) pos, int sanityGain)
-        : base("meadow_idle", pos, 50)
+        : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos, 50)
     {
         SanityGain = sanityGain;
-        float lerpConst = .25f;
+        // float lerpConst = .25f;
         
-        if(SanityGain == 10)
-        {
-            _spriteTop.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
-            _spriteBase.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
-        }
-        else if(SanityGain == 15)
-        {
-            _spriteTop.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
-            _spriteBase.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
-        }
-        else if(SanityGain == 20)
-        {
-            _spriteTop.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
-            _spriteBase.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
-        }
+        // if(SanityGain == 10)
+        // {
+        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
+        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
+        // }
+        // else if(SanityGain == 15)
+        // {
+        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
+        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
+        // }
+        // else if(SanityGain == 20)
+        // {
+        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
+        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
+        // }
     }
 
     public override void Update(GameTime gameTime)
@@ -163,7 +163,7 @@ public class PlacableMeadow : Structure
     protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 
     public PlacableMeadow((int,int) pos, int sanityGain)
-        : base("meadow_idle", pos, 5)
+        : base("meadow_placed_idle", pos, 5)
     {
         SanityGain = sanityGain;
     }
