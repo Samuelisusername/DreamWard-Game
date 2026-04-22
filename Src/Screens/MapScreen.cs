@@ -488,6 +488,12 @@ public class MapScreen : GamelabGameScreen
 
         spriteBatch.End();
 
+        // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
+        Structure._screenTransform = viewportAdapter.GetScaleMatrix();
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _hoveredStructure?.DrawCard(spriteBatch);
+        spriteBatch.End();
+
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
         spriteBatch.Begin(samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
@@ -497,9 +503,6 @@ public class MapScreen : GamelabGameScreen
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
             DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
         }
-
-        // Draw info card in point clamp batch so text is crisp at all zoom levels
-        _hoveredStructure?.DrawCard(spriteBatch);
 
         // draw sanity
         if (sanityManager != null)
