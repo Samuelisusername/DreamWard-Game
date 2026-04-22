@@ -173,7 +173,7 @@ public class Meadow : Structure
                 float t = (float)(_cantAffordFlash / FlashDuration);
                 spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, (int)textW, barH), Color.Red * (t * 0.6f));
             }
-            else if(mapManager.GetSheep() != null)
+            else
             {
                 int fillW = (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
                 spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), loadColor * 0.5f);
