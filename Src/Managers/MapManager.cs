@@ -438,6 +438,7 @@ public class MapManager
         {
             logger.Info("Tile already occupied! " + pos);
             AudioManager.Play("error");
+            AudioManager.Play("sheep_baa");
             return false;
         }
 

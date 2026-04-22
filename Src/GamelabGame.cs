@@ -73,6 +73,12 @@ public class GamelabGame : Game
     private MouseCursor cursorArrow;
     private MouseCursor cursorHover;
     private MouseCursor cursorClick;
+    private MouseCursor dayCursorArrow;
+    private MouseCursor dayCursorHover;
+    private MouseCursor dayCursorClick;
+    private MouseCursor CursorArrow => GamePhaseManager?.IsDay == true ? dayCursorArrow : cursorArrow;
+    private MouseCursor CursorHover => GamePhaseManager?.IsDay == true ? dayCursorHover : cursorHover;
+    private MouseCursor CursorClick => GamePhaseManager?.IsDay == true ? dayCursorClick : cursorClick;
 
     /// <summary>
     /// Set to true during Update to show the hover cursor. Reset automatically each frame.
@@ -183,12 +189,18 @@ public class GamelabGame : Game
 
         TextureAtlas interfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
         textureAtlas.Add("interface", interfaceAtlas);
+        TextureAtlas dayInterfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_interface.json");
+        textureAtlas.Add("day_interface", dayInterfaceAtlas);
 
         var interfaceTexture = interfaceAtlas.Texture;
         cursorArrow = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_arrow0").SourceRectangle, 0, 0, 2);
         cursorHover = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
         cursorClick = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
-        Mouse.SetCursor(cursorArrow);
+        var dayInterfaceTexture = dayInterfaceAtlas.Texture;
+        dayCursorArrow = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_arrow0").SourceRectangle, 0, 0, 2);
+        dayCursorHover = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
+        dayCursorClick = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
+        Mouse.SetCursor(CursorArrow);
 
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
         //pathfindingManager need the MapManager on init
@@ -215,12 +227,12 @@ public class GamelabGame : Game
 
         var mouseState = Mouse.GetState();
         if (IsHovering){
-            Mouse.SetCursor(cursorHover);
+            Mouse.SetCursor(CursorHover);
             if (mouseState.LeftButton == ButtonState.Pressed)
-                Mouse.SetCursor(cursorClick);
+                Mouse.SetCursor(CursorClick);
         }
         else
-            Mouse.SetCursor(cursorArrow);
+            Mouse.SetCursor(CursorArrow);
     }
 
     private MouseCursor CursorFromRegion(Texture2D source, Rectangle region, int originX, int originY, int scale = 1)
