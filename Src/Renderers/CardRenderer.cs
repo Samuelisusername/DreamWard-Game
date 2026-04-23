@@ -218,7 +218,7 @@ public class CardRenderer
                 ? Math.Max(ExpandedCard.Cost - 1, 0) : ExpandedCard.Cost;
 
             string costStr = isLocked
-                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity\n(discounted)" : $"Cost: {displayCost} sanity")
+                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
                 : "Purchased";
             Color costColor = isLocked ? new Color(0xc0, 0x50, 0x30) : new Color(0x20, 0x80, 0x30);
             spriteBatch.DrawString(font, costStr, new Vector2(lx, ty), costColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
