@@ -16,6 +16,8 @@ public class StartScreen : GamelabGameScreen
     private Texture2D InterfaceTexture => IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private Rectangle[] _buttons;
     private Rectangle _volumeBar;
+    private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
+    private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
 
     // Colors
     private readonly Color _bgColor = new(0x85, 0x8f, 0x60);  //new Color(113, 137, 92);
@@ -181,7 +183,6 @@ public class StartScreen : GamelabGameScreen
             case "Start New Game":
                 Game.ResetGame();
                 Game.MapScreenInstance = new MapScreen(Game);
-                Game.CardScreenInstance = new CardScreen(Game);
                 Game.IsGameInProgress = true;
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
@@ -257,9 +258,16 @@ public class StartScreen : GamelabGameScreen
         return MathF.Min(scaleX, scaleY);
     }
 
-    private void DrawButton(Rectangle rect, string text, bool pressed = false)
+    private void DrawButton(Rectangle rect, string text, bool pressed = false,Rectangle? normalSrc = null, Rectangle? pressedSrc = null)
     {
-        Rectangle sourceRect = pressed ? new Rectangle(0, 80, 80, 32) : new Rectangle(0, 48, 80, 32);
+        Rectangle sourceRect;
+
+        if (normalSrc.HasValue && pressedSrc.HasValue)
+            sourceRect = pressed ? pressedSrc.Value : normalSrc.Value;
+        else
+            sourceRect = pressed
+                ? new Rectangle(0, 80, 80, 32)
+                : new Rectangle(0, 48, 80, 32);
 
         float scaleX = rect.Width / (float)sourceRect.Width;
         float scaleY = rect.Height / (float)sourceRect.Height;
@@ -331,7 +339,7 @@ public class StartScreen : GamelabGameScreen
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed);
+        DrawButton(_backButton, "Back", pressed, BtnNormal, BtnPressed);
     }
 
     private void DrawSettings()
@@ -364,7 +372,7 @@ public class StartScreen : GamelabGameScreen
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed);
+        DrawButton(_backButton, "Back", pressed, BtnNormal, BtnPressed);
     }
 
     private void DrawRoundedRectangle(Rectangle rect, int radius, Color fillColor, Color borderColor)
