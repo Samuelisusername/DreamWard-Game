@@ -71,9 +71,9 @@ public class MapManager
     public float TileWidth => _tileSets["day"].TileWidth * Scale.X;
 
     /// <summary>
-    /// The height of a single tile
+    /// Effective height is 32. The rest is only visible on borders.
     /// </summary>
-    public float TileHeight => _tileSets["day"].TileHeight * Scale.Y;
+    public float TileHeight => (_tileSets["day"].TileWidth / 2) * Scale.Y;
 
     /// <summary>
     /// The region of the hexagon that overlaps with other hexagons
