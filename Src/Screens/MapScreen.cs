@@ -44,14 +44,12 @@ public class MapScreen : GamelabGameScreen
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Navigation button
-    private Rectangle _toCardScreenBtn;
     private bool _showInventory = true;
     private Rectangle _inventoryBtn;
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
     private bool _offsetInitialized = false;
     private int _cardStartY = 0;
-    private bool _toCardsBtnPressed   = false;
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
     
@@ -71,6 +69,9 @@ public class MapScreen : GamelabGameScreen
     private Structure _hoveredStructure;
     private Texture2D _interfaceTexture;
     private Texture2D _dayInterfaceTexture;
+    private double _lastClickTime = 0;
+    private const double DOUBLE_CLICK_TIME = 300; // ms
+    private int _restoredSavedSlotThisDay = -1;
     private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
     private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
@@ -134,11 +135,10 @@ public class MapScreen : GamelabGameScreen
             { "polymorph",    new(0, 1280, 128, 128) },
             { "move",         new(0, 1408, 128, 128) },
             { "destroy",      new(0, 1536, 128, 128) },
-            //new
-            { "void",      new(0, 1664, 128, 128) },
-            { "spikes",      new(0, 1792, 128, 128) },
-            { "decoy",      new(0, 1920, 128, 128) },
-            { "buff",      new(0, 2048, 128, 128) }
+            { "void",         new(0, 1664, 128, 128) },
+            { "spikes",       new(0, 1792, 128, 128) },
+            { "decoy",        new(0, 1920, 128, 128) },
+            { "buff",         new(0, 2048, 128, 128) }
 
         };
         
@@ -148,13 +148,21 @@ public class MapScreen : GamelabGameScreen
             _offsetInitialized = true;
         }
     }
-    private void update_card_button()
+
+    public void StartNewDay(int day)
+    {
+        _restoredSavedSlotThisDay = cardManager.SavedSlotIndex;
+        cardManager.GenerateDailyCards(day);
+        cardRenderer.SetRestoredSavedSlot(_restoredSavedSlotThisDay);
+        cardRenderer.CollapseExpanded();
+    }
+
+    private void RebuildButtonLayout()
     {
         int vw = viewportAdapter.VirtualWidth;
         int vh = viewportAdapter.VirtualHeight;
-        _toCardScreenBtn = new Rectangle(vw-183, 20, 163, 63);
-        _tutorial_btn = new Rectangle(vw-183, 80, 163, 63);
-        _speedBtn = new Rectangle(vw - 183, 140, 163, 63);
+        _tutorial_btn = new Rectangle(vw - 240, 20, 220, 70);
+        _speedBtn = new Rectangle(vw - 240, 20, 220, 70);
         if (!gamePhaseManager.IsInTransition)
         {
             cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
@@ -172,7 +180,8 @@ public class MapScreen : GamelabGameScreen
                 
         GamelabGame.IsHovering = false;
         Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-        update_card_button();
+        cardRenderer.SetMousePos(mousePos);
+        RebuildButtonLayout();
         
 
         if(Game.IsActive)
@@ -187,7 +196,7 @@ public class MapScreen : GamelabGameScreen
             {
                 _tutorial_step++;
                 //reached tutorial end
-                if(_tutorial_step == 10)
+                if(_tutorial_step == 25)
                 {  
                     _is_active_tutorial = false; 
                 }
@@ -206,6 +215,35 @@ public class MapScreen : GamelabGameScreen
                 float delta = mouse.DeltaScrollWheelValue * (-0.01f);
                 mapManager.Zoom(delta, viewportAdapter.PointToScreen(mouse.Position).ToVector2(), screenSize);
             }
+            if (gamePhaseManager.IsDay && _showInventory)
+            {
+                cardRenderer.HandleHover(mousePos, cardManager);
+            }
+            else
+            {
+                cardRenderer.CollapseExpanded();
+            }
+#if DEBUG
+            // Build cards 
+            if (keyboard.WasKeyReleased(Keys.D1)) cardManager.ForceSpawnInto("sniper",        cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D2)) cardManager.ForceSpawnInto("aoe",           cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D3)) cardManager.ForceSpawnInto("meadow",        cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D4)) cardManager.ForceSpawnInto("dreamcatcher",  cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D5)) cardManager.ForceSpawnInto("fence",         cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.E))  cardManager.ForceSpawnInto("void",          cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.R))  cardManager.ForceSpawnInto("spikes",        cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.T))  cardManager.ForceSpawnInto("decoy",         cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.Y))  cardManager.ForceSpawnInto("buff",          cardManager.BuildSlots);
+            // Map action cards
+            if (keyboard.WasKeyReleased(Keys.D6)) cardManager.ForceSpawnInto("polymorph",     cardManager.MapSlots);
+            if (keyboard.WasKeyReleased(Keys.D7)) cardManager.ForceSpawnInto("destroy",       cardManager.MapSlots);
+            if (keyboard.WasKeyReleased(Keys.D8)) cardManager.ForceSpawnInto("move",          cardManager.MapSlots);
+            // Stack action cards
+            if (keyboard.WasKeyReleased(Keys.D9)) cardManager.ForceSpawnInto("shuffle",       cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.D0)) cardManager.ForceSpawnInto("discount",      cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.Q))  cardManager.ForceSpawnInto("top3",          cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.W))  cardManager.ForceSpawnInto("discard",       cardManager.StackSlots);
+#endif
         }
 
         if (_showDayPopup)
@@ -243,12 +281,9 @@ public class MapScreen : GamelabGameScreen
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
             }
             //set cursor state
-            if (_toCardScreenBtn.Contains(mousePos) ||
-                _inventoryBtn.Contains(mousePos) ||
-                _towerRangeBtn.Contains(mousePos) ||
-                _startNightBtn.Contains(mousePos))
-            {
-                GamelabGame.IsHovering = true;
+            if(gamePhaseManager.IsDay){
+                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))
+                    GamelabGame.IsHovering = true;
             }
             if (_showInventory)
             {
@@ -261,12 +296,10 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-            
-            //switch to cards
-            if(!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
+            if (!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
             {
-                Game.SwitchToScreen(Game.CardScreenInstance);
-                AudioManager.Play("dragonflap");
+                _showInventory = !_showInventory;
+                if (!_showInventory) cardRenderer.CollapseExpanded();
                 return;
             }
             
@@ -291,11 +324,11 @@ public class MapScreen : GamelabGameScreen
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
                 var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                _toCardsBtnPressed    = _toCardScreenBtn.Contains(pos);
                 _inventoryBtnPressed  = _inventoryBtn.Contains(pos);
                 _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
+                _tutorial_btn_pressed = _tutorial_btn.Contains(pos);
                 _speedBtnPressed      = _speedBtn.Contains(pos);
-                _oldPos = pos;
+                _oldPos       = pos;
                 _clickStarted = true;
 
                 // trigger unaffordable flash
@@ -307,68 +340,81 @@ public class MapScreen : GamelabGameScreen
                 }
             }
 
-            if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted)
+            if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted &&
+                (!_showInventory || !cardRenderer.CardStripBounds.Contains(mousePos)))
             {
                 Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
+
                 if (deltaPos.Length() > 0)
                 {
                     mapManager.MoveMap(deltaPos, screenSize);
                     _isDrag = true;
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
-                if(!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot)
+
+                if (!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot)
                 {
-                    int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition) * MapManager.MoveCostMultiplier);
-                    if(GamelabGame.SanityManager.Sanity >= moveCost && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                    int moveCost = (int)MathF.Round(
+                        MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
+                        * MapManager.MoveCostMultiplier);
+
+                    if (GamelabGame.SanityManager.Sanity >= moveCost &&
+                        grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                     {
                         mapManager.TryMoveSheep(mousePos);
                     }
                 }
-                else if(!_isDrag && !gamePhaseManager.IsInTransition && _startNightBtn.Contains(mousePos))
+                else if (!_isDrag && !gamePhaseManager.IsInTransition && _startNightBtn.Contains(mousePos))
                 {
                     _elapsedStartNightTime += gameTime.ElapsedGameTime;
                     _resetStartNightTimer = false;
-                    if(_elapsedStartNightTime > _startNightTime)
+
+                    if (_elapsedStartNightTime > _startNightTime)
                     {
                         _elapsedStartNightTime = TimeSpan.Zero;
-#if DEBUG
+
+            #if DEBUG
                         gamePhaseManager.SwitchToNight();
-#else
-                        if(gamePhaseManager.IsDay){
+            #else
+                        if (gamePhaseManager.IsDay)
                             gamePhaseManager.SwitchToNight();
-                        }
-#endif
+            #endif
                     }
                 }
             }
 
             //set the hovered tile
+            bool mouseOverUI = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
-            if (_hoverTile.col >= 0)
+            // BLOCK HOVER IF ON UI
+            if (!mouseOverUI && _hoverTile.col >= 0)
             {
-                if(_hoveredStructure != null)
-                {
+                if (_hoveredStructure != null)
                     _hoveredStructure.ShouldDrawCard = false;
-                }
+
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
-                if(_hoveredStructure != null)
-                {
+
+                if (_hoveredStructure != null)
                     _hoveredStructure.ShouldDrawCard = true;
-                }
             }
             else
             {
-                if(_hoveredStructure != null)
-                {
+                if (_hoveredStructure != null)
                     _hoveredStructure.ShouldDrawCard = false;
-                }
+
                 _hoveredStructure = null;
+            }
+
+            // ── Mouse sprites for meadow hover ─────────────────────
+            if (!mouseOverUI && _hoveredStructure is Meadow)
+            {
+                GamelabGame.IsHovering = true;
             }
 
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
+                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
                     if (_speedBtn.Contains(mousePos))
@@ -386,6 +432,12 @@ public class MapScreen : GamelabGameScreen
                     {
                         _is_active_tutorial = !_is_active_tutorial;
                         _tutorial_step = 0; 
+                        if (_is_active_tutorial)
+                        {
+                            _showInventory = false;
+                            _showTowerRange = false;
+                            cardRenderer.CollapseExpanded(); 
+                        }
                         AudioManager.Play("dragonflap");
                         _clickStarted = false;
                         return;
@@ -395,41 +447,108 @@ public class MapScreen : GamelabGameScreen
                     {
                         _tutorial_step++;
                         //reached tutorial end
-                        if(_tutorial_step == 10)
+                        if(_tutorial_step == 25)
                         {  
                            _is_active_tutorial = false; 
                         }
                         _clickStarted = false; 
                         return;
                     }
-                    // Navigation to CardScreen
-                    if (_toCardScreenBtn.Contains(mousePos))
-                    {
-                        Game.SwitchToScreen(Game.CardScreenInstance);
-                        AudioManager.Play("dragonflap");
-                        return;
-                    }
-                    //toggle show cards
                     if (_inventoryBtn.Contains(mousePos))
                     {
                         _showInventory = !_showInventory;
+                        if (!_showInventory) cardRenderer.CollapseExpanded();
+                        _clickStarted = false;
                         return;
                     }
-                    //toggle show towerrange
                     if (_towerRangeBtn.Contains(mousePos))
                     {
                         _showTowerRange = !_showTowerRange;
+                        _clickStarted = false;
                         return;
                     }
-                    // Check USE buttons on cards
-                    if (cardManager.HandleCardUseClicks(mousePos, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight))
-                        return;
-
-                    if (cardManager._activeMapCard != null)
+                    if (_showInventory)
                     {
-                        if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                        foreach (var (rect, card) in cardManager.CardRects)
+                        {
+                            if (card == null || !rect.Contains(mousePos)) continue;
+                            CardSlot slot = cardManager.GetSlotForCard(card);
+                            bool isDouble = IsDoubleClick(mouse, gameTime);
+                            if (card.Type == CardType.Build)
+                            {
+                                if (cardManager.PendingStackAction != null && slot != null)
+                                {
+                                    if (cardManager.PendingStackAction == CardEffect.SaveCard)
+                                    {
+                                        cardManager.SaveCardFromSlot(slot);
+                                    }
+                                    else if (cardManager.PendingStackAction == CardEffect.Discard)
+                                    {
+                                        cardManager.DiscardCardFromSlot(slot, gamePhaseManager.DayCount);
+                                    }
+                                    cardManager.PendingStackAction = null;
+                                    _clickStarted = false;
+                                    return;
+                                }
+                                if (slot != null && !slot.Purchased)
+                                {
+                                    if (isDouble)
+                                    {
+                                        bool bought = cardManager.TryPurchaseBuildCard(slot, sanityManager);
+                                        if (bought)
+                                            AudioManager.Play("coinsplash");
+                                    }
+                                    _clickStarted = false;
+                                    return;
+                                }
+                                if (slot != null && slot.Purchased)
+                                {
+                                    ToggleActiveCard(cardManager, card);
+                                    _clickStarted = false;
+                                    return;
+                                }
+                            }
+                            if (card.Type == CardType.StackAction)
+                            {
+                                if (card.Effect == CardEffect.Shuffle || card.Effect == CardEffect.Discount)
+                                {
+                                    if (isDouble)
+                                    {
+                                        cardManager.UseCard(card);
+                                        AudioManager.Play("cardflip");
+                                    }
+                                }
+                                else if (card.Effect == CardEffect.SaveCard || card.Effect == CardEffect.Discard)
+                                {
+                                    if (isDouble)
+                                    {
+                                        cardManager.UseCard(card); 
+                                        AudioManager.Play("cardflip");
+                                    }
+                                }
+                                _clickStarted = false;
+                                return;
+                            }
+                            if (card.Type == CardType.MapAction)
+                            {
+                                ToggleActiveCard(cardManager, card);
+                                _clickStarted = false;
+                                return;
+                            }
+                        }
+                    }
+
+                    if (!mouseOverUI)
+                    {
+                        if (cardManager._activeMapCard != null)
+                        {
+                            if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                                cardRenderer.CollapseExpanded();
+                            _clickStarted = false;
+                            _isDrag = false;
                             return;
-                        return;
+                        }
+                        mapManager.HandleMapClick(mousePos);
                     }
                     mapManager.HandleMapClick(mousePos);
                 }
@@ -536,95 +655,81 @@ public class MapScreen : GamelabGameScreen
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
             DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
         }
+        int vw = (int)viewportAdapter.VirtualWidth;
+        int vh = (int)viewportAdapter.VirtualHeight;
 
-        // draw sanity
-        if (sanityManager != null)
+        DrawSanityPanel();
+
+        if (!gamePhaseManager.IsInTransition)
         {
-            string text = $"Sanity: {sanityManager.Sanity}";
-            string dayText = $"Day: {gamePhaseManager.DayCount}/10";
-
-            Vector2 pos1 = new Vector2(20, 20);
-            Vector2 pos2 = new Vector2(20, 70);
-
-            int pad = 10;
-
-            Vector2 size1 = _font.MeasureString(text);
-            Vector2 size2 = _font.MeasureString(dayText);
-
-            int boxWidth = (int)Math.Max(size1.X, size2.X) + pad * 2;
-            int boxHeight = (int)(size1.Y + size2.Y + (pos2.Y - pos1.Y - size1.Y)) + pad * 2;
-
-            Color rectColor = gamePhaseManager.IsDay
-                ? COLOR_L
-                : new Color(33, 28, 11);      // #211c0b
-
-            Color textColor = gamePhaseManager.IsDay
-                ? COLOR_D
-                : new Color(214, 214, 214);   // #d6d6d6
-
-            spriteBatch.Draw(_dummy, new Rectangle((int)pos1.X - pad, (int)pos1.Y - pad, boxWidth, boxHeight), rectColor);
-            spriteBatch.DrawString(_font, text, pos1, textColor);
-            spriteBatch.DrawString(_font, dayText, pos2, textColor);
-        }
-
-        if(!gamePhaseManager.IsInTransition)
-        {
-            DrawButton(_toCardScreenBtn, "Cards", _toCardsBtnPressed);
-            //cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
-            DrawButton(_inventoryBtn,    _showInventory ? "Hide Cards" : "Show Cards", _inventoryBtnPressed);
-            DrawButton(_towerRangeBtn,   _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
-            DrawButton(_tutorial_btn, _is_active_tutorial? "close tutorial" : "Tutorial", _tutorial_btn_pressed);
+            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   _inventoryBtnPressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
+            DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
             DrawButton(_startNightBtn, "start night (Space)", false, (float)(_elapsedStartNightTime/_startNightTime));
-
             if (_showInventory)
             {
-                cardRenderer.DrawCardSlots(spriteBatch, _dummy, _cardTexture, _cardRegions, _font, cardManager, _cardStartY, (int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight);
+                cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh);
+                cardRenderer.DrawExpandedPanel(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager,vw, vh); 
             }
         }
-        if (_is_active_tutorial)
-        {
 
-            DrawTutorialState(gameTime);
-        }
-        if (_showDayPopup)
-        {
-            DrawDayPopup();
-        }
+        if (_is_active_tutorial) DrawTutorialState(gameTime);
+        if (_showDayPopup)       DrawDayPopup();
         spriteBatch.End();
     }
 
     // ------------------------
     // Draw Helpers
     // ------------------------
-    private string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
-{
-    // Remove any hardcoded newlines you might have left in your strings
-    text = text.Replace("\n", " "); 
-    
-    string[] words = text.Split(' ');
-    System.Text.StringBuilder sb = new System.Text.StringBuilder();
-    float lineWidth = 0f;
-    float spaceWidth = font.MeasureString(" ").X * scale;
 
-    foreach (string word in words)
+    private void DrawSanityPanel()
     {
-        Vector2 size = font.MeasureString(word) * scale;
-
-        if (lineWidth + size.X < maxLineWidth)
-        {
-            sb.Append(word + " ");
-            lineWidth += size.X + spaceWidth;
-        }
-        else
-        {
-            // The word is too long, push it to the next line!
-            sb.Append("\n" + word + " ");
-            lineWidth = size.X + spaceWidth;
-        }
+        if (sanityManager == null) return;
+        string text    = $"Sanity: {sanityManager.Sanity}";
+        string dayText = $"Day: {gamePhaseManager.DayCount}/10";
+        int pad = 10;
+        Vector2 pos1  = new Vector2(20, 20);
+        Vector2 pos2  = new Vector2(20, 70);
+        Vector2 size1 = _font.MeasureString(text);
+        Vector2 size2 = _font.MeasureString(dayText);
+        int boxW = (int)Math.Max(size1.X, size2.X) + pad * 2;
+        int boxH = (int)(size1.Y + size2.Y + (pos2.Y - pos1.Y - size1.Y)) + pad * 2;
+        Color rectColor = gamePhaseManager.IsDay ? COLOR_L : new Color(33, 28, 11);
+        Color textColor = gamePhaseManager.IsDay ? COLOR_D : new Color(214, 214, 214);
+        spriteBatch.Draw(_dummy, new Rectangle((int)pos1.X - pad, (int)pos1.Y - pad, boxW, boxH), rectColor);
+        spriteBatch.DrawString(_font, text,    pos1, textColor);
+        spriteBatch.DrawString(_font, dayText, pos2, textColor);
     }
+    
+    private string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
+    {
+        // Remove any hardcoded newlines you might have left in your strings
+        text = text.Replace("\n", " "); 
+        
+        string[] words = text.Split(' ');
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        float lineWidth = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale;
 
-    return sb.ToString();
-}
+        foreach (string word in words)
+        {
+            Vector2 size = font.MeasureString(word) * scale;
+
+            if (lineWidth + size.X < maxLineWidth)
+            {
+                sb.Append(word + " ");
+                lineWidth += size.X + spaceWidth;
+            }
+            else
+            {
+                // The word is too long, push it to the next line!
+                sb.Append("\n" + word + " ");
+                lineWidth = size.X + spaceWidth;
+            }
+        }
+
+        return sb.ToString();
+    }
 private float _targetZoom = 1.0f; // Add this variable to your class fields at the top
 
 private void DrawTutorialState(GameTime gameTime)
@@ -729,22 +834,34 @@ else
         spriteBatch.Draw(_dummy, rect, highlightColor);
     }
             break;
-        case 8: 
-            speaker = "Human";
-            text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
-            break;
-        case 9: 
-            speaker = "Sheep"; 
-            text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
-            break;
+        // case 8: 
+        //     speaker = "Human";
+        //     text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
+        //     break;
+        // case 9: 
+        //     speaker = "Sheep"; 
+        //     text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
+        //     break;
+
+        case 8:  speaker = "Sheep";  text = "Now Look at the bottom-left of the screen your cards are there."; break;
+        case 9:  speaker = "Human";  text = "Cards? My life depends on cards now?"; break;
+        case 10: speaker = "Sheep";  text = "There are 3 types - starting with Build Cards."; break;
+        case 11: speaker = "Sheep";  text = "Dark ones are locked - double click to buy, then click again to place."; break;
+        case 12: speaker = "Human";  text = "Buy first, then place... got it."; break;
+        case 13: speaker = "Sheep";  text = "Build cards protect the tent and stop monsters at night."; break;
+        case 14: speaker = "Sheep";  text = "Hover over any card to see its info before using it."; break;
+        case 15: speaker = "Sheep";  text = "Map Action cards let you move, destroy structures, or polymorph me."; break;
+        case 16: speaker = "Human";  text = "How does that help against monsters?"; break;
+        case 17: speaker = "Sheep";  text = "You can reposition defenses as u move me and also once polymorphed monsters won't attack me."; break;
+        case 18: speaker = "Sheep";  text = "Stack Action cards modify your build cards like shuffle or discount."; break;
+        case 19: speaker = "Human";  text = "So I need strategy..."; break;
+        case 20: speaker = "Sheep";  text = "Exactly. Plan smart to survive the night."; break;
+        case 21: speaker = "Human";  text = "Alright... I'll try not to mess this up."; break;
 
         default:
             speaker = (_tutorial_step%2==0)?"Sheep" : "Human";
             text = "DREAMWARD!!!!";
             break;
-
-
-
 
     }
 
@@ -874,26 +991,19 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
     spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 12, (int)tipPos.Y - 8, 6, 16), color);
     spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 18, (int)tipPos.Y - 4, 6, 8), color);
 }
-  private void DrawDayPopup()
+    private void DrawDayPopup()
     {
         int w = (int)viewportAdapter.VirtualWidth;
         int h = (int)viewportAdapter.VirtualHeight;
-
-        // Make the popup cover at least half the screen
-        int boxWidth = w / 2;
-        int boxHeight = h / 2;
-        Rectangle box = new(w / 2 - boxWidth / 2, h / 2 - boxHeight / 2, boxWidth, boxHeight);
-
-        // Faint white background (semi-transparent)
+        int bW = w / 2, bH = h / 2;
+        Rectangle box = new(w / 2 - bW / 2, h / 2 - bH / 2, bW, bH);
         spriteBatch.Draw(_dummy, box, Color.Beige * 0.6f);
-
-        // Bigger text
-        float scale = 1.25f; // scale up font
+        float scale      = 1.25f;
         Vector2 textSize = _font.MeasureString(_dayPopupText) * scale;
-        Vector2 textPos = new Vector2(box.Center.X - textSize.X / 2, box.Center.Y - textSize.Y / 2);
-
+        Vector2 textPos  = new Vector2(box.Center.X - textSize.X / 2, box.Center.Y - textSize.Y / 2);
         spriteBatch.DrawString(_font, _dayPopupText, textPos, COLOR_D, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
+
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
         var src = pressed ? BtnPressed : BtnNormal;
@@ -935,5 +1045,34 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
         _showDayPopup = true;
         _popupTimer = 4f; // seconds
     }
-    
+    private bool IsDoubleClick(MouseStateExtended mouse, GameTime gameTime)
+    {
+        double now = gameTime.TotalGameTime.TotalMilliseconds;
+        if (mouse.WasButtonReleased(MouseButton.Left))
+        {
+            if (now - _lastClickTime < DOUBLE_CLICK_TIME)
+            {
+                _lastClickTime = 0;
+                return true;
+            }
+            _lastClickTime = now;
+        }
+        return false;
+    }
+
+    private void ToggleActiveCard(CardManager cm, Card card)
+    {
+        if (ReferenceEquals(cm._activeMapCard, card))
+        {
+            cm._activeMapCard    = null;
+            cm._previewStructure = null;
+            cm._selectedTile     = (-1, -1);
+        }
+        else
+        {
+            cm._activeMapCard    = card;
+            cm._selectedTile     = (-1, -1);
+            cm._previewStructure = null;
+        }
+    }
 }
