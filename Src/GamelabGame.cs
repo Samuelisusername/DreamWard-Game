@@ -90,6 +90,9 @@ public class GamelabGame : Game
     
     private int setSeed = 0; //1512335036;//1029531291; //1330672853; //1036804964; //set this to override seed
 
+    public BalanceParams Balance;
+    //public Effect MyEffect;
+
     public GamelabGame(RunMode runMode, int? seed = null)
     {
         Instance = this;
@@ -114,6 +117,8 @@ public class GamelabGame : Game
         GamePhaseManager = new();
         SanityManager = new();
         Components.Add(screenManager);
+
+        Balance = jsonLoader.LoadJson<BalanceParams>("Balance.json");
     }
 
     protected override void Initialize()
@@ -176,6 +181,7 @@ public class GamelabGame : Game
         DummyText.SetData(new[] { Color.White });
         
         Font = Content.Load<SpriteFont>("infoFont");
+        //MyEffect = Content.Load<Effect>("ColorOverlay");
         
         //load tilesets — read frame duration from the JSON atlas so it stays in sync with entity animations
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");

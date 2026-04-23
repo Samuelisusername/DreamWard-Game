@@ -774,7 +774,7 @@ public class MapManager
     {
         var oldMeadow = Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
         if(oldMeadow == null) return;
-        if(!gamePhaseManager.IsDay) return;
+        if(gamePhaseManager.IsInTransition) return;
         (int col, int row) tilePos = GetTileFromScreenPosition(pos);
         if(tilePos.col < 0) return;
         Entity entity = GetStructure(tilePos);

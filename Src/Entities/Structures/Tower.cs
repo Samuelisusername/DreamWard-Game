@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Gamelab;
 using Gamelab.Managers;
 using MonoGame.Extended.Animations;
 
@@ -8,12 +9,12 @@ using MonoGame.Extended.Animations;
 /// </summary>
 public abstract class Tower : Structure
 {
-    protected abstract float damagePerSecond {get;}
-    protected abstract int rangeDepth {get;}
+    protected virtual float damagePerSecond => GamelabGame.Instance.Balance.TowerDamage[this.GetType()];
+    protected virtual int rangeDepth => GamelabGame.Instance.Balance.TowerRanges[this.GetType()];
     private float soundTimer = 0.0f;
 
-    public Tower(string animName, (int,int) pos, int health)
-        : base(animName, pos, health)
+    public Tower(string animName, (int,int) pos)
+        : base(animName, pos)
     {
     }
 

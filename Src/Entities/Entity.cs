@@ -1,9 +1,17 @@
+using Gamelab;
 using Microsoft.Xna.Framework;
 
 public abstract class Entity
 {   
     public virtual float CurrentHealth {get; protected set;}
-    public virtual float MaxHealth {get; protected set;}
+    
+    public virtual float MaxHealth 
+    {
+        get => maxHealth == 0 ? GamelabGame.Instance.Balance.EntityHealth[this.GetType()] : maxHealth;
+        protected set => maxHealth = value;
+    }
+
+    protected float maxHealth;
 
     /// <summary>
     /// Posistion of the entity on the map
@@ -29,10 +37,9 @@ public abstract class Entity
     public abstract void Update(GameTime gameTime);
 
     protected abstract Vector2 _localOffset{get;}
-    public Entity((int,int) tilePos, int health = 100)
+    public Entity((int,int) tilePos)
     {
         TilePosition = tilePos;
-        CurrentHealth = health;
-        MaxHealth = health;
+        CurrentHealth = MaxHealth;
     }
 }

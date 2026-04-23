@@ -15,7 +15,7 @@ public abstract class MonsterGroup
     protected MapManager mapManager => GamelabGame.MapManager;
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     public List<Monster> Monsters { get; private set; } 
-    protected abstract TimeSpan speed {get;}
+    protected virtual TimeSpan speed => GamelabGame.Instance.Balance.MonsterSpeed[this.GetType()];
     protected TimeSpan _elapsed = TimeSpan.Zero;
     protected float _pathProgress;
     public (int,int) TilePosition {get; set;}

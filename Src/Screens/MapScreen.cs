@@ -54,6 +54,11 @@ public class MapScreen : GamelabGameScreen
     private bool _toCardsBtnPressed   = false;
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
+    
+    private Rectangle _startNightBtn;
+    private TimeSpan _startNightTime = TimeSpan.FromSeconds(1);
+    private TimeSpan _elapsedStartNightTime = TimeSpan.Zero;
+    private bool _resetStartNightTimer = true;
 
     // Drag
     private bool _isDrag;
@@ -150,14 +155,19 @@ public class MapScreen : GamelabGameScreen
         _toCardScreenBtn = new Rectangle(vw-183, 20, 163, 63);
         _tutorial_btn = new Rectangle(vw-183, 80, 163, 63);
         _speedBtn = new Rectangle(vw - 183, 140, 163, 63);
-        if (gamePhaseManager.IsDay)
+        if (!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
+            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
         }
     }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
+        if(_resetStartNightTimer)
+        {
+            _elapsedStartNightTime = TimeSpan.Zero;
+        }
+        _resetStartNightTimer = true;
         AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
                 
         GamelabGame.IsHovering = false;
@@ -173,34 +183,15 @@ public class MapScreen : GamelabGameScreen
             
             // Spawn monster at edge heading toward tent
             
-            if (keyboard.WasKeyPressed(Keys.Space))
-            
+            if (keyboard.WasKeyPressed(Keys.Space) && _is_active_tutorial)
             {
-                    if (_is_active_tutorial)
-                    {
-                        _tutorial_step++;
-                        //reached tutorial end
-                        if(_tutorial_step == 10)
-                        {  
-                           _is_active_tutorial = false; 
-                        }
-                        _clickStarted = false; 
-                        return;
-                    }
-                else
-                {
-                    int centerX = mapManager.Columns / 2;
-                    int centerY = mapManager.Rows / 2;
-    #if DEBUG
-                    gamePhaseManager.SwitchToNight();
-    #else
-                    if(gamePhaseManager.IsDay){
-                        gamePhaseManager.SwitchToNight();
-                    }
-    #endif
+                _tutorial_step++;
+                //reached tutorial end
+                if(_tutorial_step == 10)
+                {  
+                    _is_active_tutorial = false; 
                 }
-
-
+                _clickStarted = false;
             }
 
             if (keyboard.WasKeyPressed(Keys.P))
@@ -254,7 +245,8 @@ public class MapScreen : GamelabGameScreen
             //set cursor state
             if (_toCardScreenBtn.Contains(mousePos) ||
                 _inventoryBtn.Contains(mousePos) ||
-                _towerRangeBtn.Contains(mousePos))
+                _towerRangeBtn.Contains(mousePos) ||
+                _startNightBtn.Contains(mousePos))
             {
                 GamelabGame.IsHovering = true;
             }
@@ -271,11 +263,28 @@ public class MapScreen : GamelabGameScreen
             }
             
             //switch to cards
-            if(gamePhaseManager.IsDay && keyboard.WasKeyReleased(Keys.C))
+            if(!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
             {
                 Game.SwitchToScreen(Game.CardScreenInstance);
                 AudioManager.Play("dragonflap");
                 return;
+            }
+            
+            if(keyboard.IsKeyDown(Keys.Space) && !_is_active_tutorial && !gamePhaseManager.IsInTransition)
+            {
+                _resetStartNightTimer = false;
+                _elapsedStartNightTime += gameTime.ElapsedGameTime;
+                if(_elapsedStartNightTime > _startNightTime)
+                {
+                    _elapsedStartNightTime = TimeSpan.Zero;
+#if DEBUG
+                    gamePhaseManager.SwitchToNight();
+#else
+                    if(gamePhaseManager.IsDay){
+                        gamePhaseManager.SwitchToNight();
+                    }
+#endif
+                }
             }
                        
             // Drag
@@ -290,7 +299,7 @@ public class MapScreen : GamelabGameScreen
                 _clickStarted = true;
 
                 // trigger unaffordable flash
-                if(gamePhaseManager.IsDay && _hoveredStructure is Meadow cantAffordSpot && !cantAffordSpot.HasSheep)
+                if(!gamePhaseManager.IsInTransition && _hoveredStructure is Meadow cantAffordSpot && !cantAffordSpot.HasSheep)
                 {
                     int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, cantAffordSpot.TilePosition) * MapManager.MoveCostMultiplier);
                     if(GamelabGame.SanityManager.Sanity < moveCost)
@@ -307,12 +316,28 @@ public class MapScreen : GamelabGameScreen
                     _isDrag = true;
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
-                if(!_isDrag && gamePhaseManager.IsDay && _hoveredStructure is Meadow grazingSpot)
+                if(!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot)
                 {
                     int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition) * MapManager.MoveCostMultiplier);
                     if(GamelabGame.SanityManager.Sanity >= moveCost && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                     {
                         mapManager.TryMoveSheep(mousePos);
+                    }
+                }
+                else if(!_isDrag && !gamePhaseManager.IsInTransition && _startNightBtn.Contains(mousePos))
+                {
+                    _elapsedStartNightTime += gameTime.ElapsedGameTime;
+                    _resetStartNightTimer = false;
+                    if(_elapsedStartNightTime > _startNightTime)
+                    {
+                        _elapsedStartNightTime = TimeSpan.Zero;
+#if DEBUG
+                        gamePhaseManager.SwitchToNight();
+#else
+                        if(gamePhaseManager.IsDay){
+                            gamePhaseManager.SwitchToNight();
+                        }
+#endif
                     }
                 }
             }
@@ -354,7 +379,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                 }
-                if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
+                if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
                     //start tutorial
                     if (_tutorial_btn.Contains(mousePos))
@@ -438,8 +463,7 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.Begin(samplerState: sampler,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
-        // ✅ Map
-        
+        // ✅ Map        
         if (cardManager._activeMapCard != null &&
             (cardManager._activeMapCard.Effect == CardEffect.Move ||
             cardManager._activeMapCard.Effect == CardEffect.Destroy ||
@@ -543,13 +567,14 @@ public class MapScreen : GamelabGameScreen
             spriteBatch.DrawString(_font, dayText, pos2, textColor);
         }
 
-        if(gamePhaseManager.IsDay)
+        if(!gamePhaseManager.IsInTransition)
         {
             DrawButton(_toCardScreenBtn, "Cards", _toCardsBtnPressed);
             //cardRenderer.UpdateUIButtonLayout((int)viewportAdapter.VirtualWidth, (int)viewportAdapter.VirtualHeight, _showInventory, _font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
             DrawButton(_inventoryBtn,    _showInventory ? "Hide Cards" : "Show Cards", _inventoryBtnPressed);
             DrawButton(_towerRangeBtn,   _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
             DrawButton(_tutorial_btn, _is_active_tutorial? "close tutorial" : "Tutorial", _tutorial_btn_pressed);
+            DrawButton(_startNightBtn, "start night (Space)", false, (float)(_elapsedStartNightTime/_startNightTime));
 
             if (_showInventory)
             {
@@ -868,10 +893,33 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
 
         spriteBatch.DrawString(_font, _dayPopupText, textPos, COLOR_D, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
-    private void DrawButton(Rectangle rect, string text, bool pressed = false)
+    private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
         var src = pressed ? BtnPressed : BtnNormal;
         spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+        if(progress > 0)
+        {   
+            // spriteBatch.End();
+            // // 1. Calculate where the progress "line" is in the texture atlas
+            // // We find the X position in pixels, then divide by texture width to get 0.0 - 1.0
+            // float progressWidthInPixels = src.X + (src.Width * progress);
+            // float uvThreshold = progressWidthInPixels / (float)InterfaceTexture.Width;
+
+            // // 2. Set the Shader Parameters
+            // //GamelabGame.Instance.MyEffect.Parameters["ProgressThreshold"].SetValue(uvThreshold);
+            // GamelabGame.Instance.MyEffect.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f)); // 50% dark
+
+            // // 3. Draw using the effect
+            // spriteBatch.Begin(effect: GamelabGame.Instance.MyEffect);
+            // spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            // spriteBatch.End();
+            // spriteBatch.Begin(samplerState: SamplerState.PointClamp,
+            //             transformMatrix: viewportAdapter.GetScaleMatrix());
+
+            Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
+            Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
+            spriteBatch.Draw(InterfaceTexture, progressDst, progressSrc, Color.Black * 0.4f);
+        }
         var size = _font.MeasureString(text);
         float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
         spriteBatch.DrawString(_font, text,

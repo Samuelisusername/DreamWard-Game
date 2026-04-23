@@ -2,8 +2,8 @@ using Gamelab;
 
 public abstract class CardEntity : Structure
 {
-    public CardEntity(string animName, (int,int) pos, int health = 100)
-        : base(animName, pos, health)
+    public CardEntity(string animName, (int,int) pos)
+        : base(animName, pos)
     {
     }
 }
@@ -15,10 +15,10 @@ public class Tent : CardEntity
     public override bool CanMove => false;
 
     public Tent(string animName, (int,int) pos)
-        : base(animName, pos, GamelabGame.SanityManager?.Sanity ?? 100)
+        : base(animName, pos)
     {
     }
-
+    
     public override float CurrentHealth { get => sanityManager?.Sanity ?? 0; protected set => base.CurrentHealth = value; }
     public override float MaxHealth
     { 
@@ -32,7 +32,7 @@ public class Tent : CardEntity
 public class Fence : CardEntity
 {
     public Fence((int,int) pos)
-        : base("fence_idle", pos, 15)
+        : base("fence_idle", pos)
     {
     }
 
@@ -42,7 +42,7 @@ public class Fence : CardEntity
 public class Wall : CardEntity
 {
     public Wall((int,int) pos)
-        : base("wall_idle", pos, 10)
+        : base("wall_idle", pos)
     {
     }
 

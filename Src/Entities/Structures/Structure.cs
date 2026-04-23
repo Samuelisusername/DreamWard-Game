@@ -22,7 +22,7 @@ public abstract class Structure : Entity
     protected GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     protected MapManager mapManager => GamelabGame.MapManager;
 
-    public Structure(string animName, (int, int) tilePos, int health = 100) : base(tilePos, health)
+    public Structure(string animName, (int, int) tilePos) : base(tilePos)
     {
         _animName = animName;
         _spriteTop = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);

@@ -15,7 +15,7 @@ public class FlyingMonsterGroup : MonsterGroup
     public override MonsterType MonsterType => MonsterType.Flying;
     
 
-    protected override TimeSpan speed => TimeSpan.FromSeconds(2);
+    //protected override TimeSpan speed => TimeSpan.FromSeconds(2);
 
 
     public override Vector2 LocalOffset => new Vector2(-44, -90);

@@ -10,7 +10,7 @@ public class RegularMonsterGroup : MonsterGroup
 
     public override MonsterType MonsterType => MonsterType.Regular;
 
-    protected override TimeSpan speed => TimeSpan.FromSeconds(2);
+    //protected override TimeSpan speed => TimeSpan.FromSeconds(2);
 
     public override Vector2 LocalOffset => new Vector2(-20, -90);
 }

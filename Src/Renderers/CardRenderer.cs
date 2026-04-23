@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -190,7 +191,8 @@ public class CardRenderer
         SpriteFont font,
         ref int cardStartY,
         ref Rectangle inventoryBtn,
-        ref Rectangle towerRangeBtn)
+        ref Rectangle towerRangeBtn,
+        ref Rectangle nightBtn)
     {
         int spacing = 10;
         int marginRight = 20;
@@ -217,5 +219,13 @@ public class CardRenderer
         // Tower range button (above inventory)
         currentY -= btnH;
         towerRangeBtn = new Rectangle(screenW - btnW - marginRight, currentY, btnW, btnH);
+
+        text = "start night (Space)";
+        size = font.MeasureString(text);
+
+        btnW = (int)size.X + 20;
+        btnH = (int)size.Y + 10;
+
+        nightBtn = new Rectangle(marginRight, screenH - btnH - marginRight, btnW, btnH);
     }
 }

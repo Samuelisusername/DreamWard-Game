@@ -14,8 +14,20 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin ColorOverlay.fx
+/copy:ColorOverlay.fx
+
+#begin Data/Balance.json
+/copy:Data/Balance.json
+
+#begin Data/Buff.json
+/copy:Data/Buff.json
+
 #begin Data/example.json
 /copy:Data/example.json
+
+#begin Data/example2.json
+/copy:Data/example2.json
 
 #begin font.spritefont
 /importer:FontDescriptionImporter
@@ -310,6 +322,21 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/cards.png
 
+#begin Sprites/day_interface.json
+/copy:Sprites/day_interface.json
+
+#begin Sprites/day_interface.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day_interface.png
+
 #begin Sprites/day_player.json
 /copy:Sprites/day_player.json
 
@@ -558,11 +585,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
-#begin Sprites/day_interface.json
-/copy:Sprites/day_interface.json
-
-#begin Sprites/day_interface.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/day_interface.png
 

@@ -1,7 +1,7 @@
 public class FlyingMonster : Monster
 {
 
-    public override float DamagePerSecond => 1.5f;
+    //public override float DamagePerSecond => 1.5f;
 
     public override MonsterType Type => MonsterType.Flying;
 
@@ -23,7 +23,7 @@ public class FlyingMonster : Monster
         return true;
     }
     
-    public FlyingMonster((int, int) startTile, int health = 30) : base(startTile, health)
+    public FlyingMonster((int, int) startTile) : base(startTile)
     {
     }
 }

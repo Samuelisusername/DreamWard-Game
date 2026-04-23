@@ -138,6 +138,10 @@ public class StartScreen : GamelabGameScreen
                             break; // exit loop after click
                         }
                     }
+                    if(keyboard.WasKeyReleased(Keys.F5))
+                    {
+                        GamelabGame.Instance.Balance =  GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
+                    }
                 }
                 break;
 

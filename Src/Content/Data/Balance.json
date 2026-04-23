@@ -1,0 +1,43 @@
+{
+  "TowerRanges": {
+    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2,
+    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 3,
+    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 0
+  },
+  "TowerDamage": {
+    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 5.0,
+    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 7.5,
+    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 10.0
+  },
+  "EntityHealth": {
+    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Buff, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Tent, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 0.0,
+    "Fence, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Wall, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Decoy, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Meadow, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "PlacableMeadow, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
+    "TreeTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
+    "VoidTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
+    "WallTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 100.0,
+    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 20.0,
+    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 10.0
+  },
+  "MonsterDamage": {
+    "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
+    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 8.0,
+    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 5.0,
+    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.0
+  },
+  "MonsterSpeed": {
+    "BigMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:03",
+    "FlyingMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:02",
+    "RegularMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:02",
+    "SmallMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:01"
+  }
+}

@@ -4,7 +4,7 @@
 public class VoidTile : Structure
 {
     public VoidTile((int,int) pos)
-        : base("void_idle", pos, int.MaxValue)
+        : base("void_idle", pos)
     {
     }
     

@@ -1,6 +1,6 @@
 public class SmallMonster : Monster
 {
-    public override float DamagePerSecond => 1;
+    //public override float DamagePerSecond => 1;
 
     public override MonsterType Type => MonsterType.Small;
 
@@ -29,7 +29,7 @@ public class SmallMonster : Monster
         return true;
     }
     
-    public SmallMonster((int, int) startTile, int health = 10) : base(startTile, health)
+    public SmallMonster((int, int) startTile) : base(startTile)
     {
     }
 }

@@ -29,7 +29,7 @@ public class Meadow : Structure
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
     public Meadow((int,int) pos, int sanityGain)
-        : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos, 50)
+        : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos)
     {
         SanityGain = sanityGain;
         // float lerpConst = .25f;
@@ -190,7 +190,7 @@ public class PlacableMeadow : Structure
     protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
 
     public PlacableMeadow((int,int) pos, int sanityGain)
-        : base("meadowPlaced_idle", pos, 5)
+        : base("meadowPlaced_idle", pos)
     {
         SanityGain = sanityGain;
     }

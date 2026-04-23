@@ -324,15 +324,15 @@ public class CardManager
     {
         Structure structure = card.Name switch
         {
-            "sniper" => new SniperTower(pos, health: 100),
-            "aoe" => new AreaTower(pos, health: 80),
+            "sniper" => new SniperTower(pos),
+            "aoe" => new AreaTower(pos),
             "fence" => new Fence(pos),
             "meadow" => new PlacableMeadow(pos,2),
             "dreamcatcher" => new Wall(pos),
             "void" => new VoidTile(pos),
-            "spikes" => new Spike(pos,2),
-            "decoy" => new Decoy(pos,2),
-            "buff" => new Buff(pos,2),
+            "spikes" => new Spike(pos),
+            "decoy" => new Decoy(pos),
+            "buff" => new Buff(pos),
             _ => null
         };
 

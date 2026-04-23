@@ -13,7 +13,7 @@ public abstract class Monster : Entity
     private List<(int,int)> _path = new List<(int,int)>();
 
     // Damage this monster deals per second when attacking
-    public abstract float DamagePerSecond { get; }
+    public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType()];
 
     // The type of this monster (Regular or Flying)
     public abstract MonsterType Type { get; } 
@@ -59,8 +59,8 @@ public abstract class Monster : Entity
 
     protected override Vector2 _localOffset => throw new NotImplementedException();
 
-    public Monster((int,int) startTile, int health = 30)
-        : base(startTile, health)
+    public Monster((int,int) startTile)
+        : base(startTile)
     {
         // DamagePerSecond = type == MonsterType.Flying ? damagePerSecond * 0.5f : damagePerSecond;
         // Name = type == MonsterType.Regular ? "Regular" : "Flying";

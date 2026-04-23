@@ -4,8 +4,8 @@
 /// </summary>
 public class WallTile : Structure
 {
-    public WallTile(string animName, (int,int) pos, int health = 50)
-        : base(animName, pos, health)
+    public WallTile(string animName, (int,int) pos)
+        : base(animName, pos)
     {
     }
 

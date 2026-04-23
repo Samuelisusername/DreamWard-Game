@@ -1,12 +1,12 @@
 public class RegularMonster : Monster
 {
 
-    public override float DamagePerSecond => 3;
+    //public override float DamagePerSecond => 3;
 
     public override MonsterType Type => MonsterType.Regular;
 
     
-    public RegularMonster((int, int) startTile,  int health = 30) : base(startTile, health)
+    public RegularMonster((int, int) startTile) : base(startTile)
     {
     }
 
