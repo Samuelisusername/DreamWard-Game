@@ -812,7 +812,8 @@ else
             }
         }
     }
-
+    // wrappedText is recomputed each frame and can change length if layout shifts, so clamp _charIndex to avoid Substring overflow
+    _charIndex = Math.Min(_charIndex, wrappedText.Length);
     string textToDraw = wrappedText.Substring(0, _charIndex);
     int bounceOffset = isTyping ? (int)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 20) * 4) : 0;
 
