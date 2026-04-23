@@ -423,7 +423,7 @@ public class MapScreen : GamelabGameScreen
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
             entityRenderer.Draw(spriteBatch);
-            if (_is_active_tutorial && (_tutorial_step == 6 || _tutorial_step == 7))
+            if (_is_active_tutorial && (_tutorial_step == 6))
             {
                 float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
                 Color highlightColor = Color.Yellow * (0.3f + pulse * 0.4f);
@@ -654,6 +654,13 @@ else
         case 7: 
             speaker = "Sheep";
             text = "you should also place some cards from your hand to defend us";
+            float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
+            Color highlightColor = Color.Yellow * (0.3f + pulse * 0.4f);
+            foreach (var (rect, card) in cardManager.CardRects)
+    {
+        // Draw a glow behind or over each card slot
+        spriteBatch.Draw(_dummy, rect, highlightColor);
+    }
             break;
         case 8: 
             speaker = "Human";
