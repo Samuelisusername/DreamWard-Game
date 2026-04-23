@@ -15,7 +15,10 @@
 #---------------------------------- Content ---------------------------------#
 
 #begin ColorOverlay.fx
-/copy:ColorOverlay.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:ColorOverlay.fx
 
 #begin Data/Balance.json
 /copy:Data/Balance.json

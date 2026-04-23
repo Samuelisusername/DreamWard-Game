@@ -91,7 +91,7 @@ public class GamelabGame : Game
     private int setSeed = 0; //1512335036;//1029531291; //1330672853; //1036804964; //set this to override seed
 
     public BalanceParams Balance;
-    //public Effect MyEffect;
+    public Effect LoadingShader;
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {
@@ -181,7 +181,7 @@ public class GamelabGame : Game
         DummyText.SetData(new[] { Color.White });
         
         Font = Content.Load<SpriteFont>("infoFont");
-        //MyEffect = Content.Load<Effect>("ColorOverlay");
+        LoadingShader = Content.Load<Effect>("ColorOverlay");
         
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
         dayTiles = new(dayTilesAtlas, "var", "idle");

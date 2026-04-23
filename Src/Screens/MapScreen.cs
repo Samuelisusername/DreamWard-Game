@@ -897,29 +897,34 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
         var src = pressed ? BtnPressed : BtnNormal;
-        spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
         if(progress > 0)
         {   
-            // spriteBatch.End();
-            // // 1. Calculate where the progress "line" is in the texture atlas
-            // // We find the X position in pixels, then divide by texture width to get 0.0 - 1.0
-            // float progressWidthInPixels = src.X + (src.Width * progress);
-            // float uvThreshold = progressWidthInPixels / (float)InterfaceTexture.Width;
+            spriteBatch.End();
+            // 1. Calculate where the progress "line" is in the texture atlas
+            // We find the X position in pixels, then divide by texture width to get 0.0 - 1.0
+            float progressWidthInPixels = src.X + (src.Width * progress);
+            float uvThreshold = progressWidthInPixels / (float)InterfaceTexture.Width;
 
-            // // 2. Set the Shader Parameters
-            // //GamelabGame.Instance.MyEffect.Parameters["ProgressThreshold"].SetValue(uvThreshold);
-            // GamelabGame.Instance.MyEffect.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f)); // 50% dark
+            // 2. Set the Shader Parameters
+            GamelabGame.Instance.LoadingShader.Parameters["ProgressThreshold"].SetValue(uvThreshold);
+            GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f)); // 50% dark
 
-            // // 3. Draw using the effect
-            // spriteBatch.Begin(effect: GamelabGame.Instance.MyEffect);
-            // spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
-            // spriteBatch.End();
-            // spriteBatch.Begin(samplerState: SamplerState.PointClamp,
-            //             transformMatrix: viewportAdapter.GetScaleMatrix());
+            // 3. Draw using the effect
 
-            Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
-            Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
-            spriteBatch.Draw(InterfaceTexture, progressDst, progressSrc, Color.Black * 0.4f);
+            spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
+                        samplerState: SamplerState.PointClamp,
+                        transformMatrix: viewportAdapter.GetScaleMatrix());
+            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            spriteBatch.End();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
+
+            // Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
+            // Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
+            // spriteBatch.Draw(InterfaceTexture, progressDst, progressSrc, Color.Black * 0.4f);
+        }
+        else
+        {
+            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
         }
         var size = _font.MeasureString(text);
         float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
