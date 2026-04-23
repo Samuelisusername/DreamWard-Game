@@ -186,12 +186,18 @@ public class CardManager
 
     public void UseCard(Card card)
     {
+        bool usedSuccessfully = false;
+
         switch (card.Effect)
         {
             case CardEffect.Shuffle:
             {
+                bool anyValid = false;
+
                 foreach (var slot in BuildSlots.Where(s => s.IsFilled && !s.Purchased && !s.IsSaved))
                 {
+                    anyValid = true;
+
                     int index = BuildSlots.IndexOf(slot);
                     if (index == -1) continue;
 
@@ -201,12 +207,23 @@ public class CardManager
                         slot.Card
                     );
                 }
+
+                usedSuccessfully = anyValid;
                 break;
             }
 
             case CardEffect.Discount:
-                DiscountActive = true;
+            {
+                bool anyValid = BuildSlots.Any(s => s.IsFilled && !s.Purchased);
+
+                if (anyValid)
+                {
+                    DiscountActive = true;
+                    usedSuccessfully = true;
+                }
+
                 break;
+            }
 
             case CardEffect.SaveCard:
                 PendingStackAction = CardEffect.SaveCard;
@@ -219,7 +236,7 @@ public class CardManager
                 return;
         }
 
-        if (card.Effect != CardEffect.SaveCard && card.Effect != CardEffect.Discard)
+        if (usedSuccessfully)
         {
             RemoveFromSlots(card);
         }
@@ -268,10 +285,17 @@ public class CardManager
 
         switch (card.Effect)
         {
-            case CardEffect.Destroy:
-                if (target is Structure toDestroy && toDestroy.CanMove)
-                { mapManager.RemoveStructure((col, row)); return true; }
-                return false;
+           case CardEffect.Destroy:
+            {
+                if (target is not Structure toDestroy)
+                    return false;
+                if (toDestroy is VoidTile)
+                    return false;
+                if (!toDestroy.CanMove)
+                    return false;
+                mapManager.RemoveStructure((col, row));
+                return true;
+            }
 
             case CardEffect.Discard:
                 if (target is Structure toDiscard && toDiscard.CanMove)
