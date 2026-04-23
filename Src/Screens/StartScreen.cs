@@ -108,8 +108,9 @@ public class StartScreen : GamelabGameScreen
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
         AudioManager.PlayMusic("start_music");
-        if (keyboard.IsKeyDown(Keys.Escape))
-            Game.Exit();
+
+        if (keyboard.WasKeyReleased(Keys.Escape) && Game.IsGameInProgress)
+            Game.SwitchToScreen(Game.MapScreenInstance);
 
         UpdateLayout();
         Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();

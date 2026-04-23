@@ -49,6 +49,7 @@ public class MapScreen : GamelabGameScreen
     private Rectangle _inventoryBtn;
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
+    private bool _offsetInitialized = false;
     private int _cardStartY = 0;
     private bool _toCardsBtnPressed   = false;
     private bool _inventoryBtnPressed  = false;
@@ -136,7 +137,11 @@ public class MapScreen : GamelabGameScreen
 
         };
         
-        mapManager.InitOffset(screenSize);
+        if (!_offsetInitialized)
+        {
+            mapManager.InitOffset(screenSize);
+            _offsetInitialized = true;
+        }
     }
     private void update_card_button()
     {
@@ -283,6 +288,14 @@ public class MapScreen : GamelabGameScreen
                 _speedBtnPressed      = _speedBtn.Contains(pos);
                 _oldPos = pos;
                 _clickStarted = true;
+
+                // trigger unaffordable flash
+                if(gamePhaseManager.IsDay && _hoveredStructure is Meadow cantAffordSpot && !cantAffordSpot.HasSheep)
+                {
+                    int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, cantAffordSpot.TilePosition) * MapManager.MoveCostMultiplier);
+                    if(GamelabGame.SanityManager.Sanity < moveCost)
+                        cantAffordSpot.TriggerCantAffordFlash();
+                }
             }
 
             if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted)
@@ -294,9 +307,10 @@ public class MapScreen : GamelabGameScreen
                     _isDrag = true;
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
-                if(!_isDrag && _hoveredStructure is Meadow grazingSpot)
+                if(!_isDrag && gamePhaseManager.IsDay && _hoveredStructure is Meadow grazingSpot)
                 {
-                    if(grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                    int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition) * MapManager.MoveCostMultiplier);
+                    if(GamelabGame.SanityManager.Sanity >= moveCost && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                     {
                         mapManager.TryMoveSheep(mousePos);
                     }
@@ -481,6 +495,12 @@ public class MapScreen : GamelabGameScreen
         }
         cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
 
+        spriteBatch.End();
+
+        // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
+        Structure._screenTransform = viewportAdapter.GetScaleMatrix();
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _hoveredStructure?.DrawCard(spriteBatch);
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied

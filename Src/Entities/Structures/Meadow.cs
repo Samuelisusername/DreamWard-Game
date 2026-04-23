@@ -17,14 +17,16 @@ public class Meadow : Structure
     public int SanityGain {get; private set;}
 
     public override bool CanMove => false;
-    protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition)}")];
+    protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")];
 
     protected override string bottomText => "Click and hold to move sheep here";
 
-    protected TimeSpan timeToMove = TimeSpan.FromSeconds(2.5f);
+    protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
 
     private bool resetSanity = true;
+    private TimeSpan _cantAffordFlash = TimeSpan.Zero;
+    private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
     public Meadow((int,int) pos, int sanityGain)
         : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos, 50)
@@ -49,6 +51,8 @@ public class Meadow : Structure
         // }
     }
 
+    public void TriggerCantAffordFlash() => _cantAffordFlash = FlashDuration;
+
     public override void Update(GameTime gameTime)
     {
         base.Update(gameTime);
@@ -57,6 +61,8 @@ public class Meadow : Structure
             moveProgress = TimeSpan.Zero;
         }
         resetSanity = true;
+        if(_cantAffordFlash > TimeSpan.Zero)
+            _cantAffordFlash -= gameTime.ElapsedGameTime;
     }
 
     public void AddSheep(bool isPolymorphed = false)
@@ -120,41 +126,59 @@ public class Meadow : Structure
             ? COLOR_D
             : new Color(214, 214, 214); 
 
+        // Floor to integer scale so every font stroke occupies whole screen pixels without growing larger than intended.
+        float sx = MathF.Max(1f, MathF.Floor(_screenTransform.M11));
+        float sy = MathF.Max(1f, MathF.Floor(_screenTransform.M22));
+        // Anchor uses the true (non-rounded) transform so the card stays over the tile.
+        Vector2 ToScreen(float x, float y) => new Vector2(
+            MathF.Round(x * _screenTransform.M11 + _screenTransform.M41),
+            MathF.Round(y * _screenTransform.M22 + _screenTransform.M42));
+
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
         int pad = 10;
         int midPad = 50;
         int heightPad = 50;
-        int boxWidth = (int)infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad;
-        int boxHeight = (int)infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + (pad * (infos.Length + 1));
+
+        int boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
+        int boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
         if(bottomText != null)
         {
-            boxWidth = Math.Max(boxWidth, (int)_font.MeasureString(bottomText).X + 2 * pad);
-            boxHeight += (int)_font.MeasureString(bottomText).Y + heightPad;
+            boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
+            boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
         }
-        int left = (int)(worldPos.X + (31.5f * mapManager.Scale.X)) - boxWidth/2;
-        int top = (int)(worldPos.Y - (64 * mapManager.Scale.X) - boxHeight);
 
+        Vector2 anchor = ToScreen(worldPos.X + 31.5f * mapManager.Scale.X, worldPos.Y);
+        int left = (int)(anchor.X - boxWidth / 2f);
+        int top  = (int)(anchor.Y - MathF.Round(16 * mapManager.Scale.X * sy) - boxHeight);
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
-        int yOffset = pad;
+
+        float yOff = MathF.Round(pad * sy);
         for (int i = 0; i < infos.Length; i++)
         {
-            Vector2 posLabel = new(left + pad, top + yOffset);
-            spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor);
-            Vector2 posInfo = new(left + boxWidth - pad - _font.MeasureString(infos[i].info).X, posLabel.Y);
-            spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor);
-            yOffset += (int)_font.MeasureString(infos[i].info).Y + pad;
+            var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
+            spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            float infoW = _font.MeasureString(infos[i].info).X * sx;
+            var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
+            spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
         }
         if(bottomText != null)
         {
-            Vector2 pos = new (worldPos.X + (31.5f * mapManager.Scale.X) - _font.MeasureString(bottomText).X/2, top + yOffset - pad + heightPad);
-            if(mapManager.GetSheep() != null)
-            {                
-                Point size = _font.MeasureString(bottomText).ToPoint();
-                size.X = (int)(size.X * (moveProgress / timeToMove));
-                spriteBatch.Draw(_dummy, new Rectangle(pos.ToPoint(), size), loadColor * 0.5f);
+            float textW = _font.MeasureString(bottomText).X * sx;
+            var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+            int barH = (int)MathF.Round(_font.MeasureString(bottomText).Y * sy);
+            if(_cantAffordFlash > TimeSpan.Zero)
+            {
+                float t = (float)(_cantAffordFlash / FlashDuration);
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, (int)textW, barH), Color.Red * (t * 0.6f));
             }
-            spriteBatch.DrawString(_font, bottomText, pos, textColor);
+            else
+            {
+                int fillW = (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), loadColor * 0.5f);
+            }
+            spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
     }
 }
