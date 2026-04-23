@@ -30,7 +30,6 @@ public class MapScreen : GamelabGameScreen
     private Rectangle _tutorial_btn;
     private int _tutorial_step = 0;
     private bool _tutorial_btn_pressed = false; 
-    private int _lastAudioStep = -1;
     private float _textTimer = 0f;
     private float _zoomTimer = 0f;
     private int _charIndex = 0;
@@ -173,7 +172,7 @@ public class MapScreen : GamelabGameScreen
                     {
                         _tutorial_step++;
                         //reached tutorial end
-                        if(_tutorial_step == 15) //4 tutorial steps for the moment, change this later based on tutorial
+                        if(_tutorial_step == 10)
                         {  
                            _is_active_tutorial = false; 
                         }
@@ -185,11 +184,9 @@ public class MapScreen : GamelabGameScreen
                     int centerX = mapManager.Columns / 2;
                     int centerY = mapManager.Rows / 2;
     #if DEBUG
-                    AudioManager.Play("grunt_03");
                     gamePhaseManager.SwitchToNight();
     #else
                     if(gamePhaseManager.IsDay){
-                        AudioManager.Play("grunt_03");
                         gamePhaseManager.SwitchToNight();
                     }
     #endif
@@ -343,7 +340,7 @@ public class MapScreen : GamelabGameScreen
                     {
                         _tutorial_step++;
                         //reached tutorial end
-                        if(_tutorial_step == 15) //4 tutorial steps for the moment, change this later based on tutorial
+                        if(_tutorial_step == 10)
                         {  
                            _is_active_tutorial = false; 
                         }
@@ -656,23 +653,19 @@ else
             break;
         case 7: 
             speaker = "Sheep";
-            text = "You can move me to the other meadows by clicking on the sheep on the map and then clicking on another meadow.";
+            text = "you should also place some cards from your hand to defend us";
             break;
         case 8: 
-            speaker = "Sheep";
-            text = "you should also place defenses to defend us";
-            break;
-        case 9: 
             speaker = "Human";
             text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
             break;
-        case 10: 
+        case 9: 
             speaker = "Sheep"; 
-            text = "Okay cool! For any more tipps and infos you can click on tiles like meadows, cards and defense towers. Good Luck!";
+            text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
             break;
 
         default:
-            speaker = (_tutorial_step%2==0)?"sheep" : "Human";
+            speaker = (_tutorial_step%2==0)?"Sheep" : "Human";
             text = "DREAMWARD!!!!";
             break;
 
