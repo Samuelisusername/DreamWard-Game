@@ -25,7 +25,6 @@ public class GamelabGame : Game
 
     public static GamelabGame Instance { get; private set; }
 
-    public CardScreen CardScreenInstance;
     public MapScreen MapScreenInstance;
     public StartScreen StartScreenInstance;
     public float MasterVolume { get; set; } = 0.5f;
