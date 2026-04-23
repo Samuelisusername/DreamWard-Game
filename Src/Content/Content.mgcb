@@ -20,14 +20,8 @@
 #begin Data/Balance.json
 /copy:Data/Balance.json
 
-#begin Data/Buff.json
-/copy:Data/Buff.json
-
 #begin Data/example.json
 /copy:Data/example.json
-
-#begin Data/example2.json
-/copy:Data/example2.json
 
 #begin font.spritefont
 /importer:FontDescriptionImporter
