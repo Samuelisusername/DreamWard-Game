@@ -181,7 +181,6 @@ public class StartScreen : GamelabGameScreen
             case "Start New Game":
                 Game.ResetGame();
                 Game.MapScreenInstance = new MapScreen(Game);
-                Game.CardScreenInstance = new CardScreen(Game);
                 Game.IsGameInProgress = true;
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
