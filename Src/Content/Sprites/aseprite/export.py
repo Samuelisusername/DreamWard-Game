@@ -47,6 +47,10 @@ run_aseprite(
     "icon.aseprite", "--color-mode", "rgb",
     "--sheet", "../../../Icon.ico", "--sheet-type", "horizontal",
 )
+run_aseprite(
+    "icon.aseprite", "--color-mode", "rgb",
+    "--sheet", "../../../Icon.bmp", "--sheet-type", "horizontal",
+)
 
 # important that the layer part is before the file part
 # json is already exported earlier
