@@ -26,6 +26,8 @@ public class MapScreen : GamelabGameScreen
     // The exact coordinates from your JSON files
     private readonly Rectangle _sheepPortraitRect = new Rectangle(0, 1408, 128, 128); 
     private readonly Rectangle _humanPortraitRect = new Rectangle(0, 0, 16, 32);
+    private Rectangle _speedBtn;
+    private bool _speedBtnPressed = false;
     private bool _is_active_tutorial = false;
     private Rectangle _tutorial_btn;
     private int _tutorial_step = 0;
@@ -142,6 +144,7 @@ public class MapScreen : GamelabGameScreen
         int vh = viewportAdapter.VirtualHeight;
         _toCardScreenBtn = new Rectangle(vw-183, 20, 163, 63);
         _tutorial_btn = new Rectangle(vw-183, 80, 163, 63);
+        _speedBtn = new Rectangle(vw - 183, 140, 163, 63);
         if (gamePhaseManager.IsDay)
         {
             cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn);
@@ -220,7 +223,9 @@ public class MapScreen : GamelabGameScreen
         
 
         // Map update
-        mapManager.Update(gameTime);
+        TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
+        GameTime scaledGameTime = new GameTime(gameTime.TotalGameTime, scaledElapsed);
+        mapManager.Update(scaledGameTime);
 
         if(Game.IsActive)
         {
@@ -275,6 +280,7 @@ public class MapScreen : GamelabGameScreen
                 _toCardsBtnPressed    = _toCardScreenBtn.Contains(pos);
                 _inventoryBtnPressed  = _inventoryBtn.Contains(pos);
                 _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
+                _speedBtnPressed      = _speedBtn.Contains(pos);
                 _oldPos = pos;
                 _clickStarted = true;
             }
@@ -323,7 +329,17 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = false;
+                _toCardsBtnPressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
+                if(!gamePhaseManager.IsDay) // Night specific clicks
+                {
+                    if (_speedBtn.Contains(mousePos))
+                    {
+                        // Toggle speed: 1x -> 3x -> 1x
+                        GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
+                        AudioManager.Play("rustle_01");
+                        return;
+                    }
+                }
                 if(gamePhaseManager.IsDay && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
                     //start tutorial
@@ -470,6 +486,12 @@ public class MapScreen : GamelabGameScreen
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
         spriteBatch.Begin(samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
+        if (!gamePhaseManager.IsDay)
+        {
+            // Label showing current speed
+            string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
+            DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
+        }
 
         // draw sanity
         if (sanityManager != null)

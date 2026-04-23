@@ -14,6 +14,7 @@ public class MapManager
     private CombatManager combatManager => GamelabGame.CombatManager;
     private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+    // Add this near your other public properties
     
     private readonly Logger logger = new("Game");
 #endregion
@@ -34,6 +35,8 @@ public class MapManager
 
     //stores which tiles has which structure on it -1 if none
     public readonly Structure[,] ExteriorStructures; //colfirst
+    // Add this near your other public properties
+    public float TimeScale { get; set; } = 1.0f;
     
     // NEW: stores the container for each tile, handling all monsters
     public readonly MonsterGroupContainer[,] MonsterContainers; //colfirst
@@ -153,9 +156,14 @@ public class MapManager
     
     public void Update(GameTime gameTime)
     {   
+        float multiplier = (!gamePhaseManager.IsDay) ? TimeScale : 1.0f; // Only speed up at night
+        TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * multiplier));
+    
+        // Create a temporary GameTime object for scaled logic
+        GameTime scaledGameTime = new GameTime(gameTime.TotalGameTime, scaledElapsed);
         //progress the animation using the active tileset's frame duration from JSON
         TimeSpan delay = _tileSets[gamePhaseManager.IsDay ? "day" : "night"].FrameDuration;
-        _elapsed += gameTime.ElapsedGameTime;
+        _elapsed += scaledElapsed;
         if(_elapsed >= delay)
         {
             _elapsed -= delay;
@@ -163,7 +171,7 @@ public class MapManager
         }
         if(isFalling)
         {
-            TotalFallTime += gameTime.ElapsedGameTime;
+            TotalFallTime += scaledElapsed;
             for (int i = 0; i < Columns * 3; i++)
             {
                 for (int j = 0; j < Rows*3; j++)
@@ -171,13 +179,13 @@ public class MapManager
                     if(FallTimer[i,j] > TimeSpan.Zero)
                     {
                         //falling phase
-                        FallTimer[i,j] += gameTime.ElapsedGameTime;
+                        FallTimer[i,j] += scaledElapsed;
                         TilesOfsets[i,j] = Vector2.UnitY * (float)FallTimer[i,j].TotalSeconds * fallSpeed * Scale;
                     }
                     else
                     {
                         //shaking phase
-                        FallTimer[i,j] += gameTime.ElapsedGameTime;
+                        FallTimer[i,j] += scaledElapsed;
                         if(FallTimer[i,j] > TimeSpan.Zero)
                         {
                             TilesOfsets[i,j] = Vector2.UnitY * (float)FallTimer[i,j].TotalSeconds * fallSpeed * Scale;
@@ -201,7 +209,7 @@ public class MapManager
         {
             for(int j = 0; j < Rows; j++)
             {
-                Structures[i,j]?.Update(gameTime);
+                Structures[i,j]?.Update(scaledGameTime);
             }
         }
         
@@ -213,7 +221,7 @@ public class MapManager
         //if its night manage monsters
         if(!gamePhaseManager.IsDay)
         {
-            combatManager.ManageMoveAndAttack(gameTime);
+            combatManager.ManageMoveAndAttack(scaledGameTime);
             // NEW: Check if ALL containers on the map are entirely empty
             if(MonsterContainers.Cast<MonsterGroupContainer>().All(c => c.IsEmpty))
             {
