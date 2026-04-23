@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace DreamWardUtils.Graphics;
@@ -35,6 +36,30 @@ public class TileSet
             _tiles[i] = new TextureRegion(region.Texture, region.SourceRectangle.X +  (i%Columns) * tileWidth,region.SourceRectangle.Y +  (i/Columns) * tileHeight , tileWidth, tileHeight); 
         }
 
+    }
+
+    public TileSet(TextureAtlas atlas, string slicePrefix, string animTag)
+    {
+        var variantAnims = new List<Animation>();
+        int v = 0;
+        while (true)
+        {
+            try { variantAnims.Add(atlas.GetAnimation($"{slicePrefix}{v}_{animTag}")); v++; }
+            catch (KeyNotFoundException) { break; }
+        }
+
+        var firstFrame = variantAnims[0].Frames[0];
+        TileWidth = firstFrame.Width;
+        TileHeight = firstFrame.Height;
+        Columns = variantAnims[0].Frames.Count;
+        Rows = variantAnims.Count;
+        Count = Rows * Columns;
+        FrameDuration = variantAnims[0].Delay;
+
+        _tiles = new TextureRegion[Count];
+        for (int row = 0; row < Rows; row++)
+            for (int col = 0; col < Columns; col++)
+                _tiles[row * Columns + col] = variantAnims[row].Frames[col];
     }
 
     public TextureRegion GetTile(int index) => _tiles[index];

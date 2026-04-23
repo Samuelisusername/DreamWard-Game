@@ -183,14 +183,11 @@ public class GamelabGame : Game
         Font = Content.Load<SpriteFont>("infoFont");
         //MyEffect = Content.Load<Effect>("ColorOverlay");
         
-        //load tilesets — read frame duration from the JSON atlas so it stays in sync with entity animations
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
-        TextureRegion regionDay = new(dayTilesAtlas.Texture, 0, 0, dayTilesAtlas.Texture.Width, dayTilesAtlas.Texture.Height);
-        dayTiles = new(regionDay, 64, 32, dayTilesAtlas.GetAnimation("var0_idle").Delay);
+        dayTiles = new(dayTilesAtlas, "var", "idle");
 
         var nightTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/night_tiles.json");
-        TextureRegion regionNight = new(nightTilesAtlas.Texture, 0, 0, nightTilesAtlas.Texture.Width, nightTilesAtlas.Texture.Height);
-        nightTiles = new(regionNight, 64, 32, nightTilesAtlas.GetAnimation("var0_idle").Delay);
+        nightTiles = new(nightTilesAtlas, "var", "idle");
 
 
         TextureAtlas interfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
