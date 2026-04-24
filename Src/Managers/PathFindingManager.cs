@@ -36,7 +36,7 @@ public class PathFindingManager
     /// <summary>
     /// Finds a target and a path to said target for the given monster.
     /// </summary>
-    public List<(int, int)> CalculatePath(Monster monster)
+    public (int, int) GetNextPosition(Monster monster)
     {
         // Each monster type has an important property, vision range, that defines how far it can see on the map. The monster will target a structure
         // only if it can see the structure and each tile within 2 tiles of the structure.
@@ -80,7 +80,7 @@ public class PathFindingManager
             if (primaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
-                return primaryPath;
+                return primaryPath[1];
             }
         }
 
@@ -91,18 +91,22 @@ public class PathFindingManager
             if (secondaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
-                return secondaryPath;
+                return secondaryPath[1];
             }
         }
 
-        var centerTile = (mapManager.Columns / 2, mapManager.Rows / 2);
-        CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
-        var centerPath = ReconstructPath(startTile, centerTile, previousTile, timeToReach);
-        if (centerPath.Count > 0)
+        for (int i = 0; i < 10; ++i)
         {
-            return centerPath;
+            var randomCenterTile = GetRandomTileNearCenter(6);
+            CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
+            var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach);
+            if (centerPath.Count > 1)
+            {
+                return centerPath[1];
+            }
         }
-        return new List<(int, int)> { startTile };
+
+        return GetRandomNeighborAsLastResort(startTile, monster);
     }
 
     /// <summary>
@@ -266,6 +270,55 @@ public class PathFindingManager
             MonsterType.Flying => FlyingMonsterVisionRange,
             _ => RegularMonsterVisionRange
         };
+    }
+
+    private (int col, int row) GetRandomTileNearCenter(int maxDistanceFromCenter)
+    {
+        var centerTile = (col: mapManager.Columns / 2, row: mapManager.Rows / 2);
+        var candidateTiles = new List<(int col, int row)>();
+
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                var dist = MapUtils.CalculateTileDistance(centerTile, (col, row));
+                if (dist <= 1) continue;
+                if (dist > maxDistanceFromCenter) continue;
+                candidateTiles.Add((col, row));
+            }
+        }
+
+        if (candidateTiles.Count == 0)
+        {
+            return centerTile;
+        }
+
+        return candidateTiles[Random.Shared.Next(candidateTiles.Count)];
+    }
+
+    private (int col, int row) GetRandomNeighborAsLastResort((int col, int row) startTile, Monster monster)
+    {
+        var candidates = new List<(int col, int row)>();
+        foreach (var neighbor in MapUtils.GetSurroundingTiles(startTile))
+        {
+            if (!MapUtils.IsInBounds(neighbor))
+            {
+                continue;
+            }
+
+            Entity structure = mapManager.GetStructure(neighbor);
+            if (structure == null || monster.CanStepOn(structure) || structure is WallTile || structure is Fence || structure is Tower)
+            {
+                candidates.Add(neighbor);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return startTile;
+        }
+
+        return candidates[Random.Shared.Next(candidates.Count)];
     }
 
     /// <summary>
