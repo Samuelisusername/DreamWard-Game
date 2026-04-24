@@ -45,10 +45,10 @@ public class PathFindingManager
 
         // --- TARGET FINDING  ---
         // A new target is selected according to the following preferences:
-        // 1. A structure less than or equal to 'visionRange - 2' tiles away (in simple airwise distance) that the monster can target
+        // 1. A structure less than or equal to 'visionRange' tiles away (in simple airwise distance) that the monster can target
         //    a. In case of a tie, the monster will prefer primary targets over secondary targets.
         //    b. If there are multiple targets of the same type, the monster will pick the one with the lowest 'costToGetThere'.
-        // 2. One tile towards the center of the map (while paying a tiny little bit of attention to defenses along the way).
+        // 2. One tile towards some randomly chosen tile near the center
 
         // --- PATH FINDING ---
         // The sum of squared defense strength along the path is used as a measure of path cost, where defense strength is the sum of strengths of the
@@ -85,6 +85,13 @@ public class PathFindingManager
                 visibleTargets.Add(target);
                 break;
             }
+        }
+
+        // prototype: monsters share knowledge of all targets
+        foreach (var activeTarget in _activeTargets)
+        {
+            (int col, int row, int timeToBeAttacked, int monsterCount) = activeTarget;
+            visibleTargets.Add(((col, row), mapManager.GetStructure((row, col))));
         }
 
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
