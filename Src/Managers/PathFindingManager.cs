@@ -6,10 +6,10 @@ public class PathFindingManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
 
-    private const int RegularMonsterVisionRange = 6; // must be at least 2
-    private const int FlyingMonsterVisionRange = 10;
-    private const int SimplePathBaseDefenceStrength = 9;
-    private const int SimplePathDefendedDefenceStrength = 10;
+    private const int RegularMonsterVisionRange = 5;
+    private const int FlyingMonsterVisionRange = 8;
+    private const int SimplePathMinDefenceStrength = 1; // encourages taking a shorter route
+    private const int RandomTileMaxDistanceFromCenter = 8;
 
     // Keep track of all tiles that are going to be attacked and by who
     private readonly List<(int col, int row, int timeToBeAttacked, int monsterCount)> _activeTargets;
@@ -67,7 +67,7 @@ public class PathFindingManager
 
         var allTargets = GetAllTargetStructures(monster);
         int visionRange = GetVisionRange(monster);
-        int maxTargetDistance = visionRange - 2;
+        int maxTargetDistance = visionRange;
 
         var visibleTargets = allTargets.FindAll(target =>
             MapUtils.CalculateTileDistance(startTile, target.Tile) <= maxTargetDistance &&
@@ -97,7 +97,7 @@ public class PathFindingManager
 
         for (int i = 0; i < 10; ++i)
         {
-            var randomCenterTile = GetRandomTileNearCenter(6);
+            var randomCenterTile = GetRandomTileNearCenter(RandomTileMaxDistanceFromCenter);
             CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
             var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach);
             if (centerPath.Count > 1)
@@ -146,25 +146,40 @@ public class PathFindingManager
     /// </summary>
     private void UpdateDefenceStrengths()
     {
+        // reset data structures
         Array.Clear(_defenceStrength, 0, _defenceStrength.Length);
         _defenders.Clear();
-
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                _simplePathDefenceStrength[col, row] = SimplePathBaseDefenceStrength;
+                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength;
+            }
+        }
 
+        // update based on current structures
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
                 Entity structure = mapManager.GetStructure((col, row));
-                if (structure is not Tower tower)
+                List<(int, int)> defendedTiles;
+                if (structure is Tower tower)
+                {
+                    defendedTiles = tower.GetTilesInRange();
+                }
+                else if (structure is Buff buff)
+                {
+                    defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
+                }
+                else
                 {
                     continue;
                 }
-
-                foreach (var defendedTile in tower.GetTilesInRange())
+                foreach (var defendedTile in defendedTiles)
                 {
                     _defenceStrength[defendedTile.Item1, defendedTile.Item2]++;
-                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] = SimplePathDefendedDefenceStrength;
+                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] += 1;
                     if (!_defenders.TryGetValue(defendedTile, out var defenders))
                     {
                         defenders = new List<Entity>();
@@ -173,6 +188,7 @@ public class PathFindingManager
 
                     defenders.Add(structure);
                 }
+          
             }
         }
     }
@@ -224,7 +240,7 @@ public class PathFindingManager
                 }
 
                 int neighborDefence = defenseStrength[neighbor.Item1, neighbor.Item2];
-                int nextDamage = currentDamage + neighborDefence * neighborDefence;
+                int nextDamage = currentDamage + neighborDefence;
                 int nextTime = currentTime + 1;
 
                 if (nextDamage < costToGetThere[neighbor.Item1, neighbor.Item2] ||
