@@ -65,6 +65,7 @@ public class PathFindingManager
         // ------------------------------------
 
 
+        // TODO: uncomment below once attack logic is implemented when the monster is next to but cannot step onto its target
         // Already there, don't move
         //if (_monsterToTargetDist.TryGetValue(monster, out var dist) && dist <= 2)
         //{
@@ -78,6 +79,7 @@ public class PathFindingManager
         //        }
         //    }
         //}
+        // TODO ends
 
         UnregisterMonsterTarget(monster);
         UpdateDefenceStrengths();
