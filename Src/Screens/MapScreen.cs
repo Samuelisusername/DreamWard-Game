@@ -22,6 +22,9 @@ public class MapScreen : GamelabGameScreen
     private readonly CardRenderer cardRenderer;
     private Texture2D _dayTopTexture;
     private Texture2D _dayPlayerTexture;
+    
+    private enum TutorialHighlight { None, CardStrip, BuildSlots, MapSlots, StackSlots, Expanded, MeadowTiles }
+    private TutorialHighlight _tutorialHighlight = TutorialHighlight.None;
 
     // The exact coordinates from your JSON files
     private readonly Rectangle _sheepPortraitRect = new Rectangle(0, 1408, 128, 128); 
@@ -203,7 +206,7 @@ public class MapScreen : GamelabGameScreen
             {
                 _tutorial_step++;
                 //reached tutorial end
-                if(_tutorial_step == 25)
+                if(_tutorial_step == 23)
                 {  
                     _is_active_tutorial = false; 
                 }
@@ -678,7 +681,7 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_startNightBtn, "start night (Space)", false, (float)(_elapsedStartNightTime/_startNightTime));
             if (_showInventory)
             {
-                cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh);
+                cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
                 cardRenderer.DrawExpandedPanel(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager,vw, vh); 
             }
         }
@@ -741,267 +744,444 @@ public class MapScreen : GamelabGameScreen
 
         return sb.ToString();
     }
-private float _targetZoom = 1.0f; // Add this variable to your class fields at the top
-
-private void DrawTutorialState(GameTime gameTime)
-{
-    int vw = (int)viewportAdapter.VirtualWidth;
-    int vh = (int)viewportAdapter.VirtualHeight;
-    float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-    // --- 1. SMOOTH ZOOM LOGIC ---
-    // Instead of a loop, we check if we are at the target. If not, we zoom slightly.
-    // Adjust 0.05f to change the speed (smaller = slower).
-// --- 1. SMOOTH ZOOM LOGIC ---
-// --- 1. SMOOTH ZOOM LOGIC ---
-float zoomSpeed = 1.5f; // Adjust this to make the overall transition faster or slower
-if (Math.Abs(mapManager.Scale.X - _targetZoom) > 0.05f)
-{
-    // 1. Calculate how much we WANT to zoom this frame
-    float amountToMove = zoomSpeed * deltaTime;
     
-    // 2. Add it to our timer (acting as an accumulator)
-    _zoomTimer += amountToMove;
+    private float _targetZoom = 1.0f; // Add this variable to your class fields at the top
 
-    // 3. Only call the expensive/jumpy Zoom method when the accumulator 
-    // reaches a 'threshold' (0.1). This creates a rhythmic, consistent pulse.
-    if (_zoomTimer >= 0.1f)
+    private void DrawTutorialState(GameTime gameTime)
     {
-        Vector2 screenCenter = new Vector2(vw / 2f, vh / 2f);
-        float direction = mapManager.Scale.X < _targetZoom ? 1f : -1f;
-        
-        mapManager.Zoom(direction, screenCenter, screenSize);
-        
-        // 4. Subtract the threshold rather than setting to 0 
-        // to keep the remainder for the next frame (prevents stutter)
-        _zoomTimer -= 0.1f; 
-    }
-}
-else 
-{
-    _zoomTimer = 0f; // Reset when we are at the target
-}
+        int vw = (int)viewportAdapter.VirtualWidth;
+        int vh = (int)viewportAdapter.VirtualHeight;
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-    // Darken the background
-    spriteBatch.Draw(_dummy, new Rectangle(0, 0, vw, vh), Color.Black * 0.4f);
+        // --- 1. SMOOTH ZOOM LOGIC ---
+        // Instead of a loop, we check if we are at the target. If not, we zoom slightly.
+        // Adjust 0.05f to change the speed (smaller = slower).
 
-    string speaker = "";
-    string text = "";
-    Rectangle? highlightBox = null;
-
-    // --- 2. TUTORIAL STEPS ---
-    switch (_tutorial_step)
-    {
-        case 0:
-            speaker = "Human";
-            text = "Huh... where am I? What is happening?";
-            _targetZoom = 1.7f; // Zoom in close to the player
-            break;
-        case 1:
-            speaker = "Sheep";
-            text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you.";
-            break;
-        case 2:
-            speaker = "Human";
-            text = "Did they do something to us?";
-            break;
-        case 3:
-            speaker = "Sheep";
-            text = "The sleep monsters come from the forest at night and wanted to attack sanity points at your tent. They also tried to eat me.";
-            _targetZoom = 1.0f; // Zoom back out to see the UI
-
-            // Calculate Sanity UI Highlight
-            string sanityText = $"Sanity: {sanityManager.Sanity}";
-            string dayText = $"Day: {gamePhaseManager.DayCount}/10";
-            Vector2 s1 = _font.MeasureString(sanityText);
-            Vector2 s2 = _font.MeasureString(dayText);
-            int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; 
-            int boxHeight = (int)(s1.Y + s2.Y + 30) + 20;
-            highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
-            break;
-        case 4: 
-            speaker = "Human";
-            text = "Oh no, I hope you are okay. Why did they attack you?";
-            _targetZoom = 1.7f;
-            break;
-        case 5: 
-            speaker = "Sheep";
-            text = "The monsters attack your sanity and I produce sanity each morning, if I survive the night";
-            break;
-        case 6:
-            speaker = "Sheep";
-            
-            _targetZoom = 1.0f;
-            text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
-            break;
-        case 7: 
-            speaker = "Sheep";
-            text = "you should also place some cards from your hand to defend us";
-            float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
-            Color highlightColor = Color.Yellow * (0.3f + pulse * 0.4f);
-            foreach (var (rect, card) in cardManager.CardRects)
-    {
-        // Draw a glow behind or over each card slot
-        spriteBatch.Draw(_dummy, rect, highlightColor);
-    }
-            break;
-        // case 8: 
-        //     speaker = "Human";
-        //     text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
-        //     break;
-        // case 9: 
-        //     speaker = "Sheep"; 
-        //     text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
-        //     break;
-
-        case 8:  speaker = "Sheep";  text = "Now Look at the bottom-left of the screen your cards are there."; break;
-        case 9:  speaker = "Human";  text = "Cards? My life depends on cards now?"; break;
-        case 10: speaker = "Sheep";  text = "There are 3 types - starting with Build Cards."; break;
-        case 11: speaker = "Sheep";  text = "Dark ones are locked - double click to buy, then click again to place."; break;
-        case 12: speaker = "Human";  text = "Buy first, then place... got it."; break;
-        case 13: speaker = "Sheep";  text = "Build cards protect the tent and stop monsters at night."; break;
-        case 14: speaker = "Sheep";  text = "Hover over any card to see its info before using it."; break;
-        case 15: speaker = "Sheep";  text = "Map Action cards let you move, destroy structures, or polymorph me."; break;
-        case 16: speaker = "Human";  text = "How does that help against monsters?"; break;
-        case 17: speaker = "Sheep";  text = "You can reposition defenses as u move me and also once polymorphed monsters won't attack me."; break;
-        case 18: speaker = "Sheep";  text = "Stack Action cards modify your build cards like shuffle or discount."; break;
-        case 19: speaker = "Human";  text = "So I need strategy..."; break;
-        case 20: speaker = "Sheep";  text = "Exactly. Plan smart to survive the night."; break;
-        case 21: speaker = "Human";  text = "Alright... I'll try not to mess this up."; break;
-
-        default:
-            speaker = (_tutorial_step%2==0)?"Sheep" : "Human";
-            text = "DREAMWARD!!!!";
-            break;
-
-    }
-
-    // --- 3. DRAW HIGHLIGHT & ARROW ---
-    if (highlightBox.HasValue)
-    {
-        Rectangle h = highlightBox.Value;
-        int border = 4;
-        Color hc = Color.Yellow;
-
-        // Draw Border
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); 
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     
-        spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      
-        spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);
-
-        // Draw Bouncing Arrow pointing at the box
-        // We place it to the right of the box and make it bob left/right
-        float bounce = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 12) * 8;
-        Vector2 arrowPos = new Vector2(h.Right + 30 + bounce, h.Center.Y);
-        DrawPointerArrow(arrowPos, hc);
-    }
-
-    // --- 4. DIALOG BOX UI ---
-    int dialogHeight = 140;
-    Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
-    
-    spriteBatch.Draw(_dummy, dialogRect, COLOR_L); 
-    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
-    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
-
-    // Portrait Logic
-    Texture2D currentPortraitTex = null;
-    Rectangle currentSourceRect = Rectangle.Empty;
-    float portraitScale = 1f;
-    int portraitX = 0;
-    int portraitY = 0;
-    int textOffsetX = 20; 
-
-    if (speaker == "Human")
-    {
-        currentPortraitTex = _dayPlayerTexture;
-        currentSourceRect = _humanPortraitRect;
-        portraitScale = 3f; 
-        portraitX = dialogRect.X + 20;
-        portraitY = dialogRect.Y + 20;
-        textOffsetX = 140; 
-    }
-    else if (speaker == "Sheep")
-    {
-        currentPortraitTex = _dayTopTexture;
-        currentSourceRect = _sheepPortraitRect;
-        portraitScale = 4f; 
-        float scaledWidth = currentSourceRect.Width * portraitScale;
-        float scaledHeight = currentSourceRect.Height * portraitScale;
-        portraitX = dialogRect.Right - (int)scaledWidth + 201; 
-        portraitY = dialogRect.Bottom - (int)scaledHeight; 
-        textOffsetX = 20; 
-    }
-
-    // Typewriter Logic
-    float textScale = 0.5f; 
-    float maxTextWidth = (speaker == "Sheep") 
-        ? portraitX - (dialogRect.X + textOffsetX) - 20 
-        : dialogRect.Right - (dialogRect.X + textOffsetX) - 20;
-
-    string wrappedText = WrapText(_font, text, maxTextWidth, textScale);
-
-    if (_previousTutorialStep != _tutorial_step)
-    {
-        _charIndex = 0;
-        _textTimer = 0f;
-        _previousTutorialStep = _tutorial_step;
-    }
-
-    bool isTyping = _charIndex < wrappedText.Length;
-    if (isTyping)
-    {
-        _textTimer += deltaTime;
-        float timePerChar = 0.03f;
-        while (_textTimer >= timePerChar && _charIndex < wrappedText.Length)
+        float zoomSpeed = 1.5f; // Adjust this to make the overall transition faster or slower
+        if (Math.Abs(mapManager.Scale.X - _targetZoom) > 0.05f)
         {
-            _charIndex++;
-            _textTimer -= timePerChar;
-            int frequency = speaker == "Human" ? 10 : 30;
-            if (_charIndex % frequency == 4 && wrappedText[_charIndex - 1] != ' ' && wrappedText[_charIndex - 1] != '\n')
+            // 1. Calculate how much we WANT to zoom this frame
+            float amountToMove = zoomSpeed * deltaTime;
+            
+            // 2. Add it to our timer (acting as an accumulator)
+            _zoomTimer += amountToMove;
+
+            // 3. Only call the expensive/jumpy Zoom method when the accumulator 
+            // reaches a 'threshold' (0.1). This creates a rhythmic, consistent pulse.
+            if (_zoomTimer >= 0.1f)
             {
-                if (speaker == "Sheep") AudioManager.Play("sheep_baa");
-                else if (speaker == "Human") AudioManager.Play("grunt_03");
+                Vector2 screenCenter = new Vector2(vw / 2f, vh / 2f);
+                float direction = mapManager.Scale.X < _targetZoom ? 1f : -1f;
+                
+                mapManager.Zoom(direction, screenCenter, screenSize);
+                
+                // 4. Subtract the threshold rather than setting to 0 
+                // to keep the remainder for the next frame (prevents stutter)
+                _zoomTimer -= 0.1f; 
             }
         }
-    }
-    // wrappedText is recomputed each frame and can change length if layout shifts, so clamp _charIndex to avoid Substring overflow
-    _charIndex = Math.Min(_charIndex, wrappedText.Length);
-    string textToDraw = wrappedText.Substring(0, _charIndex);
-    int bounceOffset = isTyping ? (int)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 20) * 4) : 0;
+        else 
+        {
+            _zoomTimer = 0f; // Reset when we are at the target
+        }
 
-    if (currentPortraitTex != null)
+        // Darken the background
+        spriteBatch.Draw(_dummy, new Rectangle(0, 0, vw, vh), Color.Black * 0.4f);
+
+        string speaker = "";
+        string text = "";
+        Rectangle? highlightBox = null;
+        _tutorialHighlight = TutorialHighlight.None;
+
+        // --- 2. TUTORIAL STEPS ---
+        switch (_tutorial_step)
+        {
+            case 0:
+                speaker = "Human";
+                text = "Huh... where am I? What is happening?";
+                _targetZoom = 1.7f; // Zoom in close to the player
+                _showInventory = false;
+                break;
+            case 1:
+                speaker = "Sheep";
+                text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you.";
+                _targetZoom = 1.7f;
+                _showInventory = false;
+                break;
+            case 2:
+                speaker = "Human";
+                text = "Did they do something to us?";
+                _targetZoom = 1.7f;
+                _showInventory = false;
+                break;
+            case 3:
+                speaker = "Sheep";
+                text = "The sleep monsters come from the forest at night and wanted to attack sanity points at your tent. They also tried to eat me.";
+                _targetZoom = 1.0f; // Zoom back out to see the UI
+                _showInventory = false;
+
+                // Calculate Sanity UI Highlight
+                string sanityText = $"Sanity: {sanityManager.Sanity}";
+                string dayText = $"Day: {gamePhaseManager.DayCount}/10";
+                Vector2 s1 = _font.MeasureString(sanityText);
+                Vector2 s2 = _font.MeasureString(dayText);
+                int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; 
+                int boxHeight = (int)(s1.Y + s2.Y + 30) - 10;
+                highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
+                break;
+            case 4: 
+                speaker = "Human";
+                text = "Oh no, I hope you are okay. Why did they attack you?";
+                _targetZoom = 1.7f;
+                _showInventory = false;
+                break;
+            case 5: 
+                speaker = "Sheep";
+                text = "The monsters attack your sanity and I produce sanity each morning, if I survive the night";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+            case 6:
+                speaker = "Sheep";
+                text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+            case 7: 
+                speaker = "Sheep";
+                text = "Bonus tip: place a Build Card Meadow next to an existing meadow tile and you'll get DOUBLE the Sanity from it.";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                _tutorialHighlight = TutorialHighlight.MeadowTiles;
+                break;
+            case 8:
+                speaker = "Human";
+                text = "Okay, this is a lot. You said something about cards?";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 9:  
+                speaker = "Sheep";
+                text = "Yes! Look at the bottom of the screen - that's your hand. There are 3 types of cards. Build, Map Action, and Stack Action cards.";
+                _targetZoom = 1.0f;
+                _showInventory = true; // open inventory for this step
+                _tutorialHighlight = TutorialHighlight.CardStrip;
+                break;
+
+            case 10:
+                speaker = "Sheep";
+                text = "Build Cards are your defenses. Dark ones are locked - DOUBLE-CLICK to buy with Sanity, then click once to select and click a tile to place!";
+                _targetZoom = 1.0f;
+                _showInventory = true;
+                _tutorialHighlight = TutorialHighlight.BuildSlots;
+                break;
+
+            case 11:
+                speaker = "Human";
+                text = "Double-click to buy, single click to select, then click the map tile... got it.";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 12:
+                speaker = "Sheep";
+                text = "Hover any card to peek at its details in the expanded panel. Towers, fence, spikes, dream-catcher, you name it! Go ahead, try it now.";
+                _targetZoom = 1.0f;
+                _showInventory = true;
+                _tutorialHighlight = TutorialHighlight.Expanded;
+                break;
+            
+            case 13:
+                speaker = "Human";
+                text = "Okay, what about the action cards?";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 14:
+                speaker = "Sheep";
+                text = "Map Action cards let you mess with the map itself. Click one to select it, then click a structure on the map to apply it.";
+                _targetZoom = 1.0f;
+                _showInventory = true;
+                _tutorialHighlight = TutorialHighlight.MapSlots;
+                break;
+
+            case 15:
+                speaker = "Sheep";
+                text = "Move repositions a structure. Destroy blows one up. And Polymorph? It turns me into a rat! - they won't attack a rat!";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 16:
+                speaker = "Human";
+                text = "So I click the map card once, then click the structure on the map?";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 17:
+                speaker = "Sheep";
+                text = "Precisely. Select card -> click map tile. Simple as that. Great for repositioning towers as I wander further from the tent.";
+                _targetZoom = 1.0f;
+                _showInventory = false;
+                break;
+
+            case 18:
+                speaker = "Sheep";
+                text = "Stack Action cards modify your build deck. DOUBLE-CLICK them to activate - Shuffle, Discount, and more!";
+                _targetZoom = 1.0f;
+                _showInventory = true;
+                _tutorialHighlight = TutorialHighlight.StackSlots;
+                break;
+
+            case 19: 
+                speaker = "Human";
+                text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
+                break;
+
+            case 20: 
+                speaker = "Sheep"; 
+                text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
+                break;
+
+            default:
+                speaker = (_tutorial_step%2==0)?"Sheep" : "Human";
+                text = "DREAMWARD!!!!";
+                break;
+        }
+
+        // --- 3. DRAW HIGHLIGHT & ARROW ---
+        if (highlightBox.HasValue)
+        {
+            Rectangle h = highlightBox.Value;
+            int border = 4;
+            Color hc = Color.Yellow;
+
+            // Draw Border
+            spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y - border, h.Width + border * 2, border), hc); 
+            spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Bottom, h.Width + border * 2, border), hc);     
+            spriteBatch.Draw(_dummy, new Rectangle(h.X - border, h.Y, border, h.Height), hc);                      
+            spriteBatch.Draw(_dummy, new Rectangle(h.Right, h.Y, border, h.Height), hc);
+
+            // Draw Bouncing Arrow pointing at the box
+            // We place it to the right of the box and make it bob left/right
+            float bounce = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 12) * 8;
+            Vector2 arrowPos = new Vector2(h.Right + 30 + bounce, h.Center.Y);
+            DrawPointerArrow(arrowPos, hc);
+        }
+
+        // ── 4. DRAW CARD-STRIP REGION HIGHLIGHTS────────────────────────────────
+        if (_tutorialHighlight != TutorialHighlight.None && _tutorialHighlight != TutorialHighlight.MeadowTiles)
+        {
+            DrawCardRegionHighlight(gameTime, _tutorialHighlight, vw, vh);
+        }    
+
+        // --- 5. DIALOG BOX UI ---
+        int dialogHeight = 140;
+        Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
+        
+        spriteBatch.Draw(_dummy, dialogRect, COLOR_L); 
+        spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
+        spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
+
+        // Portrait Logic
+        Texture2D currentPortraitTex = null;
+        Rectangle currentSourceRect = Rectangle.Empty;
+        float portraitScale = 1f;
+        int portraitX = 0;
+        int portraitY = 0;
+        int textOffsetX = 20; 
+
+        if (speaker == "Human")
+        {
+            currentPortraitTex = _dayPlayerTexture;
+            currentSourceRect = _humanPortraitRect;
+            portraitScale = 3f; 
+            portraitX = dialogRect.X + 20;
+            portraitY = dialogRect.Y + 20;
+            textOffsetX = 140; 
+        }
+        else if (speaker == "Sheep")
+        {
+            currentPortraitTex = _dayTopTexture;
+            currentSourceRect = _sheepPortraitRect;
+            portraitScale = 4f; 
+            float scaledWidth = currentSourceRect.Width * portraitScale;
+            float scaledHeight = currentSourceRect.Height * portraitScale;
+            portraitX = dialogRect.Right - (int)scaledWidth + 201; 
+            portraitY = dialogRect.Bottom - (int)scaledHeight; 
+            textOffsetX = 20; 
+        }
+
+        // Typewriter Logic
+        float textScale = 0.5f; 
+        float maxTextWidth = (speaker == "Sheep") 
+            ? portraitX - (dialogRect.X + textOffsetX) - 20 
+            : dialogRect.Right - (dialogRect.X + textOffsetX) - 20;
+
+        string wrappedText = WrapText(_font, text, maxTextWidth, textScale);
+
+        if (_previousTutorialStep != _tutorial_step)
+        {
+            _charIndex = 0;
+            _textTimer = 0f;
+            _previousTutorialStep = _tutorial_step;
+        }
+
+        bool isTyping = _charIndex < wrappedText.Length;
+        if (isTyping)
+        {
+            _textTimer += deltaTime;
+            float timePerChar = 0.03f;
+            while (_textTimer >= timePerChar && _charIndex < wrappedText.Length)
+            {
+                _charIndex++;
+                _textTimer -= timePerChar;
+                int frequency = speaker == "Human" ? 10 : 30;
+                if (_charIndex % frequency == 4 && wrappedText[_charIndex - 1] != ' ' && wrappedText[_charIndex - 1] != '\n')
+                {
+                    if (speaker == "Sheep") AudioManager.Play("sheep_baa");
+                    else if (speaker == "Human") AudioManager.Play("grunt_03");
+                }
+            }
+        }
+        // wrappedText is recomputed each frame and can change length if layout shifts, so clamp _charIndex to avoid Substring overflow
+        _charIndex = Math.Min(_charIndex, wrappedText.Length);
+        string textToDraw = wrappedText.Substring(0, _charIndex);
+        int bounceOffset = isTyping ? (int)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 20) * 4) : 0;
+
+        if (currentPortraitTex != null)
+        {
+            spriteBatch.Draw(currentPortraitTex, new Vector2(portraitX, portraitY + bounceOffset), 
+                currentSourceRect, Color.White, 0f, Vector2.Zero, portraitScale, SpriteEffects.None, 0f);
+        }
+
+        spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, textToDraw, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+
+        // "Click to continue"
+        if (!isTyping)
+        {
+            string hint = "(Click anywhere to continue)";
+            Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
+            int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X +160  : dialogRect.Right - (int)hintSize.X - 80;
+            float pulse = (float)Math.Abs(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3));
+            spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 80), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+        }
+    }
+
+    // ── Draws a yellow highlight box + arrow around a card-strip region ─────────
+    private void DrawCardRegionHighlight(GameTime gameTime, TutorialHighlight region, int vw, int vh)
     {
-        spriteBatch.Draw(currentPortraitTex, new Vector2(portraitX, portraitY + bounceOffset), 
-            currentSourceRect, Color.White, 0f, Vector2.Zero, portraitScale, SpriteEffects.None, 0f);
-    }
+        // We need an approximate bounding rect for each sub-region of the card strip.
+        // CardStripBounds covers the full strip. We subdivide it for build/map/stack.
+        Rectangle stripBounds = cardRenderer.CardStripBounds;
 
-    spriteBatch.DrawString(_font, speaker + ":", new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 15), Color.DarkRed, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
-    spriteBatch.DrawString(_font, textToDraw, new Vector2(dialogRect.X + textOffsetX, dialogRect.Y + 45), COLOR_D, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+        // Determine the box to highlight
+        Rectangle targetRect;
+        string     regionLabel;
+        int slotW = stripBounds.Width / 6;
 
-    // "Click to continue"
-    if (!isTyping)
+    switch (region)
     {
-        string hint = "(Click anywhere to continue)";
-        Vector2 hintSize = _font.MeasureString(hint) * 0.4f;
-        int hintX = speaker == "Sheep" ? portraitX - (int)hintSize.X +160  : dialogRect.Right - (int)hintSize.X - 80;
-        float pulse = (float)Math.Abs(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3));
-        spriteBatch.DrawString(_font, hint, new Vector2(hintX, dialogRect.Bottom - 80), Color.DarkOliveGreen * pulse, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
-    }
-}
+        case TutorialHighlight.CardStrip:
+            targetRect  = stripBounds;
+            regionLabel = "Your Cards";
+            break;
 
-/// <summary>
-/// Draws a simple pixel-art arrow pointing left ( <--- )
-/// </summary>
-private void DrawPointerArrow(Vector2 tipPos, Color color)
-{
-    // Shaft
-    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X, (int)tipPos.Y - 4, 30, 8), color);
-    // Head (Triangle-ish)
-    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 6, (int)tipPos.Y - 12, 6, 24), color);
-    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 12, (int)tipPos.Y - 8, 6, 16), color);
-    spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 18, (int)tipPos.Y - 4, 6, 8), color);
-}
+        case TutorialHighlight.MapSlots:
+            // leftmost slot
+            targetRect = new Rectangle(
+                stripBounds.X,
+                stripBounds.Y,
+                slotW,
+                stripBounds.Height);
+            regionLabel = "Map Action Cards";
+            break;
+
+        case TutorialHighlight.StackSlots:
+            // second slot
+            targetRect = new Rectangle(
+                stripBounds.X + slotW,
+                stripBounds.Y,
+                slotW,
+                stripBounds.Height);
+            regionLabel = "Stack Action Cards";
+            break;
+
+        case TutorialHighlight.BuildSlots:
+            // right 4 slots
+            targetRect = new Rectangle(
+                stripBounds.X + 2 * slotW,
+                stripBounds.Y,
+                4 * slotW,
+                stripBounds.Height);
+            regionLabel = "Build Cards";
+            break;
+
+        case TutorialHighlight.Expanded:
+            targetRect  = cardRenderer.ExpandedPanelBounds;
+            regionLabel = "Card Info Panel";
+            break;
+
+        default:
+            return;
+    }
+
+        // Draw yellow border around the target rect
+        int border = 4;
+        Color hc   = Color.Yellow;
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Y - border, targetRect.Width + border * 2, border), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Bottom,     targetRect.Width + border * 2, border), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Y,          border, targetRect.Height), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.Right,      targetRect.Y,          border, targetRect.Height), hc);
+
+        // Draw region label above the box
+        if (!string.IsNullOrEmpty(regionLabel))
+        {
+            float padding = 6f;
+            float labelScale = 0.75f;
+
+            Vector2 labelSize = _font.MeasureString(regionLabel) * labelScale;
+
+            Vector2 labelPos = new Vector2(
+                targetRect.X,                        
+                targetRect.Y - labelSize.Y - padding   
+            );
+            spriteBatch.DrawString(_font, regionLabel, labelPos, Color.Yellow, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+        }
+
+        // Bouncing arrow pointing down into the highlighted box from above
+        float bounce   = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 8) * 6;
+        Vector2 arrowTip = new Vector2(targetRect.Center.X, targetRect.Y - border - 60 - bounce);
+        DrawPointerArrowDown(arrowTip, hc);
+    }
+
+    /// <summary>
+    /// Draws a simple pixel-art arrow pointing left ( <--- )
+    /// </summary>
+    private void DrawPointerArrow(Vector2 tipPos, Color color)
+    {
+        // Shaft
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X, (int)tipPos.Y - 4, 30, 8), color);
+        // Head (Triangle-ish)
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 6, (int)tipPos.Y - 12, 6, 24), color);
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 12, (int)tipPos.Y - 8, 6, 16), color);
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 18, (int)tipPos.Y - 4, 6, 8), color);
+    }
+
+    private void DrawPointerArrowDown(Vector2 tipPos, Color color)
+    {
+        // Shaft (vertical)
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 4, (int)tipPos.Y - 30, 8, 30), color);
+        // Head (Triangle-ish, pointing down)
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 12, (int)tipPos.Y,      24, 6), color);
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 8,  (int)tipPos.Y + 6,  16, 6), color);
+        spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 4,  (int)tipPos.Y + 12,  8, 6), color);
+    }
+
     private void DrawDayPopup()
     {
         int w = (int)viewportAdapter.VirtualWidth;
@@ -1061,6 +1241,7 @@ private void DrawPointerArrow(Vector2 tipPos, Color color)
         _showDayPopup = true;
         _popupTimer = 4f; // seconds
     }
+    
     private bool IsDoubleClick(MouseStateExtended mouse, GameTime gameTime)
     {
         double now = gameTime.TotalGameTime.TotalMilliseconds;
