@@ -37,6 +37,7 @@ public class CardRenderer
     private const int MARGIN_BOT   = 10;
     private const int MARGIN_LEFT  = 10;
     public Rectangle CardStripBounds { get; private set; }
+    public Rectangle ExpandedPanelBounds { get; private set; }
 
     public  Card      ExpandedCard      { get; private set; }
     private Vector2   _lastMousePos;
@@ -65,7 +66,7 @@ public class CardRenderer
         SpriteFont font,
         CardManager cardManager,
         int screenW,
-        int screenH)
+        int screenH, bool isTutorial = false)
     {
         var orderedSlots = new List<(CardSlot slot, bool isSaved)>();
         orderedSlots.Add((cardManager.MapSlots[0],   false));
@@ -81,6 +82,13 @@ public class CardRenderer
         int totalW = orderedSlots.Count * CARD_W + (orderedSlots.Count - 1) * CARD_SPACING;
         int startX = MARGIN_LEFT;
         int startY = screenH - CARD_H - MARGIN_BOT;
+
+        if (isTutorial)
+        {
+            // move everything up by strip height 
+            startY -= CARD_H;
+        }
+
         CardStripBounds =  new Rectangle(startX - 6, startY - 6, totalW + 12, CARD_H + 12);
 
         spriteBatch.Draw(dummy,CardStripBounds, COLOR_L);
@@ -132,7 +140,11 @@ public class CardRenderer
         int screenW,
         int screenH)
     {
-        if (ExpandedCard == null) return;
+        if (ExpandedCard == null)
+        {
+            ExpandedPanelBounds = Rectangle.Empty;
+            return;
+        }
 
         // Find the card's strip rect
         Rectangle cardRect = Rectangle.Empty;
@@ -162,6 +174,7 @@ public class CardRenderer
         if (panelY < 4) panelY = 4;
 
         Rectangle panelRect = new(panelX, panelY, panelW, panelH);
+        ExpandedPanelBounds = panelRect;
 
         spriteBatch.Draw(dummy, panelRect, COLOR_L);
         spriteBatch.Draw(dummy, new Rectangle(panelRect.X + 2, panelRect.Y + 2, panelRect.Width - 4, panelRect.Height - 4), COLOR_D);
@@ -361,5 +374,4 @@ public class CardRenderer
     }
     private int _restoredSavedSlotIndex = -1;
     public void SetRestoredSavedSlot(int index) => _restoredSavedSlotIndex = index;
-
 }
