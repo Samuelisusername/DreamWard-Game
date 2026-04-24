@@ -446,9 +446,9 @@ public class MapManager
         bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
+            // meadow init has a retry loop. can be ignored in that case
             logger.Info("Tile already occupied! " + pos);
-            AudioManager.Play("error");
-            AudioManager.Play("sheep_baa");
+
             return false;
         }
 
@@ -484,6 +484,7 @@ public class MapManager
         if (occupied)
         {
             Console.WriteLine("Tile already occupied!");
+            AudioManager.Play("sheep_baa");
             return false;
         }
 

@@ -421,7 +421,7 @@ public class MapScreen : GamelabGameScreen
                     {
                         // Toggle speed: 1x -> 3x -> 1x
                         GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
-                        AudioManager.Play("rustle_01");
+                        AudioManager.Play("rustle01");
                         return;
                     }
                 }
@@ -515,15 +515,15 @@ public class MapScreen : GamelabGameScreen
                                     if (isDouble)
                                     {
                                         cardManager.UseCard(card);
-                                        AudioManager.Play("cardflip");
+                                        AudioManager.Play("card-place");
                                     }
                                 }
                                 else if (card.Effect == CardEffect.SaveCard || card.Effect == CardEffect.Discard)
                                 {
                                     if (isDouble)
                                     {
-                                        cardManager.UseCard(card); 
-                                        AudioManager.Play("cardflip");
+                                        cardManager.UseCard(card);
+                                        AudioManager.Play("card-place");
                                     }
                                 }
                                 _clickStarted = false;
