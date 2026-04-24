@@ -446,9 +446,9 @@ public class MapManager
         bool occupied = Structures[pos.col, pos.row] != null;
         if (occupied)
         {
+            // meadow init has a retry loop. can be ignored in that case
             logger.Info("Tile already occupied! " + pos);
-            AudioManager.Play("error");
-            AudioManager.Play("sheep_baa");
+
             return false;
         }
 
@@ -484,6 +484,7 @@ public class MapManager
         if (occupied)
         {
             Console.WriteLine("Tile already occupied!");
+            AudioManager.Play("sheep_baa");
             return false;
         }
 
@@ -784,7 +785,8 @@ public class MapManager
             int cost = (int)MathF.Floor(distance * MapManager.MoveCostMultiplier);
             if(sanityManager.TryDeductSanity(cost))
             {
-                foreach (var position in MapUtils.GetSurroundingTiles(tilePos))
+                var newNeighbors = MapUtils.GetSurroundingTiles(tilePos);
+                foreach (var position in newNeighbors)
                 {
                     if(Structures[position.Item1,position.Item2] is PlacableMeadow toActivate)
                     {
@@ -793,6 +795,7 @@ public class MapManager
                 }
                 foreach (var position in MapUtils.GetSurroundingTiles(SheepPosition))
                 {
+                    if(newNeighbors.Contains(position)) continue;
                     if(Structures[position.Item1,position.Item2] is PlacableMeadow toDeactivate)
                     {
                         toDeactivate.DeactivateMeadow();

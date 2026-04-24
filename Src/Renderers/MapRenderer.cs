@@ -9,7 +9,7 @@ public class MapRenderer
     private MapManager mapManager => GamelabGame.MapManager;
     private CombatManager combatManager => GamelabGame.CombatManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
-    private const bool _draw_tile_coordinates = false; // setting to true will draw the (column, row) of each tile
+    private bool _draw_tile_coordinates = false; // setting to true will draw the (column, row) of each tile
     
 
     /// <summary>
@@ -56,25 +56,15 @@ public class MapRenderer
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
 
+                    Color tileColor = Color.White;
                     #if DEBUG
                     if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
-                    {
-                        tile.Draw(spriteBatch, worldPos, Color.Red * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-                        if (_draw_tile_coordinates) {
-                            DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
-                        }
-                    }
-                    else
-                    {
-                        tile.Draw(spriteBatch, worldPos, Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-                        if (_draw_tile_coordinates) {
-                            DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
-                        }
-                    }
-                    #else
-
-                    tile.Draw(spriteBatch, worldPos, Color.White * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-
+                        tileColor = Color.Red;
+                    #endif
+                    tile.Draw(spriteBatch, worldPos, tileColor * offsetProgressInv, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                    #if DEBUG
+                    if (_draw_tile_coordinates)
+                        DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
                     #endif
 
 
@@ -112,25 +102,15 @@ public class MapRenderer
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
 
+                    Color tileColor = Color.White;
                     #if DEBUG
-                    if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
-                    {
-                        tile.Draw(spriteBatch, worldPos, Color.Red, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-                        if (_draw_tile_coordinates) {
-                            DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
-                        }
-                    }
-                    else
-                    {
-                        tile.Draw(spriteBatch, worldPos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-                        if (_draw_tile_coordinates) {
-                            DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
-                        }
-                    }
-                    #else
-
-                    tile.Draw(spriteBatch, worldPos, Color.White, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
-
+                    if(mapManager.Debug[localTilePos.col, localTilePos.row])
+                        tileColor = Color.Red;
+                    #endif
+                    tile.Draw(spriteBatch, worldPos, tileColor, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
+                    #if DEBUG
+                    if (_draw_tile_coordinates)
+                        DrawTileCoordinates(localTilePos.col, localTilePos.row, worldPos, spriteBatch);
                     #endif
 
                     //BASEDRAWING                

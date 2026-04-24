@@ -439,18 +439,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/interface.png
 
-#begin Sprites/monsters_alternative.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/monsters_alternative.png
-
 #begin Sprites/monsters.json
 /copy:Sprites/monsters.json
 
@@ -511,18 +499,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/night_tiles.png
 
-#begin Sprites/night_top_alternative.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/night_top_alternative.png
-
 #begin Sprites/night_top_base.json
 /copy:Sprites/night_top_base.json
 
@@ -537,9 +513,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/night_top_base.png
-
-#begin Sprites/night_top-atlas-definition.xml
-/copy:Sprites/night_top-atlas-definition.xml
 
 #begin Sprites/night_top.json
 /copy:Sprites/night_top.json

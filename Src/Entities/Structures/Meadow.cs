@@ -185,6 +185,7 @@ public class Meadow : Structure
 
 public class PlacableMeadow : Structure
 {
+    private int _baseSanityGain;
     public int SanityGain {get; private set;}
 
     protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
@@ -192,6 +193,7 @@ public class PlacableMeadow : Structure
     public PlacableMeadow((int,int) pos, int sanityGain)
         : base("meadowPlaced_idle", pos)
     {
+        _baseSanityGain = sanityGain;
         SanityGain = sanityGain;
     }
 
@@ -202,7 +204,7 @@ public class PlacableMeadow : Structure
     }
     public void DeactivateMeadow()
     {
-        SanityGain = 5;
+        SanityGain = _baseSanityGain;
         SetAnimation("meadowPlaced_idle");
     }
 }
