@@ -454,20 +454,8 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false; 
                         return;
                     }
-                    if (_inventoryBtn.Contains(mousePos))
-                    {
-                        _showInventory = !_showInventory;
-                        if (!_showInventory) cardRenderer.CollapseExpanded();
-                        _clickStarted = false;
-                        return;
-                    }
-                    if (_towerRangeBtn.Contains(mousePos))
-                    {
-                        _showTowerRange = !_showTowerRange;
-                        _clickStarted = false;
-                        return;
-                    }
-                    if (_showInventory)
+                    // Card strip takes priority over any overlapping buttons
+                    if (_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
                     {
                         foreach (var (rect, card) in cardManager.CardRects)
                         {
@@ -536,6 +524,20 @@ public class MapScreen : GamelabGameScreen
                                 return;
                             }
                         }
+                    }
+
+                    if (_inventoryBtn.Contains(mousePos))
+                    {
+                        _showInventory = !_showInventory;
+                        if (!_showInventory) cardRenderer.CollapseExpanded();
+                        _clickStarted = false;
+                        return;
+                    }
+                    if (_towerRangeBtn.Contains(mousePos))
+                    {
+                        _showTowerRange = !_showTowerRange;
+                        _clickStarted = false;
+                        return;
                     }
 
                     if (!mouseOverUI)
