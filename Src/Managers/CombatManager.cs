@@ -192,7 +192,7 @@ public class CombatManager
         {
             if (entity is Tower tower && !tower.IsDestroyed)
             {
-                tower.Attack(dt);
+                tower.Attack(gameTime);
             }
         }
 
@@ -201,45 +201,7 @@ public class CombatManager
         {
             foreach (var monsterGroup in container.MonsterGroups)
             {
-                foreach (var monster in monsterGroup.Monsters)
-                {
-                    if (!monster.GoalReached) continue; 
-
-                    var goalTile = monster.AttackTarget ?? monster.TilePosition;
-                    var structure = mapManager.GetStructure(goalTile);
-                    if (structure == null || structure.IsDestroyed) continue;
-                    if (structure is Meadow m && !m.HasSheep) continue;
-
-                    else if(sanityManager != null && structure is Tent)
-                    {                           
-                        float damage = monster.DamagePerSecond * dt;
-                        _sanityDamageAccumulator += damage;
-                    }
-                    else
-                    {
-                        monster.Attack(structure, dt);
-
-                        if (!_monsterGruntTimers.ContainsKey(monsterGroup))
-                        {
-                            _monsterGruntTimers[monsterGroup] = 0f;
-                        }
-
-                        _monsterGruntTimers[monsterGroup] -= dt;
-
-                        if (_monsterGruntTimers[monsterGroup] <= 0f)
-                        {
-                            AudioManager.Play("grunt_03"); 
-                            _monsterGruntTimers[monsterGroup] = 1.0f; 
-                        }
-                    }   
-                }
-            }
-            
-            if (_sanityDamageAccumulator >= 1f)
-            {
-                int toDeduct = (int)_sanityDamageAccumulator;
-                sanityManager.DeductSanity(toDeduct);
-                _sanityDamageAccumulator -= toDeduct;
+                monsterGroup.Attack(gameTime);
             }
         }
 

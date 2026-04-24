@@ -262,6 +262,11 @@ public class MonsterGroupContainer
         MonsterGroups.RemoveAll(g => g.IsEmpty);
     }
 
+    public Monster GetFirstMonster()
+    {
+        return MonsterGroups[0].Monsters[0];
+    }
+
 #region Visuals and Drawing
     public void SetScale(Vector2 scale)
     {

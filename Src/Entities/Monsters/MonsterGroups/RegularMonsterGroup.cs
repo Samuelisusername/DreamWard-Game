@@ -9,6 +9,7 @@ public class RegularMonsterGroup : MonsterGroup
     }
 
     public override MonsterType MonsterType => MonsterType.Regular;
+    protected override int attackFrame => 3;
 
     //protected override TimeSpan speed => TimeSpan.FromSeconds(2);
 

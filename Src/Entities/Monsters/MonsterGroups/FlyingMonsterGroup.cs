@@ -13,6 +13,7 @@ public class FlyingMonsterGroup : MonsterGroup
     }
 
     public override MonsterType MonsterType => MonsterType.Flying;
+    protected override int attackFrame => 3;
     
 
     //protected override TimeSpan speed => TimeSpan.FromSeconds(2);

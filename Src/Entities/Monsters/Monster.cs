@@ -1,13 +1,20 @@
 using System;
 using System.Collections.Generic;
 using Gamelab;
+using Gamelab.Managers;
+using Gamelab.Utils.Logging;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 
 
 public abstract class Monster : Entity
 {
     protected MapManager mapManager => GamelabGame.MapManager;
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
+    private SanityManager sanityManager => GamelabGame.SanityManager;
+
+    Logger logger = new Logger("Monster");
+
     
     // Path the monster follows from spawn to target
     private List<(int,int)> _path = new List<(int,int)>();
@@ -109,10 +116,31 @@ public abstract class Monster : Entity
     /// Deals damage to entities on the same tile based on DPS and elapsed time.
     /// Only attacks when the monster has reached its goal.
     /// </summary>
-    public void Attack(Entity target, float deltaTime)
+    public void Attack(Entity target)
     {
         if (target == null || target.IsDestroyed) return;
-        target.TakeDamage(DamagePerSecond * deltaTime);
+        target.TakeDamage(DamagePerSecond);
+    }
+
+    public void Attack(GameTime gameTime, Structure structure)
+    {
+        
+            if(sanityManager != null && structure is Tent)
+            {                           
+                sanityManager.DeductSanity((int)DamagePerSecond);
+                AudioManager.Play("grunt_03"); 
+                //TODO: grunt sound?
+            }
+            else
+            {
+                Attack(structure);
+                if(structure.IsDestroyed)
+                {
+                    AttackTarget = null;
+                }
+                AudioManager.Play("grunt_03"); 
+                //TODO: grunt sound?
+            }       
     }
 
     /// <summary>

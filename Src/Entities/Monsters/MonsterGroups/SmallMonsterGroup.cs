@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 public class SmallMonsterGroup : MonsterGroup
 {
     public override MonsterType MonsterType => MonsterType.Small;
+    protected override int attackFrame => 3;
 
     public override bool isGrounded => true;
 

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Gamelab;
 using Gamelab.Managers;
-using MonoGame.Extended.Animations;
+using Microsoft.Xna.Framework;
 
 /// <summary>
 /// Tower with depth-1 hex range (own tile + immediate neighbors).
@@ -18,8 +18,9 @@ public abstract class Tower : Structure
     {
     }
 
-    public virtual void Attack(float dt)
-    {
+    public virtual void Attack(GameTime gameTime)
+    {        
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth + 1);
         bool dealtDamageThisFrame = false;
         foreach (var tile in tilesInRange)

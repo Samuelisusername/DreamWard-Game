@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
+using Gamelab.Managers;
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -14,6 +15,8 @@ public abstract class MonsterGroup
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
+    private SanityManager sanityManager => GamelabGame.SanityManager;
+
     public List<Monster> Monsters { get; private set; } 
     protected virtual TimeSpan speed => GamelabGame.Instance.Balance.MonsterSpeed[this.GetType()];
     protected TimeSpan _elapsed = TimeSpan.Zero;
@@ -23,6 +26,11 @@ public abstract class MonsterGroup
     private bool shouldRecalcPath;
     public bool shouldCheckMerge;
     public bool IsNew {get; set;}
+    
+    private TimeSpan attackCooldown = TimeSpan.FromMilliseconds(125 * 7);
+    private TimeSpan elapsedAttackCooldown;
+
+    protected abstract int attackFrame{get;}
 
     public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
     {
@@ -33,7 +41,8 @@ public abstract class MonsterGroup
         sprite.Scale = mapManager.Scale;
         _elapsed = elapsed;
         _pathProgress = (float)(_elapsed/speed);
-        IsNew = true;
+        IsNew = true;        
+        elapsedAttackCooldown = TimeSpan.FromMilliseconds(125 * (7-attackFrame));
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
@@ -232,9 +241,17 @@ public abstract class MonsterGroup
                 break;
             case "rebuild":
                 anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "rebuildIdle" + direction + "_idle" + direction : "rebuildIdle" + direction + "_attack" + direction) : "rebuild" + direction + "_walk" + direction;
+                if(anim.Contains("attack"))
+                {
+                    elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame -1));
+                }
                 break;
             default:
                 anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "idle" + direction :  "attack" + direction) : "walk" + direction;
+                if(anim.Contains("attack"))
+                {
+                    elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame));
+                }
             break;
         }
         //Turn into Amalgam
@@ -249,6 +266,29 @@ public abstract class MonsterGroup
         SetAnimation("merge");
         //GamelabGame.GameSpeed = 0.1f;
         isMerging = true;
+    }
+
+    public void Attack(GameTime gameTime)
+    {
+        if (!_goalReached || CommonAttackTarget() == null)
+        {
+            elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame));
+            return;
+        }
+        
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        elapsedAttackCooldown += gameTime.ElapsedGameTime;
+        if(elapsedAttackCooldown >= attackCooldown)
+        {
+            //tower should attack
+            elapsedAttackCooldown -= attackCooldown;
+            var structure = mapManager.GetStructure(CommonAttackTarget().Value);
+            if (structure == null || structure.IsDestroyed ||(structure is Meadow m && !m.HasSheep))
+            {
+                return; 
+            }
+            Monsters.ForEach(i => i.Attack(gameTime, structure));
+        }     
     }
 
 }
