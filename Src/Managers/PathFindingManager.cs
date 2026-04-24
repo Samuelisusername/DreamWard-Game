@@ -83,6 +83,7 @@ public class PathFindingManager
             {
                 visibleTargets.Clear();
                 visibleTargets.Add(target);
+                break;
             }
         }
 
@@ -93,7 +94,7 @@ public class PathFindingManager
             if (primaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
-                return primaryPath[1];
+                return primaryPath[Math.Min(1, primaryPath.Count - 1)];
             }
         }
 
@@ -104,7 +105,7 @@ public class PathFindingManager
             if (secondaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
-                return secondaryPath[1];
+                return secondaryPath[Math.Min(1, secondaryPath.Count - 1)];
             }
         }
 
