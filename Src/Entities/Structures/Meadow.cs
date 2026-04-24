@@ -16,10 +16,14 @@ public class Meadow : Structure
 
     public int SanityGain {get; private set;}
 
-    public override bool CanMove => false;
-    protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")];
+    public bool IsGrazed {get; private set;}
 
-    protected override string bottomText => !HasSheep ? "Click and hold to move sheep here" : null;
+    public override bool CanMove => false;
+    protected override (string label, string info)[] infos =>
+    !IsGrazed && !HasSheep ? [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
+     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
+
+    protected override string bottomText => !HasSheep ? !IsGrazed ?  "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
 
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
@@ -73,6 +77,7 @@ public class Meadow : Structure
     public void RemoveSheep()
     {
         HasSheep = false;
+        IsGrazed = true;
         SetAnimation("meadowGrazed_idle");
     }
 

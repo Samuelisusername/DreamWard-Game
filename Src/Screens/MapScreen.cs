@@ -183,7 +183,7 @@ public class MapScreen : GamelabGameScreen
         // ParticleManager.AddParticle(new Particle
         // {
         //     WorldPosition = (mousePos - mapManager.Offset)/mapManager.Scale,
-        //     Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 20, (float)(Random.Shared.NextDouble() -0.5f) * 20),
+        //     Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 200, (float)(Random.Shared.NextDouble() -0.5f) * 200),
         //     LifeSpan = TimeSpan.FromSeconds(3),
         //     Color = Color.Orange
         // });
@@ -360,7 +360,7 @@ public class MapScreen : GamelabGameScreen
                     _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                 }
 
-                if (!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot)
+                if (!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot && !grazingSpot.HasSheep && !grazingSpot.IsGrazed)
                 {
                     int moveCost = (int)MathF.Round(
                         MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)

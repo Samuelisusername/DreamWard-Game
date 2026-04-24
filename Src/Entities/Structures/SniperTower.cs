@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime;
+using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 
 public class SniperTower : Tower
@@ -17,7 +18,7 @@ public class SniperTower : Tower
 
     // protected override int rangeDepth => 2;
 
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
 
     public override void Attack(GameTime gameTime)
     {
@@ -56,11 +57,13 @@ public class SniperTower : Tower
                 //tower should attack
                 elapsedAttackCooldown -= attackCooldown;
                 target.TakeDamage(damagePerSecond);
+                totalDamage += damagePerSecond;
                 if (target.IsDestroyed)
                 {
                     target = null;
                 }
                 //TODO: play anim here
+                AudioManager.Play("shoot_01");
             } 
         }
     }

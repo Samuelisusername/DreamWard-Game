@@ -26,7 +26,7 @@ public class Tent : CardEntity
         protected set => base.MaxHealth = value; 
     }
 
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    protected override (string, string)[] infos => [("Sanity:", $"{CurrentHealth}")];
 }
 
 public class Fence : CardEntity

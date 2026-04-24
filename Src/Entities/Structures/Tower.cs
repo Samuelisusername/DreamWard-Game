@@ -12,6 +12,7 @@ public abstract class Tower : Structure
     protected virtual float damagePerSecond => GamelabGame.Instance.Balance.TowerDamage[this.GetType()];
     protected virtual int rangeDepth => GamelabGame.Instance.Balance.TowerRanges[this.GetType()];
     private float soundTimer = 0.0f;
+    protected float totalDamage = 0;
 
     public Tower(string animName, (int,int) pos)
         : base(animName, pos)
@@ -30,7 +31,8 @@ public abstract class Tower : Structure
             if (targetContainer != null && !targetContainer.IsEmpty)
             {
                 // Pass that info into the container
-                targetContainer.TakeDamage(damagePerSecond * dt, this is AreaTower, this is Spike); 
+                targetContainer.TakeDamage(damagePerSecond * dt, this is AreaTower, this is Spike);
+                totalDamage += damagePerSecond * dt;
                 dealtDamageThisFrame = true;
                 if(this is SniperTower)
                 {

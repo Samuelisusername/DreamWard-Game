@@ -18,5 +18,5 @@ public class AreaTower : Tower
 
     // protected override int rangeDepth => 1;
 
-    protected override (string,string)[] infos { get => [("DPS:", $"{damagePerSecond}"), ("Health:", $"{CurrentHealth}")];}
+    protected override (string,string)[] infos { get => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];}
 }
