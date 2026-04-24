@@ -9,13 +9,13 @@ public class SmallMonster : Monster
         if (entity is VoidTile ) return false;
         if (entity is TreeTile) return false;
         if (entity is WallTile) return false;
-        // if (entity is Wall) return false; TODO: Once pathfinding is updated uncomment this
+        if (entity is Wall) return false;
         if (entity is Fence) return false;
         if (entity is Tower && entity is not Spike) return false;
         if (entity is Meadow meadow && meadow.HasSheep) return false;
         if (entity is Buff) return false;
         if (entity is Decoy) return false;
-        // if (entity is Tent) return false; TODO: Once pathfinding is updated uncomment this
+        if (entity is Tent) return false;
         return true;
     }
 
