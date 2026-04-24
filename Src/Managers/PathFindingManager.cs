@@ -15,6 +15,7 @@ public class PathFindingManager
     private readonly List<(int col, int row, int timeToBeAttacked, int monsterCount)> _activeTargets;
     private readonly Dictionary<(int col, int row), HashSet<Monster>> _monstersTargeting;
     private readonly Dictionary<Monster, (int col, int row)> _monsterToTarget;
+    private readonly Dictionary<Monster, int> _monsterToTargetDist;
 
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
@@ -28,6 +29,7 @@ public class PathFindingManager
         _activeTargets = new List<(int, int, int, int)>();
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
+        _monsterToTargetDist = new Dictionary<Monster, int>();
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
@@ -72,6 +74,17 @@ public class PathFindingManager
         var visibleTargets = allTargets.FindAll(target =>
             MapUtils.CalculateTileDistance(startTile, target.Tile) <= maxTargetDistance &&
             CanSeeStructureAndSurroundings(startTile, target.Tile, visionRange));
+
+        // if the monster can see a decoy, it will ignore all other targets
+        foreach (var target in visibleTargets)
+        {
+            var (location, entity) = target;
+            if (entity is Decoy decoy)
+            {
+                visibleTargets.Clear();
+                visibleTargets.Add(target);
+            }
+        }
 
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
         if (bestPrimary != null)
@@ -124,11 +137,11 @@ public class PathFindingManager
     /// <returns></returns>
     public int PathLength(Monster monster)
     {
-        if(GetNextPosition(monster) == monster.TilePosition)
+        if (_monsterToTargetDist.TryGetValue(monster, out var dist))
         {
-            return 1;
+            return dist;
         }
-        return 3;
+        return 100;
     }
 
     /// <summary>
@@ -139,6 +152,7 @@ public class PathFindingManager
         _activeTargets.Clear();
         _monstersTargeting.Clear();
         _monsterToTarget.Clear();
+        _monsterToTargetDist.Clear();
     }
 
     /// <summary>
@@ -439,6 +453,7 @@ public class PathFindingManager
 
         monsters.Add(monster);
         _monsterToTarget[monster] = targetTile;
+        _monsterToTargetDist[monster] = timeToBeAttacked;
 
         int targetIndex = _activeTargets.FindIndex(t => t.col == targetTile.col && t.row == targetTile.row);
         if (targetIndex >= 0)
@@ -468,6 +483,7 @@ public class PathFindingManager
         }
 
         monsters.Remove(monster);
+        _monsterToTargetDist.Remove(monster);
 
         int targetIndex = _activeTargets.FindIndex(t => t.col == previousTile.col && t.row == previousTile.row);
         if (monsters.Count == 0)
