@@ -93,7 +93,6 @@ public class MonsterGroupContainer
                 if(i.CanTarget(destStructure))
                 {
                     i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
-                    i.Path = new List<(int,int)> { i.Path[0] };
                 }
             });
         }

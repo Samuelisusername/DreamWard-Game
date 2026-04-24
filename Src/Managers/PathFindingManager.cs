@@ -118,6 +118,20 @@ public class PathFindingManager
     }
 
     /// <summary>
+    /// returns the length of the monsters path to their next target
+    /// </summary>
+    /// <param name="monster"></param>
+    /// <returns></returns>
+    public int PathLength(Monster monster)
+    {
+        if(GetNextPosition(monster) == monster.TilePosition)
+        {
+            return 1;
+        }
+        return 3;
+    }
+
+    /// <summary>
     /// Clears all target-intent tracking state, e.g. when a night ends.
     /// </summary>
     public void ClearEverythingWhenNightEnds()

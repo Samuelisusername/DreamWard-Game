@@ -177,9 +177,10 @@ public abstract class MonsterGroup
                     Monsters.ForEach(i =>
                     {
                         i.AttackTarget = null;
-                        var newPath = pathFindingManager.CalculatePath(i);
-                        if (newPath != null && newPath.Count > 0)
-                            i.Path = newPath;
+                        // var newPath = pathFindingManager.CalculatePath(i);
+                        // if (newPath != null && newPath.Count > 0)
+                        //     i.Path = newPath;
+                        i.NextTarget = pathFindingManager.GetNextPosition(i);
                     });
                     SetAnimation();
                 }  

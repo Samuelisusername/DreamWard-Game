@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 public class FlyingMonsterGroup : MonsterGroup
 {
     private Texture2D shadow;
-    public override bool isGrounded => Monsters[0].Path.Count > 2 ? false : true;
+    public override bool isGrounded => pathFindingManager.PathLength(Monsters[0]) > 2 ? false : true;
     public FlyingMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
     {
         shadow = GamelabGame.Instance.Content.Load<Texture2D>("Sprites/shadowDummy");
@@ -32,7 +32,7 @@ public class FlyingMonsterGroup : MonsterGroup
         
         var goal = Monsters[0].GetCurrentGoal();
         Vector2 goalPos = mapManager.GetWorldPositionOfTile(goal);
-        if(Monsters[0].Path.Count > 2)
+        if(pathFindingManager.PathLength(Monsters[0]) > 2)
         {
             //the monster moves on next step
             goalPos -= Vector2.UnitY * 50 * mapManager.Scale;

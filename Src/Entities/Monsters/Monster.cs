@@ -14,10 +14,7 @@ public abstract class Monster : Entity
     private SanityManager sanityManager => GamelabGame.SanityManager;
 
     Logger logger = new Logger("Monster");
-
-    
-    // Path the monster follows from spawn to target
-    private List<(int,int)> _path = new List<(int,int)>();
+    public (int col, int row) NextTarget{get; set;}
 
     // Damage this monster deals per second when attacking
     public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType()];
@@ -26,7 +23,7 @@ public abstract class Monster : Entity
     public abstract MonsterType Type { get; } 
 
     // Has the monster reached the end of its path
-    public bool GoalReached => _path.Count <= 1;
+    public bool GoalReached => pathFindingManager.PathLength(this) <= 1;
 
     // Flag set by MonsterGroup when it's time to step forward
     public bool ShouldMove { get; set; }
@@ -35,32 +32,6 @@ public abstract class Monster : Entity
     public (int,int)? AttackTarget { get; set; }
 
     public string Facing {get; private set;}
-
-    public List<(int,int)> Path
-    {
-        get => _path;
-        set
-        {
-            foreach (var item in value)
-            {
-                if (item.Item1 < 0 || item.Item1 >= mapManager.Columns || item.Item2 < 0 || item.Item2 >= mapManager.Rows)
-                {
-                    _path = new List<(int,int)> { value[0] };
-                    Facing = "S";
-                    return;
-                }
-            }
-            _path = value;
-            if(_path.Count > 1)
-            {
-                Facing = MapUtils.GetDirection(_path[0],_path[1]);
-            }
-            else
-            {
-                Facing = Facing;
-            }
-        }
-    }
 
     public override bool IsBuildEntity => false;
 
@@ -71,7 +42,7 @@ public abstract class Monster : Entity
     {
         // DamagePerSecond = type == MonsterType.Flying ? damagePerSecond * 0.5f : damagePerSecond;
         // Name = type == MonsterType.Regular ? "Regular" : "Flying";
-        _path = GamelabGame.PathFindingManager.CalculatePath(this);
+        NextTarget = GamelabGame.PathFindingManager.GetNextPosition(this);
     }
 
     /// <summary>
@@ -95,19 +66,15 @@ public abstract class Monster : Entity
     public void Move(bool shouldRecalcPath)
     {
         if (GoalReached || !ShouldMove) return;
-        _path.RemoveAt(0);
-        TilePosition = _path[0]; 
+        TilePosition = NextTarget; 
         if(shouldRecalcPath)
         {            
-            AttackTarget = null;
-            var newPath = pathFindingManager.CalculatePath(this);
-                if (newPath != null && newPath.Count > 0)
-                    Path = newPath;  
-        }       
-        if(!GoalReached)
-        {
-            Facing = MapUtils.GetDirection(_path[0], _path[1]);
+            // AttackTarget = null;
+            // var newPath = pathFindingManager.CalculatePath(this);
+            //     if (newPath != null && newPath.Count > 0)
+            //         Path = newPath;  
         }
+        NextTarget = pathFindingManager.GetNextPosition(this);
         ShouldMove = false;
 
     }
@@ -148,9 +115,7 @@ public abstract class Monster : Entity
     /// </summary>
     public (int,int) GetCurrentGoal()
     {
-        if (GoalReached)
-            return _path[0];
-        return _path[1];
+        return NextTarget;
     }
     
 
