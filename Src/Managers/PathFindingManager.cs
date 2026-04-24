@@ -9,7 +9,7 @@ public class PathFindingManager
     private const int RegularMonsterVisionRange = 5;
     private const int FlyingMonsterVisionRange = 8;
     private const int SimplePathMinDefenceStrength = 1; // encourages taking a shorter route
-    private const int RandomTileMaxDistanceFromCenter = 8;
+    private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
     private readonly List<(int col, int row, int timeToBeAttacked, int monsterCount)> _activeTargets;
@@ -36,7 +36,15 @@ public class PathFindingManager
     }
 
     /// <summary>
-    /// Finds a target and a path to said target for the given monster.
+    /// Gives the monster's actual target.
+    /// </summary>
+    public (int, int)? GetTarget(Monster monster)
+    {
+        return _monsterToTarget.TryGetValue(monster, out var target) ? target : null;
+    }
+
+    /// <summary>
+    /// Gives the monster's next move.
     /// </summary>
     public (int, int) GetNextPosition(Monster monster)
     {
@@ -56,6 +64,20 @@ public class PathFindingManager
 
         // ------------------------------------
 
+
+        // Already there, don't move
+        //if (_monsterToTargetDist.TryGetValue(monster, out var dist) && dist <= 2)
+        //{
+        //    if (_monsterToTarget.TryGetValue(monster, out var targetTile))
+        //    {
+        //        var endStructure = mapManager.GetStructure(targetTile);
+        //        if (endStructure != null && !monster.CanStepOn(endStructure))
+        //        {
+        //            _monsterToTargetDist[monster] = 1; // trick the monster into attacking
+        //            return monster.TilePosition;
+        //        }
+        //    }
+        //}
 
         UnregisterMonsterTarget(monster);
         UpdateDefenceStrengths();
@@ -97,7 +119,7 @@ public class PathFindingManager
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
         if (bestPrimary != null)
         {
-            var primaryPath = ReconstructPath(startTile, bestPrimary.Value.Tile, previousTile, timeToReach);
+            var primaryPath = ReconstructPath(startTile, bestPrimary.Value.Tile, previousTile, timeToReach, monster);
             if (primaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
@@ -108,7 +130,7 @@ public class PathFindingManager
         var bestSecondary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
         if (bestSecondary != null)
         {
-            var secondaryPath = ReconstructPath(startTile, bestSecondary.Value.Tile, previousTile, timeToReach);
+            var secondaryPath = ReconstructPath(startTile, bestSecondary.Value.Tile, previousTile, timeToReach, monster);
             if (secondaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
@@ -120,7 +142,7 @@ public class PathFindingManager
         {
             var randomCenterTile = GetRandomTileNearCenter(RandomTileMaxDistanceFromCenter);
             CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
-            var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach);
+            var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach, monster);
             if (centerPath.Count > 1)
             {
                 return centerPath[1];
@@ -254,8 +276,9 @@ public class PathFindingManager
                 Entity structureOnNeighbor = mapManager.GetStructure(neighbor);
                 if (structureOnNeighbor != null && !monster.CanStepOn(structureOnNeighbor))
                 {
+                    bool isTarget = IsPrimaryTarget(structureOnNeighbor) || IsSecondaryTarget(monster, structureOnNeighbor);
                     bool isBreakableStructure = structureOnNeighbor is WallTile || structureOnNeighbor is Fence || structureOnNeighbor is Tower;
-                    if (!allowThroughBreakableStructures || !isBreakableStructure)
+                    if (!isTarget && (!allowThroughBreakableStructures || !isBreakableStructure))
                     {
                         continue;
                     }
@@ -514,7 +537,8 @@ public class PathFindingManager
     /// <summary>
     /// Reconstructs a path from start to end using predecessor data.
     /// </summary>
-    private List<(int, int)> ReconstructPath((int col, int row) startTile, (int col, int row) endTile, (int col, int row)?[,] previousTile, int[,] timeToReach)
+    private List<(int, int)> ReconstructPath((int col, int row) startTile, (int col, int row) endTile,
+                                            (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster)
     {
         if (!MapUtils.IsInBounds(endTile) || timeToReach[endTile.col, endTile.row] == int.MaxValue)
         {
@@ -523,6 +547,11 @@ public class PathFindingManager
 
         var path = new List<(int, int)>();
         var current = endTile;
+        //var endStructure = mapManager.GetStructure(endTile);
+        //if (!monster.CanStepOn(endStructure))
+        //{
+        //    current = previousTile[current.col, current.row] ?? current;
+        //}
         int maxSteps = mapManager.Columns * mapManager.Rows;
 
         for (int steps = 0; steps <= maxSteps; steps++)
