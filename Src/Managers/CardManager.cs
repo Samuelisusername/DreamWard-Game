@@ -338,7 +338,19 @@ public class CardManager
     private void RemoveFromSlots(Card card)
     {
         foreach (var slot in MapSlots.Concat(StackSlots).Concat(BuildSlots))
-            if (ReferenceEquals(slot.Card, card)) { slot.Card = null; slot.Purchased = false; return; }
+        {
+            if (!ReferenceEquals(slot.Card, card)) continue;
+            slot.Card = null;
+            slot.Purchased = false;
+            if (slot.IsSaved)
+            {
+                slot.IsSaved = false;
+                SavedCard = null;
+                SavedSlotIndex = -1;
+                SavedCardExpiresInDays = 0;
+            }
+            return;
+        }
     }
 
     public CardSlot GetSlotForCard(Card card)
