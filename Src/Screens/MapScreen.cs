@@ -180,6 +180,13 @@ public class MapScreen : GamelabGameScreen
                 
         GamelabGame.IsHovering = false;
         Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+        // ParticleManager.AddParticle(new Particle
+        // {
+        //     WorldPosition = (mousePos - mapManager.Offset)/mapManager.Scale,
+        //     Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 20, (float)(Random.Shared.NextDouble() -0.5f) * 20),
+        //     LifeSpan = TimeSpan.FromSeconds(3),
+        //     Color = Color.Orange
+        // });
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
         
@@ -260,6 +267,7 @@ public class MapScreen : GamelabGameScreen
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
         GameTime scaledGameTime = new GameTime(gameTime.TotalGameTime, scaledElapsed);
         mapManager.Update(scaledGameTime);
+        ParticleManager.Update(scaledGameTime);
 
         if(Game.IsActive)
         {
@@ -677,6 +685,7 @@ public class MapScreen : GamelabGameScreen
 
         if (_is_active_tutorial) DrawTutorialState(gameTime);
         if (_showDayPopup)       DrawDayPopup();
+        ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
     }
 

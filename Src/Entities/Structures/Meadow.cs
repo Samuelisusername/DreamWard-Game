@@ -19,7 +19,7 @@ public class Meadow : Structure
     public override bool CanMove => false;
     protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")];
 
-    protected override string bottomText => "Click and hold to move sheep here";
+    protected override string bottomText => !HasSheep ? "Click and hold to move sheep here" : null;
 
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
@@ -32,23 +32,6 @@ public class Meadow : Structure
         : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos)
     {
         SanityGain = sanityGain;
-        // float lerpConst = .25f;
-        
-        // if(SanityGain == 10)
-        // {
-        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
-        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Red, lerpConst);
-        // }
-        // else if(SanityGain == 15)
-        // {
-        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
-        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Blue, lerpConst);
-        // }
-        // else if(SanityGain == 20)
-        // {
-        //     _spriteTop.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
-        //     _spriteBase.Color = Color.Lerp(Color.White, Color.Orange, lerpConst);
-        // }
     }
 
     public void TriggerCantAffordFlash() => _cantAffordFlash = FlashDuration;
