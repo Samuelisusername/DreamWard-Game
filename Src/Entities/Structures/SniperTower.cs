@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Runtime;
 using Microsoft.Xna.Framework;
 
 public class SniperTower : Tower
@@ -21,7 +23,7 @@ public class SniperTower : Tower
     {
         //TODO: potentially move this responsability to the monsters.
         // the monsters tell the tower if they get in/out of range
-        if(target != null && MapUtils.CalculateTileDistance(TilePosition, target.TilePosition) > rangeDepth)
+        if(target != null && (MapUtils.CalculateTileDistance(TilePosition, target.TilePosition) > rangeDepth ||  target.IsDestroyed))
         {
             //target is out of range
             target = null;
@@ -29,7 +31,7 @@ public class SniperTower : Tower
         if(target == null)
         {
             //find new target
-            elapsedAttackCooldown = TimeSpan.Zero;
+            bool reset = true;
             var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth + 1);
             foreach (var item in tilesInRange)
             {
@@ -37,9 +39,14 @@ public class SniperTower : Tower
                 if(container != null && !container.IsEmpty)
                 {
                     target = container.GetFirstMonster();
-                    break;
+                    if(target != null)
+                    {
+                        reset = false;
+                        break;
+                    }
                 }
-            }
+            }            
+            elapsedAttackCooldown = reset ? TimeSpan.Zero : elapsedAttackCooldown;
         }
         if(target != null)
         {

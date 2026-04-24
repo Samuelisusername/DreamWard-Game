@@ -264,7 +264,17 @@ public class MonsterGroupContainer
 
     public Monster GetFirstMonster()
     {
-        return MonsterGroups[0].Monsters[0];
+        foreach (var group in MonsterGroups)
+        {
+            foreach (var monster in group.Monsters)
+            {
+                if(!monster.IsDestroyed)
+                {
+                    return monster;
+                }
+            }
+        }
+        return null;
     }
 
 #region Visuals and Drawing
