@@ -71,6 +71,9 @@ public class SniperTower : Tower
                 pendingHitDamage = damagePerSecond;
                 pendingHitTimer = projectileTravelTime;
                 totalDamage += damagePerSecond;
+                var hitTile = target.TilePosition;
+                DamageByTile.TryGetValue(hitTile, out float prevDmg);
+                DamageByTile[hitTile] = prevDmg + damagePerSecond;
                 targetPos = targetGroup.GetInterpolatedWorldPosition();
                 //TODO: play anim here
                 attackCD = projectileTravelTime;
