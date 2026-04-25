@@ -14,7 +14,7 @@ public abstract class Tower : Structure
     private float soundTimer = 0.0f;
     protected float totalDamage = 0;
 
-    public Dictionary<(int, int), float> DamageByTile { get; } = new();
+    public float DamagePerSecond => damagePerSecond;
 
     public Tower(string animName, (int,int) pos)
         : base(animName, pos)
@@ -33,11 +33,8 @@ public abstract class Tower : Structure
             if (targetContainer != null && !targetContainer.IsEmpty)
             {
                 // Pass that info into the container
-                float damageDealt = damagePerSecond * dt;
-                targetContainer.TakeDamage(damageDealt, this is AreaTower, this is Spike);
-                totalDamage += damageDealt;
-                DamageByTile.TryGetValue(tile, out float prev);
-                DamageByTile[tile] = prev + damageDealt;
+                targetContainer.TakeDamage(damagePerSecond * dt, this is AreaTower, this is Spike);
+                totalDamage += damagePerSecond * dt;
                 dealtDamageThisFrame = true;
                 if(this is SniperTower)
                 {

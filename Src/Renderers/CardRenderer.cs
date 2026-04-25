@@ -333,6 +333,9 @@ public class CardRenderer
     private const int HEX_MASK_W = 64;
     private const int HEX_MASK_H = 32;
     private const float HEATMAP_ALPHA = 0.55f;
+    private const float HEATMAP_DPS_LOW = 15f;   // below this DPS -> yellow
+    private const float HEATMAP_DPS_MID = 30f;   // below this -> orange
+    private const float HEATMAP_DPS_HIGH = 50f;  // below this -> muted red, above -> deep red
 
     private Texture2D GetHexMask(GraphicsDevice gd)
     {
@@ -369,8 +372,7 @@ public class CardRenderer
 
     public void DrawAllTowerRanges(SpriteBatch spriteBatch, MapManager mapManager)
     {
-        var damagePerTile = new Dictionary<(int, int), float>();
-        var coveredTiles = new HashSet<(int, int)>();
+        var dpsPerTile = new Dictionary<(int, int), float>();
 
         for (int i = 0; i < mapManager.Columns; i++)
             for (int j = 0; j < mapManager.Rows; j++)
@@ -380,39 +382,29 @@ public class CardRenderer
                     {
                         if (tile.Item1 < 0 || tile.Item1 >= mapManager.Columns ||
                             tile.Item2 < 0 || tile.Item2 >= mapManager.Rows) continue;
-                        coveredTiles.Add(tile);
-                    }
-                    foreach (var kv in t.DamageByTile)
-                    {
-                        damagePerTile.TryGetValue(kv.Key, out float prev);
-                        damagePerTile[kv.Key] = prev + kv.Value;
+                        dpsPerTile.TryGetValue(tile, out float prev);
+                        dpsPerTile[tile] = prev + t.DamagePerSecond;
                     }
                 }
 
-        float maxDamage = 0f;
-        foreach (var v in damagePerTile.Values)
-            if (v > maxDamage) maxDamage = v;
+        if (dpsPerTile.Count == 0) return;
 
         var mask = GetHexMask(spriteBatch.GraphicsDevice);
         Vector2 maskScale = new Vector2(
             mapManager.TileWidth / HEX_MASK_W,
             (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
 
-        foreach (var tile in coveredTiles)
+        foreach (var kv in dpsPerTile)
         {
-            damagePerTile.TryGetValue(tile, out float dmg);
+            float dps = kv.Value;
             int level;
-            if (maxDamage <= 0f || dmg <= 0f) level = 0;
-            else
-            {
-                float ratio = dmg / maxDamage;
-                if (ratio < 0.34f) level = 1;
-                else if (ratio < 0.67f) level = 2;
-                else level = 3;
-            }
+            if (dps < HEATMAP_DPS_LOW) level = 0;
+            else if (dps < HEATMAP_DPS_MID) level = 1;
+            else if (dps < HEATMAP_DPS_HIGH) level = 2;
+            else level = 3;
 
             Color color = HeatmapColor(level) * HEATMAP_ALPHA;
-            Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+            Vector2 pos = mapManager.GetWorldPositionOfTile(kv.Key);
             spriteBatch.Draw(mask, pos, null, color, 0f, Vector2.Zero,
                 maskScale, SpriteEffects.None, 0.8f);
         }
