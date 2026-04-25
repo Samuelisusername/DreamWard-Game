@@ -14,6 +14,8 @@ public abstract class Tower : Structure
     private float soundTimer = 0.0f;
     protected float totalDamage = 0;
 
+    public float DamagePerSecond => damagePerSecond;
+
     public Tower(string animName, (int,int) pos)
         : base(animName, pos)
     {
