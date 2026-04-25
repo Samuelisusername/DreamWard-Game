@@ -375,23 +375,6 @@ public class MapScreen : GamelabGameScreen
                         mapManager.TryMoveSheep(mousePos);
                     }
                 }
-                else if (!_isDrag && !gamePhaseManager.IsInTransition && _startNightBtn.Contains(mousePos))
-                {
-                    _elapsedStartNightTime += gameTime.ElapsedGameTime;
-                    _resetStartNightTimer = false;
-
-                    if (_elapsedStartNightTime > _startNightTime)
-                    {
-                        _elapsedStartNightTime = TimeSpan.Zero;
-
-            #if DEBUG
-                        gamePhaseManager.SwitchToNight();
-            #else
-                        if (gamePhaseManager.IsDay)
-                            gamePhaseManager.SwitchToNight();
-            #endif
-                    }
-                }
             }
 
             //set the hovered tile
@@ -438,6 +421,18 @@ public class MapScreen : GamelabGameScreen
                 }
                 if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
+                    //start night
+                    if (_startNightBtn.Contains(mousePos))
+                    {
+#if DEBUG
+                        gamePhaseManager.SwitchToNight();
+#else
+                        if (gamePhaseManager.IsDay)
+                            gamePhaseManager.SwitchToNight();
+#endif
+                        _clickStarted = false;
+                        return;
+                    }
                     //start tutorial
                     if (_tutorial_btn.Contains(mousePos))
                     {
@@ -678,7 +673,7 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   _inventoryBtnPressed);
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
             DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
-            DrawButton(_startNightBtn, "start night (Space)", false, (float)(_elapsedStartNightTime/_startNightTime));
+            DrawButton(_startNightBtn, "Start night", false, (float)(_elapsedStartNightTime/_startNightTime));
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);

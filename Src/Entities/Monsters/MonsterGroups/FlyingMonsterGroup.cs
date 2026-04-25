@@ -27,7 +27,7 @@ public class FlyingMonsterGroup : MonsterGroup
         if(CommonNextTarget() != TilePosition)
         {
             //they are still flying
-            origin -= Vector2.UnitY * 50 * mapManager.Scale;
+            origin -= Vector2.UnitY * 30 * mapManager.Scale;
         }
         
         var goal = Monsters[0].GetCurrentGoal();
@@ -35,7 +35,7 @@ public class FlyingMonsterGroup : MonsterGroup
         if(Monsters[0].Path.Count > 2)
         {
             //the monster moves on next step
-            goalPos -= Vector2.UnitY * 50 * mapManager.Scale;
+            goalPos -= Vector2.UnitY * 30 * mapManager.Scale;
         }
         return origin + (goalPos - origin) * _pathProgress;
     }
