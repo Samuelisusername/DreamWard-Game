@@ -276,13 +276,13 @@ public class MonsterGroupContainer
         }
         return null;
     }
-    public MonsterGroup GetFirstMonsterGroup()
+    public MonsterGroup GetMonsterGroup(Monster monster)
     {
         foreach (var group in MonsterGroups)
         {
-            foreach (var monster in group.Monsters)
+            foreach (var m in group.Monsters)
             {
-                if(!monster.IsDestroyed)
+                if(m == monster)
                 {
                     return group;
                 }

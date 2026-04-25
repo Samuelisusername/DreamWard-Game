@@ -52,7 +52,7 @@ public class SniperTower : Tower
                     target = container.GetFirstMonster();
                     if(target != null)
                     {
-                        targetGroup = container.GetFirstMonsterGroup();
+                        
                         reset = false;
                         break;
                     }
@@ -61,7 +61,8 @@ public class SniperTower : Tower
             elapsedAttackCooldown = reset ? TimeSpan.Zero : elapsedAttackCooldown;
         }
         if(target != null)
-        {
+        {   
+            targetGroup = mapManager.GetMonsterContainer(target.TilePosition).GetMonsterGroup(target);
             elapsedAttackCooldown += gameTime.ElapsedGameTime;
             if(elapsedAttackCooldown >= attackCooldown)
             {
