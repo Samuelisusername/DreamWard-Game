@@ -67,18 +67,18 @@ public class PathFindingManager
 
         // TODO: uncomment below once attack logic is implemented when the monster is next to but cannot step onto its target
         // Already there, don't move
-        //if (_monsterToTargetDist.TryGetValue(monster, out var dist) && dist <= 2)
-        //{
-        //    if (_monsterToTarget.TryGetValue(monster, out var targetTile))
-        //    {
-        //        var endStructure = mapManager.GetStructure(targetTile);
-        //        if (endStructure != null && !monster.CanStepOn(endStructure))
-        //        {
-        //            _monsterToTargetDist[monster] = 1; // trick the monster into attacking
-        //            return monster.TilePosition;
-        //        }
-        //    }
-        //}
+        if (_monsterToTargetDist.TryGetValue(monster, out var dist) && dist <= 2)
+        {
+           if (_monsterToTarget.TryGetValue(monster, out var targetTile))
+           {
+               var endStructure = mapManager.GetStructure(targetTile);
+               if (endStructure != null && !monster.CanStepOn(endStructure))
+               {
+                   _monsterToTargetDist[monster] = 1; // trick the monster into attacking
+                   return monster.TilePosition;
+               }
+           }
+        }
         // TODO ends
 
         UnregisterMonsterTarget(monster);
