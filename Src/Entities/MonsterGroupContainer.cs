@@ -276,6 +276,20 @@ public class MonsterGroupContainer
         }
         return null;
     }
+    public MonsterGroup GetFirstMonsterGroup()
+    {
+        foreach (var group in MonsterGroups)
+        {
+            foreach (var monster in group.Monsters)
+            {
+                if(!monster.IsDestroyed)
+                {
+                    return group;
+                }
+            }
+        }
+        return null;
+    }
 
 #region Visuals and Drawing
     public void SetScale(Vector2 scale)

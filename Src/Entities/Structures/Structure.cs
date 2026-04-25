@@ -55,7 +55,7 @@ public abstract class Structure : Entity
     /// <summary>
     /// draws the entity
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
+    public virtual void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
     {
         if (_spriteTop == null) return;
         #if DEBUG
