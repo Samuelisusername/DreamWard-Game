@@ -103,6 +103,25 @@ public abstract class Structure : Entity
         _spriteBase.Scale = mapManager.Scale;
     }
 
+    public override void TakeDamage(float amount)
+    {        
+        base.TakeDamage(amount);        
+        if(IsDestroyed)
+        {
+            Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+            for(int i = 0; i < 40; i++)
+            {
+                ParticleManager.AddParticle(new Particle
+                {
+                    WorldPosition = (worldPos + (_localOffset * _spriteTop.Scale) + (new Vector2(64, 100) * _spriteTop.Scale) - mapManager.Offset)/mapManager.Scale,
+                    Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 150, (float)(Random.Shared.NextDouble() -0.5f) * 150),
+                    LifeSpan = TimeSpan.FromSeconds(0.5),
+                    Color = Color.Gray
+                });
+            }
+        }
+    }
+
     #region statcard
 
     protected Texture2D _dummy = GamelabGame.DummyText;

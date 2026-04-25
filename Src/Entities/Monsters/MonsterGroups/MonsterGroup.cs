@@ -6,6 +6,7 @@ using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 using Gamelab.Managers;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -77,10 +78,24 @@ public abstract class MonsterGroup
     public void RemoveDead() 
     {
         int oldCount = Count;
+        Vector2 worldPos = GetInterpolatedWorldPosition();
         Monsters.RemoveAll(m => m.IsDestroyed);
         if(Count <= 2 && oldCount > 2)
         {
             SetAnimation();
+        }
+        if(oldCount != Count)
+        {
+            for(int i = 0; i < 40; i++)
+            {
+                ParticleManager.AddParticle(new Particle
+                {
+                    WorldPosition = ((worldPos + new Vector2(45, 5) * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
+                    Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 150, (float)(Random.Shared.NextDouble() -0.5f) * 150),
+                    LifeSpan = TimeSpan.FromSeconds(0.5),
+                    Color = Color.Black
+                });
+            }
         }
     }
     
