@@ -7,6 +7,7 @@ using Gamelab;
 public class EntityRenderer
 {
     private MapManager mapManager => GamelabGame.MapManager;
+    private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private Texture2D _pixel;
 
     public void SetHealthBarTexture(Texture2D pixel)
@@ -31,13 +32,25 @@ public class EntityRenderer
             for(int j = 0; j < mapManager.Rows; j++)
             {
                 var structure = mapManager.GetStructure((i, j));
-                if (structure is Tower)
+                if (structure is SniperTower)
                 {
                     Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, -80f);
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -40f : -70f);
                 }
-                else if (structure is Fence || structure is Tent)
+                else if (structure is AreaTower)
+                {
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
+                    DrawHpBar(spriteBatch, worldPos, scale,
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -20f : -40f);
+                }
+                else if (structure is Wall || structure is WallTile)
+                {
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
+                    DrawHpBar(spriteBatch, worldPos, scale,
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -10f : -50f);
+                }
+                else if (structure is Fence || structure is Tent || structure is PlacableMeadow || structure is Spike)
                 {
                     Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
