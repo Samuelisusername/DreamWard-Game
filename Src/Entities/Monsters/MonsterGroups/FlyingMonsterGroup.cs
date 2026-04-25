@@ -74,9 +74,9 @@ public class FlyingMonsterGroup : MonsterGroup
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale));
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
         //sprite.Draw(spriteBatch, shadowPos + (_localOffset * mapManager.Scale) + rankOffset);
-        
+
     }
 
 }

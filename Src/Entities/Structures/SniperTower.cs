@@ -24,6 +24,12 @@ public class SniperTower : Tower
     protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
 
     private TimeSpan attackCD = TimeSpan.Zero;
+
+    private static readonly TimeSpan projectileTravelTime = TimeSpan.FromMilliseconds(125);
+    private TimeSpan pendingHitTimer = TimeSpan.Zero;
+    private Monster pendingHitTarget = null;
+    private float pendingHitDamage;
+
     public override void Attack(GameTime gameTime)
     {
         //TODO: potentially move this responsability to the monsters.
@@ -61,15 +67,13 @@ public class SniperTower : Tower
             {
                 //tower should attack
                 elapsedAttackCooldown -= attackCooldown;
-                target.TakeDamage(damagePerSecond);
+                pendingHitTarget = target;
+                pendingHitDamage = damagePerSecond;
+                pendingHitTimer = projectileTravelTime;
                 totalDamage += damagePerSecond;
                 targetPos = targetGroup.GetInterpolatedWorldPosition();
-                if (target.IsDestroyed)
-                {
-                    target = null;
-                }
                 //TODO: play anim here
-                attackCD = TimeSpan.FromMilliseconds(125);
+                attackCD = projectileTravelTime;
                 Vector2 startPos = mapManager.GetWorldPositionOfTile(TilePosition) + (_localOffset * _spriteTop.Scale) + (new Vector2(64, 55) * _spriteTop.Scale);
                 Vector2 endPos =  targetPos +  (new Vector2(45, 5) * mapManager.Scale);
                 Vector2 dir = endPos - startPos;
@@ -95,6 +99,22 @@ public class SniperTower : Tower
         if(attackCD > TimeSpan.Zero)
         {
             attackCD -= gameTime.ElapsedGameTime;
+        }
+        if (pendingHitTarget != null)
+        {
+            pendingHitTimer -= gameTime.ElapsedGameTime;
+            if (pendingHitTimer <= TimeSpan.Zero)
+            {
+                if (!pendingHitTarget.IsDestroyed)
+                {
+                    pendingHitTarget.TakeDamage(pendingHitDamage);
+                    if (pendingHitTarget.IsDestroyed && target == pendingHitTarget)
+                    {
+                        target = null;
+                    }
+                }
+                pendingHitTarget = null;
+            }
         }
     }
 
