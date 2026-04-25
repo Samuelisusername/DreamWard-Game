@@ -333,7 +333,7 @@ public class CardRenderer
     private const int HEX_MASK_W = 64;
     private const int HEX_MASK_H = 32;
     private const float HEATMAP_ALPHA = 0.55f;
-    private const float HEATMAP_DPS_LOW = 15f;   // below this DPS -> yellow
+    private const float HEATMAP_DPS_LOW = 10f;   // below this DPS -> yellow
     private const float HEATMAP_DPS_MID = 30f;   // below this -> orange
     private const float HEATMAP_DPS_HIGH = 50f;  // below this -> muted red, above -> deep red
 
