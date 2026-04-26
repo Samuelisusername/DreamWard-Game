@@ -43,7 +43,14 @@ public class GamePhaseManager
 
     public void FinishSwitchToNight()
     {        
-        combatManager.SpawnMonsters(DayCount * 3, DayCount);
+        int spawnCount = DayCount switch
+        {
+            1 => 3,
+            2 => 4,
+            3 => 6,
+            _ => DayCount * 4,
+        };
+        combatManager.SpawnMonsters(spawnCount, DayCount);
         IsDay = false;
         AudioManager.PlayMusic("night_music");
     }

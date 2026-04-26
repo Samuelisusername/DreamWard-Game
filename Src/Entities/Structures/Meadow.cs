@@ -9,14 +9,19 @@ using Microsoft.Xna.Framework.Graphics;
 /// </summary>
 public class Meadow : Structure
 {
+    private const int MaxGrazingDays = 2;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     public bool HasSheep{get; private set;}
 
     public bool IsPolymorphed{get; private set;}
 
-    public int SanityGain {get; private set;}
+    private int _baseSanityGain;
+    public int SanityGain => IsDepleted ? 0 : _baseSanityGain;
 
     public bool IsGrazed {get; private set;}
+
+    public int DaysGrazed {get; private set;}
+    public bool IsDepleted {get; private set;}
 
     public override bool CanMove => false;
     protected override (string label, string info)[] infos =>
@@ -35,7 +40,19 @@ public class Meadow : Structure
     public Meadow((int,int) pos, int sanityGain)
         : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos)
     {
-        SanityGain = sanityGain;
+        _baseSanityGain = sanityGain;
+    }
+
+    public void TickGrazingDay()
+    {
+        if (!HasSheep || IsDepleted) return;
+        DaysGrazed++;
+        if (DaysGrazed > MaxGrazingDays)
+        {
+            IsDepleted = true;
+            IsGrazed = true;
+            SetAnimation("meadowGrazed_idle");
+        }
     }
 
     public void TriggerCantAffordFlash() => _cantAffordFlash = FlashDuration;
@@ -56,6 +73,7 @@ public class Meadow : Structure
     {
         HasSheep = true;
         IsPolymorphed = isPolymorphed;
+        DaysGrazed = 0;
         if (IsPolymorphed)
             SetAnimation("rats_idle");
         else

@@ -53,7 +53,9 @@ public class SanityManager
     public int AddSanityGainedFromNewDay()
     {
         sanity_ = Sanity;
-        Sanity += mapManager.GetSheep()?.SanityGain ?? 0;
+        var sheepMeadow = mapManager.GetSheep();
+        sheepMeadow?.TickGrazingDay();
+        Sanity += sheepMeadow?.SanityGain ?? 0;
         List<PlacableMeadow> meadows = mapManager.GetAllMeadows();
         foreach (var meadow in meadows)
         {

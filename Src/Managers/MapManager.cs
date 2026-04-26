@@ -377,7 +377,7 @@ public class MapManager
                 {
                     newMonster = new RegularMonster(pos);
                 }
-                else if(roll < 80)
+                else
                 {
                     newMonster = new FlyingMonster(pos);
                 }

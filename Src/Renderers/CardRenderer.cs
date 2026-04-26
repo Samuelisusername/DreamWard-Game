@@ -127,6 +127,16 @@ public class CardRenderer
             {
                 spriteBatch.Draw(dummy, rect, Color.Cyan * 0.2f);
             }
+            if (slot.Card != null && slot.Card.StackCount > 1)
+            {
+                string countText = $"x{slot.Card.StackCount}";
+                Vector2 size = font.MeasureString(countText);
+                int badgeW = (int)size.X + 12;
+                int badgeH = (int)size.Y + 6;
+                Rectangle badge = new(rect.Right - badgeW - 6, rect.Bottom - badgeH - 6, badgeW, badgeH);
+                spriteBatch.Draw(dummy, badge, COLOR_D);
+                spriteBatch.DrawString(font, countText, new Vector2(badge.X + 6, badge.Y + 3), COLOR_M);
+            }
         }
     }
 
