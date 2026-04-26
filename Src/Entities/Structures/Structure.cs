@@ -55,7 +55,7 @@ public abstract class Structure : Entity
     /// <summary>
     /// draws the entity
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
+    public virtual void Draw(SpriteBatch spriteBatch, Vector2 offset = new(), float alpha = 1.0f)
     {
         if (_spriteTop == null) return;
         #if DEBUG
@@ -101,6 +101,25 @@ public abstract class Structure : Entity
         GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(_animName) :
         GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(_animName);
         _spriteBase.Scale = mapManager.Scale;
+    }
+
+    public override void TakeDamage(float amount)
+    {        
+        base.TakeDamage(amount);        
+        if(IsDestroyed)
+        {
+            Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+            for(int i = 0; i < 40; i++)
+            {
+                ParticleManager.AddParticle(new Particle
+                {
+                    WorldPosition = (worldPos + (_localOffset * _spriteTop.Scale) + (new Vector2(64, 100) * _spriteTop.Scale) - mapManager.Offset)/mapManager.Scale,
+                    Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 150, (float)(Random.Shared.NextDouble() -0.5f) * 150),
+                    LifeSpan = TimeSpan.FromSeconds(0.5),
+                    Color = Color.Gray
+                });
+            }
+        }
     }
 
     #region statcard

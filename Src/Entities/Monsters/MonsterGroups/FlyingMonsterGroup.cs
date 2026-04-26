@@ -27,7 +27,7 @@ public class FlyingMonsterGroup : MonsterGroup
         if(CommonNextTarget() != TilePosition)
         {
             //they are still flying
-            origin -= Vector2.UnitY * 50 * mapManager.Scale;
+            origin -= Vector2.UnitY * 30 * mapManager.Scale;
         }
         
         var goal = Monsters[0].GetCurrentGoal();
@@ -35,7 +35,7 @@ public class FlyingMonsterGroup : MonsterGroup
         if(pathFindingManager.PathLength(Monsters[0]) > 2)
         {
             //the monster moves on next step
-            goalPos -= Vector2.UnitY * 50 * mapManager.Scale;
+            goalPos -= Vector2.UnitY * 30 * mapManager.Scale;
         }
         return origin + (goalPos - origin) * _pathProgress;
     }
@@ -74,9 +74,9 @@ public class FlyingMonsterGroup : MonsterGroup
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale));
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
         //sprite.Draw(spriteBatch, shadowPos + (_localOffset * mapManager.Scale) + rankOffset);
-        
+
     }
 
 }

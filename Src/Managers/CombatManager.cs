@@ -218,7 +218,14 @@ public class CombatManager
             if (entity != null && entity.IsDestroyed)
             {
                 if (entity is Tent) mapManager.TentDestroyed = true;
-                
+                if (entity is Meadow destroyedMeadow)
+                {
+                    foreach (var pos in MapUtils.GetSurroundingTiles(entity.TilePosition))
+                    {
+                        if (mapManager.Structures[pos.Item1, pos.Item2] is PlacableMeadow pm)
+                            pm.DeactivateMeadow();
+                    }
+                }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);
             }

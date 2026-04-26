@@ -42,7 +42,7 @@ public static class ParticleManager
             part.Value.Color,
             0,
             Vector2.One,
-            GamelabGame.MapManager.Scale * 10,
+            GamelabGame.MapManager.Scale * 2,
             SpriteEffects.None,
             0);
             part = part.Next;

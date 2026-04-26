@@ -329,27 +329,104 @@ public class CardRenderer
         }
     }
 
+    private Texture2D _hexMask;
+    private const int HEX_MASK_W = 64;
+    private const int HEX_MASK_H = 32;
+    private const float HEATMAP_ALPHA = 0.55f;
+    private const float HEATMAP_DPS_LOW = 10f;   // below this DPS -> yellow
+    private const float HEATMAP_DPS_MID = 30f;   // below this -> orange
+    private const float HEATMAP_DPS_HIGH = 50f;  // below this -> muted red, above -> deep red
+
+    private Texture2D GetHexMask(GraphicsDevice gd)
+    {
+        if (_hexMask != null) return _hexMask;
+        var data = new Color[HEX_MASK_W * HEX_MASK_H];
+        // Pointy-side (flat top/bottom) hexagon spanning the full 64x32.
+        // Top/bottom edges occupy the middle 32px width; sides angle out to full 64px width at vertical center.
+        for (int y = 0; y < HEX_MASK_H; y++)
+        {
+            float t = y < HEX_MASK_H / 2 ? y / (float)(HEX_MASK_H / 2)
+                                         : (HEX_MASK_H - 1 - y) / (float)(HEX_MASK_H / 2);
+            int halfWidth = (int)(16 + 16 * t);
+            int xStart = HEX_MASK_W / 2 - halfWidth;
+            int xEnd = HEX_MASK_W / 2 + halfWidth;
+            for (int x = 0; x < HEX_MASK_W; x++)
+                data[y * HEX_MASK_W + x] = (x >= xStart && x < xEnd) ? Color.White : Color.Transparent;
+        }
+        _hexMask = new Texture2D(gd, HEX_MASK_W, HEX_MASK_H);
+        _hexMask.SetData(data);
+        return _hexMask;
+    }
+
+    private static Color HeatmapColor(int level)
+    {
+        // 0: yellow (low), 1: orange (some), 2: muted red (more), 3: deep red (most)
+        return level switch
+        {
+            0 => new Color(247, 211, 79),
+            1 => new Color(232, 142, 60),
+            2 => new Color(184, 64, 50),
+            _ => new Color(120, 28, 28),
+        };
+    }
+
     public void DrawAllTowerRanges(SpriteBatch spriteBatch, MapManager mapManager)
     {
+        var dpsPerTile = new Dictionary<(int, int), float>();
+
         for (int i = 0; i < mapManager.Columns; i++)
             for (int j = 0; j < mapManager.Rows; j++)
                 if (mapManager.GetStructure((i, j)) is Tower t)
-                    DrawTowerRangePreview(spriteBatch, mapManager, t);
+                {
+                    foreach (var tile in t.GetTilesInRange())
+                    {
+                        if (tile.Item1 < 0 || tile.Item1 >= mapManager.Columns ||
+                            tile.Item2 < 0 || tile.Item2 >= mapManager.Rows) continue;
+                        dpsPerTile.TryGetValue(tile, out float prev);
+                        dpsPerTile[tile] = prev + t.DamagePerSecond;
+                    }
+                }
+
+        if (dpsPerTile.Count == 0) return;
+
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
+
+        foreach (var kv in dpsPerTile)
+        {
+            float dps = kv.Value;
+            int level;
+            if (dps < HEATMAP_DPS_LOW) level = 0;
+            else if (dps < HEATMAP_DPS_MID) level = 1;
+            else if (dps < HEATMAP_DPS_HIGH) level = 2;
+            else level = 3;
+
+            Color color = HeatmapColor(level) * HEATMAP_ALPHA;
+            Vector2 pos = mapManager.GetWorldPositionOfTile(kv.Key);
+            spriteBatch.Draw(mask, pos, null, color, 0f, Vector2.Zero,
+                maskScale, SpriteEffects.None, 0.8f);
+        }
     }
 
     public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower)
     {
         if (tower == null) return;
-        float alpha      = tower is AreaTower ? 0.25f : 0.4f;
-        Color rangeColor = (tower is AreaTower ? Color.Blue : Color.DarkOliveGreen) * alpha;
+        Color rangeColor = new Color(247, 211, 79) * 0.45f;
+
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
 
         foreach (var tile in tower.GetTilesInRange())
         {
             if (tile.Item1 < 0 || tile.Item1 >= mapManager.Columns ||
                 tile.Item2 < 0 || tile.Item2 >= mapManager.Rows) continue;
-            var tex = mapManager.GetTile(tile);
-            tex.Draw(spriteBatch, mapManager.GetWorldPositionOfTile(tile),
-                rangeColor, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 0.8f);
+            Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+            spriteBatch.Draw(mask, pos, null, rangeColor, 0f, Vector2.Zero,
+                maskScale, SpriteEffects.None, 0.8f);
         }
     }
 

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet mgcb *)",
+      "Bash(grep -viE \"^skipping|^$\")",
+      "Bash(dotnet build *)"
+    ]
+  }
+}

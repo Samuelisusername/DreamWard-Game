@@ -7,6 +7,7 @@ using Gamelab;
 public class EntityRenderer
 {
     private MapManager mapManager => GamelabGame.MapManager;
+    private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private Texture2D _pixel;
 
     public void SetHealthBarTexture(Texture2D pixel)
@@ -31,13 +32,25 @@ public class EntityRenderer
             for(int j = 0; j < mapManager.Rows; j++)
             {
                 var structure = mapManager.GetStructure((i, j));
-                if (structure is Tower)
+                if (structure is SniperTower)
                 {
                     Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, -80f);
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -40f : -70f);
                 }
-                else if (structure is Fence || structure is Tent)
+                else if (structure is AreaTower)
+                {
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
+                    DrawHpBar(spriteBatch, worldPos, scale,
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -20f : -40f);
+                }
+                else if (structure is Wall || structure is WallTile)
+                {
+                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
+                    DrawHpBar(spriteBatch, worldPos, scale,
+                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -10f : -50f);
+                }
+                else if (structure is Fence || structure is Tent || structure is PlacableMeadow || structure is Spike)
                 {
                     Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
                     DrawHpBar(spriteBatch, worldPos, scale,
@@ -72,7 +85,10 @@ public class EntityRenderer
     private void DrawHpBar(SpriteBatch spriteBatch, Vector2 worldPos, Vector2 scale,
                            float currentHealth, float maxHealth, float spriteOffsetY)
     {
-        float barWidth = 37.5f * scale.X;
+        //Show HP bar only if not full
+        if (currentHealth >= maxHealth) return;
+
+        float barWidth = 33.75f * scale.X;
         float barHeight = 3f * scale.Y;
 
         float spriteLeftX = worldPos.X + (-32f) * scale.X;
@@ -85,11 +101,30 @@ public class EntityRenderer
             (int)barX, (int)barY, (int)barWidth, (int)barHeight),
             new Color(40, 40, 40));
 
-        // Fill (green → red based on %)
+        // Fill (green → orange → red based on %)
         float pct = Math.Clamp(currentHealth / maxHealth, 0f, 1f);
-        Color barColor = pct > 0.5f ? Color.LimeGreen : pct > 0.25f ? Color.Orange : Color.Red;
+
+        Color barColor = pct > 0.5f ? new Color(128, 209, 84)
+                       : pct > 0.25f ? new Color(209, 151, 84)
+                       : new Color(217, 52, 52);
         spriteBatch.Draw(_pixel, new Rectangle(
             (int)barX, (int)barY, (int)(barWidth * pct), (int)barHeight),
             barColor);
+
+        // Border (#3b4f46)
+        Color borderColor = new(59, 79, 70);
+        int border = 1;
+        int bx = (int)barX;
+        int by = (int)barY;
+        int bw = (int)barWidth;
+        int bh = (int)barHeight;
+        // top
+        spriteBatch.Draw(_pixel, new Rectangle(bx, by, bw, border), borderColor);
+        // bottom
+        spriteBatch.Draw(_pixel, new Rectangle(bx, by + bh - border, bw, border), borderColor);
+        // left
+        spriteBatch.Draw(_pixel, new Rectangle(bx, by, border, bh), borderColor);
+        // right
+        spriteBatch.Draw(_pixel, new Rectangle(bx + bw - border, by, border, bh), borderColor);
     }
 }

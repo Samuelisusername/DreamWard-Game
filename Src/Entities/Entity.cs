@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 public abstract class Entity
 {   
     public virtual float CurrentHealth {get; protected set;}
+
+    private MapManager mapManager => GamelabGame.MapManager;
     
     public virtual float MaxHealth 
     {
@@ -29,7 +31,7 @@ public abstract class Entity
     /// <summary>
     /// removes health from the entity
     /// </summary>
-    public void TakeDamage(float amount)
+    public virtual void TakeDamage(float amount)
     {
         CurrentHealth -= amount;
     }

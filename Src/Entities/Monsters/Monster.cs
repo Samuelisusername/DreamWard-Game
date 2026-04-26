@@ -33,6 +33,38 @@ public abstract class Monster : Entity
 
     public string Facing {get; private set;}
 
+    private static readonly TimeSpan hitFlashDuration = TimeSpan.FromMilliseconds(300);
+    private TimeSpan hitFlashRemaining = TimeSpan.Zero;
+    private const float hitFlashMinAlpha = 0.3f;
+
+    public float HitFlashAlpha
+    {
+        get
+        {
+            if (hitFlashRemaining <= TimeSpan.Zero) return 1f;
+            float t = (float)(hitFlashRemaining.TotalSeconds / hitFlashDuration.TotalSeconds);
+            return MathHelper.Lerp(1f, hitFlashMinAlpha, t);
+        }
+    }
+
+    public void TickHitFlash(GameTime gameTime)
+    {
+        if (hitFlashRemaining > TimeSpan.Zero)
+        {
+            hitFlashRemaining -= gameTime.ElapsedGameTime;
+            if (hitFlashRemaining < TimeSpan.Zero) hitFlashRemaining = TimeSpan.Zero;
+        }
+    }
+
+    public override void TakeDamage(float amount)
+    {
+        base.TakeDamage(amount);
+        if (hitFlashRemaining <= TimeSpan.Zero)
+        {
+            hitFlashRemaining = hitFlashDuration;
+        }
+    }
+
     public override bool IsBuildEntity => false;
 
     protected override Vector2 _localOffset => throw new NotImplementedException();

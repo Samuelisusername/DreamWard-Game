@@ -6,6 +6,7 @@ using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 using Gamelab.Managers;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -77,10 +78,24 @@ public abstract class MonsterGroup
     public void RemoveDead() 
     {
         int oldCount = Count;
+        Vector2 worldPos = GetInterpolatedWorldPosition();
         Monsters.RemoveAll(m => m.IsDestroyed);
         if(Count <= 2 && oldCount > 2)
         {
             SetAnimation();
+        }
+        if(oldCount != Count)
+        {
+            for(int i = 0; i < 40; i++)
+            {
+                ParticleManager.AddParticle(new Particle
+                {
+                    WorldPosition = ((worldPos + new Vector2(45, 5) * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
+                    Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 150, (float)(Random.Shared.NextDouble() -0.5f) * 150),
+                    LifeSpan = TimeSpan.FromSeconds(0.5),
+                    Color = Color.Black
+                });
+            }
         }
     }
     
@@ -157,6 +172,7 @@ public abstract class MonsterGroup
         }
         
         _elapsed += gameTime.ElapsedGameTime;
+        Monsters.ForEach(m => m.TickHitFlash(gameTime));
         if(isMerging && (speed - _elapsed).TotalMilliseconds < 125)
         {
             SetAnimation("rebuild");
@@ -183,6 +199,7 @@ public abstract class MonsterGroup
                         i.NextTarget = pathFindingManager.GetNextPosition(i);
                     });
                     SetAnimation();
+                    IsNew = true;
                 }  
             }
         }
@@ -210,17 +227,31 @@ public abstract class MonsterGroup
 
     protected AnimatedSprite sprite;
 
+    protected float HitFlashAlpha
+    {
+        get
+        {
+            if (Monsters.Count == 0) return 1f;
+            float min = 1f;
+            foreach (var m in Monsters)
+            {
+                if (m.HitFlashAlpha < min) min = m.HitFlashAlpha;
+            }
+            return min;
+        }
+    }
+
     public virtual void Draw(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)
     {
         if (IsEmpty) return;
 
         Vector2 worldPos = GetInterpolatedWorldPosition();
-        
+
         // Use the container's rank logic to offset them so they don't overlap perfectly
-        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0); 
-        
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale));
-        
+        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
+
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
+
     }
 
     public void SetScale(Vector2 scale)
