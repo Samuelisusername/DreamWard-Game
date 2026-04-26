@@ -82,7 +82,7 @@ public class CardManager
     {
         new Card { Name = "fence",        Type = CardType.Build, Cost = 1, SpriteName = "fence",        Weight = 3, StackCount = 10 },
         new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 2, SpriteName = "dreamcatcher", Weight = 2, StackCount = 10 },
-        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2, StackCount = 10 },
+        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2, StackCount = 5 },
         new Card { Name = "spikes",       Type = CardType.Build, Cost = 2, SpriteName = "spikes",       Weight = 3 },
     };
 
