@@ -645,7 +645,10 @@ public class MapScreen : GamelabGameScreen
 
             
         }
-        cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
+        if(!gamePhaseManager.IsInTransition)
+        {
+            cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
+        }
 
         spriteBatch.End();
 
