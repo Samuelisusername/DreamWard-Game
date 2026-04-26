@@ -5,9 +5,9 @@
     "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 0
   },
   "TowerDamage": {
-    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.0,
-    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 8,
-    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.0
+    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 9,
+    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 9,
+    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 7.0
   },
   "EntityHealth": {
     "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
@@ -24,9 +24,9 @@
     "VoidTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
     "WallTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 24.0,
     "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 100.0,
-    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 20.0,
-    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 10.0
+    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 13,
+    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 18,
+    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.5
   },
   "MonsterDamage": {
     "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,

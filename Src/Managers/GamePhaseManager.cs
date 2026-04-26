@@ -40,17 +40,11 @@ public class GamePhaseManager
         mapManager.StartFalling();
         IsInTransition = true;
     }
+    private int[] monsterCount = [3, 6, 12, 18, 30, 50, 90, 80, 80, 100];
 
     public void FinishSwitchToNight()
-    {        
-        int spawnCount = DayCount switch
-        {
-            1 => 3,
-            2 => 4,
-            3 => 6,
-            _ => DayCount * 4,
-        };
-        combatManager.SpawnMonsters(spawnCount, DayCount);
+    {      
+        combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
         IsDay = false;
         AudioManager.PlayMusic("night_music");
     }
@@ -61,7 +55,7 @@ public class GamePhaseManager
         {
             EndGame(false); // lose
         }
-        else if (DayCount >= 10)
+        else if (DayCount > 10)
         {
             EndGame(true); // win
         }
