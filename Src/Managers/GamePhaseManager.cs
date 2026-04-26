@@ -30,6 +30,7 @@ public class GamePhaseManager
         AudioManager.PlayMusic("day_music");
         checkGameOver();
         mapManager.ResetFall();
+        GamelabGame.GameSpeed = 1.0f;
     }
 
     /// <summary>
@@ -63,6 +64,7 @@ public class GamePhaseManager
 
     private void EndGame(bool won)
     {
+        GamelabGame.GameSpeed = 1.0f;
         GameOverScreen.DidWin = won; 
         GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
     }

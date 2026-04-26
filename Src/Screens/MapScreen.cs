@@ -292,20 +292,25 @@ public class MapScreen : GamelabGameScreen
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
             }
             //set cursor state
-            if(gamePhaseManager.IsDay){
+            if(!gamePhaseManager.IsInTransition){
                 if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))
                     GamelabGame.IsHovering = true;
-            }
-            if (_showInventory)
-            {
-                foreach (var (rect, card) in cardManager.CardRects)
+                    
+                if (_showInventory)
                 {
-                    if (card != null && rect.Contains(mousePos))
+                    foreach (var (rect, card) in cardManager.CardRects)
                     {
-                        GamelabGame.IsHovering = true;
-                        break;
+                        if (card != null && rect.Contains(mousePos))
+                        {
+                            GamelabGame.IsHovering = true;
+                            break;
+                        }
                     }
                 }
+            }
+            else if(!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos))
+            {
+                GamelabGame.IsHovering = true;
             }
             if (!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
             {
@@ -378,7 +383,7 @@ public class MapScreen : GamelabGameScreen
             }
 
             //set the hovered tile
-            bool mouseOverUI = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
+            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
