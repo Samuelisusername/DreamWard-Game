@@ -178,7 +178,7 @@ public class CardManager
     public bool TryPurchaseBuildCard(CardSlot slot, SanityManager sanity)
     {
         if (slot == null || slot.Card == null || slot.Purchased) return false;
-        int cost = DiscountActive ? Math.Max(slot.Card.Cost - 1, 0) : slot.Card.Cost;
+        int cost = DiscountActive ? Math.Max(slot.Card.Cost - 2, 0) : slot.Card.Cost;
         if (!sanity.TryDeductSanity(cost)) return false;
         slot.Purchased = true;
         DiscountActive = false;

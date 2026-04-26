@@ -23,7 +23,7 @@ public class CardRenderer
         { "decoy",        "Decoy\nActs like a tile with sheep.\nLures enemies towards it." },
         { "buff",         "Buff\nRepels enemies" },
         { "shuffle",      "Shuffle\nShuffles the build cards." },
-        { "discount",     "Discount\nNext card purchased gets\na discount of 1 sanity" },
+        { "discount",     "Discount\nNext card purchased gets\na discount of 2 sanity" },
         { "top3",         "Save Card\nSave a card for next \nround" },
         { "discard",      "Discard\nDiscard the card.\nGet a new card." },
         { "polymorph",    "Polymorph\nTransforms the sheep \ninto rats. Monsters don't \nattack the sheep" },
@@ -238,7 +238,7 @@ public class CardRenderer
         if (ExpandedCard.Type == CardType.Build)
         {
             int displayCost = cardManager.DiscountActive
-                ? Math.Max(ExpandedCard.Cost - 1, 0) : ExpandedCard.Cost;
+                ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
 
             string costStr = isLocked
                 ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
