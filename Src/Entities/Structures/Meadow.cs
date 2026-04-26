@@ -24,11 +24,11 @@ public class Meadow : Structure
     public bool IsDepleted {get; private set;}
 
     public override bool CanMove => false;
-    protected override (string label, string info)[] infos =>
-    !IsGrazed && !HasSheep ? [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
+    protected override (string label, string info)[] infos => !gamePhaseManager.IsInTransition && !IsGrazed && !HasSheep ?
+     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
 
-    protected override string bottomText => !HasSheep ? !IsGrazed ?  "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
+    protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep ? !IsGrazed ?  "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
 
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;

@@ -353,13 +353,19 @@ public class CardRenderer
         var data = new Color[HEX_MASK_W * HEX_MASK_H];
         // Pointy-side (flat top/bottom) hexagon spanning the full 64x32.
         // Top/bottom edges occupy the middle 32px width; sides angle out to full 64px width at vertical center.
-        for (int y = 0; y < HEX_MASK_H; y++)
+        for (int y = 0; y < 17; y++)
         {
-            float t = y < HEX_MASK_H / 2 ? y / (float)(HEX_MASK_H / 2)
-                                         : (HEX_MASK_H - 1 - y) / (float)(HEX_MASK_H / 2);
-            int halfWidth = (int)(16 + 16 * t);
-            int xStart = HEX_MASK_W / 2 - halfWidth;
-            int xEnd = HEX_MASK_W / 2 + halfWidth;
+            int pxlCount = 33 + 2*y;
+            int xStart = 15 - y;
+            int xEnd = xStart + pxlCount;
+            for (int x = 0; x < HEX_MASK_W; x++)
+                data[y * HEX_MASK_W + x] = (x >= xStart && x < xEnd) ? Color.White : Color.Transparent;
+        }
+        for (int y = 17; y < 32; y++)
+        {
+            int pxlCount = 64-((y-16)*2) - 1;
+            int xStart = y-16;
+            int xEnd = xStart + pxlCount;
             for (int x = 0; x < HEX_MASK_W; x++)
                 data[y * HEX_MASK_W + x] = (x >= xStart && x < xEnd) ? Color.White : Color.Transparent;
         }
@@ -416,7 +422,7 @@ public class CardRenderer
             Color color = HeatmapColor(level) * HEATMAP_ALPHA;
             Vector2 pos = mapManager.GetWorldPositionOfTile(kv.Key);
             spriteBatch.Draw(mask, pos, null, color, 0f, Vector2.Zero,
-                maskScale, SpriteEffects.None, 0.8f);
+                maskScale, SpriteEffects.None, 0f);
         }
     }
 
@@ -436,7 +442,7 @@ public class CardRenderer
                 tile.Item2 < 0 || tile.Item2 >= mapManager.Rows) continue;
             Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
             spriteBatch.Draw(mask, pos, null, rangeColor, 0f, Vector2.Zero,
-                maskScale, SpriteEffects.None, 0.8f);
+                maskScale, SpriteEffects.None, 0f);
         }
     }
 

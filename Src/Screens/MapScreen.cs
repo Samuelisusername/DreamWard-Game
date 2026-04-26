@@ -602,12 +602,12 @@ public class MapScreen : GamelabGameScreen
             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange && gamePhaseManager.IsDay, cardRenderer);
             entityRenderer.Draw(spriteBatch, _hoverTile);
         }
         else
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange && gamePhaseManager.IsDay, cardRenderer: cardRenderer);
             entityRenderer.Draw(spriteBatch);
             if (_is_active_tutorial && (_tutorial_step == 6))
             {
@@ -644,10 +644,6 @@ public class MapScreen : GamelabGameScreen
 
 
             
-        }
-        if (_showTowerRange && gamePhaseManager.IsDay)
-        {
-            cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
         }
         cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
 

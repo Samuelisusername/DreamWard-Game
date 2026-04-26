@@ -17,12 +17,12 @@ public class MapRenderer
     /// (e.g. meadows, void tiles, fences, etc, and any static defence tiles).
     /// To get the tiles and entites to draw it calles the MapManager.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Rectangle screen, (int col, int row)? skipTile = null)
+    public void Draw(SpriteBatch spriteBatch, Rectangle screen, (int col, int row)? skipTile = null, bool drawRange = false, CardRenderer cardRenderer = null)
     {
         int oX = 128 * (int)mapManager.Scale.X;
         int oY = 128 * (int)mapManager.Scale.Y;
         screen = new Rectangle(screen.X - oX , screen.Y - oY, screen.Width + 2*oX, screen.Height + 2*oY);
-        if(gamePhaseManager.IsDay)
+        if(gamePhaseManager.IsDay && gamePhaseManager.IsInTransition)
         {
             for (int i = 0; i < mapManager.Rows*6; i++)
             {
@@ -93,7 +93,7 @@ public class MapRenderer
                     if(!screen.Contains(worldPos)) continue;
                     (int col, int row) globalTilePos = (j, i/2);
                     
-                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
+                    if(!gamePhaseManager.IsDay && !(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
                     {
                         continue;
                     }
@@ -104,7 +104,7 @@ public class MapRenderer
 
                     Color tileColor = Color.White;
                     #if DEBUG
-                    if(mapManager.Debug[localTilePos.col, localTilePos.row])
+                    if(MapUtils.IsInBounds(localTilePos) && mapManager.Debug[localTilePos.col, localTilePos.row])
                         tileColor = Color.Red;
                     #endif
                     tile.Draw(spriteBatch, worldPos, tileColor, 0f, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 1f);
@@ -119,7 +119,11 @@ public class MapRenderer
                 }            
             }
             
-            
+            if(drawRange && cardRenderer is not null)
+            {
+                cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
+            }
+
             for (int i = 0; i < mapManager.Rows*6; i++)
             {
                 for (int j = i % 2; j < mapManager.Columns*3; j += 2)
@@ -128,7 +132,7 @@ public class MapRenderer
                     (int col, int row) localTilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
                     (int col, int row) globalTilePos = (j, i/2);
 
-                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
+                    if(!gamePhaseManager.IsDay && !(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
                     {
                         continue;
                     }
@@ -153,7 +157,7 @@ public class MapRenderer
                     
                     (int col, int row) localTilePos = (j - mapManager.Columns, (i / 2)-mapManager.Rows);
 
-                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
+                    if(!gamePhaseManager.IsDay && !(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
                     {
                         continue;
                     }
