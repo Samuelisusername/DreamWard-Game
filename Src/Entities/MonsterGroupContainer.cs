@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 public class MonsterGroupContainer 
 {   
     private MapManager mapManager => GamelabGame.MapManager;
+    private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private (int, int) tilePosition;
     public List<MonsterGroup> MonsterGroups;
 
@@ -85,15 +86,17 @@ public class MonsterGroupContainer
         
         
         //if monster can attack structure on its way, do so
-        Entity destStructure = mapManager.GetStructure(monsterGroup.CommonNextTarget());
-        if (destStructure != null /*&& !Monsters[0].CanStepOn(destStructure)*/)
+        if(monsterGroup.Monsters.All(i => i.GoalReached))
         {
             monsterGroup.Monsters.ForEach( i=>
             {
-                if(i.CanTarget(destStructure))
+                Entity destStructure = mapManager.GetStructure(pathFindingManager.GetTarget(i)?? (-12,-12));
+                if(destStructure != null)
                 {
-                    i.AttackTarget = i.GetCurrentGoal(); // Target the wall to attack
-                    i.Path = new List<(int,int)> { i.Path[0] };
+                    if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(pathFindingManager.GetTarget(i)?? (-12,-12),pathFindingManager.GetNextPosition(i)) == 1)
+                    {
+                        i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
+                    } 
                 }
             });
         }
