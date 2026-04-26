@@ -565,14 +565,14 @@ public class MapManager
 
         Meadow starterMeadow = new Meadow((centerX + 1, centerY), 5);
 
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY + 1)), (centerX, centerY + 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX, centerY - 1)), (centerX, centerY - 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY - 1)), (centerX-1, centerY - 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX-1, centerY )), (centerX-1, centerY ));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 1, centerY -1)), (centerX + 1, centerY -1));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY)), (centerX + 2, centerY ));
-        // mapManager.PlaceEntity(new Fence("fence_idle", (centerX + 2, centerY + 1)), (centerX + 2, centerY + 1));
+        // PlaceEntity(new Fence((centerX, centerY + 1)), (centerX, centerY + 1));
+        // PlaceEntity(new Fence((centerX, centerY - 1)), (centerX, centerY - 1));
+        // PlaceEntity(new Fence((centerX-1, centerY + 1)), (centerX-1, centerY + 1));
+        // PlaceEntity(new Fence((centerX-1, centerY )), (centerX-1, centerY ));
+        // PlaceEntity(new Fence((centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
+        // PlaceEntity(new Fence((centerX + 1, centerY -1)), (centerX + 1, centerY -1));
+        // PlaceEntity(new Fence((centerX + 2, centerY)), (centerX + 2, centerY ));
+        // PlaceEntity(new Fence((centerX + 2, centerY - 1)), (centerX + 2, centerY - 1));
 
 
         // 🐑 Sheep next to tent

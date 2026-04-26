@@ -87,7 +87,7 @@ public class GamelabGame : Game
     public static Random Rng { get; private set; }
     public static int Seed { get; private set; }
     
-    private int setSeed = 0; //1512335036;//1029531291; //1330672853; //1036804964; //set this to override seed
+    private int setSeed = 0; //1870306913; //1512335036;//1029531291; //1330672853; //1036804964; //set this to override seed
 
     public BalanceParams Balance;
     public Effect LoadingShader;

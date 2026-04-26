@@ -190,17 +190,23 @@ public abstract class MonsterGroup
                 shouldCheckMerge = true;
                 if(shouldRecalcPath)
                 {
-                    Monsters.ForEach(i =>
+                    foreach (Monster monster in Monsters)
                     {
-                        // var newPath = pathFindingManager.CalculatePath(i);
-                        // if (newPath != null && newPath.Count > 0)
-                        //     i.Path = newPath;
-                        i.NextTarget = pathFindingManager.GetNextPosition(i);
-                        if(i.NextTarget != TilePosition)
+                        monster.NextTarget = pathFindingManager.GetNextPosition(monster);
+                        if(pathFindingManager.GetTarget(monster) is {} target)
                         {
-                            i.AttackTarget = null;
+                            Entity destStructure = mapManager.GetStructure(target);
+                            if(destStructure != null)
+                            {
+                                if(monster.CanTarget(destStructure) && MapUtils.CalculateTileDistance(target, monster.TilePosition) <= 1)
+                                {
+                                    monster.AttackTarget = target; // Target the wall to attack
+                                    continue;
+                                }
+                            }
                         }
-                    });
+                        monster.AttackTarget = null;
+                    }
                     SetAnimation();
                     IsNew = true;
                 }  

@@ -369,7 +369,7 @@ public class PathFindingManager
             return centerTile;
         }
 
-        return candidateTiles[Random.Shared.Next(candidateTiles.Count)];
+        return candidateTiles[GamelabGame.Rng.Next(candidateTiles.Count)];
     }
 
     private (int col, int row) GetRandomNeighborAsLastResort((int col, int row) startTile, Monster monster)
@@ -394,7 +394,7 @@ public class PathFindingManager
             return startTile;
         }
 
-        return candidates[Random.Shared.Next(candidates.Count)];
+        return candidates[GamelabGame.Rng.Next(candidates.Count)];
     }
 
     /// <summary>
