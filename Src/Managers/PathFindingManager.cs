@@ -518,7 +518,7 @@ public class PathFindingManager
         _monsterToTargetDist.Remove(monster);
 
         int targetIndex = _activeTargets.FindIndex(t => t.col == previousTile.col && t.row == previousTile.row);
-        if (monsters.Count == 0)
+        if (monsters.Count == 0 || mapManager.GetStructure((_activeTargets[targetIndex].col,_activeTargets[targetIndex].row)) == null)
         {
             _monstersTargeting.Remove(previousTile);
             if (targetIndex >= 0)

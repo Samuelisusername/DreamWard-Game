@@ -108,7 +108,6 @@ public abstract class Monster : Entity
         }
         NextTarget = pathFindingManager.GetNextPosition(this);
         ShouldMove = false;
-
     }
 
     /// <summary>

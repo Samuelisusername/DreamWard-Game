@@ -90,13 +90,16 @@ public class MonsterGroupContainer
         {
             monsterGroup.Monsters.ForEach( i=>
             {
-                Entity destStructure = mapManager.GetStructure(pathFindingManager.GetTarget(i)?? (-12,-12));
-                if(destStructure != null)
+                if(pathFindingManager.GetTarget(i) is {} target)
                 {
-                    if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(pathFindingManager.GetTarget(i)?? (-12,-12),pathFindingManager.GetNextPosition(i)) == 1)
+                    Entity destStructure = mapManager.GetStructure(target);
+                    if(destStructure != null)
                     {
-                        i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
-                    } 
+                        if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(target, i.TilePosition) <= 1)
+                        {
+                            i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
+                        } 
+                    }
                 }
             });
         }
