@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 /// </summary>
 public class Meadow : Structure
 {
-    private const int MaxGrazingDays = 2;
+    private const int MaxGrazingDays = 3;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     public bool HasSheep{get; private set;}
 
