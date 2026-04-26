@@ -179,7 +179,7 @@ public class MonsterGroupContainer
 
         foreach (var mgs in monsterGroupLists)
         {
-            MonsterGroup mainGroup = mgs.SingleOrDefault(i => !i.IsNew) ?? mgs[0];
+            MonsterGroup mainGroup = mgs.FirstOrDefault(i => !i.IsNew) ?? mgs[0];
             foreach (var mg in mgs)
             {
                 if(mg == mainGroup) continue;
