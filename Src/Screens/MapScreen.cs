@@ -1257,6 +1257,8 @@ public class MapScreen : GamelabGameScreen
     {
         if (ReferenceEquals(cm._activeMapCard, card))
         {
+            if (cm._previewStructure != null && cm._selectedTile != (-1, -1))
+                GamelabGame.MapManager.PlaceEntity(cm._previewStructure, cm._selectedTile);
             cm._activeMapCard    = null;
             cm._previewStructure = null;
             cm._selectedTile     = (-1, -1);

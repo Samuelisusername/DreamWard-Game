@@ -17,7 +17,7 @@ public class CardRenderer
         { "aoe",          "Area of Effect Tower\nTargets all the enemies in \nits range. Long range \nbut less damage" },
         { "dreamcatcher", "Dreamcatcher\nActs as a wall to blocks \nthe enemies, including \nflying ones" },
         { "fence",        "Fence\nBlock all ground enemies" },
-        { "meadow",       "Meadow\nCan move Sheeps here\nHelps increase sanity" },
+        { "meadow",       "Meadow\nHelps increase sanity" },
         { "void",         "Void\nBlock all ground enemies.\nOnce placed cannot\nbe removed." },
         { "spikes",       "Spikes\nInflicts damage on ground \nenemies." },
         { "decoy",        "Decoy\nActs like a tile with sheep.\nLures enemies towards it." },
