@@ -51,7 +51,8 @@ public class Meadow : Structure
         {
             IsDepleted = true;
             IsGrazed = true;
-            SetAnimation("meadowGrazed_idle");
+            SetAnimationBase("meadowGrazed_idle");
+            SetAnimationTop("sheepSmall_idle");
         }
     }
 
@@ -75,9 +76,9 @@ public class Meadow : Structure
         IsPolymorphed = isPolymorphed;
         DaysGrazed = 0;
         if (IsPolymorphed)
-            SetAnimation("rats_idle");
+            SetAnimationTop("rats_idle");
         else
-            SetAnimation("sheepSmall_idle");
+            SetAnimationTop("sheepSmall_idle");
     }
 
     public bool AddProgress(TimeSpan delta)
@@ -104,7 +105,7 @@ public class Meadow : Structure
         if(HasSheep)
         {
             IsPolymorphed = true;
-            SetAnimation("rats_idle");
+            SetAnimationTop("rats_idle");
         }
     }
 
@@ -113,7 +114,7 @@ public class Meadow : Structure
         if(HasSheep)
         {
             IsPolymorphed = false;
-            SetAnimation("sheepSmall_idle");
+            SetAnimationTop("sheepSmall_idle");
         }
     }
     public override void DrawCard(SpriteBatch spriteBatch)
