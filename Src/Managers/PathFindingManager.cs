@@ -8,7 +8,7 @@ public class PathFindingManager
 
     private const int RegularMonsterVisionRange = 5;
     private const int FlyingMonsterVisionRange = 8;
-    private const int SimplePathMinDefenceStrength = 1; // encourages taking a shorter route
+    private const int SimplePathMinDefenceStrength = 2; // higher number encourages taking a shorter route
     private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
