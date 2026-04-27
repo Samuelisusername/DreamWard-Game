@@ -67,7 +67,6 @@ public class MapScreen : GamelabGameScreen
     private bool _clickStarted;
     private Vector2 _oldPos;
     private (int col, int row) _hoverTile = (-1,-1);
-    private bool _showDayPopup = false;
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
     private Structure _hoveredStructure;
@@ -259,15 +258,7 @@ public class MapScreen : GamelabGameScreen
 #endif
         }
 
-        if (_showDayPopup)
-        {
-            _popupTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (_popupTimer <= 0f)
-            {
-                _showDayPopup = false;
-            }
-        }
-        
+
 
         // Map update
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
@@ -712,7 +703,6 @@ public class MapScreen : GamelabGameScreen
         }
 
         if (_is_active_tutorial) DrawTutorialState(gameTime);
-        if (_showDayPopup)       DrawDayPopup();
         ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
     }
@@ -1237,8 +1227,7 @@ public class MapScreen : GamelabGameScreen
     }
 
     /// <summary>
-    /// Draws a simple pixel-art arrow pointing left ( <--- )
-    /// </summary>
+    /// Draws a simple pixel-art arrow pointing left ( <--- )    /// </summary>
     private void DrawPointerArrow(Vector2 tipPos, Color color)
     {
         // Shaft
@@ -1259,18 +1248,7 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.Draw(_dummy, new Rectangle((int)tipPos.X - 4,  (int)tipPos.Y + 12,  8, 6), color);
     }
 
-    private void DrawDayPopup()
-    {
-        int w = (int)viewportAdapter.VirtualWidth;
-        int h = (int)viewportAdapter.VirtualHeight;
-        int bW = w / 2, bH = h / 2;
-        Rectangle box = new(w / 2 - bW / 2, h / 2 - bH / 2, bW, bH);
-        spriteBatch.Draw(_dummy, box, Color.Beige * 0.6f);
-        float scale      = 1.25f;
-        Vector2 textSize = _font.MeasureString(_dayPopupText) * scale;
-        Vector2 textPos  = new Vector2(box.Center.X - textSize.X / 2, box.Center.Y - textSize.Y / 2);
-        spriteBatch.DrawString(_font, _dayPopupText, textPos, COLOR_D, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-    }
+
 
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
@@ -1312,12 +1290,6 @@ public class MapScreen : GamelabGameScreen
             COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
     }
 
-    public void ShowDayPopup(string text)
-    {
-        _dayPopupText = text;
-        _showDayPopup = true;
-        _popupTimer = 4f; // seconds
-    }
     
     private bool IsDoubleClick(MouseStateExtended mouse, GameTime gameTime)
     {
