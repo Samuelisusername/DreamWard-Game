@@ -64,7 +64,7 @@ public class PathFindingManager
         {
             _monsterToTargetDist[monster] = 0;
         }
-        _visited[candidateTile.Item1, candidateTile.Item2] = VisitedPenalty;
+        _visited[candidateTile.Item1, candidateTile.Item2] += VisitedPenalty;
         return candidateTile;
     }
 
@@ -223,7 +223,7 @@ public class PathFindingManager
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                _defenceStrength[col, row] = MinDefenceStrength;
+                _defenceStrength[col, row] = MinDefenceStrength + _visited[col, row];
             }
         }
         for (int col = 0; col < mapManager.Columns; col++)
