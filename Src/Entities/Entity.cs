@@ -36,10 +36,10 @@ public abstract class Entity
         CurrentHealth -= amount;
     }
 
-    public void Heal(float amount)
-    {
-        CurrentHealth = MathHelper.Min(CurrentHealth + amount, MaxHealth);
-    }
+    // public void Heal(float amount)
+    // {
+    //     CurrentHealth = MathHelper.Min(CurrentHealth + amount, MaxHealth);
+    // }
 
     public abstract void Update(GameTime gameTime);
 
