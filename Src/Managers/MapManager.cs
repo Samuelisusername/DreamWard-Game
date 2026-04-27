@@ -479,10 +479,16 @@ public class MapManager
     /// Places an entity defined by the Card at the given position
     /// </summary>
     public bool PlaceEntity(Card card, (int col, int row) pos)
-    {        
-        bool occupied = Structures[pos.col, pos.row] != null;
-        if (occupied)
+    {
+        Structure existing = Structures[pos.col, pos.row];
+        if (existing != null)
         {
+            Structure incoming = cardManager.GetStructureFromCard(card, pos);
+            if (incoming != null && existing.GetType() == incoming.GetType() && existing.CurrentHealth < existing.MaxHealth)
+            {
+                existing.Heal(existing.MaxHealth);
+                return true;
+            }
             Console.WriteLine("Tile already occupied!");
             AudioManager.Play("sheep_baa");
             return false;
