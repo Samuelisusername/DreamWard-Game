@@ -10,7 +10,10 @@ public class PathFindingManager
     private const int FlyingMonsterVisionRange = 8;
     private const int SimplePathMinDefenceStrength = 20; // higher number encourages taking a shorter route when discovering targets
     private const int MinDefenceStrength = 1; // higher number encourages taking a shorter route when going to a target
-    private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth
+    private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth    
+    private const int NormalDefenceStrength = 10;
+    private const int BuffPenalty = 50;
+    private const int FencePenalty = 4;
     private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
@@ -51,11 +54,15 @@ public class PathFindingManager
     {
         var endStructure = mapManager.GetStructure(candidateTile);
         var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == candidateTile;
-        if (endStructure != null && (!monster.CanStepOn(endStructure) || isIntendedTarget))
+        if (endStructure != null && !monster.CanStepOn(endStructure))
         {
             _monsterToTargetDist[monster] = 1;
             _monsterToTarget[monster] = candidateTile;
             return currentTile;
+        }
+        else if (endStructure != null && monster is FlyingMonster && isIntendedTarget)
+        {
+            _monsterToTargetDist[monster] = 0;
         }
         _visited[candidateTile.Item1, candidateTile.Item2] = VisitedPenalty;
         return candidateTile;
@@ -143,9 +150,9 @@ public class PathFindingManager
             }
         }
 
-        for (int i = 0; i < 10; ++i)
+        for (int i = RandomTileMaxDistanceFromCenter; i >= 0; --i)
         {
-            var randomCenterTile = GetRandomTileNearCenter(RandomTileMaxDistanceFromCenter);
+            var randomCenterTile = GetRandomTileNearCenter(i);
             if (_visited[randomCenterTile.col, randomCenterTile.row] == VisitedPenalty)
             {
                 continue;
@@ -234,15 +241,21 @@ public class PathFindingManager
             {
                 Entity structure = mapManager.GetStructure((col, row));
                 List<(int, int)> defendedTiles;
-                int strength = 10;
+                int strength = 0;
                 if (structure is Tower tower)
                 {
                     defendedTiles = tower.GetTilesInRange();
+                    strength = NormalDefenceStrength;
                 }
                 else if (structure is Buff buff)
                 {
                     defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
-                    strength += 50; // make buffed tiles more powerful
+                    strength = BuffPenalty; // make buffed tiles more powerful
+                }
+                else if (structure is Fence fence || structure is WallTile)
+                {
+                    defendedTiles = new List<(int, int)> { (col, row) };
+                    strength = FencePenalty;
                 }
                 else
                 {
@@ -250,8 +263,8 @@ public class PathFindingManager
                 }
                 foreach (var defendedTile in defendedTiles)
                 {
-                    _defenceStrength[defendedTile.Item1, defendedTile.Item2]++;
-                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] += 1;
+                    _defenceStrength[defendedTile.Item1, defendedTile.Item2] += strength;
+                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] += strength;
                     if (!_defenders.TryGetValue(defendedTile, out var defenders))
                     {
                         defenders = new List<Entity>();
