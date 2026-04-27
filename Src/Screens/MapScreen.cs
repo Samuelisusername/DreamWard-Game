@@ -426,8 +426,9 @@ public class MapScreen : GamelabGameScreen
                 }
                 if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
+                    bool overCardStrip = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
                     //start night
-                    if (_startNightBtn.Contains(mousePos))
+                    if (!overCardStrip && _startNightBtn.Contains(mousePos))
                     {
 #if DEBUG
                         gamePhaseManager.SwitchToNight();
@@ -439,7 +440,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                     //start tutorial
-                    if (_tutorial_btn.Contains(mousePos))
+                    if (!overCardStrip && _tutorial_btn.Contains(mousePos))
                     {
                         _is_active_tutorial = !_is_active_tutorial;
                         _tutorial_step = 0; 
