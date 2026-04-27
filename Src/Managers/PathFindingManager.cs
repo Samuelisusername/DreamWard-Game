@@ -50,7 +50,8 @@ public class PathFindingManager
     public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) candidateTile)
     {
         var endStructure = mapManager.GetStructure(candidateTile);
-        if (endStructure != null && !monster.CanStepOn(endStructure))
+        var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == candidateTile;
+        if (endStructure != null && (!monster.CanStepOn(endStructure) || isIntendedTarget))
         {
             _monsterToTargetDist[monster] = 1;
             _monsterToTarget[monster] = candidateTile;
