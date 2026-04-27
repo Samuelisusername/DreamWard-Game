@@ -531,8 +531,16 @@ public class MapScreen : GamelabGameScreen
                                 {
                                     if (isDouble)
                                     {
-                                        cardManager.UseCard(card);
-                                        AudioManager.Play("card-place");
+                                        if (cardManager.PendingStackCard != null &&
+                                            ReferenceEquals(cardManager.PendingStackCard, card))
+                                        {
+                                            cardManager.ClearPendingStackAction();
+                                        }
+                                        else
+                                        {
+                                            cardManager.UseCard(card);
+                                            AudioManager.Play("card-place");
+                                        }
                                     }
                                 }
                                 _clickStarted = false;
