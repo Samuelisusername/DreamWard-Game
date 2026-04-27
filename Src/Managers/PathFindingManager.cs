@@ -8,7 +8,9 @@ public class PathFindingManager
 
     private const int RegularMonsterVisionRange = 5;
     private const int FlyingMonsterVisionRange = 8;
-    private const int SimplePathMinDefenceStrength = 2; // higher number encourages taking a shorter route
+    private const int SimplePathMinDefenceStrength = 20; // higher number encourages taking a shorter route when discovering targets
+    private const int MinDefenceStrength = 1; // higher number encourages taking a shorter route when going to a target
+    private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth
     private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
@@ -19,6 +21,7 @@ public class PathFindingManager
 
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
+    private readonly int[,] _visited;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
 
     /// <summary>
@@ -33,6 +36,7 @@ public class PathFindingManager
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
+        _visited = new int[mapManager.Columns, mapManager.Rows];
     }
 
     /// <summary>
@@ -52,6 +56,7 @@ public class PathFindingManager
             _monsterToTarget[monster] = candidateTile;
             return currentTile;
         }
+        _visited[candidateTile.Item1, candidateTile.Item2] = VisitedPenalty;
         return candidateTile;
     }
 
@@ -94,6 +99,13 @@ public class PathFindingManager
             MapUtils.CalculateTileDistance(startTile, target.Tile) <= maxTargetDistance &&
             CanSeeStructureAndSurroundings(startTile, target.Tile, visionRange));
 
+        // prototype: monsters share knowledge of all targets
+        foreach (var activeTarget in _activeTargets)
+        {
+            (int col, int row, int timeToBeAttacked, int monsterCount) = activeTarget;
+            visibleTargets.Add(((col, row), mapManager.GetStructure((row, col))));
+        }
+
         // if the monster can see a decoy, it will ignore all other targets
         foreach (var target in visibleTargets)
         {
@@ -104,13 +116,6 @@ public class PathFindingManager
                 visibleTargets.Add(target);
                 break;
             }
-        }
-
-        // prototype: monsters share knowledge of all targets
-        foreach (var activeTarget in _activeTargets)
-        {
-            (int col, int row, int timeToBeAttacked, int monsterCount) = activeTarget;
-            visibleTargets.Add(((col, row), mapManager.GetStructure((row, col))));
         }
 
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
@@ -140,6 +145,10 @@ public class PathFindingManager
         for (int i = 0; i < 10; ++i)
         {
             var randomCenterTile = GetRandomTileNearCenter(RandomTileMaxDistanceFromCenter);
+            if (_visited[randomCenterTile.col, randomCenterTile.row] == VisitedPenalty)
+            {
+                continue;
+            }
             CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
             var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach, monster);
             if (centerPath.Count > 1)
@@ -150,6 +159,7 @@ public class PathFindingManager
         }
 
         var next = GetRandomNeighborAsLastResort(startTile, monster);
+        
         return GetNextPositionIfSafe(monster, startTile, next);
     }
 
@@ -184,6 +194,14 @@ public class PathFindingManager
         _monstersTargeting.Clear();
         _monsterToTarget.Clear();
         _monsterToTargetDist.Clear();
+        _defenders.Clear();
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                _visited[col, row] = 0;
+            }
+        }
     }
 
     /// <summary>
@@ -192,13 +210,19 @@ public class PathFindingManager
     private void UpdateDefenceStrengths()
     {
         // reset data structures
-        Array.Clear(_defenceStrength, 0, _defenceStrength.Length);
         _defenders.Clear();
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength;
+                _defenceStrength[col, row] = MinDefenceStrength;
+            }
+        }
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength + _visited[col, row];
             }
         }
 
@@ -209,6 +233,7 @@ public class PathFindingManager
             {
                 Entity structure = mapManager.GetStructure((col, row));
                 List<(int, int)> defendedTiles;
+                int strength = 10;
                 if (structure is Tower tower)
                 {
                     defendedTiles = tower.GetTilesInRange();
@@ -216,6 +241,7 @@ public class PathFindingManager
                 else if (structure is Buff buff)
                 {
                     defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
+                    strength += 50; // make buffed tiles more powerful
                 }
                 else
                 {
