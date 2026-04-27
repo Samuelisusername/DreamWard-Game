@@ -27,6 +27,7 @@ public class GamePhaseManager
         GamelabGame.Instance.MapScreenInstance?.ShowDayPopup(
         $"Day {DayCount-1} Passed\nSanity Gained: {gained}\nDay: {DayCount}\nNew Cards!"
         );
+        GamelabGame.Instance.MapScreenInstance?.SpawnSanityGainOverSheep(gained);
         AudioManager.PlayMusic("day_music");
         checkGameOver();
         mapManager.ResetFall();

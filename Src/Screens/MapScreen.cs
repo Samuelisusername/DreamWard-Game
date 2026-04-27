@@ -339,6 +339,12 @@ public class MapScreen : GamelabGameScreen
                 }
             }
                        
+            // DEBUG: right click triggers a sanity-gain burst above the sheep
+            if (mouse.WasButtonPressed(MouseButton.Right))
+            {
+                SpawnSanityGainOverSheep(20);
+            }
+
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
@@ -718,6 +724,18 @@ public class MapScreen : GamelabGameScreen
     private const int MaxSanity = 100;
 
     private const int MaxDays = 10;
+
+    public void SpawnSanityGainOverSheep(int amount)
+    {
+        if (amount <= 0) return;
+        var sheep = mapManager.GetSheep();
+        if (sheep == null) return;
+
+        Vector2 sheepScreen = mapManager.GetWorldPositionOfTile(mapManager.SheepPosition);
+        Vector2 tileCenterScreen = sheepScreen + new Vector2(mapManager.TileWidth / 2f, mapManager.TileHeight / 2f);
+        Vector2 spawnWorld = (tileCenterScreen - mapManager.Offset) / mapManager.Scale;
+        ParticleManager.SpawnSanityGain(amount, spawnWorld, _font);
+    }
 
     private void DrawSanityPanel()
     {
