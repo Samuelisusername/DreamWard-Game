@@ -556,3 +556,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
 
+#begin m5x7.ttf
+/copy:m5x7.ttf
+

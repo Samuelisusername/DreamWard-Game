@@ -3,9 +3,9 @@
   <Asset Type="Graphics:FontDescription">
     
     <!-- IMPORTANT -->
-    <FontName>PixeloidSans-lxa3y.ttf</FontName>
+    <FontName>m5x7.ttf</FontName>
 
-    <Size>14</Size>
+    <Size>48</Size>
     <Spacing>2</Spacing>
     <UseKerning>true</UseKerning>
     <Style>Regular</Style>
