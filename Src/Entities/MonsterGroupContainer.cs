@@ -90,13 +90,16 @@ public class MonsterGroupContainer
         {
             monsterGroup.Monsters.ForEach( i=>
             {
-                Entity destStructure = mapManager.GetStructure(pathFindingManager.GetTarget(i)?? (-12,-12));
-                if(destStructure != null)
+                if(pathFindingManager.GetTarget(i) is {} target)
                 {
-                    if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(pathFindingManager.GetTarget(i)?? (-12,-12),pathFindingManager.GetNextPosition(i)) == 1)
+                    Entity destStructure = mapManager.GetStructure(target);
+                    if(destStructure != null)
                     {
-                        i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
-                    } 
+                        if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(target, i.TilePosition) <= 1)
+                        {
+                            i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
+                        } 
+                    }
                 }
             });
         }
@@ -129,6 +132,9 @@ public class MonsterGroupContainer
                         case MonsterType.Small:
                             newGroup = new SmallMonsterGroup(tilePosition, elapsed);
                             break;
+                        case MonsterType.Big:
+                            newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
+                            break;
                         default:
                             throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                     }
@@ -159,6 +165,9 @@ public class MonsterGroupContainer
                     case MonsterType.Small:
                         newGroup = new SmallMonsterGroup(tilePosition, elapsed);
                         break;
+                    case MonsterType.Big:
+                        newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
+                        break;
                     default:
                         throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                 }
@@ -179,7 +188,7 @@ public class MonsterGroupContainer
 
         foreach (var mgs in monsterGroupLists)
         {
-            MonsterGroup mainGroup = mgs.SingleOrDefault(i => !i.IsNew) ?? mgs[0];
+            MonsterGroup mainGroup = mgs.FirstOrDefault(i => !i.IsNew) ?? mgs[0];
             foreach (var mg in mgs)
             {
                 if(mg == mainGroup) continue;

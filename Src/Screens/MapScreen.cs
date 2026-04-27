@@ -292,20 +292,25 @@ public class MapScreen : GamelabGameScreen
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
             }
             //set cursor state
-            if(gamePhaseManager.IsDay){
+            if(!gamePhaseManager.IsInTransition){
                 if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))
                     GamelabGame.IsHovering = true;
-            }
-            if (_showInventory)
-            {
-                foreach (var (rect, card) in cardManager.CardRects)
+                    
+                if (_showInventory)
                 {
-                    if (card != null && rect.Contains(mousePos))
+                    foreach (var (rect, card) in cardManager.CardRects)
                     {
-                        GamelabGame.IsHovering = true;
-                        break;
+                        if (card != null && rect.Contains(mousePos))
+                        {
+                            GamelabGame.IsHovering = true;
+                            break;
+                        }
                     }
                 }
+            }
+            else if(!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos))
+            {
+                GamelabGame.IsHovering = true;
             }
             if (!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
             {
@@ -378,7 +383,7 @@ public class MapScreen : GamelabGameScreen
             }
 
             //set the hovered tile
-            bool mouseOverUI = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
+            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
@@ -421,8 +426,9 @@ public class MapScreen : GamelabGameScreen
                 }
                 if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
+                    bool overCardStrip = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
                     //start night
-                    if (_startNightBtn.Contains(mousePos))
+                    if (!overCardStrip && _startNightBtn.Contains(mousePos))
                     {
 #if DEBUG
                         gamePhaseManager.SwitchToNight();
@@ -434,7 +440,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                     //start tutorial
-                    if (_tutorial_btn.Contains(mousePos))
+                    if (!overCardStrip && _tutorial_btn.Contains(mousePos))
                     {
                         _is_active_tutorial = !_is_active_tutorial;
                         _tutorial_step = 0; 
@@ -597,12 +603,12 @@ public class MapScreen : GamelabGameScreen
             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange && gamePhaseManager.IsDay, cardRenderer);
             entityRenderer.Draw(spriteBatch, _hoverTile);
         }
         else
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange && gamePhaseManager.IsDay, cardRenderer: cardRenderer);
             entityRenderer.Draw(spriteBatch);
             if (_is_active_tutorial && (_tutorial_step == 6))
             {
@@ -640,11 +646,10 @@ public class MapScreen : GamelabGameScreen
 
             
         }
-        if (_showTowerRange && gamePhaseManager.IsDay)
+        if(!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
+            cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
         }
-        cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
 
         spriteBatch.End();
 
@@ -1256,6 +1261,8 @@ public class MapScreen : GamelabGameScreen
     {
         if (ReferenceEquals(cm._activeMapCard, card))
         {
+            if (cm._previewStructure != null && cm._selectedTile != (-1, -1))
+                GamelabGame.MapManager.PlaceEntity(cm._previewStructure, cm._selectedTile);
             cm._activeMapCard    = null;
             cm._previewStructure = null;
             cm._selectedTile     = (-1, -1);

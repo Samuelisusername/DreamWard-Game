@@ -17,13 +17,13 @@ public class CardRenderer
         { "aoe",          "Area of Effect Tower\nTargets all the enemies in \nits range. Long range \nbut less damage" },
         { "dreamcatcher", "Dreamcatcher\nActs as a wall to blocks \nthe enemies, including \nflying ones" },
         { "fence",        "Fence\nBlock all ground enemies" },
-        { "meadow",       "Meadow\nCan move Sheeps here\nHelps increase sanity" },
+        { "meadow",       "Meadow\nHelps increase sanity" },
         { "void",         "Void\nBlock all ground enemies.\nOnce placed cannot\nbe removed." },
         { "spikes",       "Spikes\nInflicts damage on ground \nenemies." },
         { "decoy",        "Decoy\nActs like a tile with sheep.\nLures enemies towards it." },
         { "buff",         "Buff\nRepels enemies" },
         { "shuffle",      "Shuffle\nShuffles the build cards." },
-        { "discount",     "Discount\nNext card purchased gets\na discount of 1 sanity" },
+        { "discount",     "Discount\nNext card purchased gets\na discount of 2 sanity" },
         { "top3",         "Save Card\nSave a card for next \nround" },
         { "discard",      "Discard\nDiscard the card.\nGet a new card." },
         { "polymorph",    "Polymorph\nTransforms the sheep \ninto rats. Monsters don't \nattack the sheep" },
@@ -127,6 +127,16 @@ public class CardRenderer
             {
                 spriteBatch.Draw(dummy, rect, Color.Cyan * 0.2f);
             }
+            if (slot.Card != null && slot.Card.StackCount > 1)
+            {
+                string countText = $"x{slot.Card.StackCount}";
+                Vector2 size = font.MeasureString(countText);
+                int badgeW = (int)size.X + 12;
+                int badgeH = (int)size.Y + 6;
+                Rectangle badge = new(rect.Right - badgeW - 6, rect.Bottom - badgeH - 6, badgeW, badgeH);
+                spriteBatch.Draw(dummy, badge, COLOR_D);
+                spriteBatch.DrawString(font, countText, new Vector2(badge.X + 6, badge.Y + 3), COLOR_M);
+            }
         }
     }
 
@@ -228,7 +238,7 @@ public class CardRenderer
         if (ExpandedCard.Type == CardType.Build)
         {
             int displayCost = cardManager.DiscountActive
-                ? Math.Max(ExpandedCard.Cost - 1, 0) : ExpandedCard.Cost;
+                ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
 
             string costStr = isLocked
                 ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
@@ -343,13 +353,19 @@ public class CardRenderer
         var data = new Color[HEX_MASK_W * HEX_MASK_H];
         // Pointy-side (flat top/bottom) hexagon spanning the full 64x32.
         // Top/bottom edges occupy the middle 32px width; sides angle out to full 64px width at vertical center.
-        for (int y = 0; y < HEX_MASK_H; y++)
+        for (int y = 0; y < 17; y++)
         {
-            float t = y < HEX_MASK_H / 2 ? y / (float)(HEX_MASK_H / 2)
-                                         : (HEX_MASK_H - 1 - y) / (float)(HEX_MASK_H / 2);
-            int halfWidth = (int)(16 + 16 * t);
-            int xStart = HEX_MASK_W / 2 - halfWidth;
-            int xEnd = HEX_MASK_W / 2 + halfWidth;
+            int pxlCount = 33 + 2*y;
+            int xStart = 15 - y;
+            int xEnd = xStart + pxlCount;
+            for (int x = 0; x < HEX_MASK_W; x++)
+                data[y * HEX_MASK_W + x] = (x >= xStart && x < xEnd) ? Color.White : Color.Transparent;
+        }
+        for (int y = 17; y < 32; y++)
+        {
+            int pxlCount = 64-((y-16)*2) - 1;
+            int xStart = y-16;
+            int xEnd = xStart + pxlCount;
             for (int x = 0; x < HEX_MASK_W; x++)
                 data[y * HEX_MASK_W + x] = (x >= xStart && x < xEnd) ? Color.White : Color.Transparent;
         }
@@ -406,7 +422,7 @@ public class CardRenderer
             Color color = HeatmapColor(level) * HEATMAP_ALPHA;
             Vector2 pos = mapManager.GetWorldPositionOfTile(kv.Key);
             spriteBatch.Draw(mask, pos, null, color, 0f, Vector2.Zero,
-                maskScale, SpriteEffects.None, 0.8f);
+                maskScale, SpriteEffects.None, 0f);
         }
     }
 
@@ -426,7 +442,7 @@ public class CardRenderer
                 tile.Item2 < 0 || tile.Item2 >= mapManager.Rows) continue;
             Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
             spriteBatch.Draw(mask, pos, null, rangeColor, 0f, Vector2.Zero,
-                maskScale, SpriteEffects.None, 0.8f);
+                maskScale, SpriteEffects.None, 0f);
         }
     }
 

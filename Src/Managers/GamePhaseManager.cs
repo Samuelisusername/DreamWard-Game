@@ -30,6 +30,7 @@ public class GamePhaseManager
         AudioManager.PlayMusic("day_music");
         checkGameOver();
         mapManager.ResetFall();
+        GamelabGame.GameSpeed = 1.0f;
     }
 
     /// <summary>
@@ -40,10 +41,11 @@ public class GamePhaseManager
         mapManager.StartFalling();
         IsInTransition = true;
     }
+    private int[] monsterCount = [3, 6, 12, 18, 30, 50, 90, 80, 80, 100];
 
     public void FinishSwitchToNight()
-    {        
-        combatManager.SpawnMonsters(DayCount * 3, DayCount);
+    {      
+        combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
         IsDay = false;
         AudioManager.PlayMusic("night_music");
     }
@@ -54,7 +56,7 @@ public class GamePhaseManager
         {
             EndGame(false); // lose
         }
-        else if (DayCount >= 10)
+        else if (DayCount > 10)
         {
             EndGame(true); // win
         }
@@ -62,6 +64,7 @@ public class GamePhaseManager
 
     private void EndGame(bool won)
     {
+        GamelabGame.GameSpeed = 1.0f;
         GameOverScreen.DidWin = won; 
         GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
     }

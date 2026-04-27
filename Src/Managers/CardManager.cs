@@ -15,6 +15,7 @@ public record Card
     public int Cost;
     public string SpriteName;
     public int Weight;
+    public int StackCount = 1;
 }
 
 public class CardSlot
@@ -73,23 +74,23 @@ public class CardManager
 
     private static readonly List<Card> TowerTemplates = new()
     {
-        new Card { Name = "sniper", Type = CardType.Build, Cost = 1, SpriteName = "sniper", Weight = 3 },
-        new Card { Name = "aoe",    Type = CardType.Build, Cost = 2, SpriteName = "aoe",    Weight = 2 },
+        new Card { Name = "sniper", Type = CardType.Build, Cost = 7, SpriteName = "sniper", Weight = 3 },
+        new Card { Name = "aoe",    Type = CardType.Build, Cost = 6, SpriteName = "aoe",    Weight = 2 },
     };
 
     private static readonly List<Card> BarrierTemplates = new()
     {
-        new Card { Name = "fence",        Type = CardType.Build, Cost = 1, SpriteName = "fence",        Weight = 3 },
-        new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 1, SpriteName = "dreamcatcher", Weight = 2 },
-        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2 },
-        new Card { Name = "spikes",       Type = CardType.Build, Cost = 1, SpriteName = "spikes",       Weight = 3 },
+        new Card { Name = "fence",        Type = CardType.Build, Cost = 1, SpriteName = "fence",        Weight = 3, StackCount = 10 },
+        new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 2, SpriteName = "dreamcatcher", Weight = 2, StackCount = 10 },
+        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2, StackCount = 5 },
+        new Card { Name = "spikes",       Type = CardType.Build, Cost = 2, SpriteName = "spikes",       Weight = 3 },
     };
 
     private static readonly List<Card> SupportTemplates = new()
     {
-        new Card { Name = "meadow", Type = CardType.Build, Cost = 2, SpriteName = "meadow", Weight = 1 },
-        new Card { Name = "buff",   Type = CardType.Build, Cost = 2, SpriteName = "buff",   Weight = 2 },
-        new Card { Name = "decoy",  Type = CardType.Build, Cost = 2, SpriteName = "decoy",  Weight = 2 },
+        new Card { Name = "meadow", Type = CardType.Build, Cost = 5, SpriteName = "meadow", Weight = 1 },
+        new Card { Name = "buff",   Type = CardType.Build, Cost = 3, SpriteName = "buff",   Weight = 2 },
+        new Card { Name = "decoy",  Type = CardType.Build, Cost = 3, SpriteName = "decoy",  Weight = 2 },
     };
 
     private static readonly List<Card> MapACTemplates = new()
@@ -177,7 +178,7 @@ public class CardManager
     public bool TryPurchaseBuildCard(CardSlot slot, SanityManager sanity)
     {
         if (slot == null || slot.Card == null || slot.Purchased) return false;
-        int cost = DiscountActive ? Math.Max(slot.Card.Cost - 1, 0) : slot.Card.Cost;
+        int cost = DiscountActive ? Math.Max(slot.Card.Cost - 2, 0) : slot.Card.Cost;
         if (!sanity.TryDeductSanity(cost)) return false;
         slot.Purchased = true;
         DiscountActive = false;
@@ -254,9 +255,17 @@ public class CardManager
             bool success = mapManager.PlaceEntity(_activeMapCard, (col, row));
             if (success)
             {
-                RemoveFromSlots(_activeMapCard);
-                _activeMapCard    = null;
-                _previewStructure = null;
+                _activeMapCard.StackCount--;
+                if (_activeMapCard.StackCount <= 0)
+                {
+                    RemoveFromSlots(_activeMapCard);
+                    _activeMapCard    = null;
+                    _previewStructure = null;
+                }
+                else
+                {
+                    _previewStructure = null;
+                }
             }
             return success;
         }

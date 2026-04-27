@@ -9,21 +9,26 @@ using Microsoft.Xna.Framework.Graphics;
 /// </summary>
 public class Meadow : Structure
 {
+    private const int MaxGrazingDays = 3;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     public bool HasSheep{get; private set;}
 
     public bool IsPolymorphed{get; private set;}
 
-    public int SanityGain {get; private set;}
+    private int _baseSanityGain;
+    public int SanityGain => IsDepleted ? 0 : _baseSanityGain;
 
     public bool IsGrazed {get; private set;}
 
+    public int DaysGrazed {get; private set;}
+    public bool IsDepleted {get; private set;}
+
     public override bool CanMove => false;
-    protected override (string label, string info)[] infos =>
-    !IsGrazed && !HasSheep ? [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
+    protected override (string label, string info)[] infos => !gamePhaseManager.IsInTransition && !IsGrazed && !HasSheep && mapManager.GetSheep() != null ?
+     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
 
-    protected override string bottomText => !HasSheep ? !IsGrazed ?  "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
+    protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
 
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
@@ -35,7 +40,20 @@ public class Meadow : Structure
     public Meadow((int,int) pos, int sanityGain)
         : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos)
     {
-        SanityGain = sanityGain;
+        _baseSanityGain = sanityGain;
+    }
+
+    public void TickGrazingDay()
+    {
+        if (!HasSheep || IsDepleted) return;
+        DaysGrazed++;
+        if (DaysGrazed > MaxGrazingDays)
+        {
+            IsDepleted = true;
+            IsGrazed = true;
+            SetAnimationBase("meadowGrazed_idle");
+            SetAnimationTop("sheepSmall_idle");
+        }
     }
 
     public void TriggerCantAffordFlash() => _cantAffordFlash = FlashDuration;
@@ -56,10 +74,11 @@ public class Meadow : Structure
     {
         HasSheep = true;
         IsPolymorphed = isPolymorphed;
+        DaysGrazed = 0;
         if (IsPolymorphed)
-            SetAnimation("rats_idle");
+            SetAnimationTop("rats_idle");
         else
-            SetAnimation("sheepSmall_idle");
+            SetAnimationTop("sheepSmall_idle");
     }
 
     public bool AddProgress(TimeSpan delta)
@@ -86,7 +105,7 @@ public class Meadow : Structure
         if(HasSheep)
         {
             IsPolymorphed = true;
-            SetAnimation("rats_idle");
+            SetAnimationTop("rats_idle");
         }
     }
 
@@ -95,7 +114,7 @@ public class Meadow : Structure
         if(HasSheep)
         {
             IsPolymorphed = false;
-            SetAnimation("sheepSmall_idle");
+            SetAnimationTop("sheepSmall_idle");
         }
     }
     public override void DrawCard(SpriteBatch spriteBatch)

@@ -395,7 +395,7 @@ public class PathFindingManager
             return centerTile;
         }
 
-        return candidateTiles[Random.Shared.Next(candidateTiles.Count)];
+        return candidateTiles[GamelabGame.Rng.Next(candidateTiles.Count)];
     }
 
     private (int col, int row) GetRandomNeighborAsLastResort((int col, int row) startTile, Monster monster)
@@ -420,7 +420,7 @@ public class PathFindingManager
             return startTile;
         }
 
-        return candidates[Random.Shared.Next(candidates.Count)];
+        return candidates[GamelabGame.Rng.Next(candidates.Count)];
     }
 
     /// <summary>
@@ -544,7 +544,7 @@ public class PathFindingManager
         _monsterToTargetDist.Remove(monster);
 
         int targetIndex = _activeTargets.FindIndex(t => t.col == previousTile.col && t.row == previousTile.row);
-        if (monsters.Count == 0)
+        if (monsters.Count == 0 || mapManager.GetStructure((_activeTargets[targetIndex].col,_activeTargets[targetIndex].row)) == null)
         {
             _monstersTargeting.Remove(previousTile);
             if (targetIndex >= 0)
