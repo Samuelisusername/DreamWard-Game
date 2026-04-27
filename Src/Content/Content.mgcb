@@ -14,6 +14,9 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin ByteBounce.ttf
+/copy:ByteBounce.ttf
+
 #begin ColorOverlay.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -39,6 +42,9 @@
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:infoFont.spritefont
+
+#begin m5x7.ttf
+/copy:m5x7.ttf
 
 #begin PixeloidSans-lxa3y.ttf
 /copy:PixeloidSans-lxa3y.ttf
@@ -394,6 +400,30 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/day_top.png
 
+#begin Sprites/day-and-night_icon_ver2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day-and-night_icon_ver2.png
+
+#begin Sprites/day-and-night_icon.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day-and-night_icon.png
+
 #begin Sprites/daypalette.json
 /copy:Sprites/daypalette.json
 
@@ -544,6 +574,42 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/nightpalette.png
 
+#begin Sprites/sanity_icon_big.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/sanity_icon_big.png
+
+#begin Sprites/sanity_icon_particle.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/sanity_icon_particle.png
+
+#begin Sprites/sanity_icon_small.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/sanity_icon_small.png
+
 #begin Sprites/shadowDummy.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -555,19 +621,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
-
-#begin m5x7.ttf
-/copy:m5x7.ttf
-
-#begin CoralPixels-Regular.ttf
-/copy:CoralPixels-Regular.ttf
-
-#begin Star Crush.ttf
-/copy:Star Crush.ttf
-
-#begin ARCADECLASSIC.TTF
-/copy:ARCADECLASSIC.TTF
-
-#begin ByteBounce.ttf
-/copy:ByteBounce.ttf
 

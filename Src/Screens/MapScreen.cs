@@ -44,7 +44,7 @@ public class MapScreen : GamelabGameScreen
 
     // Cards
     private SpriteFont _font;
-    private Texture2D _dummy, _cardTexture;
+    private Texture2D _dummy, _cardTexture, _sanityIconTexture, _dayIconTexture;
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Navigation button
@@ -121,6 +121,8 @@ public class MapScreen : GamelabGameScreen
         entityRenderer.SetHealthBarTexture(_dummy);
         _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
         _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
+        _sanityIconTexture = Content.Load<Texture2D>("Sprites/sanity_icon_big");
+        _dayIconTexture = Content.Load<Texture2D>("Sprites/day-and-night_icon");
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
@@ -713,23 +715,62 @@ public class MapScreen : GamelabGameScreen
     // Draw Helpers
     // ------------------------
 
+    private const int MaxSanity = 100;
+
+    private const int MaxDays = 10;
+
     private void DrawSanityPanel()
     {
         if (sanityManager == null) return;
-        string text    = $"Sanity: {sanityManager.Sanity}";
-        string dayText = $"Day: {gamePhaseManager.DayCount}/10";
-        int pad = 10;
-        Vector2 pos1  = new Vector2(20, 20);
-        Vector2 pos2  = new Vector2(20, 70);
-        Vector2 size1 = _font.MeasureString(text);
-        Vector2 size2 = _font.MeasureString(dayText);
-        int boxW = (int)Math.Max(size1.X, size2.X) + pad * 2;
-        int boxH = (int)(size1.Y + size2.Y + (pos2.Y - pos1.Y - size1.Y)) + pad * 2;
-        Color rectColor = gamePhaseManager.IsDay ? COLOR_L : new Color(33, 28, 11);
-        Color textColor = gamePhaseManager.IsDay ? COLOR_D : new Color(214, 214, 214);
-        spriteBatch.Draw(_dummy, new Rectangle((int)pos1.X - pad, (int)pos1.Y - pad, boxW, boxH), rectColor);
-        spriteBatch.DrawString(_font, text,    pos1, textColor);
-        spriteBatch.DrawString(_font, dayText, pos2, textColor);
+        Vector2 pos1 = new Vector2(20, 20);
+        Vector2 pos2 = new Vector2(20, 70);
+        int sanityBarWidth = 280;
+        int dayBarWidth = 200;
+        int barHeight = (int)_font.MeasureString("X").Y;
+
+        int panelHeight = (int)(barHeight + barHeight + (pos2.Y - pos1.Y - barHeight));
+        int iconSize = panelHeight / 3;
+        int iconGap = 8;
+
+        if (_sanityIconTexture != null)
+        {
+            spriteBatch.Draw(_sanityIconTexture,
+                new Rectangle((int)pos1.X, (int)pos1.Y + 6, iconSize, iconSize),
+                Color.White);
+        }
+        if (_dayIconTexture != null)
+        {
+            spriteBatch.Draw(_dayIconTexture,
+                new Rectangle((int)pos1.X, (int)pos2.Y + 6, iconSize, iconSize),
+                Color.White);
+        }
+
+        int textX = (int)pos1.X + iconSize + iconGap;
+        DrawValueBar(textX, (int)pos1.Y, sanityBarWidth, barHeight,
+            Math.Clamp(sanityManager.Sanity, 0, MaxSanity), MaxSanity, new Color(37, 150, 190));
+        DrawValueBar(textX, (int)pos2.Y, dayBarWidth, barHeight,
+            Math.Clamp(gamePhaseManager.DayCount, 0, MaxDays), MaxDays, new Color(218, 165, 32));
+    }
+
+    private void DrawValueBar(int x, int y, int width, int height, int value, int max, Color fillColor)
+    {
+        float pct = max <= 0 ? 0f : value / (float)max;
+
+        spriteBatch.Draw(_dummy, new Rectangle(x, y, width, height), new Color(40, 40, 40));
+        spriteBatch.Draw(_dummy, new Rectangle(x, y, (int)(width * pct), height), fillColor);
+
+        Color borderColor = new(59, 79, 70);
+        int border = 3;
+        spriteBatch.Draw(_dummy, new Rectangle(x, y, width, border), borderColor);
+        spriteBatch.Draw(_dummy, new Rectangle(x, y + height - border, width, border), borderColor);
+        spriteBatch.Draw(_dummy, new Rectangle(x, y, border, height), borderColor);
+        spriteBatch.Draw(_dummy, new Rectangle(x + width - border, y, border, height), borderColor);
+
+        string overlay = $"{value}/{max}";
+        Vector2 overlaySize = _font.MeasureString(overlay);
+        Vector2 overlayPos = new Vector2(x + (width - overlaySize.X) / 2f, y + (height - overlaySize.Y) / 2f);
+        spriteBatch.DrawString(_font, overlay, overlayPos + new Vector2(1, 1), Color.Black);
+        spriteBatch.DrawString(_font, overlay, overlayPos, Color.White);
     }
     
     private string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
@@ -838,13 +879,13 @@ public class MapScreen : GamelabGameScreen
                 _showInventory = false;
 
                 // Calculate Sanity UI Highlight
-                string sanityText = $"Sanity: {sanityManager.Sanity}";
-                string dayText = $"Day: {gamePhaseManager.DayCount}/10";
-                Vector2 s1 = _font.MeasureString(sanityText);
-                Vector2 s2 = _font.MeasureString(dayText);
-                int boxWidth = (int)Math.Max(s1.X, s2.X) + 20; 
-                int boxHeight = (int)(s1.Y + s2.Y + 30) - 10;
-                highlightBox = new Rectangle(10, 10, boxWidth, boxHeight); 
+                int barW = 240;
+                int barH = (int)_font.MeasureString("X").Y;
+                int panelH = barH + barH + (70 - 20 - barH);
+                int iconCol = panelH / 3 + 8;
+                int boxWidth = iconCol + barW + 20;
+                int boxHeight = panelH + 20;
+                highlightBox = new Rectangle(10, 10, boxWidth, boxHeight);
                 break;
             case 4: 
                 speaker = "Human";
