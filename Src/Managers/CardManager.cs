@@ -132,6 +132,8 @@ public class CardManager
         StackSlots[0].Card = null;
         StackSlots[0].Purchased = true;
 
+        ClearPendingStackAction();
+
         foreach (var s in BuildSlots)
         {
             if (s.IsSaved)
@@ -478,5 +480,10 @@ public class CardManager
             RemoveFromSlots(PendingStackCard);
             PendingStackCard = null;
         }
+    }
+    public void ClearPendingStackAction()
+    {
+        PendingStackAction = CardEffect.None;
+        PendingStackCard = null;
     }
 }
