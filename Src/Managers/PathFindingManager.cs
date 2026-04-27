@@ -13,7 +13,7 @@ public class PathFindingManager
     private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth    
     private const int NormalDefenceStrength = 10;
     private const int BuffPenalty = 50;
-    private const int FencePenalty = 4;
+    private const int FencePenalty = 0;
     private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
