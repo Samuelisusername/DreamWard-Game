@@ -3,9 +3,9 @@
   <Asset Type="Graphics:FontDescription">
     
     <!-- IMPORTANT -->
-    <FontName>m5x7.ttf</FontName>
+    <FontName>ByteBounce.ttf</FontName>
 
-    <Size>48</Size>
+    <Size>40</Size>
     <Spacing>2</Spacing>
     <UseKerning>true</UseKerning>
     <Style>Regular</Style>
