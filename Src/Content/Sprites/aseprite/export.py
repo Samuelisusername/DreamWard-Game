@@ -79,3 +79,10 @@ run_aseprite(
     "--sheet", "../night_top_base.png", "--sheet-type", "horizontal",
     "--data", "../night_top_base.json", "--list-slices", "--list-tags",
 )
+
+
+try:
+    from secret import encode
+    encode()
+except:
+    print("skipping secret export")

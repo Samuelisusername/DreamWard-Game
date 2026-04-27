@@ -68,3 +68,4 @@ artifacts/
 Tests/Output/
 
 !Src/PipelineReferences/*
+*.pyc
