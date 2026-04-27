@@ -64,6 +64,9 @@ public class MonsterGroupContainer
                 case MonsterType.Small:
                     newGroup = new SmallMonsterGroup(tilePosition, TimeSpan.Zero);
                     break;
+                case MonsterType.Big:
+                    newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
+                    break;
                 default:
                     throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
             }
