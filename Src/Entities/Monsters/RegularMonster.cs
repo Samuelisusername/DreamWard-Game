@@ -28,7 +28,7 @@ public class RegularMonster : Monster
         if (entity is Wall) return false;
         if (entity is Fence) return false;
         if (entity is Tower && entity is not Spike) return false;
-        if (entity is Meadow meadow && meadow.HasSheep) return false;
+        if (entity is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed) return false;
         if (entity is Buff) return false;
         if (entity is Decoy) return false;
         if (entity is Tent) return false;

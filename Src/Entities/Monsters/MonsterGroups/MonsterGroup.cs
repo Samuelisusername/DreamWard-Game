@@ -324,7 +324,7 @@ public abstract class MonsterGroup
             //tower should attack
             elapsedAttackCooldown -= attackCooldown;
             var structure = mapManager.GetStructure(CommonAttackTarget().Value);
-            if (structure == null || structure.IsDestroyed ||(structure is Meadow m && !m.HasSheep))
+            if (structure == null || structure.IsDestroyed || (structure is Meadow m && (!m.HasSheep || m.IsPolymorphed)))
             {
                 return; 
             }
