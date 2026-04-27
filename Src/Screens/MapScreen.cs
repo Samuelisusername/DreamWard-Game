@@ -39,6 +39,7 @@ public class MapScreen : GamelabGameScreen
     private float _zoomTimer = 0f;
     private int _charIndex = 0;
     private int _previousTutorialStep = -1;
+    private bool _tutorialTextComplete = false;
 
 
     // Cards
@@ -206,7 +207,7 @@ public class MapScreen : GamelabGameScreen
             {
                 _tutorial_step++;
                 //reached tutorial end
-                if(_tutorial_step == 23)
+                if(_tutorial_step == 22)
                 {  
                     _is_active_tutorial = false; 
                 }
@@ -457,13 +458,21 @@ public class MapScreen : GamelabGameScreen
                     //progress tutorial
                     if (_is_active_tutorial)
                     {
-                        _tutorial_step++;
-                        //reached tutorial end
-                        if(_tutorial_step == 25)
-                        {  
-                           _is_active_tutorial = false; 
+                        if (!_tutorialTextComplete)
+                        {
+                            // Complete the text instantly
+                            _charIndex = int.MaxValue;
                         }
-                        _clickStarted = false; 
+                        else
+                        {
+                            _tutorial_step++;
+                            //reached tutorial end
+                            if(_tutorial_step == 22)
+                            {
+                               _is_active_tutorial = false;
+                            }
+                        }
+                        _clickStarted = false;
                         return;
                     }
                     // Card strip takes priority over any overlapping buttons
@@ -804,7 +813,7 @@ public class MapScreen : GamelabGameScreen
                 break;
             case 1:
                 speaker = "Sheep";
-                text = "Oh good, you're awake! Last night when you were sleeping, demons came and attacked me and you.";
+                text = "Oh good, you're awake! Last night when you were sleeping, nightmares came and attacked us.";
                 _targetZoom = 1.7f;
                 _showInventory = false;
                 break;
@@ -816,7 +825,7 @@ public class MapScreen : GamelabGameScreen
                 break;
             case 3:
                 speaker = "Sheep";
-                text = "The sleep monsters come from the forest at night and wanted to attack sanity points at your tent. They also tried to eat me.";
+                text = "The nightmares come from the forest at night and wanted to your tent and sanity. They also tried to eat me.";
                 _targetZoom = 1.0f; // Zoom back out to see the UI
                 _showInventory = false;
 
@@ -837,19 +846,19 @@ public class MapScreen : GamelabGameScreen
                 break;
             case 5: 
                 speaker = "Sheep";
-                text = "The monsters attack your sanity and I produce sanity each morning, if I survive the night";
+                text = "The nightmares attack your sanity and I produce sanity each morning, if I survive the night.";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 break;
             case 6:
                 speaker = "Sheep";
-                text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs 1 sanity point per tile i have to traverse and secondly the monsters spawn nearby the forests close to the good grazing spots";
+                text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs sanity per tile I have to traverse and secondly the nightmares spawn near the forest close to the good grazing spots";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 break;
             case 7: 
                 speaker = "Sheep";
-                text = "Bonus tip: place a Build Card Meadow next to an existing meadow tile and you'll get DOUBLE the Sanity from it.";
+                text = "Bonus tip: Place a Build-Card Meadow next to me and you'll be EVEN MORE sane!";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 _tutorialHighlight = TutorialHighlight.MeadowTiles;
@@ -863,7 +872,7 @@ public class MapScreen : GamelabGameScreen
 
             case 9:  
                 speaker = "Sheep";
-                text = "Yes! Look at the bottom of the screen - that's your hand. There are 3 types of cards. Build, Map Action, and Stack Action cards.";
+                text = "Yes! Look at the bottom of the screen - that's your hand. There are 3 types of cards. Map Action, and Stack Action, and Build cards.";
                 _targetZoom = 1.0f;
                 _showInventory = true; // open inventory for this step
                 _tutorialHighlight = TutorialHighlight.CardStrip;
@@ -909,7 +918,7 @@ public class MapScreen : GamelabGameScreen
 
             case 15:
                 speaker = "Sheep";
-                text = "Move repositions a structure. Destroy blows one up. And Polymorph? It turns me into a rat! - they won't attack a rat!";
+                text = "Move repositions a structure. Destroy blows one up. And Polymorph? It turns me into a rat! They won't attack a rat!";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 break;
@@ -923,7 +932,7 @@ public class MapScreen : GamelabGameScreen
 
             case 17:
                 speaker = "Sheep";
-                text = "Precisely. Select card -> click map tile. Simple as that. Great for repositioning towers as I wander further from the tent.";
+                text = "Precisely. Select the card then click map tile. Simple as that. Great for repositioning towers as I wander further from the tent.";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 break;
@@ -938,12 +947,12 @@ public class MapScreen : GamelabGameScreen
 
             case 19: 
                 speaker = "Human";
-                text = "Okay, okay I'm bored of explanations, I wanna learn by doing :D";
+                text = "Okay, okay I'm bored of explanations, I wanna learn by doing!";
                 break;
 
             case 20: 
                 speaker = "Sheep"; 
-                text = "Okay cool! For any more tipps and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
+                text = "Okay cool! For any more tips and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
                 break;
 
             default:
@@ -1031,6 +1040,7 @@ public class MapScreen : GamelabGameScreen
         }
 
         bool isTyping = _charIndex < wrappedText.Length;
+        _tutorialTextComplete = !isTyping;
         if (isTyping)
         {
             _textTimer += deltaTime;
