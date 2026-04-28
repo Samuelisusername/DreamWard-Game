@@ -1,5 +1,6 @@
 using System;
-using System.Linq; // Added this so we can calculate max health!
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Gamelab;
@@ -10,121 +11,161 @@ public class EntityRenderer
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private Texture2D _pixel;
 
-    public void SetHealthBarTexture(Texture2D pixel)
+    private readonly Dictionary<Structure, float> _hpBarAlpha    = new();
+    private readonly Dictionary<Structure, float> _lastHealth    = new();
+    private readonly Dictionary<Structure, float> _damageTimer   = new();
+
+    public (int col, int row)? HoveredTile   { get; set; }
+    public (int col, int row)? HealFlashTile { get; set; }
+
+    // Palette — day / night variants
+    // rgb(232, 220,  191), rgb(188, 182,  157), rgb(131,  130,  79)};
+    // rgb(188, 182, 157), rgb( 116, 112, 95), rgb(76, 76, 76)
+    // rgb( 105, 105, 93);
+    // rgb( 59,  58,  58);
+
+    private static readonly Color[] DayFill   = { new(232, 220,  191), new(232, 220,  191), new(232, 220,  191) };
+    private static readonly Color[] NightFill = { new(188, 182, 157), new( 188, 182, 157), new(188, 182, 157) };
+    private static readonly Color   DayBg     = new( 105, 105, 93);
+    private static readonly Color   NightBg   = new( 59,  58,  58);
+
+    public void SetHealthBarTexture(Texture2D pixel) => _pixel = pixel;
+
+    public void Update(GameTime gameTime)
     {
-        _pixel = pixel;
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        for (int i = 0; i < mapManager.Columns; i++)
+        {
+            for (int j = 0; j < mapManager.Rows; j++)
+            {
+                var s = mapManager.GetStructure((i, j));
+                if (s == null) continue;
+
+                bool damaged  = s.CurrentHealth < s.MaxHealth;
+                bool hovered  = HoveredTile == (i, j);
+                bool flashing = HealFlashTile == (i, j);
+
+                // Snap to 1 and start damage timer on hit
+                if (_lastHealth.TryGetValue(s, out float prev) && s.CurrentHealth < prev)
+                {
+                    _hpBarAlpha[s]  = 1f;
+                    _damageTimer[s] = 4f * (1f - s.CurrentHealth / s.MaxHealth);
+                }
+                _lastHealth[s] = s.CurrentHealth;
+                if (_damageTimer.TryGetValue(s, out float t))
+                    _damageTimer[s] = MathF.Max(0f, t - dt);
+
+                float target  = (damaged || hovered || flashing) ? 1f : 0f;
+                float current = _hpBarAlpha.GetValueOrDefault(s, 0f);
+                bool recentlyDamaged = _damageTimer.GetValueOrDefault(s) > 0f;
+                float speed   = target > current ? 10f : recentlyDamaged ? 1f : 10f;
+                _hpBarAlpha[s] = MathHelper.Lerp(current, target, 1f - MathF.Exp(-speed * dt));
+            }
+        }
     }
 
     public void Draw(SpriteBatch spriteBatch, (int col, int row)? skipTile = null)
     {
-        // we only draw monsters here since they dont fall        
-        // 1. grounded monsters
-        // 2. flying monsers
-
-
         if (_pixel == null) return;
 
         Vector2 scale = mapManager.Scale;
+        bool isDay    = gamePhaseManager.IsDay;
 
-        // Draw HP bars
-        for(int i = 0; i < mapManager.Columns; i++)
+        for (int i = 0; i < mapManager.Columns; i++)
         {
-            for(int j = 0; j < mapManager.Rows; j++)
+            for (int j = 0; j < mapManager.Rows; j++)
             {
                 var structure = mapManager.GetStructure((i, j));
-                if (structure is SniperTower)
+                if (structure is SniperTower or AreaTower or Wall or WallTile
+                              or Fence or Tent or PlacableMeadow or Spike)
                 {
-                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -40f : -70f);
-                }
-                else if (structure is AreaTower)
-                {
-                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -20f : -40f);
-                }
-                else if (structure is Wall || structure is WallTile)
-                {
-                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, gamePhaseManager.IsDay ? -10f : -50f);
-                }
-                else if (structure is Fence || structure is Tent || structure is PlacableMeadow || structure is Spike)
-                {
-                    Vector2 worldPos = mapManager.GetWorldPositionOfTile((i, j));
-                    DrawHpBar(spriteBatch, worldPos, scale,
-                              structure.CurrentHealth, structure.MaxHealth, -10f);
+                    float alpha = _hpBarAlpha.GetValueOrDefault(structure, 0f);
+                    if (alpha < 0.01f) continue;
+
+                    bool flash = HealFlashTile == (i, j);
+                    float pulse = flash
+                        ? (float)(Math.Sin(Environment.TickCount64 / 150.0) * 0.35 + 0.65)
+                        : 1f;
+
+                    float displayHealth = flash ? structure.MaxHealth : structure.CurrentHealth;
+                    Vector2 worldPos    = mapManager.GetWorldPositionOfTile((i, j));
+                    DrawStructureHpBar(spriteBatch, worldPos, scale, displayHealth, structure.MaxHealth,
+                                       alpha * pulse, isDay);
                 }
 
-                // Look inside the Container to draw HP bars for the groups!
                 var container = mapManager.GetMonsterContainer((i, j));
                 if (container != null && !container.IsEmpty)
                 {
                     foreach (var group in container.MonsterGroups)
                     {
-                        if (!group.IsEmpty)
-                        {
-                            Vector2 worldPos = group.GetInterpolatedWorldPosition()  + ((group.LocalOffset + new Vector2(32,90)) * mapManager.Scale);
-                            
-                            // Calculate total current and max HP for this specific group
-                            float currentHp = group.Health;
-                            float maxHp = group.Monsters.Sum(m => m.MaxHealth);
-                            
-                            DrawHpBar(spriteBatch, worldPos, scale,
-                                      currentHp, maxHp, -10f);
-                        }
+                        if (group.IsEmpty) continue;
+                        float currentHp = group.Health;
+                        float maxHp     = group.Monsters.Sum(m => m.MaxHealth);
+                        if (currentHp >= maxHp) continue;
+
+                        Vector2 worldPos = group.GetInterpolatedWorldPosition()
+                            + ((group.LocalOffset + new Vector2(32, 90)) * scale);
+                        DrawMonsterHpBar(spriteBatch, worldPos, scale, currentHp, maxHp, isDay);
                     }
                 }
             }
         }
     }
 
-    // Sprite localOffset is (-32, -90). The sprite is 64px wide unscaled.
-    // HP bar sits just above the sprite, centered on it.
-    private void DrawHpBar(SpriteBatch spriteBatch, Vector2 worldPos, Vector2 scale,
-                           float currentHealth, float maxHealth, float spriteOffsetY)
+    private void DrawStructureHpBar(SpriteBatch spriteBatch, Vector2 tilePos, Vector2 scale,
+                                    float current, float max, float alpha, bool isDay)
     {
-        //Show HP bar only if not full
-        if (currentHealth >= maxHealth) return;
+        const int segments = 5;
+        float segW = 3f * scale.X;
+        float gap  = 1f * scale.X;
+        float barW = segments * segW + (segments - 1) * gap;
+        float barH = segW;
 
-        float barWidth = 33.75f * scale.X;
-        float barHeight = 3f * scale.Y;
+        float barX = tilePos.X + mapManager.TileWidth  / 2f - barW / 2f;
+        float barY = tilePos.Y + mapManager.TileHeight - barH - 2f * scale.Y;
 
-        float spriteLeftX = worldPos.X + (-32f) * scale.X;
-        float spriteCenterX = spriteLeftX + 32f * scale.X;
-        float barX = spriteCenterX - barWidth / 2f + 30f * scale.X;
-        float barY = worldPos.Y + spriteOffsetY * scale.Y - barHeight - 2f * scale.Y;
+        DrawSegmentedBar(spriteBatch, barX, barY, segW, gap, barH, segments, current, max, alpha, isDay);
+    }
 
-        // Background (dark gray)
-        spriteBatch.Draw(_pixel, new Rectangle(
-            (int)barX, (int)barY, (int)barWidth, (int)barHeight),
-            new Color(40, 40, 40));
+    private void DrawMonsterHpBar(SpriteBatch spriteBatch, Vector2 anchorPos, Vector2 scale,
+                                  float current, float max, bool isDay)
+    {
+        const int segments = 5;
+        float segW = 3f * scale.X;
+        float gap  = 1f * scale.X;
+        float barW = segments * segW + (segments - 1) * gap;
+        float barH = segW;
 
-        // Fill (green → orange → red based on %)
-        float pct = Math.Clamp(currentHealth / maxHealth, 0f, 1f);
+        float barX = anchorPos.X - barW / 2f;
+        float barY = anchorPos.Y - 10f * scale.Y - barH;
 
-        Color barColor = pct > 0.5f ? new Color(128, 209, 84)
-                       : pct > 0.25f ? new Color(209, 151, 84)
-                       : new Color(217, 52, 52);
-        spriteBatch.Draw(_pixel, new Rectangle(
-            (int)barX, (int)barY, (int)(barWidth * pct), (int)barHeight),
-            barColor);
+        DrawSegmentedBar(spriteBatch, barX, barY, segW, gap, barH, segments, current, max, 1f, isDay);
+    }
 
-        // Border (#3b4f46)
-        Color borderColor = new(59, 79, 70);
-        int border = 1;
-        int bx = (int)barX;
-        int by = (int)barY;
-        int bw = (int)barWidth;
-        int bh = (int)barHeight;
-        // top
-        spriteBatch.Draw(_pixel, new Rectangle(bx, by, bw, border), borderColor);
-        // bottom
-        spriteBatch.Draw(_pixel, new Rectangle(bx, by + bh - border, bw, border), borderColor);
-        // left
-        spriteBatch.Draw(_pixel, new Rectangle(bx, by, border, bh), borderColor);
-        // right
-        spriteBatch.Draw(_pixel, new Rectangle(bx + bw - border, by, border, bh), borderColor);
+    private void DrawSegmentedBar(SpriteBatch spriteBatch, float barX, float barY,
+                                  float segW, float gap, float barH, int segments,
+                                  float current, float max, float alpha, bool isDay)
+    {
+        float pct         = Math.Clamp(current / max, 0f, 1f);
+        int   filledCount = (int)Math.Ceiling(pct * segments);
+        Color[] palette   = isDay ? DayFill : NightFill;
+        Color fill        = pct > 0.6f ? palette[0] : pct > 0.25f ? palette[1] : palette[2];
+        Color bg          = isDay ? DayBg : NightBg;
+
+        float totalW = segments * segW + (segments - 1) * gap;
+        float pad    = gap;
+        spriteBatch.Draw(_pixel, new Vector2(barX - pad, barY - pad), null, bg * alpha,
+                         0f, Vector2.Zero, new Vector2(totalW + pad * 2, barH + pad * 2),
+                         SpriteEffects.None, 0f);
+
+        for (int s = 0; s < segments; s++)
+        {
+            float sx = barX + s * (segW + gap);
+            Color c  = s < filledCount ? fill : bg;
+            spriteBatch.Draw(_pixel, new Vector2(sx, barY), null, c * alpha,
+                             0f, Vector2.Zero, new Vector2(segW, barH),
+                             SpriteEffects.None, 0f);
+        }
     }
 }
