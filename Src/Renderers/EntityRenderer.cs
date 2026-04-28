@@ -139,8 +139,8 @@ public class EntityRenderer
         float gap  = 1f * scale.X;
         float barH = segW;
 
-        float barX = anchorPos.X - (segments * segW + (segments - 1) * gap) / 2f;
-        float barY = anchorPos.Y - 10f * scale.Y - barH;
+        float barX = anchorPos.X - (segments * segW + (segments - 1) * gap) / 2f + 32f*scale.X;
+        float barY = anchorPos.Y - 12f * scale.Y - barH;
 
         if (shadowHp.HasValue)
             DrawSegmentedBar(spriteBatch, barX + segW, barY + segW, segW, gap, barH,
