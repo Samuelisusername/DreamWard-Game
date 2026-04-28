@@ -21,7 +21,9 @@ namespace Tests;
 
 public class CICD
 {
+#pragma warning disable NUnit1032 // game is disposed on the game thread, not in the OneTimeTearDown method
     private GamelabGame game;
+#pragma warning restore NUnit1032
     private Thread gameThread;
     private Exception gameException;
     private readonly Dictionary<string, double> metrics = [];
@@ -46,7 +48,10 @@ public class CICD
             {
                 gameException = ex;
             }
-        }) {
+
+            game?.Dispose();
+        })
+        {
             IsBackground = true,
         };
         gameThread.Start();
@@ -80,7 +85,8 @@ public class CICD
         Directory.CreateDirectory(outputDir);
 
         var metricsPath = Path.Combine(outputDir, "Metrics.txt");
-        var metricsFileContent = string.Join(Environment.NewLine, metrics.Select(kvp => {
+        var metricsFileContent = string.Join(Environment.NewLine, metrics.Select(kvp =>
+        {
             var metricName = kvp.Key.Replace("[^a-zA-Z0-9]", "_").ToLowerInvariant();
             var metricValue = kvp.Value.ToString("F3", CultureInfo.InvariantCulture);
             return $"{metricName} {metricValue}";
@@ -88,7 +94,6 @@ public class CICD
         File.WriteAllText(metricsPath, metricsFileContent);
 
         game?.Exit();
-        game?.Dispose();
         gameThread?.Join();
     }
 
