@@ -595,7 +595,9 @@ public class MapScreen : GamelabGameScreen
     {
         if (spriteBatch == null) return; // not yet initialized (screen switch pending)
         GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
-        SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        // this still does not account for pixel tearing, but I think I prefer that over blurriness or choppy zoom
+        float viewportScale = viewportAdapter.GetScaleMatrix().M11;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         entityRenderer.Draw(spriteBatch);
@@ -608,7 +610,8 @@ public class MapScreen : GamelabGameScreen
         float currentMin = (float)mapManager.TotalFallTime.TotalSeconds < 1.0f ? 0 : (float)mapManager.TotalFallTime.TotalSeconds / (float)mapManager.MaxTotalFallTime.TotalSeconds;
         GraphicsDevice.Clear(Color.Lerp(Color.CornflowerBlue, Color.Black, currentMin));
 
-        SamplerState sampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        float viewportScale = viewportAdapter.GetScaleMatrix().M11;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
