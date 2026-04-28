@@ -104,9 +104,12 @@ public class EntityRenderer
                         float maxHp     = group.Monsters.Sum(m => m.MaxHealth);
                         if (currentHp >= maxHp) continue;
 
+                        float? shadowHp    = group.Count > 1 ? group.Monsters[1].CurrentHealth : null;
+                        float? shadowMaxHp = group.Count > 1 ? group.Monsters[1].MaxHealth     : null;
+
                         Vector2 worldPos = group.GetInterpolatedWorldPosition()
                             + ((group.LocalOffset + new Vector2(32, 90)) * scale);
-                        DrawMonsterHpBar(spriteBatch, worldPos, scale, currentHp, maxHp, isDay);
+                        DrawMonsterHpBar(spriteBatch, worldPos, scale, currentHp, maxHp, shadowHp, shadowMaxHp, isDay);
                     }
                 }
             }
@@ -129,16 +132,19 @@ public class EntityRenderer
     }
 
     private void DrawMonsterHpBar(SpriteBatch spriteBatch, Vector2 anchorPos, Vector2 scale,
-                                  float current, float max, bool isDay)
+                                  float current, float max, float? shadowHp, float? shadowMax, bool isDay)
     {
         const int segments = 5;
         float segW = 3f * scale.X;
         float gap  = 1f * scale.X;
-        float barW = segments * segW + (segments - 1) * gap;
         float barH = segW;
 
-        float barX = anchorPos.X - barW / 2f;
+        float barX = anchorPos.X - (segments * segW + (segments - 1) * gap) / 2f;
         float barY = anchorPos.Y - 10f * scale.Y - barH;
+
+        if (shadowHp.HasValue)
+            DrawSegmentedBar(spriteBatch, barX + segW, barY + segW, segW, gap, barH,
+                             segments, shadowHp.Value, shadowMax!.Value, 0.5f, isDay);
 
         DrawSegmentedBar(spriteBatch, barX, barY, segW, gap, barH, segments, current, max, 1f, isDay);
     }
