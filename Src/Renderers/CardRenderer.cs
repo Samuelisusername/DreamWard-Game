@@ -13,22 +13,22 @@ public class CardRenderer
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Sniper Tower\nTargets 1 enemy at a time\nShort range but high \ndamage" },
-        { "aoe",          "Area of Effect Tower\nTargets all the enemies in \nits range. Long range \nbut less damage" },
-        { "dreamcatcher", "Dreamcatcher\nActs as a wall to blocks \nthe enemies, including \nflying ones" },
-        { "fence",        "Fence\nBlock all ground enemies" },
-        { "meadow",       "Meadow\nHelps increase sanity" },
-        { "void",         "Void\nBlock all ground enemies.\nOnce placed cannot\nbe removed." },
-        { "spikes",       "Spikes\nInflicts damage on ground \nenemies." },
-        { "decoy",        "Decoy\nActs like a tile with sheep.\nLures enemies towards it." },
-        { "buff",         "Buff\nRepels enemies" },
-        { "shuffle",      "Shuffle\nShuffles the build cards." },
-        { "discount",     "Discount\nNext card purchased gets\na discount of 2 sanity" },
-        { "top3",         "Save Card\nSave a card for next \nround" },
-        { "discard",      "Discard\nDiscard the card.\nGet a new card." },
-        { "polymorph",    "Polymorph\nTransforms the sheep \ninto rats. Monsters don't \nattack the sheep" },
-        { "move",         "Move\nRelocate a Build Structure" },
-        { "destroy",      "Destroy\nDestroy a Build Structure" },
+        { "sniper",       "Piercer of Veils         \nTargets one nightmare     \nLong range burst damage" },
+        { "aoe",          "Banisher of Horrors      \nTargets all nightmares    \nShort range burn damage" },
+        { "dreamcatcher", "Catcher of Dreams        \nBlock all nightmares      \nIncluding flying ones" },
+        { "fence",        "Warden of Thresholds     \nBlock walking nightmares" },
+        { "meadow",       "Meadow of Slumber        \nGain more sanity          \nStronger next to sheep" },
+        { "void",         "Absence of Field         \nBlock walking nightmares  \nCannot be removed" },
+        { "spikes",       "Bed of Thorns            \nHurts walking nightmares" },
+        { "decoy",        "Lure of Phantoms         \nLures nightmares" },
+        { "buff",         "Kindle of Resolve        \nRepels nightmares" },
+        { "shuffle",      "Shuffler of Fates        \nShuffles build cards" },
+        { "discount",     "Discounter of Burdens    \nNext card purchased gets  \na discount" },
+        { "top3",         "Choice of Illusions      \nSave a card for tomorrow" },
+        { "discard",      "Burning of Hands         \nDiscard a card            \nGet a new card" },
+        { "polymorph",    "Vermin of Shadows        \nTurn sheep to rats        \nIgnored by nightmares " },
+        { "move",         "Shifter of Roots         \nMove a structure" },
+        { "destroy",      "Forgetter of Visions     \nDestroy a structure" },
     };
 
     private const int CARD_W       = 128*3/2;
