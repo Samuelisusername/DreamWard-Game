@@ -183,7 +183,7 @@ public abstract class MonsterGroup
             _elapsed -= speed;
             if(!_goalReached)
             {
-                Monsters.ForEach(i => i.ShouldMove = !i.GoalReached);
+                Monsters.ForEach(i => i.ShouldMove = true);
             }
             else 
             {         
