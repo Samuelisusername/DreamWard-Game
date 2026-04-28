@@ -194,6 +194,23 @@ public class MapScreen : GamelabGameScreen
         // });
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
+        entityRenderer.HoveredTile = _hoverTile.col >= 0 ? _hoverTile : null;
+
+        if (cardManager._activeMapCard?.Type == CardType.Build && _hoverTile.col >= 0)
+        {
+            var existing = mapManager.GetStructure(_hoverTile);
+            var preview  = cardManager._previewStructure;
+            entityRenderer.HealFlashTile = (existing != null && preview != null
+                && existing.GetType() == preview.GetType()
+                && existing.CurrentHealth < existing.MaxHealth)
+                ? _hoverTile : null;
+        }
+        else
+        {
+            entityRenderer.HealFlashTile = null;
+        }
+
+        entityRenderer.Update(gameTime);
         
 
         if(Game.IsActive)
@@ -600,6 +617,9 @@ public class MapScreen : GamelabGameScreen
         SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
+        spriteBatch.End();
+        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         entityRenderer.Draw(spriteBatch);
         spriteBatch.End();
     }
@@ -623,12 +643,10 @@ public class MapScreen : GamelabGameScreen
             _hoverTile.col >= 0)
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange && gamePhaseManager.IsDay, cardRenderer);
-            entityRenderer.Draw(spriteBatch, _hoverTile);
         }
         else
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange && gamePhaseManager.IsDay, cardRenderer: cardRenderer);
-            entityRenderer.Draw(spriteBatch);
             if (_is_active_tutorial && (_tutorial_step == 6))
             {
                 float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
@@ -670,6 +688,16 @@ public class MapScreen : GamelabGameScreen
             cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
         }
 
+        spriteBatch.End();
+
+        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
+        (int col, int row) skipOrHover = (cardManager._activeMapCard != null &&
+            (cardManager._activeMapCard.Effect == CardEffect.Move ||
+             cardManager._activeMapCard.Effect == CardEffect.Destroy ||
+             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
+            _hoverTile.col >= 0) ? _hoverTile : (-1, -1);
+        entityRenderer.Draw(spriteBatch, skipOrHover.col >= 0 ? skipOrHover : null);
         spriteBatch.End();
 
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
