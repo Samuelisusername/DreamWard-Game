@@ -13,7 +13,7 @@ public class PathFindingManager
     private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth    
     private const int NormalDefenceStrength = 10;
     private const int BuffPenalty = 50;
-    private const int FencePenalty = 0;
+    private const int FencePenalty = 4;
     private const int RandomTileMaxDistanceFromCenter = 7;
 
     // Keep track of all tiles that are going to be attacked and by who
@@ -21,6 +21,7 @@ public class PathFindingManager
     private readonly Dictionary<(int col, int row), HashSet<Monster>> _monstersTargeting;
     private readonly Dictionary<Monster, (int col, int row)> _monsterToTarget;
     private readonly Dictionary<Monster, int> _monsterToTargetDist;
+    private readonly Dictionary<Monster, (int col, int row)> _monsterToPreviousTile;
 
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
@@ -36,6 +37,7 @@ public class PathFindingManager
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
         _monsterToTargetDist = new Dictionary<Monster, int>();
+        _monsterToPreviousTile = new Dictionary<Monster, (int, int)>();
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
@@ -58,6 +60,7 @@ public class PathFindingManager
         {
             _monsterToTargetDist[monster] = 1;
             _monsterToTarget[monster] = candidateTile;
+            _monsterToPreviousTile[monster] = currentTile;
             return currentTile;
         }
         else if (endStructure != null && monster is FlyingMonster && isIntendedTarget)
@@ -65,6 +68,7 @@ public class PathFindingManager
             _monsterToTargetDist[monster] = 0;
         }
         _visited[candidateTile.Item1, candidateTile.Item2] += VisitedPenalty;
+        _monsterToPreviousTile[monster] = candidateTile;
         return candidateTile;
     }
 
@@ -90,7 +94,7 @@ public class PathFindingManager
         // ------------------------------------
 
         UnregisterMonsterTarget(monster);
-        UpdateDefenceStrengths();
+        UpdateDefenceStrengths(monster);
 
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
@@ -215,7 +219,7 @@ public class PathFindingManager
     /// <summary>
     /// Recomputes how many defenders cover each map tile.
     /// </summary>
-    private void UpdateDefenceStrengths()
+    private void UpdateDefenceStrengths(Monster monster)
     {
         // reset data structures
         _defenders.Clear();
@@ -223,7 +227,7 @@ public class PathFindingManager
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                _defenceStrength[col, row] = MinDefenceStrength + _visited[col, row];
+                _defenceStrength[col, row] = MinDefenceStrength;
             }
         }
         for (int col = 0; col < mapManager.Columns; col++)
@@ -232,6 +236,14 @@ public class PathFindingManager
             {
                 _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength + _visited[col, row];
             }
+        }
+
+        if (_monsterToPreviousTile.TryGetValue(monster, out var previousTile))
+        {
+            // discourage going back to the previous tile
+            (int prevCol, int prevRow) = previousTile;
+            _defenceStrength[prevCol, prevRow] += VisitedPenalty;
+            _simplePathDefenceStrength[prevCol, prevRow] += VisitedPenalty;
         }
 
         // update based on current structures
@@ -252,7 +264,12 @@ public class PathFindingManager
                     defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
                     strength = BuffPenalty; // make buffed tiles more powerful
                 }
-                else if (structure is Fence fence || structure is WallTile)
+                else if (monster is not FlyingMonster && (structure is Fence fence || structure is WallTile || structure is Wall))
+                {
+                    defendedTiles = new List<(int, int)> { (col, row) };
+                    strength = FencePenalty;
+                }
+                else if (monster is FlyingMonster && structure is Wall)
                 {
                     defendedTiles = new List<(int, int)> { (col, row) };
                     strength = FencePenalty;
