@@ -195,6 +195,21 @@ public class MapScreen : GamelabGameScreen
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
         entityRenderer.HoveredTile = _hoverTile.col >= 0 ? _hoverTile : null;
+
+        if (cardManager._activeMapCard?.Type == CardType.Build && _hoverTile.col >= 0)
+        {
+            var existing = mapManager.GetStructure(_hoverTile);
+            var preview  = cardManager._previewStructure;
+            entityRenderer.HealFlashTile = (existing != null && preview != null
+                && existing.GetType() == preview.GetType()
+                && existing.CurrentHealth < existing.MaxHealth)
+                ? _hoverTile : null;
+        }
+        else
+        {
+            entityRenderer.HealFlashTile = null;
+        }
+
         entityRenderer.Update(gameTime);
         
 
