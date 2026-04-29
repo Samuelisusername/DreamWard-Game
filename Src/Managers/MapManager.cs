@@ -771,6 +771,13 @@ public class MapManager
 
     public void HandleMapClick(Vector2 pos)
     {
+        // At night only shake trees that are in the playing field (visible, not fallen)
+        if (!gamePhaseManager.IsDay)
+        {
+            var tile = GetTileFromScreenPosition(pos);
+            if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
+                return;
+        }
         ShakeTree(pos);
     }
 

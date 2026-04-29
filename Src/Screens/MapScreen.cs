@@ -348,10 +348,12 @@ public class MapScreen : GamelabGameScreen
             }
                        
             // DEBUG: right click triggers a sanity-gain burst above the sheep
+#if DEBUG
             if (mouse.WasButtonPressed(MouseButton.Right))
             {
                 SpawnSanityGainOverSheep(20);
             }
+#endif
 
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
@@ -410,7 +412,7 @@ public class MapScreen : GamelabGameScreen
 
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
 
-                if (_hoveredStructure != null)
+                if (_hoveredStructure != null && _hoveredStructure is not VoidTile)
                     _hoveredStructure.ShouldDrawCard = true;
             }
             else
@@ -433,11 +435,18 @@ public class MapScreen : GamelabGameScreen
                 _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
+                    mapManager.HandleMapClick(mousePos);
                     if (_speedBtn.Contains(mousePos))
                     {
                         // Toggle speed: 1x -> 3x -> 1x
                         GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
                         AudioManager.Play("rustle01");
+                        return;
+                    }
+                    if (_towerRangeBtn.Contains(mousePos))
+                    {
+                        _showTowerRange = !_showTowerRange;
+                        _clickStarted = false;
                         return;
                     }
                 }
@@ -642,11 +651,11 @@ public class MapScreen : GamelabGameScreen
             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange && gamePhaseManager.IsDay, cardRenderer);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange, cardRenderer);
         }
         else
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange && gamePhaseManager.IsDay, cardRenderer: cardRenderer);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange, cardRenderer: cardRenderer);
             if (_is_active_tutorial && (_tutorial_step == 6))
             {
                 float pulse = (float)(Math.Sin(gameTime.TotalGameTime.TotalSeconds * 5) + 1) / 2f;
@@ -714,6 +723,7 @@ public class MapScreen : GamelabGameScreen
             // Label showing current speed
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
             DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
         }
         int vw = (int)viewportAdapter.VirtualWidth;
         int vh = (int)viewportAdapter.VirtualHeight;

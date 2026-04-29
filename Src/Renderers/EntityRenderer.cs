@@ -78,7 +78,7 @@ public class EntityRenderer
             {
                 var structure = mapManager.GetStructure((i, j));
                 if (structure is SniperTower or AreaTower or Wall or WallTile
-                              or Fence or Tent or PlacableMeadow or Spike)
+                              or Fence or PlacableMeadow)
                 {
                     float alpha = _hpBarAlpha.GetValueOrDefault(structure, 0f);
                     if (alpha < 0.01f) continue;
