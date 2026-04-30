@@ -16,7 +16,6 @@ public class MapScreen : GamelabGameScreen
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
-    private CombatManager combatManager => GamelabGame.CombatManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
@@ -54,7 +53,6 @@ public class MapScreen : GamelabGameScreen
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
     private bool _offsetInitialized = false;
-    private int _cardStartY = 0;
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
 
@@ -84,8 +82,11 @@ public class MapScreen : GamelabGameScreen
     private const double DOUBLE_CLICK_TIME = 300; // ms
     private int _restoredSavedSlotThisDay = -1;
     private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
-    private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
-    private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
+    private float SpriteScale => viewportAdapter.VirtualWidth / 640f;
+    private static readonly Rectangle FloatBtn        = new(0, 176, 80,  32);
+    private static readonly Rectangle FloatBtnPrs     = new(0, 208, 80,  32);
+    private static readonly Rectangle LongFloatBtn    = new(0, 240, 105, 32);
+    private static readonly Rectangle LongFloatBtnPrs = new(0, 272, 105, 32);
     private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
     private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
@@ -181,11 +182,11 @@ public class MapScreen : GamelabGameScreen
     {
         int vw = viewportAdapter.VirtualWidth;
         int vh = viewportAdapter.VirtualHeight;
-        _tutorial_btn = new Rectangle(vw - 240, 20, 220, 70);
-        _speedBtn = new Rectangle(vw - 240, 20, 220, 70);
+        _tutorial_btn = new Rectangle(vw - 260, 20, 240, 96);
+        _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
         if (!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
+            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
         }
         // Hammer (destroy mode) button: square, sits to the LEFT of the right-aligned button column
         int hSize = Math.Max(_startNightBtn.Height, 56);
@@ -1382,43 +1383,53 @@ public class MapScreen : GamelabGameScreen
 
 
 
+    private Rectangle PickFloatSrc(Rectangle dest, bool pressed)
+    {
+        bool wide = (float)dest.Width / dest.Height > FloatBtn.Width / (float)FloatBtn.Height;
+        return wide ? (pressed ? LongFloatBtnPrs : LongFloatBtn) : (pressed ? FloatBtnPrs : FloatBtn);
+    }
+
+    private Rectangle UniformDest(Rectangle rect, Rectangle src)
+    {
+        float scale = rect.Width / (float)src.Width;
+        int h = (int)(src.Height * scale);
+        return new Rectangle(rect.X, rect.Center.Y - h / 2, rect.Width, h);
+    }
+
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
-        var src = pressed ? BtnPressed : BtnNormal;
+        Rectangle src = PickFloatSrc(rect, pressed);
+        float scale = SpriteScale;
+        int drawW = (int)(src.Width  * scale);
+        int drawH = (int)(src.Height * scale);
+        Rectangle drawDest = new Rectangle(rect.Center.X - drawW / 2, rect.Center.Y - drawH / 2, drawW, drawH);
+
         if(progress > 0)
-        {   
+        {
             spriteBatch.End();
-            // 1. Calculate where the progress "line" is in the texture atlas
-            // We find the X position in pixels, then divide by texture width to get 0.0 - 1.0
             float progressWidthInPixels = src.X + (src.Width * progress);
-            float uvThreshold = progressWidthInPixels / (float)InterfaceTexture.Width;
+            float uvThreshold = progressWidthInPixels / InterfaceTexture.Width;
 
-            // 2. Set the Shader Parameters
             GamelabGame.Instance.LoadingShader.Parameters["ProgressThreshold"].SetValue(uvThreshold);
-            GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f)); // 50% dark
-
-            // 3. Draw using the effect
+            GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
 
             spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
                         samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
-            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
             spriteBatch.End();
             spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
-
-            // Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
-            // Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
-            // spriteBatch.Draw(InterfaceTexture, progressDst, progressSrc, Color.Black * 0.4f);
         }
         else
         {
-            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
         }
         var size = _font.MeasureString(text);
-        float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
+        float sc = Math.Min(drawW / size.X * 0.6f, drawH / size.Y * 0.6f);
+        float pressOffset = pressed ? scale : 0f;
         spriteBatch.DrawString(_font, text,
-            new Vector2(rect.Center.X - size.X * sc * 0.5f,
-                        rect.Center.Y - size.Y * sc * 0.5f),
+            new Vector2(drawDest.Center.X - size.X * sc * 0.5f,
+                        drawDest.Center.Y - size.Y * sc * 0.5f + pressOffset),
             COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
     }
 
@@ -1453,8 +1464,9 @@ public class MapScreen : GamelabGameScreen
     private void DrawHammerButton()
     {
         // Background plate: pressed when held or active (selected = indented + grayed)
-        var src = (_hammerActive || _hammerBtnPressed) ? BtnPressed : BtnNormal;
-        spriteBatch.Draw(InterfaceTexture, _hammerBtn, src, Color.White);
+        var src = (_hammerActive || _hammerBtnPressed) ? FloatBtnPrs : FloatBtn;
+        Rectangle hammerDest = UniformDest(_hammerBtn, src);
+        spriteBatch.Draw(InterfaceTexture, hammerDest, src, Color.White);
 
         // Hammer overlay, centered with a small inset
         if (_hammerTexture != null)

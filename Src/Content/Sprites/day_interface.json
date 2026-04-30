@@ -29,7 +29,11 @@
    { "name": "button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 80, "w": 80, "h": 32 } }] },
    { "name": "backdrop", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 204, "y": 35, "w": 282, "h": 308 } }] },
    { "name": "float_button", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 176, "w": 80, "h": 32 } }] },
-   { "name": "float_button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 208, "w": 80, "h": 32 } }] }
+   { "name": "float_button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 208, "w": 80, "h": 32 } }] },
+   { "name": "long_button", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 112, "w": 105, "h": 32 } }] },
+   { "name": "long_button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 144, "w": 105, "h": 32 } }] },
+   { "name": "long_float_button", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 240, "w": 105, "h": 32 } }] },
+   { "name": "long_float_button_pressed", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 272, "w": 105, "h": 32 } }] }
   ]
  }
 }

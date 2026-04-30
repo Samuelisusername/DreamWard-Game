@@ -262,36 +262,22 @@ public class CardRenderer
         ty += 6;
     }
 
-    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, SpriteFont font, ref int cardStartY, ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn)
+    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn)
     {
-        int marginRight = 20, spacing = 12;
+        // Fixed size matching float_button sprite at 3×
+        // so PickFloatSrc uses the regular (non-long) variant and the right
+        // edge sits 20 px from the screen edge, matching the tutorial button.
+        int margin = 20, spacing = 12;
+        int btnW = 240, btnH = 96;
+        int x = screenW - btnW - margin;
 
-        // measure all texts first
-        Vector2 t1 = font.MeasureString("Show Cards");
-        Vector2 t2 = font.MeasureString("Tower Range");
-        Vector2 t3 = font.MeasureString("Start Night (Space)");
+        int y3 = screenH - btnH - margin;
+        int y2 = y3 - btnH - spacing;
+        int y1 = y2 - btnH - spacing;
 
-        // dynamic widths (shared column = max width)
-        int btnW = (int)Math.Max(t1.X, Math.Max(t2.X, t3.X)) + 5;
-
-        // dynamic heights (optional, usually same font so can unify)
-        int btnH1 = (int)t1.Y + 10;
-        int btnH2 = (int)t2.Y + 10;
-        int btnH3 = (int)t3.Y + 10;
-
-        // base Y from bottom
-        int y3 = screenH - btnH3 - marginRight;
-        int y2 = y3 - btnH2 - spacing;
-        int y1 = y2 - btnH1 - spacing;
-
-        // right alignment X (shared for all)
-        int x = screenW - btnW - marginRight;
-
-        // assign buttons
-        showCardsBtn   = new Rectangle(x, y1, btnW, btnH1);
-        towerRangeBtn  = new Rectangle(x, y2, btnW, btnH2);
-        nightBtn       = new Rectangle(x, y3, btnW, btnH3);
-
+        showCardsBtn  = new Rectangle(x, y1, btnW, btnH);
+        towerRangeBtn = new Rectangle(x, y2, btnW, btnH);
+        nightBtn      = new Rectangle(x, y3, btnW, btnH);
     }
 
     private static readonly Color PLACEMENT_OK  = new Color(0x11, 0x7a, 0x15);
