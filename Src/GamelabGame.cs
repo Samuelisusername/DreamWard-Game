@@ -78,11 +78,18 @@ public class GamelabGame : Game
     private MouseCursor CursorArrow => GamePhaseManager?.IsDay == true ? dayCursorArrow : cursorArrow;
     private MouseCursor CursorHover => GamePhaseManager?.IsDay == true ? dayCursorHover : cursorHover;
     private MouseCursor CursorClick => GamePhaseManager?.IsDay == true ? dayCursorClick : cursorClick;
+    private MouseCursor hammerCursor;
+    public Texture2D HammerTexture { get; private set; }
 
     /// <summary>
     /// Set to true during Update to show the hover cursor. Reset automatically each frame.
     /// </summary>
     public static bool IsHovering { get; set; }
+
+    /// <summary>
+    /// When true, the cursor is replaced by the hammer (destroy mode).
+    /// </summary>
+    public static bool UseHammerCursor { get; set; }
 
     public static Random Rng { get; private set; }
     public static int Seed { get; private set; }
@@ -202,6 +209,10 @@ public class GamelabGame : Game
         dayCursorArrow = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_arrow0").SourceRectangle, 0, 0, 2);
         dayCursorHover = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
         dayCursorClick = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
+
+        HammerTexture = Content.Load<Texture2D>("Sprites/hammer");
+        hammerCursor = CreateHammerCursor(HammerTexture, 32);
+
         Mouse.SetCursor(CursorArrow);
 
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
@@ -228,13 +239,40 @@ public class GamelabGame : Game
         base.Update(time);
 
         var mouseState = Mouse.GetState();
-        if (IsHovering){
+        if (UseHammerCursor)
+        {
+            Mouse.SetCursor(hammerCursor);
+        }
+        else if (IsHovering){
             Mouse.SetCursor(CursorHover);
             if (mouseState.LeftButton == ButtonState.Pressed)
                 Mouse.SetCursor(CursorClick);
         }
         else
             Mouse.SetCursor(CursorArrow);
+    }
+
+    private MouseCursor CreateHammerCursor(Texture2D source, int targetSize)
+    {
+        int srcW = source.Width;
+        int srcH = source.Height;
+        var srcData = new Color[srcW * srcH];
+        source.GetData(srcData);
+
+        var dst = new Color[targetSize * targetSize];
+        for (int y = 0; y < targetSize; y++)
+        {
+            for (int x = 0; x < targetSize; x++)
+            {
+                int sx = x * srcW / targetSize;
+                int sy = y * srcH / targetSize;
+                dst[y * targetSize + x] = srcData[sy * srcW + sx];
+            }
+        }
+
+        var tex = new Texture2D(GraphicsDevice, targetSize, targetSize);
+        tex.SetData(dst);
+        return MouseCursor.FromTexture2D(tex, targetSize / 2, targetSize / 2);
     }
 
     private MouseCursor CursorFromRegion(Texture2D source, Rectangle region, int originX, int originY, int scale = 1)

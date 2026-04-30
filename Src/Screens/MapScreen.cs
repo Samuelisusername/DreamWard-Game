@@ -45,6 +45,7 @@ public class MapScreen : GamelabGameScreen
     // Cards
     private SpriteFont _font;
     private Texture2D _dummy, _cardTexture, _sanityIconTexture, _dayIconTexture;
+    private Texture2D _hammerTexture;
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Navigation button
@@ -56,6 +57,11 @@ public class MapScreen : GamelabGameScreen
     private int _cardStartY = 0;
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
+
+    // Hammer (destroy mode) toggle
+    private Rectangle _hammerBtn;
+    private bool _hammerBtnPressed = false;
+    private bool _hammerActive = false;
     
     private Rectangle _startNightBtn;
     private TimeSpan _startNightTime = TimeSpan.FromSeconds(1);
@@ -124,6 +130,7 @@ public class MapScreen : GamelabGameScreen
         _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
         _sanityIconTexture = Content.Load<Texture2D>("Sprites/sanity_icon_big");
         _dayIconTexture = Content.Load<Texture2D>("Sprites/day-and-night_icon");
+        _hammerTexture = GamelabGame.Instance.HammerTexture;
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
@@ -180,6 +187,12 @@ public class MapScreen : GamelabGameScreen
         {
             cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
         }
+        // Hammer (destroy mode) button: square, sits to the LEFT of the right-aligned button column
+        int hSize = Math.Max(_startNightBtn.Height, 56);
+        int hMargin = 12;
+        int hX = (_startNightBtn.Width > 0 ? _startNightBtn.X : vw - 20) - hSize - hMargin;
+        int hY = _startNightBtn.Height > 0 ? _startNightBtn.Y : vh - hSize - 20;
+        _hammerBtn = new Rectangle(hX, hY, hSize, hSize);
     }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
@@ -192,7 +205,10 @@ public class MapScreen : GamelabGameScreen
         AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
                 
         GamelabGame.IsHovering = false;
-        Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+        // The hammer cursor takes over while destroy mode is active and the mouse is over the map.
+        Vector2 mousePosForCursor = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+        GamelabGame.UseHammerCursor = _hammerActive && !_hammerBtn.Contains(mousePosForCursor);
+        Vector2 mousePos = mousePosForCursor;
         // ParticleManager.AddParticle(new Particle
         // {
         //     WorldPosition = (mousePos - mapManager.Offset)/mapManager.Scale,
@@ -315,7 +331,7 @@ public class MapScreen : GamelabGameScreen
             }
             //set cursor state
             if(!gamePhaseManager.IsInTransition){
-                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))
+                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))
                     GamelabGame.IsHovering = true;
                     
                 if (_showInventory)
@@ -374,6 +390,7 @@ public class MapScreen : GamelabGameScreen
                 _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
                 _tutorial_btn_pressed = _tutorial_btn.Contains(pos);
                 _speedBtnPressed      = _speedBtn.Contains(pos);
+                _hammerBtnPressed     = _hammerBtn.Contains(pos);
                 _oldPos       = pos;
                 _clickStarted = true;
 
@@ -413,7 +430,7 @@ public class MapScreen : GamelabGameScreen
             }
 
             //set the hovered tile
-            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
+            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
@@ -443,7 +460,7 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
+                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = _hammerBtnPressed = false;
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
                     mapManager.HandleMapClick(mousePos);
@@ -604,9 +621,33 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false;
                         return;
                     }
+                    if (_hammerBtn.Contains(mousePos))
+                    {
+                        _hammerActive = !_hammerActive;
+                        if (_hammerActive)
+                        {
+                            // Cancel any active map card so the two modes don't conflict
+                            cardManager._activeMapCard = null;
+                            cardManager._previewStructure = null;
+                            cardManager._selectedTile = (-1, -1);
+                        }
+                        _clickStarted = false;
+                        return;
+                    }
 
                     if (!mouseOverUI)
                     {
+                        if (_hammerActive)
+                        {
+                            (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
+                            if (tile.col >= 0 && IsHammerDestroyable(mapManager.GetStructure(tile)))
+                            {
+                                mapManager.RemoveStructure(tile);
+                            }
+                            _clickStarted = false;
+                            _isDrag = false;
+                            return;
+                        }
                         if (cardManager._activeMapCard != null)
                         {
                             if (cardManager.HandleMapCardUse(mapManager, mousePos))
@@ -708,6 +749,22 @@ public class MapScreen : GamelabGameScreen
             cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
         }
 
+        // Hammer (destroy mode): highlight every player-placed structure tile in yellow
+        if (_hammerActive)
+        {
+            Color hammerHighlight = Color.Yellow;
+            for (int col = 0; col < mapManager.Columns; col++)
+            {
+                for (int row = 0; row < mapManager.Rows; row++)
+                {
+                    if (IsHammerDestroyable(mapManager.GetStructure((col, row))))
+                    {
+                        cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), hammerHighlight);
+                    }
+                }
+            }
+        }
+
         spriteBatch.End();
 
         SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
@@ -747,6 +804,7 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
             DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
             DrawButton(_startNightBtn, "Start night", false, (float)(_elapsedStartNightTime/_startNightTime));
+            DrawHammerButton();
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
@@ -1378,6 +1436,39 @@ public class MapScreen : GamelabGameScreen
             _lastClickTime = now;
         }
         return false;
+    }
+
+    /// <summary>
+    /// True if the hammer (destroy mode) can remove this structure.
+    /// Mirrors the existing destroy card rule: structure must be CanMove and not a VoidTile.
+    /// Excludes Sheep tile, Tent, natural Meadow, and trees.
+    /// </summary>
+    private static bool IsHammerDestroyable(Structure s)
+    {
+        if (s == null) return false;
+        if (s is VoidTile) return false;
+        return s.CanMove;
+    }
+
+    private void DrawHammerButton()
+    {
+        // Background plate: pressed when held or active (selected = indented + grayed)
+        var src = (_hammerActive || _hammerBtnPressed) ? BtnPressed : BtnNormal;
+        spriteBatch.Draw(InterfaceTexture, _hammerBtn, src, Color.White);
+
+        // Hammer overlay, centered with a small inset
+        if (_hammerTexture != null)
+        {
+            int inset = Math.Max(6, _hammerBtn.Width / 8);
+            Rectangle overlay = new Rectangle(
+                _hammerBtn.X + inset,
+                _hammerBtn.Y + inset,
+                _hammerBtn.Width  - inset * 2,
+                _hammerBtn.Height - inset * 2);
+            // Gray out when active (selected); full color otherwise
+            Color tint = _hammerActive ? new Color(140, 140, 140) : Color.White;
+            spriteBatch.Draw(_hammerTexture, overlay, null, tint);
+        }
     }
 
     private void ToggleActiveCard(CardManager cm, Card card)

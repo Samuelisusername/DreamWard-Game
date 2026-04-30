@@ -298,6 +298,23 @@ public class CardRenderer
     private static readonly Color PLACEMENT_BAD = new Color(220, 60, 60);
     private const float PLACEMENT_HIGHLIGHT_ALPHA = 0.45f;
 
+    /// <summary>
+    /// Public hex-tile highlight (single tile). Used by external callers like the hammer/destroy mode.
+    /// </summary>
+    public void DrawTileHighlightPublic(SpriteBatch spriteBatch, MapManager mapManager,
+        (int col, int row) tile, Color color, float alpha = PLACEMENT_HIGHLIGHT_ALPHA)
+    {
+        if (tile.col < 0 || tile.col >= mapManager.Columns ||
+            tile.row < 0 || tile.row >= mapManager.Rows) return;
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
+        Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+        spriteBatch.Draw(mask, pos, null, color * alpha, 0f,
+            Vector2.Zero, maskScale, SpriteEffects.None, 0f);
+    }
+
     private void DrawTileHighlight(SpriteBatch spriteBatch, MapManager mapManager,
         (int col, int row) tile, Color color)
     {
