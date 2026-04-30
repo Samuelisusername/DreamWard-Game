@@ -13,22 +13,22 @@ public class CardRenderer
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Piercer of Veils         \nTargets one nightmare     \nLong range burst damage" },
-        { "aoe",          "Banisher of Horrors      \nTargets all nightmares    \nShort range burn damage" },
-        { "dreamcatcher", "Catcher of Dreams        \nBlock all nightmares      \nIncluding flying ones" },
-        { "fence",        "Warden of Thresholds     \nBlock walking nightmares" },
-        { "meadow",       "Meadow of Slumber        \nGain more sanity          \nStronger next to sheep" },
-        { "void",         "Absence of Field         \nBlock walking nightmares  \nCannot be removed" },
-        { "spikes",       "Bed of Thorns            \nHurts walking nightmares" },
-        { "decoy",        "Lure of Phantoms         \nLures nightmares" },
-        { "buff",         "Kindle of Resolve        \nRepels nightmares" },
-        { "shuffle",      "Shuffler of Fates        \nShuffles build cards" },
-        { "discount",     "Discounter of Burdens    \nNext card purchased gets  \na discount" },
-        { "top3",         "Choice of Illusions      \nSave a card for tomorrow" },
-        { "discard",      "Burning of Hands         \nDiscard a card            \nGet a new card" },
-        { "polymorph",    "Vermin of Shadows        \nTurn sheep to rats        \nIgnored by nightmares " },
-        { "move",         "Shifter of Roots         \nMove a structure" },
-        { "destroy",      "Forgetter of Visions     \nDestroy a structure" },
+        { "sniper",       "Piercer of Veils         \n\nTargets one nightmare     \nLong range burst damage" },
+        { "aoe",          "Banisher of Horrors      \n\nTargets all nightmares    \nShort range burn damage" },
+        { "dreamcatcher", "Catcher of Dreams        \n\nBlock all nightmares      \nIncluding flying ones" },
+        { "fence",        "Warden of Thresholds     \n\nBlock walking nightmares" },
+        { "meadow",       "Meadow of Slumber        \n\nGain more sanity          \nStronger next to sheep" },
+        { "void",         "Absence of Field         \n\nBlock walking nightmares  \nCannot be removed" },
+        { "spikes",       "Bed of Thorns            \n\nHurts walking nightmares" },
+        { "decoy",        "Lure of Phantoms         \n\nLures nightmares" },
+        { "buff",         "Kindle of Resolve        \n\nRepels nightmares" },
+        { "shuffle",      "Shuffler of Fates        \n\nShuffles build cards" },
+        { "discount",     "Discounter of Burdens    \n\nNext card purchased gets  \na discount" },
+        { "top3",         "Choice of Illusions      \n\nSave a card for tomorrow" },
+        { "discard",      "Burning of Hands         \n\nDiscard a card            \nGet a new card" },
+        { "polymorph",    "Vermin of Shadows        \n\nTurn sheep to rats        \nIgnored by nightmares " },
+        { "move",         "Shifter of Roots         \n\nMove a structure" },
+        { "destroy",      "Forgetter of Visions     \n\nDestroy a structure" },
     };
 
     private const int CARD_W       = 128*3/2;
@@ -197,12 +197,20 @@ public class CardRenderer
         }
 
         float ty = panelY + bigCard + 14;
-        float lx = panelX + 8;
+        float lx = panelX + 20;
         float lineSpacing = font.LineSpacing * textSc;
 
-        foreach (var line in desc.Split('\n'))
+        var descLinesArr = desc.Split('\n');
+        for (int i = 0; i < descLinesArr.Length; i++)
         {
+            var line = descLinesArr[i];
             spriteBatch.DrawString(font, line, new Vector2(lx, ty), COLOR_D, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
+            if (i == 0)
+            {
+                Vector2 titleSize = font.MeasureString(line.TrimEnd()) * textSc;
+                int underlineY = (int)(ty + titleSize.Y + 1);
+                spriteBatch.Draw(dummy, new Rectangle((int)lx, underlineY, (int)titleSize.X, 2), COLOR_D);
+            }
             ty += lineSpacing;
         }
 
