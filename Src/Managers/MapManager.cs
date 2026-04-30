@@ -152,7 +152,9 @@ public class MapManager
         }
         
         FillRandomly();
-        Scale = new Vector2(1, 1);
+        Scale = new Vector2(2.5f, 2.5f);
+        foreach (MonsterGroupContainer container in MonsterContainers)
+            container.SetScale(Scale);
         MapUtils.Setup(Columns,Rows);
     }
     
