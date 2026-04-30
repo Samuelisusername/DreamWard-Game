@@ -10,7 +10,8 @@ public class PathFindingManager
     private const int FlyingMonsterVisionRange = 8;
     private const int SimplePathMinDefenceStrength = 20; // higher number encourages taking a shorter route when discovering targets
     private const int MinDefenceStrength = 1; // higher number encourages taking a shorter route when going to a target
-    private const int VisitedPenalty = 10; // added to defense strength for visited tiles to discourage moving back and forth    
+    private const int VisitedPenalty = 10; // per-occurrence penalty added to local cost for tiles in a monster's recent path
+    private const int RecentPathLength = 5;
     private const int NormalDefenceStrength = 10;
     private const int BuffPenalty = 50;
     private const int FencePenalty = 4;
@@ -21,12 +22,12 @@ public class PathFindingManager
     private readonly Dictionary<(int col, int row), HashSet<Monster>> _monstersTargeting;
     private readonly Dictionary<Monster, (int col, int row)> _monsterToTarget;
     private readonly Dictionary<Monster, int> _monsterToTargetDist;
-    private readonly Dictionary<Monster, (int col, int row)> _monsterToPreviousTile;
+    private readonly Dictionary<Monster, Queue<(int col, int row)>> _recentPath;
 
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
-    private readonly int[,] _visited;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
+    private readonly int[,] _visited;
 
     /// <summary>
     /// Initializes a pathfinding manager bound to a map.
@@ -37,7 +38,7 @@ public class PathFindingManager
         _monstersTargeting = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
         _monsterToTargetDist = new Dictionary<Monster, int>();
-        _monsterToPreviousTile = new Dictionary<Monster, (int, int)>();
+        _recentPath = new Dictionary<Monster, Queue<(int col, int row)>>();
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
@@ -60,7 +61,7 @@ public class PathFindingManager
         {
             _monsterToTargetDist[monster] = 1;
             _monsterToTarget[monster] = candidateTile;
-            _monsterToPreviousTile[monster] = currentTile;
+            PushToRecentPath(monster, currentTile);
             return currentTile;
         }
         else if (endStructure != null && monster is FlyingMonster && isIntendedTarget)
@@ -68,8 +69,20 @@ public class PathFindingManager
             _monsterToTargetDist[monster] = 0;
         }
         _visited[candidateTile.Item1, candidateTile.Item2] += VisitedPenalty;
-        _monsterToPreviousTile[monster] = candidateTile;
+        PushToRecentPath(monster, candidateTile);
         return candidateTile;
+    }
+
+    private void PushToRecentPath(Monster monster, (int col, int row) tile)
+    {
+        if (!_recentPath.TryGetValue(monster, out var queue))
+        {
+            queue = new Queue<(int col, int row)>();
+            _recentPath[monster] = queue;
+        }
+        queue.Enqueue(tile);
+        if (queue.Count > RecentPathLength)
+            queue.Dequeue();
     }
 
     /// <summary>
@@ -94,14 +107,14 @@ public class PathFindingManager
         // ------------------------------------
 
         UnregisterMonsterTarget(monster);
-        UpdateDefenceStrengths(monster);
+        var localPenalty = UpdateDefenceStrengths(monster);
 
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
         int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
         (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
         int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
-        CalculateWeakestPaths(startTile, monster, _defenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
+        CalculateWeakestPaths(startTile, monster, _defenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
 
         var allTargets = GetAllTargetStructures(monster);
         int visionRange = GetVisionRange(monster);
@@ -157,11 +170,11 @@ public class PathFindingManager
         for (int i = RandomTileMaxDistanceFromCenter; i >= 0; --i)
         {
             var randomCenterTile = GetRandomTileNearCenter(i);
-            if (_visited[randomCenterTile.col, randomCenterTile.row] == VisitedPenalty)
+            if (localPenalty[randomCenterTile.col, randomCenterTile.row] > 0)
             {
                 continue;
             }
-            CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
+            CalculateWeakestPaths(startTile, monster, _simplePathDefenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
             var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach, monster);
             if (centerPath.Count > 1)
             {
@@ -181,6 +194,7 @@ public class PathFindingManager
     public void DeleteMonster(Monster monster)
     {
         UnregisterMonsterTarget(monster);
+        _recentPath.Remove(monster);
     }
 
     /// <summary>
@@ -207,6 +221,7 @@ public class PathFindingManager
         _monsterToTarget.Clear();
         _monsterToTargetDist.Clear();
         _defenders.Clear();
+        _recentPath.Clear();
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
@@ -214,12 +229,13 @@ public class PathFindingManager
                 _visited[col, row] = 0;
             }
         }
+
     }
 
     /// <summary>
     /// Recomputes how many defenders cover each map tile.
     /// </summary>
-    private void UpdateDefenceStrengths(Monster monster)
+    private int[,] UpdateDefenceStrengths(Monster monster)
     {
         // reset data structures
         _defenders.Clear();
@@ -228,22 +244,8 @@ public class PathFindingManager
             for (int row = 0; row < mapManager.Rows; row++)
             {
                 _defenceStrength[col, row] = MinDefenceStrength;
-            }
-        }
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
                 _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength + _visited[col, row];
             }
-        }
-
-        if (_monsterToPreviousTile.TryGetValue(monster, out var previousTile))
-        {
-            // discourage going back to the previous tile
-            (int prevCol, int prevRow) = previousTile;
-            _defenceStrength[prevCol, prevRow] += VisitedPenalty;
-            _simplePathDefenceStrength[prevCol, prevRow] += VisitedPenalty;
         }
 
         // update based on current structures
@@ -290,16 +292,24 @@ public class PathFindingManager
 
                     defenders.Add(structure);
                 }
-          
+
             }
         }
+
+        var localPenalty = new int[mapManager.Columns, mapManager.Rows];
+        if (_recentPath.TryGetValue(monster, out var recentQueue))
+        {
+            foreach (var (col, row) in recentQueue)
+                localPenalty[col, row] += VisitedPenalty;
+        }
+        return localPenalty;
     }
 
     /// <summary>
     /// Computes weakest paths from the start tile by minimizing maximum defense encountered.
     /// Also tracks predecessor and arrival time for each tile.
     /// </summary>
-    private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] defenseStrength, int[,] costToGetThere, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
+    private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] defenseStrength, int[,] localPenalty, int[,] costToGetThere, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
     {
         for (int col = 0; col < mapManager.Columns; col++)
         {
@@ -311,7 +321,7 @@ public class PathFindingManager
             }
         }
 
-        int startDefence = defenseStrength[startTile.col, startTile.row];
+        int startDefence = defenseStrength[startTile.col, startTile.row] + localPenalty[startTile.col, startTile.row];
         costToGetThere[startTile.col, startTile.row] = startDefence * startDefence;
         timeToReach[startTile.col, startTile.row] = 0;
 
@@ -342,7 +352,7 @@ public class PathFindingManager
                     }
                 }
 
-                int neighborDefence = defenseStrength[neighbor.Item1, neighbor.Item2];
+                int neighborDefence = defenseStrength[neighbor.Item1, neighbor.Item2] + localPenalty[neighbor.Item1, neighbor.Item2];
                 int nextDamage = currentDamage + neighborDefence;
                 int nextTime = currentTime + 1;
 

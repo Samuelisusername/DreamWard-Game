@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 /// </summary>
 public class Meadow : Structure
 {
-    private const int MaxGrazingDays = 3;
+    private const int MaxGrazingDays = 4;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     public bool HasSheep{get; private set;}
 
@@ -47,7 +47,7 @@ public class Meadow : Structure
     {
         if (!HasSheep || IsDepleted) return;
         DaysGrazed++;
-        if (DaysGrazed > MaxGrazingDays)
+        if (DaysGrazed >= MaxGrazingDays)
         {
             IsDepleted = true;
             IsGrazed = true;
@@ -96,8 +96,15 @@ public class Meadow : Structure
     public void RemoveSheep()
     {
         HasSheep = false;
-        IsGrazed = true;
-        SetAnimation("meadowGrazed_idle");
+        if (IsDepleted)
+        {
+            IsGrazed = true;
+            SetAnimation("meadowGrazed_idle");
+        }
+        else
+        {
+            SetAnimation(_animNameBase);
+        }
     }
 
     public void PolymorphSheep()
