@@ -6,6 +6,7 @@ public class PathFindingManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
 
+    // Tunable parameters for pathfinding behavior
     private const int RegularMonsterVisionRange = 5;
     private const int FlyingMonsterVisionRange = 8;
     private const int SimplePathMinDefenceStrength = 20; // higher number encourages taking a shorter route when discovering targets
@@ -24,10 +25,28 @@ public class PathFindingManager
     private readonly Dictionary<Monster, int> _monsterToTargetDist;
     private readonly Dictionary<Monster, Queue<(int col, int row)>> _recentPath;
 
+    // Defences and costs for pathfinding
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
     private readonly int[,] _visited;
+
+    // Cache paths
+    private readonly Dictionary<Monster, Queue<(int col, int row)>> _cachedPaths;
+
+    // Temporary profiling variables
+    private static bool _profilingEnabled = false; // Set to true to enable profiling logs
+    private static readonly System.Diagnostics.Stopwatch _stepTimer = new System.Diagnostics.Stopwatch();
+    private static readonly System.Diagnostics.Stopwatch _logTimer = System.Diagnostics.Stopwatch.StartNew();
+    private static double _timeUpdateDef = 0;
+    private static double _timeCalcPaths1 = 0;
+    private static double _timeTargetVis = 0;
+    private static double _timePrimary = 0;
+    private static double _timeSecondary = 0;
+    private static double _timeFallback = 0;
+    private static double _timeCache = 0;
+    private static int _callCount = 0;
+    private static int _cacheHitCount = 0;
 
     /// <summary>
     /// Initializes a pathfinding manager bound to a map.
@@ -43,6 +62,15 @@ public class PathFindingManager
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
         _visited = new int[mapManager.Columns, mapManager.Rows];
+        _cachedPaths = new Dictionary<Monster, Queue<(int col, int row)>>();
+    }
+
+    /// <summary>
+    /// Notifies the PathFindingManager that the Structures on the map have changed (e.g. new structures added), so it can clear cached paths that may be invalid.
+    /// </summary>
+    public void NotifyStructuresChanged()
+    {
+        _cachedPaths.Clear();
     }
 
     /// <summary>
@@ -85,13 +113,55 @@ public class PathFindingManager
             queue.Dequeue();
     }
 
+    private void CachePath(Monster monster, List<(int, int)> path)
+    {
+        var queue = new Queue<(int, int)>();
+        // index 0 is Current tile, index 1 is Immediate return, cache index 2 and onward
+        for (int i = 2; i < path.Count; i++) 
+        {
+            queue.Enqueue(path[i]);
+        }
+        _cachedPaths[monster] = queue;
+    }
+
+    private (int, int)? TryGetCachedNextPosition(Monster monster)
+    {
+        if (_cachedPaths.TryGetValue(monster, out var cachedPath))
+        {
+            if (cachedPath.Count > 0)
+            {
+                var nextTile = cachedPath.Dequeue();
+
+                // This prevents GoalReached from breaking and ensures other monsters know the accurate ETA
+                if (_monsterToTargetDist.ContainsKey(monster))
+                {
+                    _monsterToTargetDist[monster] = cachedPath.Count + 1;
+                }
+
+                var actualNextTile = GetNextPositionIfSafe(monster, monster.TilePosition, nextTile);
+
+                // If blocked by another un-walkable entity, OR the path just ended, drop the cache!
+                if (actualNextTile != nextTile || cachedPath.Count == 0)
+                {
+                    _cachedPaths.Remove(monster);
+                }
+
+                return actualNextTile;
+            }
+
+            _cachedPaths.Remove(monster);
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Gives the monster's next move.
     /// </summary>
     public (int, int) GetNextPosition(Monster monster)
     {
         // Each monster type has an important property, vision range, that defines how far it can see on the map. The monster will target a structure
-        // only if it can see the structure and each tile within 2 tiles of the structure.
+        // only if it can see the structure.
 
         // --- TARGET FINDING  ---
         // A new target is selected according to the following preferences:
@@ -101,20 +171,50 @@ public class PathFindingManager
         // 2. One tile towards some randomly chosen tile near the center
 
         // --- PATH FINDING ---
-        // The sum of squared defense strength along the path is used as a measure of path cost, where defense strength is the sum of strengths of the
+        // The sum of defense strengths along the path is used as a measure of path cost, where defense strength is the sum of strengths of the
         // towers defending the tile.
 
         // ------------------------------------
 
+        // CACHED?
+        if (_profilingEnabled)
+        {
+            LogProfilingMetrics();
+            _callCount++;
+            _stepTimer.Restart();
+        }
+
+        var cachedPos = TryGetCachedNextPosition(monster);
+        if (cachedPos.HasValue)
+        {
+            if (_profilingEnabled)
+            {
+                _cacheHitCount++;
+                _timeCache += _stepTimer.Elapsed.TotalMilliseconds;
+                _stepTimer.Restart();
+            }
+            return cachedPos.Value;
+        }
+        
         UnregisterMonsterTarget(monster);
         var localPenalty = UpdateDefenceStrengths(monster);
 
+        if (_profilingEnabled)
+        {
+            _timeUpdateDef += _stepTimer.Elapsed.TotalMilliseconds;
+            _stepTimer.Restart();
+        }
         // Find out at what time can each tile, that is reachable without damage, be reached.
         (int col, int row) startTile = monster.TilePosition;
         int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
         (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
         int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
         CalculateWeakestPaths(startTile, monster, _defenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
+        if (_profilingEnabled)
+        {
+            _timeCalcPaths1 += _stepTimer.Elapsed.TotalMilliseconds;
+            _stepTimer.Restart();
+        }
 
         var allTargets = GetAllTargetStructures(monster);
         int visionRange = GetVisionRange(monster);
@@ -143,6 +243,12 @@ public class PathFindingManager
             }
         }
 
+        if (_profilingEnabled)
+        {
+            _timeTargetVis += _stepTimer.Elapsed.TotalMilliseconds;
+            _stepTimer.Restart();
+        }
+
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
         if (bestPrimary != null)
         {
@@ -150,9 +256,21 @@ public class PathFindingManager
             if (primaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
+                CachePath(monster, primaryPath);
                 var nextTile = primaryPath[Math.Min(1, primaryPath.Count - 1)];
+
+                if (_profilingEnabled)
+                {
+                    _timePrimary += _stepTimer.Elapsed.TotalMilliseconds;
+                }
                 return GetNextPositionIfSafe(monster, startTile, nextTile);
             }
+        }
+
+        if (_profilingEnabled)
+        {
+            _timePrimary += _stepTimer.Elapsed.TotalMilliseconds;
+            _stepTimer.Restart();
         }
 
         var bestSecondary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
@@ -162,9 +280,21 @@ public class PathFindingManager
             if (secondaryPath.Count > 0)
             {
                 RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
+                CachePath(monster, secondaryPath);
                 var nextTile = secondaryPath[Math.Min(1, secondaryPath.Count - 1)];
+
+                if (_profilingEnabled)
+                {
+                    _timeSecondary += _stepTimer.Elapsed.TotalMilliseconds;
+                }
                 return GetNextPositionIfSafe(monster, startTile, nextTile);
             }
+        }
+
+        if (_profilingEnabled)
+        {
+            _timeSecondary += _stepTimer.Elapsed.TotalMilliseconds;
+            _stepTimer.Restart();
         }
 
         for (int i = RandomTileMaxDistanceFromCenter; i >= 0; --i)
@@ -178,14 +308,49 @@ public class PathFindingManager
             var centerPath = ReconstructPath(startTile, randomCenterTile, previousTile, timeToReach, monster);
             if (centerPath.Count > 1)
             {
+                CachePath(monster, centerPath);
                 var nextTile = centerPath[1];
+
+                if (_profilingEnabled)
+                {
+                    _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
+                }
                 return GetNextPositionIfSafe(monster, startTile, nextTile);
             }
         }
 
         var next = GetRandomNeighborAsLastResort(startTile, monster);
-        
+
+        if (_profilingEnabled)
+        {
+            _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
+        }
         return GetNextPositionIfSafe(monster, startTile, next);
+    }
+
+    private void LogProfilingMetrics()
+    {
+        // Log every 10 seconds
+        if (_logTimer.ElapsedMilliseconds > 10000)
+        {
+            double total = _timeCache + _timeUpdateDef + _timeCalcPaths1 + _timeTargetVis + _timePrimary + _timeSecondary + _timeFallback;
+            double elapsedRealTime = _logTimer.ElapsedMilliseconds;
+            System.Console.WriteLine($"\n--- PathFinding Profiling ({_callCount} calls over {elapsedRealTime / 1000.0:F1}s) ---");
+            System.Console.WriteLine($"Total Time:      {total:F2} ms ({(total / elapsedRealTime * 100):F2}% of elapsed time)");
+            System.Console.WriteLine($"Cache Hit Rate:  {(_callCount > 0 ? (double)_cacheHitCount / _callCount * 100 : 0):F1}% ({_cacheHitCount}/{_callCount})");
+            System.Console.WriteLine($"Cached Path:     {_timeCache:F2} ms ({(total > 0 ? _timeCache/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"UpdateDefences:  {_timeUpdateDef:F2} ms ({(total > 0 ? _timeUpdateDef/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"CalcPaths 1:     {_timeCalcPaths1:F2} ms ({(total > 0 ? _timeCalcPaths1/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"Find Targets:    {_timeTargetVis:F2} ms ({(total > 0 ? _timeTargetVis/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"Best Primary:    {_timePrimary:F2} ms ({(total > 0 ? _timePrimary/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"Best Secondary:  {_timeSecondary:F2} ms ({(total > 0 ? _timeSecondary/total*100 : 0):F1}%)");
+            System.Console.WriteLine($"Fallback Center: {_timeFallback:F2} ms ({(total > 0 ? _timeFallback/total*100 : 0):F1}%)");
+
+            // Reset counters
+            _timeUpdateDef = 0; _timeCalcPaths1 = 0; _timeTargetVis = 0;
+            _timePrimary = 0; _timeSecondary = 0; _timeFallback = 0; _timeCache = 0; _callCount = 0; _cacheHitCount = 0;
+            _logTimer.Restart();
+        }
     }
 
     /// <summary>
@@ -195,6 +360,7 @@ public class PathFindingManager
     {
         UnregisterMonsterTarget(monster);
         _recentPath.Remove(monster);
+        _cachedPaths.Remove(monster);
     }
 
     /// <summary>
@@ -222,6 +388,7 @@ public class PathFindingManager
         _monsterToTargetDist.Clear();
         _defenders.Clear();
         _recentPath.Clear();
+        _cachedPaths.Clear();
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
