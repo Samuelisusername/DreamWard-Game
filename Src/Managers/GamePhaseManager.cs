@@ -25,6 +25,7 @@ public class GamePhaseManager
         int gained = sanityManager.AddSanityGainedFromNewDay();
         cardManager.GenerateDailyCards(DayCount);
         GamelabGame.Instance.MapScreenInstance?.SpawnSanityGainOverSheep(gained);
+        GamelabGame.Instance.MapScreenInstance?.ShowDayPopup(DayCount);
         AudioManager.PlayMusic("day_music");
         checkGameOver();
         mapManager.ResetFall();

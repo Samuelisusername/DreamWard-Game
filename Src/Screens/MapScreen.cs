@@ -69,6 +69,8 @@ public class MapScreen : GamelabGameScreen
     private (int col, int row) _hoverTile = (-1,-1);
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
+    private const float DayPopupDuration = 2f;
+    private const float DayPopupFadeStart = 1f;
     private Structure _hoveredStructure;
     private Texture2D _interfaceTexture;
     private Texture2D _dayInterfaceTexture;
@@ -160,6 +162,12 @@ public class MapScreen : GamelabGameScreen
         cardManager.GenerateDailyCards(day);
         cardRenderer.SetRestoredSavedSlot(_restoredSavedSlotThisDay);
         cardRenderer.CollapseExpanded();
+    }
+
+    public void ShowDayPopup(int day)
+    {
+        _dayPopupText = $"Day {day}";
+        _popupTimer = 0f;
     }
 
     private void RebuildButtonLayout()
@@ -276,6 +284,9 @@ public class MapScreen : GamelabGameScreen
         }
 
 
+
+        if (!string.IsNullOrEmpty(_dayPopupText) && _popupTimer < DayPopupDuration)
+            _popupTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         // Map update
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
@@ -744,8 +755,30 @@ public class MapScreen : GamelabGameScreen
         }
 
         if (_is_active_tutorial) DrawTutorialState(gameTime);
+        DrawDayPopup(vw, vh);
         ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
+    }
+
+    private void DrawDayPopup(int vw, int vh)
+    {
+        if (string.IsNullOrEmpty(_dayPopupText) || _popupTimer >= DayPopupDuration) return;
+
+        float fade = _popupTimer < DayPopupFadeStart
+            ? 1f
+            : 1f - (_popupTimer - DayPopupFadeStart) / (DayPopupDuration - DayPopupFadeStart);
+        float rise = _popupTimer < DayPopupFadeStart
+            ? 0f
+            : (_popupTimer - DayPopupFadeStart) / (DayPopupDuration - DayPopupFadeStart) * 60f;
+
+        float scale = 2.5f;
+        Vector2 size = _font.MeasureString(_dayPopupText) * scale;
+        Vector2 pos = new Vector2((vw - size.X) / 2f, vh * 0.25f - rise);
+
+        Color shadow = Color.Black * fade;
+        Color text = Color.White * fade;
+        spriteBatch.DrawString(_font, _dayPopupText, pos + new Vector2(2, 2), shadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, _dayPopupText, pos, text, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
     // ------------------------
