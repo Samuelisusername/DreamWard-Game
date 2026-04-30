@@ -56,6 +56,8 @@ public abstract class Structure : Entity
         _spriteBase?.Update(gameTime);
     }    
 
+    public Color? PreviewTint { get; set; }
+
     /// <summary>
     /// draws the entity
     /// </summary>
@@ -63,7 +65,7 @@ public abstract class Structure : Entity
     {
         if (_spriteTop == null) return;
         #if DEBUG
-        
+
         if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
         {
             _spriteTop.Color = Color.Red;
@@ -72,7 +74,10 @@ public abstract class Structure : Entity
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+        Color savedColor = _spriteTop.Color;
+        if (PreviewTint.HasValue) _spriteTop.Color = PreviewTint.Value;
         _spriteTop.Draw(spriteBatch, worldPos + (_localOffset * _spriteTop.Scale + offset), alpha);
+        if (PreviewTint.HasValue) _spriteTop.Color = savedColor;
     }
 
     /// <summary>
@@ -82,7 +87,7 @@ public abstract class Structure : Entity
     {
         if (_spriteBase == null) return;
         #if DEBUG
-        
+
         if(MapUtils.IsInBounds(TilePosition) && mapManager.Debug[TilePosition.Item1, TilePosition.Item2])
         {
             _spriteBase.Color = Color.Red;
@@ -91,7 +96,10 @@ public abstract class Structure : Entity
         #endif
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
+        Color savedColor = _spriteBase.Color;
+        if (PreviewTint.HasValue) _spriteBase.Color = PreviewTint.Value;
         _spriteBase.Draw(spriteBatch, worldPos + (_localOffset * _spriteBase.Scale + offset), alpha);
+        if (PreviewTint.HasValue) _spriteBase.Color = savedColor;
     }
 
     protected void SetAnimation(string animName)

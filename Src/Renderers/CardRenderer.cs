@@ -286,6 +286,33 @@ public class CardRenderer
 
     }
 
+    private static readonly Color PLACEMENT_OK  = new Color(0x11, 0x7a, 0x15);
+    private static readonly Color PLACEMENT_BAD = new Color(220, 60, 60);
+    private const float PLACEMENT_HIGHLIGHT_ALPHA = 0.45f;
+
+    private void DrawTileHighlight(SpriteBatch spriteBatch, MapManager mapManager,
+        (int col, int row) tile, Color color)
+    {
+        if (tile.col < 0 || tile.col >= mapManager.Columns ||
+            tile.row < 0 || tile.row >= mapManager.Rows) return;
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
+        Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+        spriteBatch.Draw(mask, pos, null, color * PLACEMENT_HIGHLIGHT_ALPHA, 0f,
+            Vector2.Zero, maskScale, SpriteEffects.None, 0f);
+    }
+
+    private void DrawPlacementHighlight(SpriteBatch spriteBatch, MapManager mapManager,
+        Structure structure, (int col, int row) tile, Color color)
+    {
+        if (structure is Tower tower)
+            DrawTowerRangePreview(spriteBatch, mapManager, tower, color);
+        else
+            DrawTileHighlight(spriteBatch, mapManager, tile, color);
+    }
+
     public void DrawPreview(
         SpriteBatch spriteBatch, CardManager cardManager,
         MapManager mapManager, (int col, int row) hoverTile)
@@ -299,11 +326,12 @@ public class CardRenderer
                 cardManager._previewStructure =
                     cardManager.GetStructureFromCard(cardManager._activeMapCard, hoverTile);
 
-            if (cardManager._previewStructure != null)
+            var preview = cardManager._previewStructure;
+            if (preview != null)
             {
-                DrawTransparentStructure(spriteBatch, cardManager._previewStructure);
-                if (cardManager._previewStructure is Tower t)
-                    DrawTowerRangePreview(spriteBatch, mapManager, t);
+                Color hl = mapManager.GetStructure(hoverTile) == null ? PLACEMENT_OK : PLACEMENT_BAD;
+                DrawPlacementHighlight(spriteBatch, mapManager, preview, hoverTile, hl);
+                DrawTransparentStructure(spriteBatch, preview, hl);
             }
             return;
         }
@@ -322,12 +350,15 @@ public class CardRenderer
                 {
                     var moving = cardManager._previewStructure
                         ?? mapManager.GetStructure(cardManager._selectedTile) as Structure;
-                    if (moving != null && target == null)
+                    if (moving != null)
                     {
+                        bool valid = target == null;
+                        Color hl = valid ? PLACEMENT_OK : PLACEMENT_BAD;
                         var old = moving.TilePosition;
                         moving.TilePosition = hoverTile;
-                        DrawTransparentStructure(spriteBatch, moving);
-                        if (moving is Tower tower) DrawTowerRangePreview(spriteBatch, mapManager, tower);
+                        DrawPlacementHighlight(spriteBatch, mapManager, moving, hoverTile, hl);
+                        if (valid)
+                            DrawTransparentStructure(spriteBatch, moving, hl);
                         moving.TilePosition = old;
                     }
                 }
@@ -426,10 +457,11 @@ public class CardRenderer
         }
     }
 
-    public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower)
+    public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower, Color? overrideColor = null)
     {
         if (tower == null) return;
-        Color rangeColor = new Color(247, 211, 79) * 0.45f;
+        Color baseColor = overrideColor ?? new Color(247, 211, 79);
+        Color rangeColor = baseColor * 0.45f;
 
         var mask = GetHexMask(spriteBatch.GraphicsDevice);
         Vector2 maskScale = new Vector2(
@@ -446,11 +478,14 @@ public class CardRenderer
         }
     }
 
-    private void DrawTransparentStructure(SpriteBatch spriteBatch, Structure structure)
+    private void DrawTransparentStructure(SpriteBatch spriteBatch, Structure structure, Color? tint = null)
     {
         if (structure == null) return;
+        var prev = structure.PreviewTint;
+        structure.PreviewTint = tint;
         structure.DrawBase(spriteBatch, alpha: 0.5f);
         structure.Draw(spriteBatch, alpha: 0.5f);
+        structure.PreviewTint = prev;
     }
 
     private void DrawBorder(SpriteBatch spriteBatch, Texture2D dummy, Rectangle rect, Color color, int t)
