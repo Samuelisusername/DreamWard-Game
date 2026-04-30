@@ -73,10 +73,25 @@ public class SniperTower : Tower
                 pendingHitTimer = projectileTravelTime;
                 totalDamage += damagePerSecond;
                 targetPos = targetGroup.GetInterpolatedWorldPosition();
+                switch (target.Type)
+                {
+                    case MonsterType.Regular:
+                        targetPos = (targetPos +  (new Vector2(45, 5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        break;
+                    case MonsterType.Flying:
+                        targetPos = (targetPos +  (new Vector2(20, 5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        break;
+                    case MonsterType.Small:
+                        targetPos = (targetPos +  (new Vector2(32, 25) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        break;
+                    case MonsterType.Big:
+                        targetPos = (targetPos +  (new Vector2(28, -5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        break;
+                }
                 //TODO: play anim here
                 attackCD = projectileTravelTime;
                 Vector2 startPos = mapManager.GetWorldPositionOfTile(TilePosition) + (_localOffset * _spriteTop.Scale) + (new Vector2(64, 55) * _spriteTop.Scale);
-                Vector2 endPos =  targetPos +  (new Vector2(45, 5) * mapManager.Scale);
+                Vector2 endPos =  (targetPos * mapManager.Scale) + mapManager.Offset;
                 Vector2 dir = endPos - startPos;
                 for (int i = 0; i < 50; i++)
                 {
@@ -126,6 +141,6 @@ public class SniperTower : Tower
         if (_spriteTop == null || attackCD <= TimeSpan.Zero || gamePhaseManager.IsDay) return;
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        spriteBatch.DrawLine(worldPos + (_localOffset * _spriteTop.Scale + offset) + (new Vector2(64, 55) * _spriteTop.Scale), targetPos +  (new Vector2(45, 5) * mapManager.Scale), Color.LightSkyBlue, 3);
+        spriteBatch.DrawLine(worldPos + (_localOffset * _spriteTop.Scale + offset) + (new Vector2(64, 55) * _spriteTop.Scale), (targetPos * mapManager.Scale) + mapManager.Offset, Color.LightSkyBlue, 3);
     }
 }

@@ -79,6 +79,21 @@ public abstract class MonsterGroup
     {
         int oldCount = Count;
         Vector2 worldPos = GetInterpolatedWorldPosition();
+        switch (MonsterType)
+        {
+            case MonsterType.Regular:
+                worldPos = worldPos +  (new Vector2(45, 5) * mapManager.Scale);
+                break;
+            case MonsterType.Flying:
+                worldPos = worldPos +  (new Vector2(20, 5) * mapManager.Scale);
+                break;
+            case MonsterType.Small:
+                worldPos = worldPos +  (new Vector2(32, 25) * mapManager.Scale);
+                break;
+            case MonsterType.Big:
+                worldPos = worldPos +  (new Vector2(28, -5) * mapManager.Scale);
+                break;
+        }
         Monsters.RemoveAll(m => m.IsDestroyed);
         if(Count <= 2 && oldCount > 2)
         {
@@ -90,7 +105,7 @@ public abstract class MonsterGroup
             {
                 ParticleManager.AddParticle(new Particle
                 {
-                    WorldPosition = ((worldPos + new Vector2(45, 5) * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
+                    WorldPosition = (worldPos - mapManager.Offset)/mapManager.Scale,
                     Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 150, (float)(Random.Shared.NextDouble() -0.5f) * 150),
                     LifeSpan = TimeSpan.FromSeconds(0.5),
                     Color = Color.Black

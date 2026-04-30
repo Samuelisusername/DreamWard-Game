@@ -72,7 +72,22 @@ public class AreaTower : Tower
         foreach (var group in activeBeamTargets)
         {
             if (group.IsEmpty) continue;
-            Vector2 endPos = group.GetInterpolatedWorldPosition() + (new Vector2(45, 5) * mapManager.Scale);
+            Vector2 endPos = group.GetInterpolatedWorldPosition();
+            switch (group.MonsterType)
+            {
+                case MonsterType.Regular:
+                    endPos = endPos +  (new Vector2(45, 5) * mapManager.Scale );
+                    break;
+                case MonsterType.Flying:
+                    endPos = endPos +  (new Vector2(20, 5) * mapManager.Scale );
+                    break;
+                case MonsterType.Small:
+                    endPos = endPos +  (new Vector2(32, 25) * mapManager.Scale );
+                    break;
+                case MonsterType.Big:
+                    endPos = endPos +  (new Vector2(28, -5) * mapManager.Scale );
+                    break;
+            }
             DrawWavyBeam(spriteBatch, startPos, endPos);
         }
     }
