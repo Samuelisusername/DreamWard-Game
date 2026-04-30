@@ -96,8 +96,15 @@ public class Meadow : Structure
     public void RemoveSheep()
     {
         HasSheep = false;
-        IsGrazed = true;
-        SetAnimation("meadowGrazed_idle");
+        if (IsDepleted)
+        {
+            IsGrazed = true;
+            SetAnimation("meadowGrazed_idle");
+        }
+        else
+        {
+            SetAnimation(_animNameBase);
+        }
     }
 
     public void PolymorphSheep()
