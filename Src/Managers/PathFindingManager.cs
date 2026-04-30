@@ -27,6 +27,7 @@ public class PathFindingManager
     private readonly int[,] _defenceStrength;
     private readonly int[,] _simplePathDefenceStrength;
     private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
+    private readonly int[,] _visited;
 
     /// <summary>
     /// Initializes a pathfinding manager bound to a map.
@@ -41,6 +42,7 @@ public class PathFindingManager
         _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
         _defenders = new Dictionary<(int, int), List<Entity>>();
+        _visited = new int[mapManager.Columns, mapManager.Rows];
     }
 
     /// <summary>
@@ -66,6 +68,7 @@ public class PathFindingManager
         {
             _monsterToTargetDist[monster] = 0;
         }
+        _visited[candidateTile.Item1, candidateTile.Item2] += VisitedPenalty;
         PushToRecentPath(monster, candidateTile);
         return candidateTile;
     }
@@ -219,6 +222,14 @@ public class PathFindingManager
         _monsterToTargetDist.Clear();
         _defenders.Clear();
         _recentPath.Clear();
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                _visited[col, row] = 0;
+            }
+        }
+
     }
 
     /// <summary>
@@ -233,7 +244,7 @@ public class PathFindingManager
             for (int row = 0; row < mapManager.Rows; row++)
             {
                 _defenceStrength[col, row] = MinDefenceStrength;
-                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength;
+                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength + _visited[col, row];
             }
         }
 
