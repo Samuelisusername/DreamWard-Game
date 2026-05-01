@@ -16,7 +16,6 @@ public class MapScreen : GamelabGameScreen
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
-    private CombatManager combatManager => GamelabGame.CombatManager;
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
@@ -45,6 +44,7 @@ public class MapScreen : GamelabGameScreen
     // Cards
     private SpriteFont _font;
     private Texture2D _dummy, _cardTexture, _sanityIconTexture, _dayIconTexture;
+    private Texture2D _hammerTexture;
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Navigation button
@@ -53,9 +53,13 @@ public class MapScreen : GamelabGameScreen
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
     private bool _offsetInitialized = false;
-    private int _cardStartY = 0;
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
+
+    // Hammer (destroy mode) toggle
+    private Rectangle _hammerBtn;
+    private bool _hammerBtnPressed = false;
+    private bool _hammerActive = false;
     
     private Rectangle _startNightBtn;
     private TimeSpan _startNightTime = TimeSpan.FromSeconds(1);
@@ -69,6 +73,8 @@ public class MapScreen : GamelabGameScreen
     private (int col, int row) _hoverTile = (-1,-1);
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
+    private const float DayPopupDuration = 2f;
+    private const float DayPopupFadeStart = 1f;
     private Structure _hoveredStructure;
     private Texture2D _interfaceTexture;
     private Texture2D _dayInterfaceTexture;
@@ -76,8 +82,11 @@ public class MapScreen : GamelabGameScreen
     private const double DOUBLE_CLICK_TIME = 300; // ms
     private int _restoredSavedSlotThisDay = -1;
     private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
-    private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
-    private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
+    private float SpriteScale => viewportAdapter.VirtualWidth / 640f;
+    private static readonly Rectangle FloatBtn        = new(0, 176, 80,  32);
+    private static readonly Rectangle FloatBtnPrs     = new(0, 208, 80,  32);
+    private static readonly Rectangle LongFloatBtn    = new(0, 240, 105, 32);
+    private static readonly Rectangle LongFloatBtnPrs = new(0, 272, 105, 32);
     private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
     private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
@@ -122,6 +131,7 @@ public class MapScreen : GamelabGameScreen
         _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
         _sanityIconTexture = Content.Load<Texture2D>("Sprites/sanity_icon_big");
         _dayIconTexture = Content.Load<Texture2D>("Sprites/day-and-night_icon");
+        _hammerTexture = GamelabGame.Instance.HammerTexture;
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
@@ -162,16 +172,28 @@ public class MapScreen : GamelabGameScreen
         cardRenderer.CollapseExpanded();
     }
 
+    public void ShowDayPopup(int day)
+    {
+        _dayPopupText = $"Day {day}";
+        _popupTimer = 0f;
+    }
+
     private void RebuildButtonLayout()
     {
         int vw = viewportAdapter.VirtualWidth;
         int vh = viewportAdapter.VirtualHeight;
-        _tutorial_btn = new Rectangle(vw - 240, 20, 220, 70);
-        _speedBtn = new Rectangle(vw - 240, 20, 220, 70);
+        _tutorial_btn = new Rectangle(vw - 260, 20, 240, 96);
+        _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
         if (!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory,_font, ref _cardStartY, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
+            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
         }
+        // Hammer (destroy mode) button: square, sits to the LEFT of the right-aligned button column
+        int hSize = Math.Max(_startNightBtn.Height, 56);
+        int hMargin = 12;
+        int hX = (_startNightBtn.Width > 0 ? _startNightBtn.X : vw - 20) - hSize - hMargin;
+        int hY = _startNightBtn.Height > 0 ? _startNightBtn.Y : vh - hSize - 20;
+        _hammerBtn = new Rectangle(hX, hY, hSize, hSize);
     }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
@@ -184,7 +206,10 @@ public class MapScreen : GamelabGameScreen
         AudioManager.PlayMusic(gamePhaseManager.IsDay ? "day_music" : "night_music");
                 
         GamelabGame.IsHovering = false;
-        Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+        // The hammer cursor takes over while destroy mode is active and the mouse is over the map.
+        Vector2 mousePosForCursor = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+        GamelabGame.UseHammerCursor = _hammerActive && !_hammerBtn.Contains(mousePosForCursor);
+        Vector2 mousePos = mousePosForCursor;
         // ParticleManager.AddParticle(new Particle
         // {
         //     WorldPosition = (mousePos - mapManager.Offset)/mapManager.Scale,
@@ -277,6 +302,9 @@ public class MapScreen : GamelabGameScreen
 
 
 
+        if (!string.IsNullOrEmpty(_dayPopupText) && _popupTimer < DayPopupDuration)
+            _popupTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         // Map update
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
         GameTime scaledGameTime = new GameTime(gameTime.TotalGameTime, scaledElapsed);
@@ -304,7 +332,7 @@ public class MapScreen : GamelabGameScreen
             }
             //set cursor state
             if(!gamePhaseManager.IsInTransition){
-                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))
+                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))
                     GamelabGame.IsHovering = true;
                     
                 if (_showInventory)
@@ -363,6 +391,7 @@ public class MapScreen : GamelabGameScreen
                 _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
                 _tutorial_btn_pressed = _tutorial_btn.Contains(pos);
                 _speedBtnPressed      = _speedBtn.Contains(pos);
+                _hammerBtnPressed     = _hammerBtn.Contains(pos);
                 _oldPos       = pos;
                 _clickStarted = true;
 
@@ -402,7 +431,7 @@ public class MapScreen : GamelabGameScreen
             }
 
             //set the hovered tile
-            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
+            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
@@ -432,7 +461,7 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = false;
+                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = _hammerBtnPressed = false;
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
                     mapManager.HandleMapClick(mousePos);
@@ -593,9 +622,33 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false;
                         return;
                     }
+                    if (_hammerBtn.Contains(mousePos))
+                    {
+                        _hammerActive = !_hammerActive;
+                        if (_hammerActive)
+                        {
+                            // Cancel any active map card so the two modes don't conflict
+                            cardManager._activeMapCard = null;
+                            cardManager._previewStructure = null;
+                            cardManager._selectedTile = (-1, -1);
+                        }
+                        _clickStarted = false;
+                        return;
+                    }
 
                     if (!mouseOverUI)
                     {
+                        if (_hammerActive)
+                        {
+                            (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
+                            if (tile.col >= 0 && IsHammerDestroyable(mapManager.GetStructure(tile)))
+                            {
+                                mapManager.RemoveStructure(tile);
+                            }
+                            _clickStarted = false;
+                            _isDrag = false;
+                            return;
+                        }
                         if (cardManager._activeMapCard != null)
                         {
                             if (cardManager.HandleMapCardUse(mapManager, mousePos))
@@ -697,6 +750,22 @@ public class MapScreen : GamelabGameScreen
             cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
         }
 
+        // Hammer (destroy mode): highlight every player-placed structure tile in yellow
+        if (_hammerActive)
+        {
+            Color hammerHighlight = Color.Yellow;
+            for (int col = 0; col < mapManager.Columns; col++)
+            {
+                for (int row = 0; row < mapManager.Rows; row++)
+                {
+                    if (IsHammerDestroyable(mapManager.GetStructure((col, row))))
+                    {
+                        cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), hammerHighlight);
+                    }
+                }
+            }
+        }
+
         spriteBatch.End();
 
         SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
@@ -736,6 +805,7 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
             DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
             DrawButton(_startNightBtn, "Start night", false, (float)(_elapsedStartNightTime/_startNightTime));
+            DrawHammerButton();
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
@@ -744,8 +814,30 @@ public class MapScreen : GamelabGameScreen
         }
 
         if (_is_active_tutorial) DrawTutorialState(gameTime);
+        DrawDayPopup(vw, vh);
         ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
+    }
+
+    private void DrawDayPopup(int vw, int vh)
+    {
+        if (string.IsNullOrEmpty(_dayPopupText) || _popupTimer >= DayPopupDuration) return;
+
+        float fade = _popupTimer < DayPopupFadeStart
+            ? 1f
+            : 1f - (_popupTimer - DayPopupFadeStart) / (DayPopupDuration - DayPopupFadeStart);
+        float rise = _popupTimer < DayPopupFadeStart
+            ? 0f
+            : (_popupTimer - DayPopupFadeStart) / (DayPopupDuration - DayPopupFadeStart) * 60f;
+
+        float scale = 2.5f;
+        Vector2 size = _font.MeasureString(_dayPopupText) * scale;
+        Vector2 pos = new Vector2((vw - size.X) / 2f, vh * 0.25f - rise);
+
+        Color shadow = Color.Black * fade;
+        Color text = Color.White * fade;
+        spriteBatch.DrawString(_font, _dayPopupText, pos + new Vector2(2, 2), shadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        spriteBatch.DrawString(_font, _dayPopupText, pos, text, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
     // ------------------------
@@ -1291,43 +1383,53 @@ public class MapScreen : GamelabGameScreen
 
 
 
+    private Rectangle PickFloatSrc(Rectangle dest, bool pressed)
+    {
+        bool wide = (float)dest.Width / dest.Height > FloatBtn.Width / (float)FloatBtn.Height;
+        return wide ? (pressed ? LongFloatBtnPrs : LongFloatBtn) : (pressed ? FloatBtnPrs : FloatBtn);
+    }
+
+    private Rectangle UniformDest(Rectangle rect, Rectangle src)
+    {
+        float scale = rect.Width / (float)src.Width;
+        int h = (int)(src.Height * scale);
+        return new Rectangle(rect.X, rect.Center.Y - h / 2, rect.Width, h);
+    }
+
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
-        var src = pressed ? BtnPressed : BtnNormal;
+        Rectangle src = PickFloatSrc(rect, pressed);
+        float scale = SpriteScale;
+        int drawW = (int)(src.Width  * scale);
+        int drawH = (int)(src.Height * scale);
+        Rectangle drawDest = new Rectangle(rect.Center.X - drawW / 2, rect.Center.Y - drawH / 2, drawW, drawH);
+
         if(progress > 0)
-        {   
+        {
             spriteBatch.End();
-            // 1. Calculate where the progress "line" is in the texture atlas
-            // We find the X position in pixels, then divide by texture width to get 0.0 - 1.0
             float progressWidthInPixels = src.X + (src.Width * progress);
-            float uvThreshold = progressWidthInPixels / (float)InterfaceTexture.Width;
+            float uvThreshold = progressWidthInPixels / InterfaceTexture.Width;
 
-            // 2. Set the Shader Parameters
             GamelabGame.Instance.LoadingShader.Parameters["ProgressThreshold"].SetValue(uvThreshold);
-            GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f)); // 50% dark
-
-            // 3. Draw using the effect
+            GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
 
             spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
                         samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
-            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
             spriteBatch.End();
             spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
-
-            // Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
-            // Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
-            // spriteBatch.Draw(InterfaceTexture, progressDst, progressSrc, Color.Black * 0.4f);
         }
         else
         {
-            spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
+            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
         }
         var size = _font.MeasureString(text);
-        float sc = Math.Min(rect.Width / size.X * 0.6f, rect.Height / size.Y * 0.6f);
+        float sc = Math.Min(drawW / size.X * 0.6f, drawH / size.Y * 0.6f);
+        float pressOffset = pressed ? scale : 0f;
         spriteBatch.DrawString(_font, text,
-            new Vector2(rect.Center.X - size.X * sc * 0.5f,
-                        rect.Center.Y - size.Y * sc * 0.5f),
+            new Vector2(drawDest.Center.X - size.X * sc * 0.5f,
+                        drawDest.Center.Y - size.Y * sc * 0.5f + pressOffset),
             COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
     }
 
@@ -1345,6 +1447,40 @@ public class MapScreen : GamelabGameScreen
             _lastClickTime = now;
         }
         return false;
+    }
+
+    /// <summary>
+    /// True if the hammer (destroy mode) can remove this structure.
+    /// Mirrors the existing destroy card rule: structure must be CanMove and not a VoidTile.
+    /// Excludes Sheep tile, Tent, natural Meadow, and trees.
+    /// </summary>
+    private static bool IsHammerDestroyable(Structure s)
+    {
+        if (s == null) return false;
+        if (s is VoidTile) return false;
+        return s.CanMove;
+    }
+
+    private void DrawHammerButton()
+    {
+        // Background plate: pressed when held or active (selected = indented + grayed)
+        var src = (_hammerActive || _hammerBtnPressed) ? FloatBtnPrs : FloatBtn;
+        Rectangle hammerDest = UniformDest(_hammerBtn, src);
+        spriteBatch.Draw(InterfaceTexture, hammerDest, src, Color.White);
+
+        // Hammer overlay, centered with a small inset
+        if (_hammerTexture != null)
+        {
+            int inset = Math.Max(6, _hammerBtn.Width / 8);
+            Rectangle overlay = new Rectangle(
+                _hammerBtn.X + inset,
+                _hammerBtn.Y + inset,
+                _hammerBtn.Width  - inset * 2,
+                _hammerBtn.Height - inset * 2);
+            // Gray out when active (selected); full color otherwise
+            Color tint = _hammerActive ? new Color(140, 140, 140) : Color.White;
+            spriteBatch.Draw(_hammerTexture, overlay, null, tint);
+        }
     }
 
     private void ToggleActiveCard(CardManager cm, Card card)

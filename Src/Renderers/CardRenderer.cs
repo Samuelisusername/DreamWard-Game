@@ -13,22 +13,22 @@ public class CardRenderer
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Piercer of Veils         \nTargets one nightmare     \nLong range burst damage" },
-        { "aoe",          "Banisher of Horrors      \nTargets all nightmares    \nShort range burn damage" },
-        { "dreamcatcher", "Catcher of Dreams        \nBlock all nightmares      \nIncluding flying ones" },
-        { "fence",        "Warden of Thresholds     \nBlock walking nightmares" },
-        { "meadow",       "Meadow of Slumber        \nGain more sanity          \nStronger next to sheep" },
-        { "void",         "Absence of Field         \nBlock walking nightmares  \nCannot be removed" },
-        { "spikes",       "Bed of Thorns            \nHurts walking nightmares" },
-        { "decoy",        "Lure of Phantoms         \nLures nightmares" },
-        { "buff",         "Kindle of Resolve        \nRepels nightmares" },
-        { "shuffle",      "Shuffler of Fates        \nShuffles build cards" },
-        { "discount",     "Discounter of Burdens    \nNext card purchased gets  \na discount" },
-        { "top3",         "Choice of Illusions      \nSave a card for tomorrow" },
-        { "discard",      "Burning of Hands         \nDiscard a card            \nGet a new card" },
-        { "polymorph",    "Vermin of Shadows        \nTurn sheep to rats        \nIgnored by nightmares " },
-        { "move",         "Shifter of Roots         \nMove a structure" },
-        { "destroy",      "Forgetter of Visions     \nDestroy a structure" },
+        { "sniper",       "Piercer of Veils         \n\nTargets one nightmare     \nLong range burst damage" },
+        { "aoe",          "Banisher of Horrors      \n\nTargets all nightmares    \nShort range burn damage" },
+        { "dreamcatcher", "Catcher of Dreams        \n\nBlock all nightmares      \nIncluding flying ones" },
+        { "fence",        "Warden of Thresholds     \n\nBlock walking nightmares" },
+        { "meadow",       "Meadow of Slumber        \n\nGain more sanity          \nStronger next to sheep" },
+        { "void",         "Absence of Field         \n\nBlock walking nightmares  \nCannot be removed" },
+        { "spikes",       "Bed of Thorns            \n\nHurts walking nightmares" },
+        { "decoy",        "Lure of Phantoms         \n\nLures nightmares" },
+        { "buff",         "Kindle of Resolve        \n\nRepels nightmares" },
+        { "shuffle",      "Shuffler of Fates        \n\nShuffles build cards" },
+        { "discount",     "Discounter of Burdens    \n\nNext card purchased gets  \na discount" },
+        { "top3",         "Choice of Illusions      \n\nSave a card for tomorrow" },
+        { "discard",      "Burning of Hands         \n\nDiscard a card            \nGet a new card" },
+        { "polymorph",    "Vermin of Shadows        \n\nTurn sheep to rats        \nIgnored by nightmares " },
+        { "move",         "Shifter of Roots         \n\nMove a structure" },
+        { "destroy",      "Forgetter of Visions     \n\nDestroy a structure" },
     };
 
     private const int CARD_W       = 128*3/2;
@@ -197,12 +197,20 @@ public class CardRenderer
         }
 
         float ty = panelY + bigCard + 14;
-        float lx = panelX + 8;
+        float lx = panelX + 20;
         float lineSpacing = font.LineSpacing * textSc;
 
-        foreach (var line in desc.Split('\n'))
+        var descLinesArr = desc.Split('\n');
+        for (int i = 0; i < descLinesArr.Length; i++)
         {
+            var line = descLinesArr[i];
             spriteBatch.DrawString(font, line, new Vector2(lx, ty), COLOR_D, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
+            if (i == 0)
+            {
+                Vector2 titleSize = font.MeasureString(line.TrimEnd()) * textSc;
+                int underlineY = (int)(ty + titleSize.Y + 1);
+                spriteBatch.Draw(dummy, new Rectangle((int)lx, underlineY, (int)titleSize.X, 2), COLOR_D);
+            }
             ty += lineSpacing;
         }
 
@@ -254,36 +262,66 @@ public class CardRenderer
         ty += 6;
     }
 
-    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, SpriteFont font, ref int cardStartY, ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn)
+    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn)
     {
-        int marginRight = 20, spacing = 12;
+        // Fixed size matching float_button sprite at 3×
+        // so PickFloatSrc uses the regular (non-long) variant and the right
+        // edge sits 20 px from the screen edge, matching the tutorial button.
+        int margin = 20, spacing = 12;
+        int btnW = 240, btnH = 96;
+        int x = screenW - btnW - margin;
 
-        // measure all texts first
-        Vector2 t1 = font.MeasureString("Show Cards");
-        Vector2 t2 = font.MeasureString("Tower Range");
-        Vector2 t3 = font.MeasureString("Start Night (Space)");
+        int y3 = screenH - btnH - margin;
+        int y2 = y3 - btnH - spacing;
+        int y1 = y2 - btnH - spacing;
 
-        // dynamic widths (shared column = max width)
-        int btnW = (int)Math.Max(t1.X, Math.Max(t2.X, t3.X)) + 5;
+        showCardsBtn  = new Rectangle(x, y1, btnW, btnH);
+        towerRangeBtn = new Rectangle(x, y2, btnW, btnH);
+        nightBtn      = new Rectangle(x, y3, btnW, btnH);
+    }
 
-        // dynamic heights (optional, usually same font so can unify)
-        int btnH1 = (int)t1.Y + 10;
-        int btnH2 = (int)t2.Y + 10;
-        int btnH3 = (int)t3.Y + 10;
+    private static readonly Color PLACEMENT_OK  = new Color(0x11, 0x7a, 0x15);
+    private static readonly Color PLACEMENT_BAD = new Color(220, 60, 60);
+    private const float PLACEMENT_HIGHLIGHT_ALPHA = 0.45f;
 
-        // base Y from bottom
-        int y3 = screenH - btnH3 - marginRight;
-        int y2 = y3 - btnH2 - spacing;
-        int y1 = y2 - btnH1 - spacing;
+    /// <summary>
+    /// Public hex-tile highlight (single tile). Used by external callers like the hammer/destroy mode.
+    /// </summary>
+    public void DrawTileHighlightPublic(SpriteBatch spriteBatch, MapManager mapManager,
+        (int col, int row) tile, Color color, float alpha = PLACEMENT_HIGHLIGHT_ALPHA)
+    {
+        if (tile.col < 0 || tile.col >= mapManager.Columns ||
+            tile.row < 0 || tile.row >= mapManager.Rows) return;
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
+        Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+        spriteBatch.Draw(mask, pos, null, color * alpha, 0f,
+            Vector2.Zero, maskScale, SpriteEffects.None, 0f);
+    }
 
-        // right alignment X (shared for all)
-        int x = screenW - btnW - marginRight;
+    private void DrawTileHighlight(SpriteBatch spriteBatch, MapManager mapManager,
+        (int col, int row) tile, Color color)
+    {
+        if (tile.col < 0 || tile.col >= mapManager.Columns ||
+            tile.row < 0 || tile.row >= mapManager.Rows) return;
+        var mask = GetHexMask(spriteBatch.GraphicsDevice);
+        Vector2 maskScale = new Vector2(
+            mapManager.TileWidth / HEX_MASK_W,
+            (HEX_MASK_H * mapManager.Scale.Y) / HEX_MASK_H);
+        Vector2 pos = mapManager.GetWorldPositionOfTile(tile);
+        spriteBatch.Draw(mask, pos, null, color * PLACEMENT_HIGHLIGHT_ALPHA, 0f,
+            Vector2.Zero, maskScale, SpriteEffects.None, 0f);
+    }
 
-        // assign buttons
-        showCardsBtn   = new Rectangle(x, y1, btnW, btnH1);
-        towerRangeBtn  = new Rectangle(x, y2, btnW, btnH2);
-        nightBtn       = new Rectangle(x, y3, btnW, btnH3);
-
+    private void DrawPlacementHighlight(SpriteBatch spriteBatch, MapManager mapManager,
+        Structure structure, (int col, int row) tile, Color color)
+    {
+        if (structure is Tower tower)
+            DrawTowerRangePreview(spriteBatch, mapManager, tower, color);
+        else
+            DrawTileHighlight(spriteBatch, mapManager, tile, color);
     }
 
     public void DrawPreview(
@@ -299,11 +337,12 @@ public class CardRenderer
                 cardManager._previewStructure =
                     cardManager.GetStructureFromCard(cardManager._activeMapCard, hoverTile);
 
-            if (cardManager._previewStructure != null)
+            var preview = cardManager._previewStructure;
+            if (preview != null)
             {
-                DrawTransparentStructure(spriteBatch, cardManager._previewStructure);
-                if (cardManager._previewStructure is Tower t)
-                    DrawTowerRangePreview(spriteBatch, mapManager, t);
+                Color hl = mapManager.GetStructure(hoverTile) == null ? PLACEMENT_OK : PLACEMENT_BAD;
+                DrawPlacementHighlight(spriteBatch, mapManager, preview, hoverTile, hl);
+                DrawTransparentStructure(spriteBatch, preview, hl);
             }
             return;
         }
@@ -322,12 +361,15 @@ public class CardRenderer
                 {
                     var moving = cardManager._previewStructure
                         ?? mapManager.GetStructure(cardManager._selectedTile) as Structure;
-                    if (moving != null && target == null)
+                    if (moving != null)
                     {
+                        bool valid = target == null;
+                        Color hl = valid ? PLACEMENT_OK : PLACEMENT_BAD;
                         var old = moving.TilePosition;
                         moving.TilePosition = hoverTile;
-                        DrawTransparentStructure(spriteBatch, moving);
-                        if (moving is Tower tower) DrawTowerRangePreview(spriteBatch, mapManager, tower);
+                        DrawPlacementHighlight(spriteBatch, mapManager, moving, hoverTile, hl);
+                        if (valid)
+                            DrawTransparentStructure(spriteBatch, moving, hl);
                         moving.TilePosition = old;
                     }
                 }
@@ -426,10 +468,11 @@ public class CardRenderer
         }
     }
 
-    public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower)
+    public void DrawTowerRangePreview(SpriteBatch spriteBatch, MapManager mapManager, Tower tower, Color? overrideColor = null)
     {
         if (tower == null) return;
-        Color rangeColor = new Color(247, 211, 79) * 0.45f;
+        Color baseColor = overrideColor ?? new Color(247, 211, 79);
+        Color rangeColor = baseColor * 0.45f;
 
         var mask = GetHexMask(spriteBatch.GraphicsDevice);
         Vector2 maskScale = new Vector2(
@@ -446,11 +489,14 @@ public class CardRenderer
         }
     }
 
-    private void DrawTransparentStructure(SpriteBatch spriteBatch, Structure structure)
+    private void DrawTransparentStructure(SpriteBatch spriteBatch, Structure structure, Color? tint = null)
     {
         if (structure == null) return;
+        var prev = structure.PreviewTint;
+        structure.PreviewTint = tint;
         structure.DrawBase(spriteBatch, alpha: 0.5f);
         structure.Draw(spriteBatch, alpha: 0.5f);
+        structure.PreviewTint = prev;
     }
 
     private void DrawBorder(SpriteBatch spriteBatch, Texture2D dummy, Rectangle rect, Color color, int t)

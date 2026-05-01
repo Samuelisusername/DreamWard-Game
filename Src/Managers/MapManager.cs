@@ -152,7 +152,9 @@ public class MapManager
         }
         
         FillRandomly();
-        Scale = new Vector2(1, 1);
+        Scale = new Vector2(2.5f, 2.5f);
+        foreach (MonsterGroupContainer container in MonsterContainers)
+            container.SetScale(Scale);
         MapUtils.Setup(Columns,Rows);
     }
     
@@ -486,12 +488,13 @@ public class MapManager
         Structure existing = Structures[pos.col, pos.row];
         if (existing != null)
         {
-            Structure incoming = cardManager.GetStructureFromCard(card, pos);
-            if (incoming != null && existing.GetType() == incoming.GetType() && existing.CurrentHealth < existing.MaxHealth)
-            {
-                existing.Heal(existing.MaxHealth);
-                return true;
-            }
+            // Heal-on-replace disabled:
+            // Structure incoming = cardManager.GetStructureFromCard(card, pos);
+            // if (incoming != null && existing.GetType() == incoming.GetType() && existing.CurrentHealth < existing.MaxHealth)
+            // {
+            //     existing.Heal(existing.MaxHealth);
+            //     return true;
+            // }
             Console.WriteLine("Tile already occupied!");
             AudioManager.Play("sheep_baa");
             return false;

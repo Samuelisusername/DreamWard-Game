@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -14,10 +15,11 @@ public class StartScreen : GamelabGameScreen
     private Texture2D _interfaceTexture;
     private Texture2D _dayInterfaceTexture;
     private Texture2D InterfaceTexture => IsDay ? _dayInterfaceTexture : _interfaceTexture;
+    private float SpriteScale => virtualScreenSize.X / 640f;
+    private TextureAtlas InterfaceAtlas => GamelabGame.textureAtlas[IsDay ? "day_interface" : "interface"];
+    private Rectangle Region(string name) => InterfaceAtlas.GetRegion(name + "0").SourceRectangle;
     private Rectangle[] _buttons;
     private Rectangle _volumeBar;
-    private static readonly Rectangle BtnNormal  = new(0, 176, 80, 32); // button_normal_map
-    private static readonly Rectangle BtnPressed = new(0, 208, 80, 32); // button_pressed_map
 
     // Colors
     private readonly Color _bgColor = new(0x85, 0x8f, 0x60);  //new Color(113, 137, 92);
@@ -33,7 +35,7 @@ public class StartScreen : GamelabGameScreen
         ? new(0x29, 0x24, 0x10)           // dark text (day)
         : new Color(0xd6, 0xd6, 0xd6);       // light text (night)
 
-    private string[] _buttonLabels = { "Start New Game", "Continue Game", "How to Play", "Settings", "Quit Game" };
+    private string[] _buttonLabels = { "New Game", "Continue", "How to Play", "Settings", "Quit Game" };
     private string _howToPlayText =
     @" Welcome to DreamWard!
     - Protect yourself and your sheep.
@@ -77,12 +79,13 @@ public class StartScreen : GamelabGameScreen
         {
             _buttons = new Rectangle[_buttonLabels.Length];
 
-            int btnWidth = w / 5;    // width of normal buttons
-            int btnHeight = h / 12;  // height of normal buttons
-            int spacingX = w / 50 - 50;   // horizontal spacing
-            int spacingY = h / 20;   // vertical spacing
-            int startX = (w - (btnWidth * 2 + spacingX)) / 2 + 10;
-            int startY = h / 3 + 50;
+            var btnSrc    = Region("button_normal");
+            int btnWidth  = (int)(btnSrc.Width  * SpriteScale);
+            int btnHeight = (int)(btnSrc.Height * SpriteScale);
+            int spacingX  = (int)(10 * SpriteScale);
+            int spacingY  = (int)(8  * SpriteScale);
+            int startX = (w - (btnWidth * 2 + spacingX)) / 2;
+            int startY = h / 2 - 2 * btnHeight / 2 - spacingY;
 
             // Top row: Start, Continue
             _buttons[0] = new Rectangle(startX, startY, btnWidth, btnHeight);                 // Start
@@ -127,7 +130,7 @@ public class StartScreen : GamelabGameScreen
                 {
                     Rectangle btnRect = _buttons[i];
                     string label = _buttonLabels[i];
-                    bool disabled = label == "Continue Game" && !Game.IsGameInProgress;
+                    bool disabled = label == "Continue" && !Game.IsGameInProgress;
 
                     if (btnRect.Contains(mousePos))
                     {
@@ -176,11 +179,11 @@ public class StartScreen : GamelabGameScreen
     {
         switch (label)
         {
-            case "Continue Game":
+            case "Continue":
                 if (Game.MapScreenInstance != null)
                     Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
-            case "Start New Game":
+            case "New Game":
                 Game.ResetGame();
                 Game.MapScreenInstance = new MapScreen(Game);
                 Game.IsGameInProgress = true;
@@ -235,7 +238,7 @@ public class StartScreen : GamelabGameScreen
         {
             string label = _buttonLabels[idx];
 
-            bool disabled = label == "Continue Game" && !Game.IsGameInProgress;
+            bool disabled = label == "Continue" && !Game.IsGameInProgress;
             bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && btnRect.Contains(mousePos);
 
             if (disabled)
@@ -252,27 +255,32 @@ public class StartScreen : GamelabGameScreen
 
         Vector2 textSize = _font.MeasureString(referenceText);
 
-        float scaleX = rect.Width / textSize.X * 0.7f;
-        float scaleY = rect.Height / textSize.Y * 0.7f;
+        float scaleX = rect.Width / textSize.X * 1;
+        float scaleY = rect.Height / textSize.Y * 1;
 
         return MathF.Min(scaleX, scaleY);
     }
 
-    private void DrawButton(Rectangle rect, string text, bool pressed = false,Rectangle? normalSrc = null, Rectangle? pressedSrc = null)
+    private Rectangle PickMenuSrc(Rectangle dest, bool pressed, string normalName = null, string pressedName = null)
     {
-        Rectangle sourceRect;
+        if (normalName != null && pressedName != null)
+            return Region(pressed ? pressedName : normalName);
+        var normal = Region("button_normal");
+        bool wide = (float)dest.Width / dest.Height > normal.Width / (float)normal.Height;
+        wide = false;
+        if (pressed) return wide ? Region("long_button_pressed") : Region("button_pressed");
+        return wide ? Region("long_button") : Region("button_normal");
+    }
 
-        if (normalSrc.HasValue && pressedSrc.HasValue)
-            sourceRect = pressed ? pressedSrc.Value : normalSrc.Value;
-        else
-            sourceRect = pressed
-                ? new Rectangle(0, 80, 80, 32)
-                : new Rectangle(0, 48, 80, 32);
+    private void DrawButton(Rectangle rect, string text, bool pressed = false, string normalRegion = null, string pressedRegion = null)
+    {
+        Rectangle sourceRect = PickMenuSrc(rect, pressed, normalRegion, pressedRegion);
+        float scale = SpriteScale;
+        int drawW = (int)(sourceRect.Width  * scale);
+        int drawH = (int)(sourceRect.Height * scale);
+        Vector2 drawPos = new Vector2(rect.Center.X - drawW / 2f, rect.Center.Y - drawH / 2f);
 
-        float scaleX = rect.Width / (float)sourceRect.Width;
-        float scaleY = rect.Height / (float)sourceRect.Height;
-
-        spriteBatch.Draw(InterfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.White, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
+        spriteBatch.Draw(InterfaceTexture, drawPos, sourceRect, Color.White, 0f, Vector2.Zero, new Vector2(scale, scale), SpriteEffects.None, 0f);
 
         float textScale;
 
@@ -285,20 +293,23 @@ public class StartScreen : GamelabGameScreen
         {
             Vector2 textSize = _font.MeasureString(text);
             textScale = MathF.Min(rect.Width / textSize.X * 0.6f, rect.Height / textSize.Y * 0.6f);
-            _buttonTextColor1 = TextColor;
+            _buttonTextColor1 = _buttonTextColor;
         }
         Vector2 textSizeFinal = _font.MeasureString(text);
-        Vector2 textPos = new Vector2(rect.Center.X - textSizeFinal.X * textScale / 2, rect.Center.Y - textSizeFinal.Y * textScale / 2);
+        float pressOffset = pressed ? SpriteScale : 0f;
+        Vector2 textPos = new Vector2(rect.Center.X - textSizeFinal.X * textScale / 2, rect.Center.Y - textSizeFinal.Y * textScale / 2 + pressOffset);
         spriteBatch.DrawString(_font, text, textPos, _buttonTextColor1, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
     }
 
     private void DrawButtonDisabled(Rectangle rect, string text)
     {
-        Rectangle sourceRect = new Rectangle(0, 48, 80, 32);
-        float scaleX = rect.Width / (float)sourceRect.Width;
-        float scaleY = rect.Height / (float)sourceRect.Height;
+        Rectangle sourceRect = PickMenuSrc(rect, false);
+        float scale = SpriteScale;
+        int drawW = (int)(sourceRect.Width  * scale);
+        int drawH = (int)(sourceRect.Height * scale);
+        Vector2 drawPos = new Vector2(rect.Center.X - drawW / 2f, rect.Center.Y - drawH / 2f);
 
-        spriteBatch.Draw(InterfaceTexture, new Vector2(rect.X, rect.Y), sourceRect, Color.Gray * 0.6f, 0f, Vector2.Zero, new Vector2(scaleX, scaleY), SpriteEffects.None, 0f);
+        spriteBatch.Draw(InterfaceTexture, drawPos, sourceRect, Color.Gray * 0.6f, 0f, Vector2.Zero, new Vector2(scale, scale), SpriteEffects.None, 0f);
 
         float textScale = GetMenuButtonTextScale(rect);
         Vector2 textSize = _font.MeasureString(text);
@@ -313,12 +324,9 @@ public class StartScreen : GamelabGameScreen
 
         Rectangle sourceRect = new Rectangle(204, 35, 282, 308);
 
-        float scaleX = (vw * 1f) / sourceRect.Width;
-        float scaleY = (vh * 1f) / sourceRect.Height;
-        float scale = Math.Min(scaleX, scaleY);
-
+        float scale = SpriteScale;
         Vector2 size = new Vector2(sourceRect.Width * scale, sourceRect.Height * scale);
-        Vector2 pos = new Vector2((vw - size.X) / 2, (vh - size.Y) / 2);
+        Vector2 pos  = new Vector2((vw - size.X) / 2, (vh - size.Y) / 2);
         Rectangle destRect = new Rectangle((int)pos.X, (int)pos.Y, (int)size.X, (int)size.Y);
 
         spriteBatch.Draw(InterfaceTexture, destRect, sourceRect, Color.White);
@@ -339,7 +347,7 @@ public class StartScreen : GamelabGameScreen
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed, BtnNormal, BtnPressed);
+        DrawButton(_backButton, "Back", pressed, "float_button", "float_button_pressed");
     }
 
     private void DrawSettings()
@@ -372,7 +380,7 @@ public class StartScreen : GamelabGameScreen
 
         Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
         bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed, BtnNormal, BtnPressed);
+        DrawButton(_backButton, "Back", pressed, "float_button", "float_button_pressed");
     }
 
     private void DrawRoundedRectangle(Rectangle rect, int radius, Color fillColor, Color borderColor)
