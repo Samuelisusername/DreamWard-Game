@@ -82,7 +82,6 @@ public class MapScreen : GamelabGameScreen
     private Texture2D _dayInterfaceTexture;
     private double _lastClickTime = 0;
     private const double DOUBLE_CLICK_TIME = 300; // ms
-    private int _restoredSavedSlotThisDay = -1;
     private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private float SpriteScale => viewportAdapter.VirtualWidth / 640f;
     private static readonly Rectangle FloatBtn        = new(0, 176, 80,  32);
@@ -168,9 +167,7 @@ public class MapScreen : GamelabGameScreen
 
     public void StartNewDay(int day)
     {
-        _restoredSavedSlotThisDay = cardManager.SavedSlotIndex;
         cardManager.GenerateDailyCards(day);
-        cardRenderer.SetRestoredSavedSlot(_restoredSavedSlotThisDay);
         cardRenderer.CollapseExpanded();
     }
 
@@ -541,20 +538,6 @@ public class MapScreen : GamelabGameScreen
                             bool isDouble = IsDoubleClick(mouse, gameTime);
                             if (card.Type == CardType.Build)
                             {
-                                if (cardManager.PendingStackAction != null && slot != null)
-                                {
-                                    if (cardManager.PendingStackAction == CardEffect.SaveCard)
-                                    {
-                                        cardManager.SaveCardFromSlot(slot);
-                                    }
-                                    else if (cardManager.PendingStackAction == CardEffect.Discard)
-                                    {
-                                        cardManager.DiscardCardFromSlot(slot, gamePhaseManager.DayCount);
-                                    }
-                                    cardManager.PendingStackAction = null;
-                                    _clickStarted = false;
-                                    return;
-                                }
                                 if (slot != null && !slot.Purchased)
                                 {
                                     if (isDouble)
@@ -575,28 +558,12 @@ public class MapScreen : GamelabGameScreen
                             }
                             if (card.Type == CardType.StackAction)
                             {
-                                if (card.Effect == CardEffect.Shuffle || card.Effect == CardEffect.Discount)
+                                if (card.Effect == CardEffect.Shuffle)
                                 {
                                     if (isDouble)
                                     {
                                         cardManager.UseCard(card);
                                         AudioManager.Play("card-place");
-                                    }
-                                }
-                                else if (card.Effect == CardEffect.SaveCard || card.Effect == CardEffect.Discard)
-                                {
-                                    if (isDouble)
-                                    {
-                                        if (cardManager.PendingStackCard != null &&
-                                            ReferenceEquals(cardManager.PendingStackCard, card))
-                                        {
-                                            cardManager.ClearPendingStackAction();
-                                        }
-                                        else
-                                        {
-                                            cardManager.UseCard(card);
-                                            AudioManager.Play("card-place");
-                                        }
                                     }
                                 }
                                 _clickStarted = false;
@@ -698,13 +665,13 @@ public class MapScreen : GamelabGameScreen
             var prevTargets = GraphicsDevice.GetRenderTargets();
             GraphicsDevice.SetRenderTarget(_nightBackgroundCache);
             GraphicsDevice.Clear(Color.Transparent);
-            spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             spriteBatch.Draw(GamelabGame.NightBackground, new Rectangle(0, 0, vw, vh), Color.White);
             spriteBatch.End();
             GraphicsDevice.SetRenderTargets(prevTargets);
         }
 
-        spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
         spriteBatch.Draw(_nightBackgroundCache, new Rectangle(0, 0, vw, vh), Color.White * opacity);
         spriteBatch.End();
     }
@@ -718,14 +685,14 @@ public class MapScreen : GamelabGameScreen
         GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
         // this still does not account for pixel tearing, but I think I prefer that over blurriness or choppy zoom
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
-        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.PointClamp : SamplerState.PointClamp;
 
         DrawNightBackgroundIfNight();
 
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
-        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.PointClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         entityRenderer.Draw(spriteBatch);
         spriteBatch.End();
@@ -738,7 +705,7 @@ public class MapScreen : GamelabGameScreen
         GraphicsDevice.Clear(Color.Lerp(Color.CornflowerBlue, Color.Black, currentMin));
 
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
-        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.PointClamp : SamplerState.PointClamp;
 
         DrawNightBackgroundIfNight();
 
@@ -748,7 +715,6 @@ public class MapScreen : GamelabGameScreen
         // ✅ Map        
         if (cardManager._activeMapCard != null &&
             (cardManager._activeMapCard.Effect == CardEffect.Move ||
-            cardManager._activeMapCard.Effect == CardEffect.Destroy ||
             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
@@ -816,11 +782,10 @@ public class MapScreen : GamelabGameScreen
 
         spriteBatch.End();
 
-        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.PointClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         (int col, int row) skipOrHover = (cardManager._activeMapCard != null &&
             (cardManager._activeMapCard.Effect == CardEffect.Move ||
-             cardManager._activeMapCard.Effect == CardEffect.Destroy ||
              cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0) ? _hoverTile : (-1, -1);
         entityRenderer.Draw(spriteBatch, skipOrHover.col >= 0 ? skipOrHover : null);
@@ -828,12 +793,12 @@ public class MapScreen : GamelabGameScreen
 
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
         Structure._screenTransform = viewportAdapter.GetScaleMatrix();
-        spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         _hoveredStructure?.DrawCard(spriteBatch);
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
-        spriteBatch.Begin(samplerState: SamplerState.LinearClamp,
+        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
         if (!gamePhaseManager.IsDay)
         {
@@ -1156,7 +1121,7 @@ public class MapScreen : GamelabGameScreen
 
             case 15:
                 speaker = "Sheep";
-                text = "Move repositions a structure. Destroy blows one up. And Polymorph? It turns me into a rat! They won't attack a rat!";
+                text = "Move repositions a structure. And Polymorph? It turns me into a rat! They won't attack a rat!";
                 _targetZoom = 1.0f;
                 _showInventory = false;
                 break;
@@ -1177,7 +1142,7 @@ public class MapScreen : GamelabGameScreen
 
             case 18:
                 speaker = "Sheep";
-                text = "Stack Action cards modify your build deck. DOUBLE-CLICK them to activate - Shuffle, Discount, and more!";
+                text = "Stack Action cards modify your build deck. DOUBLE-CLICK them to activate - like Shuffle!";
                 _targetZoom = 1.0f;
                 _showInventory = true;
                 _tutorialHighlight = TutorialHighlight.StackSlots;
@@ -1462,11 +1427,11 @@ public class MapScreen : GamelabGameScreen
             GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
 
             spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
-                        samplerState: SamplerState.LinearClamp,
+                        samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
             spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
             spriteBatch.End();
-            spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
         }
         else
         {

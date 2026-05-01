@@ -23,12 +23,8 @@ public class CardRenderer
         { "decoy",        "Lure of Phantoms         \n\nLures nightmares" },
         { "buff",         "Kindle of Resolve        \n\nRepels nightmares" },
         { "shuffle",      "Shuffler of Fates        \n\nShuffles build cards" },
-        { "discount",     "Discounter of Burdens    \n\nNext card purchased gets  \na discount" },
-        { "top3",         "Choice of Illusions      \n\nSave a card for tomorrow" },
-        { "discard",      "Burning of Hands         \n\nDiscard a card            \nGet a new card" },
         { "polymorph",    "Vermin of Shadows        \n\nTurn sheep to rats        \nIgnored by nightmares " },
         { "move",         "Shifter of Roots         \n\nMove a structure" },
-        { "destroy",      "Forgetter of Visions     \n\nDestroy a structure" },
     };
 
     private const int CARD_W       = 128*3/2;
@@ -68,15 +64,12 @@ public class CardRenderer
         int screenW,
         int screenH, bool isTutorial = false)
     {
-        var orderedSlots = new List<(CardSlot slot, bool isSaved)>();
-        orderedSlots.Add((cardManager.MapSlots[0],   false));
-        orderedSlots.Add((cardManager.StackSlots[0], false));
+        var orderedSlots = new List<CardSlot>();
+        orderedSlots.Add(cardManager.MapSlots[0]);
+        orderedSlots.Add(cardManager.StackSlots[0]);
         for (int i = 0; i < cardManager.BuildSlots.Count; i++)
         {
-            bool isSaved = cardManager.BuildSlots[i].Purchased
-                        && cardManager.SavedSlotIndex == -1   
-                        && IsSavedSlot(cardManager, i);
-            orderedSlots.Add((cardManager.BuildSlots[i], isSaved));
+            orderedSlots.Add(cardManager.BuildSlots[i]);
         }
 
         int totalW = orderedSlots.Count * CARD_W + (orderedSlots.Count - 1) * CARD_SPACING;
@@ -96,13 +89,13 @@ public class CardRenderer
 
         for (int i = 0; i < orderedSlots.Count; i++)
         {
-            var (slot, isSaved) = orderedSlots[i];
+            var slot = orderedSlots[i];
             Rectangle rect = new(startX + i * (CARD_W + CARD_SPACING), startY, CARD_W, CARD_H);
             cardManager.CardRects.Add((rect, slot.Card));
 
             bool isActive = slot.Card != null && ReferenceEquals(slot.Card, cardManager._activeMapCard);
             bool isLocked = slot.Card != null && slot.Card.Type == CardType.Build && !slot.Purchased;
-            
+
             spriteBatch.Draw(dummy, rect, COLOR_M);
 
             if (slot.Card != null && cardRegions.TryGetValue(slot.Card.SpriteName, out var region))
@@ -114,18 +107,9 @@ public class CardRenderer
             {
                 spriteBatch.Draw(dummy, rect, COLOR_D * 0.15f);
             }
-            if (cardManager.PendingStackCard != null &&
-                ReferenceEquals(slot.Card, cardManager.PendingStackCard))
-            {
-                spriteBatch.Draw(dummy, rect, COLOR_D * 0.45f);
-            }
             if (isActive)
             {
                 spriteBatch.Draw(dummy, rect, COLOR_D * 0.45f);
-            }
-            if (slot.IsSaved)
-            {
-                spriteBatch.Draw(dummy, rect, Color.Cyan * 0.2f);
             }
             if (slot.Card != null && slot.Card.StackCount > 1)
             {
@@ -218,19 +202,7 @@ public class CardRenderer
 
         if (ExpandedCard.Type == CardType.StackAction)
         {
-            string info = "";
-
-            if (ExpandedCard.Effect == CardEffect.Shuffle ||
-                ExpandedCard.Effect == CardEffect.Discount)
-            {
-                info = "Double Click to apply";
-            }
-            else if (ExpandedCard.Effect == CardEffect.SaveCard ||
-                    ExpandedCard.Effect == CardEffect.Discard)
-            {
-                info = "Double Click -> Select card";
-            }
-
+            string info = "Double Click to apply";
             spriteBatch.DrawString(font, info, new Vector2(lx, ty), infoColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
             ty += lineH * 2;
         }
@@ -245,12 +217,7 @@ public class CardRenderer
         // Cost / status line
         if (ExpandedCard.Type == CardType.Build)
         {
-            int displayCost = cardManager.DiscountActive
-                ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
-
-            string costStr = isLocked
-                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
-                : "Purchased";
+            string costStr = isLocked ? $"Cost: {ExpandedCard.Cost} sanity" : "Purchased";
             Color costColor = isLocked ? new Color(0xc0, 0x50, 0x30) : new Color(0x20, 0x80, 0x30);
             spriteBatch.DrawString(font, costStr, new Vector2(lx, ty), costColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
             ty += lineH + 4;
@@ -350,11 +317,6 @@ public class CardRenderer
         Structure target = mapManager.GetStructure(hoverTile) as Structure;
         switch (cardManager._activeMapCard.Effect)
         {
-            case CardEffect.Destroy:
-            case CardEffect.Discard:
-                if (target != null) DrawTransparentStructure(spriteBatch, target);
-                break;
-
             case CardEffect.Move:
                 if (target != null) DrawTransparentStructure(spriteBatch, target);
                 if (cardManager._selectedTile != (-1, -1))
@@ -507,10 +469,4 @@ public class CardRenderer
         spriteBatch.Draw(dummy, new Rectangle(rect.Right - t, rect.Y, t, rect.Height), color);
     }
 
-    private bool IsSavedSlot(CardManager cardManager, int slotIndex)
-    {
-        return _restoredSavedSlotIndex == slotIndex;
-    }
-    private int _restoredSavedSlotIndex = -1;
-    public void SetRestoredSavedSlot(int index) => _restoredSavedSlotIndex = index;
 }
