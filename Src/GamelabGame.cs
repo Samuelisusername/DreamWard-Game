@@ -36,6 +36,7 @@ public class GamelabGame : Game
     public readonly FontSystem fontSystem = new();
 
     public static Texture2D DummyText;
+    public static Texture2D NightBackground;
     public static SpriteFont Font;
 
     /// <summary>
@@ -185,7 +186,9 @@ public class GamelabGame : Game
         
         DummyText = new Texture2D(GraphicsDevice, 1, 1);
         DummyText.SetData(new[] { Color.White });
-        
+
+        NightBackground = Content.Load<Texture2D>("Sprites/night_background");
+
         Font = Content.Load<SpriteFont>("infoFont");
         LoadingShader = Content.Load<Effect>("ColorOverlay");
         

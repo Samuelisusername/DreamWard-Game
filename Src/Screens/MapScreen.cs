@@ -22,6 +22,8 @@ public class MapScreen : GamelabGameScreen
     private readonly CardRenderer cardRenderer;
     private Texture2D _dayTopTexture;
     private Texture2D _dayPlayerTexture;
+    private RenderTarget2D _nightBackgroundCache;
+    private Point _nightBackgroundCacheSize;
     
     private enum TutorialHighlight { None, CardStrip, BuildSlots, MapSlots, StackSlots, Expanded, MeadowTiles }
     private TutorialHighlight _tutorialHighlight = TutorialHighlight.None;
@@ -666,6 +668,46 @@ public class MapScreen : GamelabGameScreen
         }        
     }
 
+    private void DrawNightBackgroundIfNight()
+    {
+        if (GamelabGame.NightBackground == null) return;
+
+        bool isNight = !gamePhaseManager.IsDay;
+        bool isFallingToNight = gamePhaseManager.IsInTransition && gamePhaseManager.IsDay;
+        if (!isNight && !isFallingToNight) return;
+
+        float opacity = 1f;
+        if (isFallingToNight)
+        {
+            float fallProgress = (float)mapManager.TotalFallTime.TotalSeconds < 1.0f
+                ? 0f
+                : (float)mapManager.TotalFallTime.TotalSeconds / (float)mapManager.MaxTotalFallTime.TotalSeconds;
+            opacity = MathHelper.Clamp(fallProgress, 0f, 1f);
+        }
+
+        int vw = viewportAdapter.VirtualWidth;
+        int vh = viewportAdapter.VirtualHeight;
+
+        if (_nightBackgroundCache == null || _nightBackgroundCacheSize.X != vw || _nightBackgroundCacheSize.Y != vh)
+        {
+            _nightBackgroundCache?.Dispose();
+            _nightBackgroundCache = new RenderTarget2D(GraphicsDevice, vw, vh);
+            _nightBackgroundCacheSize = new Point(vw, vh);
+
+            var prevTargets = GraphicsDevice.GetRenderTargets();
+            GraphicsDevice.SetRenderTarget(_nightBackgroundCache);
+            GraphicsDevice.Clear(Color.Transparent);
+            spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+            spriteBatch.Draw(GamelabGame.NightBackground, new Rectangle(0, 0, vw, vh), Color.White);
+            spriteBatch.End();
+            GraphicsDevice.SetRenderTargets(prevTargets);
+        }
+
+        spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
+        spriteBatch.Draw(_nightBackgroundCache, new Rectangle(0, 0, vw, vh), Color.White * opacity);
+        spriteBatch.End();
+    }
+
     /// <summary>
     /// Draws only the map and entities without any UI. Used to render the map as a background behind other screens.
     /// </summary>
@@ -676,6 +718,9 @@ public class MapScreen : GamelabGameScreen
         // this still does not account for pixel tearing, but I think I prefer that over blurriness or choppy zoom
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
         SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+
+        DrawNightBackgroundIfNight();
+
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
@@ -693,6 +738,9 @@ public class MapScreen : GamelabGameScreen
 
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
         SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
+
+        DrawNightBackgroundIfNight();
+
         spriteBatch.Begin(samplerState: sampler,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 
@@ -779,12 +827,12 @@ public class MapScreen : GamelabGameScreen
 
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
         Structure._screenTransform = viewportAdapter.GetScaleMatrix();
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
         _hoveredStructure?.DrawCard(spriteBatch);
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
-        spriteBatch.Begin(samplerState: SamplerState.PointClamp,
+        spriteBatch.Begin(samplerState: SamplerState.LinearClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
         if (!gamePhaseManager.IsDay)
         {
@@ -1400,11 +1448,11 @@ public class MapScreen : GamelabGameScreen
             // 3. Draw using the effect
 
             spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
-                        samplerState: SamplerState.PointClamp,
+                        samplerState: SamplerState.LinearClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
             spriteBatch.Draw(InterfaceTexture, rect, src, Color.White);
             spriteBatch.End();
-            spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
+            spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
 
             // Rectangle progressSrc = new Rectangle(src.X, src.Y, (int)(src.Width * progress), src.Height);
             // Rectangle progressDst = new Rectangle(rect.X, rect.Y, (int)(rect.Width * progress), rect.Height);
