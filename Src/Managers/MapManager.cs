@@ -63,7 +63,7 @@ public class MapManager
     /// <summary>
     /// The offset used to draw the map
     /// </summary>
-    public Vector2 Offset {get; private set;}
+    public Vector2 Offset => offset + screenShakeOffset;
     
     /// <summary>
     /// The width of a single tile
@@ -96,6 +96,8 @@ public class MapManager
 
 #region animation fields 
 
+    private Vector2 offset;
+
     //the elapsed time since the start of the last animationframe
     private TimeSpan _elapsed;
 
@@ -117,6 +119,11 @@ public class MapManager
     private float shakeOffset = 0.05f; //shaketime max in seconds
 
     public Vector2[,] TilesOfsets {get; set;}
+    private TimeSpan maxScreenShakeTime;
+    private TimeSpan screenShakeTime;
+    private float screenShakeIntensity;
+    private Vector2 screenShakeOffset;
+
 
 #endregion
 
@@ -208,6 +215,21 @@ public class MapManager
             }
         }
 
+        if (screenShakeTime > TimeSpan.Zero)
+        {
+            screenShakeTime -= gameTime.ElapsedGameTime;
+
+            // Calculate how "strong" the shake is right now (0.0 to 1.0)
+            float progress = (float)(screenShakeTime / maxScreenShakeTime); // Assuming a 0.5s default or use a maxDuration variable
+            float currentPower = screenShakeIntensity * progress;
+
+            // Get a random direction using the "Circle" logic from before!
+            double angle = Random.Shared.NextDouble() * Math.PI * 2;
+            screenShakeOffset = new Vector2(
+                (float)Math.Cos(angle) * currentPower * Scale.X,
+                (float)Math.Sin(angle) * currentPower * Scale.Y
+            );
+        }
         //Update all the monsters and structures
         for(int i = 0; i < Columns; i++)
         {
@@ -515,6 +537,7 @@ public class MapManager
                     }
                 }
             }
+            InitScreenShake(TimeSpan.FromSeconds(0.3), 5);
             return true;
         }
         return false;
@@ -871,14 +894,14 @@ public class MapManager
 
     public void InitOffset(Point screenSize)
     {
-        Offset = -GetWorldPositionOfTileWithoutOffset((Columns/2,Rows/2)) + (screenSize.ToVector2() / 2) - new Vector2(TileWidth/2,TileHeight/2);
+        offset = -GetWorldPositionOfTileWithoutOffset((Columns/2,Rows/2)) + (screenSize.ToVector2() / 2) - new Vector2(TileWidth/2,TileHeight/2);
     }
     /// <summary>
     /// Moves the map into the direction of delta
     /// </summary>
     public void MoveMap(Vector2 delta, Point screenSize)
     {
-        Offset += delta;
+        offset += delta;
         float screenHalfX = screenSize.X / 2f;
         float screenHalfY = screenSize.Y / 2f;
         // Clamp rightward/downward pan so the left/top exterior borders stay one tile off-screen
@@ -887,7 +910,7 @@ public class MapManager
         float maxY = Math.Min(screenHalfY, (Rows - 1) * TileHeight);
         Vector2 maxOffset = new Vector2(maxX, maxY);
         Vector2 minOffset = -GetWorldPositionOfTileWithoutOffset((Columns,Rows)) + new Vector2(screenHalfX, screenHalfY);
-        Offset = new Vector2(Math.Clamp(Offset.X, minOffset.X, maxOffset.X), Math.Clamp(Offset.Y, minOffset.Y, maxOffset.Y));
+        offset = new Vector2(Math.Clamp(offset.X, minOffset.X, maxOffset.X), Math.Clamp(offset.Y, minOffset.Y, maxOffset.Y));
     }
 
     private Vector2 GetWorldPositionOfTileWithoutOffset((int col, int row) pos)
@@ -916,7 +939,7 @@ public class MapManager
     public void Zoom(float delta, Vector2 focus, Point screenSize)
     {
         //where are we zooming in on?
-        Vector2 oldMapPoint = focus - Offset;
+        Vector2 oldMapPoint = focus - offset;
         //get the new scale
         Vector2 newScale = new Vector2(Math.Clamp(Scale.X * (delta > 0 ? 1.09f : 0.91f), 1f, 8f), Math.Clamp(Scale.Y * (delta > 0 ? 1.09f : 0.91f), 1f, 8f));
         //how much did the scale change?
@@ -965,6 +988,13 @@ public class MapManager
         }
         MaxTotalFallTime = TimeSpan.FromSeconds(1f);
         TotalFallTime = TimeSpan.Zero;
+    }
+
+    public void InitScreenShake(TimeSpan duration, float intensity)
+    {
+        screenShakeTime = duration;
+        maxScreenShakeTime = duration;
+        screenShakeIntensity = intensity;
     }
 
 #endregion

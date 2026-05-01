@@ -151,6 +151,7 @@ public abstract class Structure : Entity
                     LifeSpan = TimeSpan.FromSeconds(0.5),
                     Color = Color.Gray
                 });
+                mapManager.InitScreenShake(TimeSpan.FromSeconds(0.3f), 7);
             }
         }
     }

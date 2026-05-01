@@ -66,4 +66,10 @@ public class Tent : CardEntity
             }
         }
     }
+
+    public override void TakeDamage(float amount)
+    {
+        base.TakeDamage(amount);
+        mapManager.InitScreenShake(TimeSpan.FromSeconds(0.3f), 7);
+    }
 }
