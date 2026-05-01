@@ -49,6 +49,17 @@ public class TreeTile : Structure
         shakeRotations.Add(0);
         int nr = Random.Shared.Next(1,21);
         AudioManager.Play($"rustle{nr:D2}");
+        var worldPos = mapManager.GetWorldPositionOfTile(TilePosition) + (new Vector2(32, -10) * mapManager.Scale);
+        // for(int i = 0; i < 20; i++)
+        // {
+        //     ParticleManager.AddParticle(new Particle
+        //     {
+        //         WorldPosition = (worldPos - (Vector2.UnitX * ((float)Random.Shared.NextDouble() -0.5f) * 20 * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
+        //         Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 10, (float)(Random.Shared.NextDouble()) * 150),
+        //         LifeSpan = TimeSpan.FromSeconds(0.5),
+        //         Color = Color.ForestGreen
+        //     });
+        // }
     }
 
     public override void Update(GameTime gameTime)

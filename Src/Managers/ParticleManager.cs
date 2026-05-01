@@ -63,7 +63,7 @@ public static class ParticleManager
             Vector2 origin = size / 2f;
             float scale = p.Scale * GamelabGame.MapManager.Scale.X;
             spriteBatch.DrawString(p.Font, p.Text,
-                screenPos + new Vector2(2, 2), Color.Black,
+                screenPos + new Vector2(2, 2), new Color((byte)0,(byte)0,(byte)0,p.Color.A),
                 0f, origin, scale, SpriteEffects.None, 0f);
             spriteBatch.DrawString(p.Font, p.Text,
                 screenPos, p.Color,
@@ -93,6 +93,16 @@ public static class ParticleManager
         Color blue = new Color(37, 150, 190);
         Color lightBlue = new Color(135, 206, 235);
 
+        AddParticle(new Particle
+        {
+            WorldPosition = worldPos + Vector2.One,
+            Velocity = new Vector2(0, -40f),
+            Color = Color.Black,
+            LifeSpan = TimeSpan.FromSeconds(2.0),
+            Text = $"+{amount}",
+            Font = font,
+            Scale = 0.5f,
+        });
         AddParticle(new Particle
         {
             WorldPosition = worldPos,
