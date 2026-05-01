@@ -438,6 +438,7 @@ public class MapManager
     public void RemoveStructure((int col, int row) pos)
     {
         Structures[pos.col, pos.row] = null;
+        GamelabGame.PathFindingManager.NotifyStructuresChanged();
     }
     
     /// <summary>
@@ -457,6 +458,7 @@ public class MapManager
         if (structure != null)
         {
             Structures[pos.col, pos.row] = structure;
+            GamelabGame.PathFindingManager.NotifyStructuresChanged();
             return true;
         }
         return false;
@@ -473,6 +475,7 @@ public class MapManager
         }        
         entity.AddSheep();
         SheepPosition = (pos.col, pos.row);
+        GamelabGame.PathFindingManager.NotifyStructuresChanged();
         return true;
     }
 
@@ -501,6 +504,7 @@ public class MapManager
 
         if (structure != null){
             Structures[pos.col, pos.row] = structure;
+            GamelabGame.PathFindingManager.NotifyStructuresChanged();
             if(structure is PlacableMeadow placableMeadow)
             {
                 foreach (var position in MapUtils.GetSurroundingTiles(pos))
@@ -820,6 +824,7 @@ public class MapManager
                 bool wasPolymorphed = oldMeadow.IsPolymorphed;
                 oldMeadow.RemoveSheep();
                 meadow.AddSheep(wasPolymorphed);
+                GamelabGame.PathFindingManager.NotifyStructuresChanged();
                 SheepPosition = (tilePos.col, tilePos.row);
             }
         }
