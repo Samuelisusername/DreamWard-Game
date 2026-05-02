@@ -1,59 +1,178 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 public class CardRenderer
 {
-    private readonly Color COLOR_M      = new Color(0xb9, 0xa5, 0x83);   // card bg
-    private readonly Color COLOR_D      = new Color(0x29, 0x24, 0x10);   // dark text / border
-    private readonly Color COLOR_L      = new Color(0xc7, 0xb8, 0x9c);   // light panel
+    private readonly Color COLOR_M = new Color(0xb9, 0xa5, 0x83);   // card bg
+    private readonly Color COLOR_D = new Color(0x29, 0x24, 0x10);   // dark text / border
+    private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);   // light panel
+    private readonly Color COLOR_G = new Color(0x7d, 0x64, 0x48);   // mid tone
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Piercer of Veils         \n\nTargets one nightmare     \nLong range burst damage" },
-        { "aoe",          "Banisher of Horrors      \n\nTargets all nightmares    \nShort range burn damage" },
-        { "dreamcatcher", "Catcher of Dreams        \n\nBlock all nightmares      \nIncluding flying ones" },
-        { "fence",        "Warden of Thresholds     \n\nBlock walking nightmares" },
-        { "meadow",       "Meadow of Slumber        \n\nGain more sanity          \nStronger next to sheep" },
-        { "void",         "Absence of Field         \n\nBlock walking nightmares  \nCannot be removed" },
-        { "spikes",       "Bed of Thorns            \n\nHurts walking nightmares" },
-        { "decoy",        "Lure of Phantoms         \n\nLures nightmares" },
-        { "buff",         "Kindle of Resolve        \n\nRepels nightmares" },
-        { "shuffle",      "Shuffler of Fates        \n\nShuffles build cards" },
-        { "polymorph",    "Vermin of Shadows        \n\nTurn sheep to rats        \nIgnored by nightmares " },
-        { "move",         "Shifter of Roots         \n\nMove a structure" },
+        { "sniper",       "Piercer of Veils\nTargets one nightmare. Long range burst damage.\n" },
+        { "aoe",          "Banisher of Horrors\nTargets all nightmares. Short range burn damage.\n" },
+        { "dreamcatcher", "Catcher of Dreams\nBlock all nightmares. Including flying ones.\n" },
+        { "fence",        "Warden of Thresholds\nBlock walking nightmares.\n" },
+        { "meadow",       "Meadow of Slumber\nGain more sanity. Stronger next to sheep.\n" },
+        { "void",         "Absence of Field\nBlock walking nightmares. Cannot be removed.\n" },
+        { "spikes",       "Bed of Thorns\nHurts walking nightmares.\n" },
+        { "decoy",        "Lure of Phantoms\nLures nightmares.\n" },
+        { "buff",         "Kindle of Resolve\nRepels nightmares.\n" },
+        { "shuffle",      "Shuffler of Fates\nShuffles build cards.\n" },
+        { "discount",     "Discounter of Burdens\nNext card purchased gets a discount.\n" },
+        { "top3",         "Choice of Illusions\nSave a card for tomorrow.\n" },
+        { "discard",      "Burning of Hands\nDiscard a card. Get a new card.\n" },
+        { "polymorph",    "Vermin of Shadows\nTurn sheep to rats. Ignored by nightmares.\n" },
     };
 
-    private const int CARD_W       = 128*3/2;
-    private const int CARD_H       = 128*3/2;
-    private const int CARD_SPACING = 10;
-    private const int MARGIN_BOT   = 10;
-    private const int MARGIN_LEFT  = 10;
-    public Rectangle CardStripBounds { get; private set; }
+    // ── Tunable hand constants ────────────────────────────────────────────────
+    // Change CARD_W / CARD_H freely. Everything else recomputes automatically.
+    private const int   CARD_W       = 128 * 2;   // card width  in virtual pixels
+    private const int   CARD_H       = 128 * 2;   // card height in virtual pixels
+
+    // How much of each card peeks above the bottom edge of the screen
+    private const float HAND_PEEK_FRAC = 0.55f;   // 0 = fully hidden, 1 = fully visible
+
+    // Arc curvature: larger → more pronounced curve; 0 → flat row
+    // Expressed as a fraction of screen width so it scales with resolution.
+    private const float ARC_RADIUS_FRAC = 2.5f;   // arc radius = screenW * this
+
+    // Max total arc angle (degrees) across all cards.  Clamped so no card overlaps.
+    private const float MAX_ARC_DEG  = 40f;
+
+    // Lift (in virtual px) applied to the card being hovered
+    private const float CARD_HOVER_LIFT = 30f;
+
+    // ── Per-card data stored during Draw, reused by hover/click ──────────────
+    // All three share the same coordinate system (virtual pixels after viewport scale).
+    // 'center'  = the point passed as the position argument to SpriteBatch.Draw
+    //             (= the world position of the card's texture origin, which is its centre)
+    // 'angleDeg'= rotation in degrees (same value passed to SpriteBatch.Draw)
+    // 'halfW/H' = half the drawn pixel size of the card  (CARD_W/2, CARD_H/2)
+    public struct CardTransform
+    {
+        public Vector2 Center;    // drawn centre (SpriteBatch position == center because origin=texCenter)
+        public float   AngleDeg;
+        public float   HalfW;    // CARD_W / 2
+        public float   HalfH;    // CARD_H / 2
+    }
+    private readonly List<CardTransform> _transforms = new();
+
+    public Rectangle CardStripBounds     { get; private set; }
     public Rectangle ExpandedPanelBounds { get; private set; }
-
-    public  Card      ExpandedCard      { get; private set; }
-    private Vector2   _lastMousePos;
-
+    private Rectangle _expandedPanelRect = Rectangle.Empty;
+    public int TransformCount => _transforms.Count;
+    public CardTransform GetTransform(int i) => _transforms[i];
+    public Card     ExpandedCard  { get; private set; }
+    private Vector2 _lastMousePos;
+    private const int ARC_MARGIN_LEFT  = 400;
+    private const int ARC_MARGIN_RIGHT = 400;
     public void SetMousePos(Vector2 pos) => _lastMousePos = pos;
-    public void CollapseExpanded(){ ExpandedCard   = null;}
+    public void CollapseExpanded() => ExpandedCard = null;
 
+    // ── Rotate a 2-D vector around the origin ────────────────────────────────
+    public static Vector2 Rot(Vector2 v, float rad)
+    {
+        float c = MathF.Cos(rad), s = MathF.Sin(rad);
+        return new Vector2(c * v.X - s * v.Y, s * v.X + c * v.Y);
+    }
+
+    // ── Hover: transform mouse into card-local space, then AABB test ─────────
+    // This exactly inverts what SpriteBatch.Draw does with a centre-origin + rotation.
     public void HandleHover(Vector2 mousePos, CardManager cardManager)
     {
         ExpandedCard = null;
-        foreach (var (rect, card) in cardManager.CardRects)
+        // Reverse order: topmost drawn card wins
+        for (int i = _transforms.Count - 1; i >= 0; i--)
         {
-            if (card != null && rect.Contains(mousePos))
+            var t   = _transforms[i];
+            var rad = MathHelper.ToRadians(t.AngleDeg);
+
+            // Translate so card centre is origin, then undo rotation
+            Vector2 local = Rot(mousePos - t.Center, -rad);
+
+            if (MathF.Abs(local.X) <= t.HalfW && MathF.Abs(local.Y) <= t.HalfH)
             {
-                ExpandedCard = card;
-                return;
+                // Find the corresponding card
+                if (i < cardManager.CardRects.Count)
+                {
+                    var (_, card) = cardManager.CardRects[i];
+                    if (card != null) { ExpandedCard = card; return; }
+                }
             }
         }
     }
 
+    // ── Compute arc transforms for 'count' cards, fitting inside screenW ──────
+    // Returns (center, angleDeg) pairs. The arc is clamped so no card goes offscreen.
+    private static List<(Vector2 center, float angleDeg)> ComputeArcTransforms(
+        int count, int screenW, int screenH)
+    {
+        var result = new List<(Vector2, float)>(count);
+        if (count == 0) return result;
+
+        // ── Arc radius ─────────────────────────────────────────────
+        float R = screenW * ARC_RADIUS_FRAC;
+
+        // ── Arc center (below screen) ──────────────────────────────
+        float peekY = CARD_H * HAND_PEEK_FRAC;
+        float arcCX = screenW / 2f;
+        float arcCY = screenH + R - peekY;
+
+        // ── Button-safe horizontal bounds ──────────────────────────
+        float usableLeft  = ARC_MARGIN_LEFT + CARD_W / 2f;
+        float usableRight = screenW - ARC_MARGIN_RIGHT - CARD_W / 2f;
+        float usableW     = MathF.Max(1f, usableRight - usableLeft);
+
+        // ── Constraint 1: prevent card overlap ─────────────────────
+        float minGap     = CARD_W * 0.05f; // 5% spacing
+        float chordMax   = CARD_W + minGap;
+        float maxStepDeg = MathHelper.ToDegrees(
+            2f * MathF.Asin(MathF.Min(chordMax / (2f * R), 1f))
+        );
+
+        // ── Constraint 2: keep cards inside usable width ───────────
+        float maxHalfSpanRad = MathF.Asin(MathF.Min(usableW / (2f * R), 1f));
+        float maxSpanDeg     = MathHelper.ToDegrees(maxHalfSpanRad * 2f);
+
+        // ── Desired span (based on count) ──────────────────────────
+        float baseStepDeg = 10f; // tweak if needed (8–12 range)
+        float spanDeg     = (count - 1) * baseStepDeg;
+
+        // clamp span to fit screen
+        spanDeg = MathF.Min(spanDeg, maxSpanDeg);
+
+        // also respect overlap constraint
+        float stepDeg = count > 1
+            ? MathF.Min(spanDeg / (count - 1), maxStepDeg)
+            : 0f;
+
+        spanDeg = stepDeg * (count - 1);
+
+        float startDeg = -spanDeg / 2f;
+
+        // ── Generate positions ─────────────────────────────────────
+        for (int i = 0; i < count; i++)
+        {
+            float deg = startDeg + i * stepDeg;
+
+            // convert to circle angle (0° at top)
+            float rad = MathHelper.ToRadians(deg - 90f);
+
+            float cx = arcCX + R * MathF.Cos(rad);
+            float cy = arcCY + R * MathF.Sin(rad);
+
+            result.Add((new Vector2(cx, cy), deg));
+        }
+
+        return result;
+    }
+
+    // ── Main card strip draw ──────────────────────────────────────────────────
     public void DrawCardStrip(
         SpriteBatch spriteBatch,
         Texture2D dummy,
@@ -62,67 +181,135 @@ public class CardRenderer
         SpriteFont font,
         CardManager cardManager,
         int screenW,
-        int screenH, bool isTutorial = false)
+        int screenH,
+        bool isTutorial = false)
     {
-        var orderedSlots = new List<CardSlot>();
-        orderedSlots.Add(cardManager.MapSlots[0]);
-        orderedSlots.Add(cardManager.StackSlots[0]);
+        // Build slot list: 4 build → 2 stack (only non-null slots count toward arc)
+        var orderedSlots = new List<(CardSlot slot, bool isSaved)>();
         for (int i = 0; i < cardManager.BuildSlots.Count; i++)
         {
-            orderedSlots.Add(cardManager.BuildSlots[i]);
+            var slot = cardManager.BuildSlots[i];
+            bool isSaved = slot.IsSaved && cardManager.SavedSlotIndex == i;
+            orderedSlots.Add((slot, isSaved));
         }
+        for (int i = 0; i < cardManager.StackSlots.Count; i++)
+            orderedSlots.Add((cardManager.StackSlots[i], false));
 
-        int totalW = orderedSlots.Count * CARD_W + (orderedSlots.Count - 1) * CARD_SPACING;
-        int startX = MARGIN_LEFT;
-        int startY = screenH - CARD_H - MARGIN_BOT;
+        // Only cards that actually have content take up arc slots
+        // (empty slots still go into CardRects so indices stay aligned, but they
+        //  use the same position as a "phantom" — they're invisible and unhittable)
+        int filledCount = orderedSlots.Count(s => s.slot.Card != null);
 
-        if (isTutorial)
-        {
-            // move everything up by strip height 
-            startY -= CARD_H;
-        }
+        int effectiveH = isTutorial ? screenH - CARD_H : screenH;
 
-        CardStripBounds =  new Rectangle(startX - 6, startY - 6, totalW + 12, CARD_H + 12);
+        // Build arc positions only for filled slots; we'll assign them in order
+        var arcPositions = ComputeArcTransforms(filledCount, screenW, effectiveH);
 
-        spriteBatch.Draw(dummy,CardStripBounds, COLOR_L);
         cardManager.CardRects.Clear();
+        _transforms.Clear();
+
+        int minX = int.MaxValue, minY = int.MaxValue;
+        int maxX = int.MinValue, maxY = int.MinValue;
+
+        int arcIdx = 0;   // index into arcPositions
 
         for (int i = 0; i < orderedSlots.Count; i++)
         {
-            var slot = orderedSlots[i];
-            Rectangle rect = new(startX + i * (CARD_W + CARD_SPACING), startY, CARD_W, CARD_H);
-            cardManager.CardRects.Add((rect, slot.Card));
+            var (slot, isSaved) = orderedSlots[i];
 
-            bool isActive = slot.Card != null && ReferenceEquals(slot.Card, cardManager._activeMapCard);
-            bool isLocked = slot.Card != null && slot.Card.Type == CardType.Build && !slot.Purchased;
+            if (slot.Card == null)
+            {
+                // Reserve slot so CardRects index stays aligned
+                cardManager.CardRects.Add((Rectangle.Empty, null));
+                _transforms.Add(new CardTransform());
+                continue;
+            }
 
-            spriteBatch.Draw(dummy, rect, COLOR_M);
+            var (arcCenter, angleDeg) = arcPositions[arcIdx++];
 
-            if (slot.Card != null && cardRegions.TryGetValue(slot.Card.SpriteName, out var region))
+            bool isHovered  = ExpandedCard != null && ReferenceEquals(slot.Card, ExpandedCard);
+            bool isActive   = ReferenceEquals(slot.Card, cardManager._activeMapCard);
+            bool isLocked   = (slot.Card.Type == CardType.Build || slot.Card.Type == CardType.MapAction) && !slot.Purchased;
+            bool isPending  = cardManager.PendingStackCard != null
+                           && ReferenceEquals(slot.Card, cardManager.PendingStackCard);
+
+            float lift = isHovered ? CARD_HOVER_LIFT : 0f;
+
+            // drawCenter is where SpriteBatch places the card centre.
+            // Because we pass origin = texCenter (below), this IS the screen centre of the card.
+            Vector2 drawCenter = arcCenter - new Vector2(0, lift);
+
+            float   rad      = MathHelper.ToRadians(angleDeg);
+            float   halfW    = CARD_W / 2f;
+            float   halfH    = CARD_H / 2f;
+
+            // ── Store transform (identical coordinate system as what we draw) ──
+            _transforms.Add(new CardTransform
             {
-                Color tint = isLocked ? new Color(120, 120, 120) : Color.White;
-                spriteBatch.Draw(cardTexture, rect, region, tint);
-            }
-            if (isLocked)
-            {
-                spriteBatch.Draw(dummy, rect, COLOR_D * 0.15f);
-            }
-            if (isActive)
-            {
-                spriteBatch.Draw(dummy, rect, COLOR_D * 0.45f);
-            }
-            if (slot.Card != null && slot.Card.StackCount > 1)
-            {
-                string countText = $"x{slot.Card.StackCount}";
-                Vector2 size = font.MeasureString(countText);
-                int badgeW = (int)size.X + 12;
-                int badgeH = (int)size.Y + 6;
-                Rectangle badge = new(rect.Right - badgeW - 6, rect.Bottom - badgeH - 6, badgeW, badgeH);
-                spriteBatch.Draw(dummy, badge, COLOR_D);
-                spriteBatch.DrawString(font, countText, new Vector2(badge.X + 6, badge.Y + 3), COLOR_M);
-            }
+                Center   = drawCenter,
+                AngleDeg = angleDeg,
+                HalfW    = halfW,
+                HalfH    = halfH,
+            });
+
+            // ── AABB for CardRects (used for bounds / mapOverUI guard).
+            //    This is an outer AABB of the rotated rectangle — always conservative.
+            float absCos = MathF.Abs(MathF.Cos(rad));
+            float absSin = MathF.Abs(MathF.Sin(rad));
+            int   aabbW  = (int)MathF.Ceiling(CARD_W * absCos + CARD_H * absSin);
+            int   aabbH  = (int)MathF.Ceiling(CARD_W * absSin + CARD_H * absCos);
+            var   aabb   = new Rectangle(
+                (int)(drawCenter.X - aabbW / 2f),
+                (int)(drawCenter.Y - aabbH / 2f),
+                aabbW, aabbH);
+
+            cardManager.CardRects.Add((aabb, slot.Card));
+
+            minX = Math.Min(minX, aabb.X);
+            minY = Math.Min(minY, aabb.Y);
+            maxX = Math.Max(maxX, aabb.Right);
+            maxY = Math.Max(maxY, aabb.Bottom);
+
+            // ── The texture region for this card ──────────────────────────────
+            if (!cardRegions.TryGetValue(slot.Card.SpriteName, out var region))
+                region = new Rectangle(0, 0, 128, 128);   // fallback
+
+            // origin = centre of the SOURCE region → SpriteBatch rotates around that
+            // → the screen centre of the drawn card == drawCenter  ✓
+            Vector2 texOrigin = new(region.Width / 2f, region.Height / 2f);
+            Vector2 texScale  = new(CARD_W / (float)region.Width, CARD_H / (float)region.Height);
+
+
+            // ── Draw card art ─────────────────────────────────────────────────
+            spriteBatch.Draw(cardTexture, drawCenter, region,
+                Color.White, rad, texOrigin, texScale, SpriteEffects.None, 0f);
+
+            // ── Overlays ──────────────────────────────────────────────────────
+            if (isSaved || slot.IsSaved)
+                DrawRotatedSolid(spriteBatch, dummy, drawCenter, halfW, halfH, rad, Color.Cyan * 0.22f);
         }
+
+        // ── Overall strip bounds ──────────────────────────────────────────────
+        if (filledCount > 0)
+            CardStripBounds = new Rectangle(minX - 8, minY - 8,
+                maxX - minX + 16, maxY - minY + 16);
+        else
+            CardStripBounds = Rectangle.Empty;
     }
+
+    // ── Draw a solid rotated rectangle with the dummy 1×1 texture ────────────
+    // center = screen centre of the rectangle (matches drawCenter above)
+    private static void DrawRotatedSolid(SpriteBatch sb, Texture2D dummy,
+        Vector2 center, float halfW, float halfH, float rad, Color color)
+    {
+        // origin = (0.5, 0.5) in texture space = centre of the 1×1 pixel
+        sb.Draw(dummy, center, null,
+            color, rad, new Vector2(0.5f, 0.5f),
+            new Vector2(halfW * 2f, halfH * 2f), SpriteEffects.None, 0f);
+    }
+
+    // ── Expanded panel ────────────────────────────────────────────────────────
+    public void SetExpandedPanelRect(Rectangle rect) => _expandedPanelRect = rect;
 
     public void DrawExpandedPanel(
         SpriteBatch spriteBatch,
@@ -134,108 +321,151 @@ public class CardRenderer
         int screenW,
         int screenH)
     {
-        if (ExpandedCard == null)
+        if (ExpandedCard == null || _expandedPanelRect == Rectangle.Empty)
         {
             ExpandedPanelBounds = Rectangle.Empty;
             return;
         }
 
-        // Find the card's strip rect
-        Rectangle cardRect = Rectangle.Empty;
-        foreach (var (r, c) in cardManager.CardRects)
-            if (c != null && ReferenceEquals(c, ExpandedCard)) { cardRect = r; break; }
-        if (cardRect == Rectangle.Empty) { ExpandedCard = null; return; }
+        Rectangle panel = _expandedPanelRect;
+        ExpandedPanelBounds = panel;
 
-        CardSlot slot = cardManager.GetSlotForCard(ExpandedCard);
-        bool isLocked = slot != null && ExpandedCard.Type == CardType.Build && !slot.Purchased;
+        // Background chrome
+        spriteBatch.Draw(dummy, panel, COLOR_L * 0.93f);
+        spriteBatch.Draw(dummy, new Rectangle(panel.X + 2, panel.Y + 2, panel.Width - 4, panel.Height - 4), COLOR_D);
+        spriteBatch.Draw(dummy, new Rectangle(panel.X + 4, panel.Y + 4, panel.Width - 8, panel.Height - 8), COLOR_L);
 
-        if (slot.Card != null && ReferenceEquals(slot.Card,ExpandedCard))
-        {
-            DrawBorder(spriteBatch, dummy, cardRect, COLOR_D, 2);
-        }
+        int   pad    = 12;
+        float lx     = panel.X + pad;
+        float ty     = panel.Y + pad;
+        float textSc = 1f;
+        float lineH  = font.LineSpacing * textSc + 2f;
 
-        int bigCard    = 128*2;
-        int panelW = bigCard + 80;
-        int lineH      = 22;
-        float textSc   = 0.55f;
+        CardSlot slot     = cardManager.GetSlotForCard(ExpandedCard);
+        bool     isLocked = slot != null && (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)  && !slot.Purchased;
 
-        int descLines = CardDescriptions.TryGetValue(ExpandedCard.SpriteName, out var desc)
-            ? desc.Split('\n').Length : 0;
-        int panelH = bigCard + 14 + descLines * lineH + (isLocked || ExpandedCard.Type == CardType.Build ? lineH + 4 : 0) + 16 + 44;
-
-        int panelX = Math.Clamp(cardRect.X + cardRect.Width / 2 - panelW / 2, 4, screenW - panelW - 4);
-        int panelY = cardRect.Y - panelH - 10;
-        if (panelY < 4) panelY = 4;
-
-        Rectangle panelRect = new(panelX, panelY, panelW, panelH);
-        ExpandedPanelBounds = panelRect;
-
-        spriteBatch.Draw(dummy, panelRect, COLOR_L);
-        spriteBatch.Draw(dummy, new Rectangle(panelRect.X + 2, panelRect.Y + 2, panelRect.Width - 4, panelRect.Height - 4), COLOR_D);
-        spriteBatch.Draw(dummy, new Rectangle(panelRect.X + 4, panelRect.Y + 4, panelRect.Width - 8, panelRect.Height - 8), COLOR_L);
-
-        Rectangle bigCardRect = new(panelX + (panelW - bigCard) / 2, panelY + 8, bigCard, bigCard);
+        // Large card image
+        int bigCard = 128 * 3;
+        Rectangle bigCardRect = new((int)lx, (int)ty, bigCard, bigCard);
         if (cardRegions.TryGetValue(ExpandedCard.SpriteName, out var bigRegion))
-        {
             spriteBatch.Draw(cardTexture, bigCardRect, bigRegion, Color.White);
-        }
 
-        float ty = panelY + bigCard + 14;
-        float lx = panelX + 20;
-        float lineSpacing = font.LineSpacing * textSc;
+        float textX = lx + bigCard + pad;
+        float textY = ty;
 
-        var descLinesArr = desc.Split('\n');
-        for (int i = 0; i < descLinesArr.Length; i++)
+        if (CardDescriptions.TryGetValue(ExpandedCard.SpriteName, out var desc))
         {
-            var line = descLinesArr[i];
-            spriteBatch.DrawString(font, line, new Vector2(lx, ty), COLOR_D, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
-            if (i == 0)
+            var lines = desc.Split('\n');
+
+            // Title
+            spriteBatch.DrawString(font, lines[0].Trim(),
+                new Vector2(textX, textY), COLOR_D,
+                0f, Vector2.Zero, textSc * 1.3f, SpriteEffects.None, 0f);
+            textY += lineH * 1.6f;
+
+            // Divider
+            int lineWidth = panel.Right - (int)textX - pad;
+            spriteBatch.Draw(dummy,
+                new Rectangle((int)textX, (int)textY, lineWidth, 1),
+                COLOR_G * 0.6f);
+
+            for (int i = 1; i < lines.Length; i++)
             {
-                Vector2 titleSize = font.MeasureString(line.TrimEnd()) * textSc;
-                int underlineY = (int)(ty + titleSize.Y + 1);
-                spriteBatch.Draw(dummy, new Rectangle((int)lx, underlineY, (int)titleSize.X, 2), COLOR_D);
+                string line = lines[i].Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+                spriteBatch.DrawString(font, line,
+                    new Vector2(textX, textY), COLOR_D,
+                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                textY += lineH;
             }
-            ty += lineSpacing;
         }
 
-        Color infoColor = new Color(0x40, 0x80, 0xc0); // blue 
+        string stats = GetCardStats(ExpandedCard);
+        if (!string.IsNullOrEmpty(stats))
+        {
+            spriteBatch.DrawString(font, stats, new Vector2(textX, textY), COLOR_D, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            textY += lineH;
+        }
+
+        Color infoColor = new Color(0x40, 0x80, 0xc0);
 
         if (ExpandedCard.Type == CardType.StackAction)
         {
-            string info = "Double Click to apply";
-            spriteBatch.DrawString(font, info, new Vector2(lx, ty), infoColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
-            ty += lineH * 2;
-        }
-        if (ExpandedCard.Type == CardType.MapAction)
-        {
-            string info = "Click card -> click on map";
-
-            spriteBatch.DrawString(font, info, new Vector2(lx, ty), infoColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
-            ty += lineH;
+            string usage = (ExpandedCard.Effect == CardEffect.Shuffle ||
+                            ExpandedCard.Effect == CardEffect.Discount)
+                ? "Double Click to apply"
+                : "Double Click --> Select card";
+            spriteBatch.DrawString(font, usage,
+                new Vector2(textX, textY), infoColor,
+                0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            textY += lineH;
         }
 
-        // Cost / status line
-        if (ExpandedCard.Type == CardType.Build)
+        if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
         {
-            string costStr = isLocked ? $"Cost: {ExpandedCard.Cost} sanity" : "Purchased";
+            int displayCost = cardManager.DiscountActive
+                ? Math.Max(ExpandedCard.Cost - 2, 0)
+                : ExpandedCard.Cost;
+
+            string costStr  = isLocked
+                ? (cardManager.DiscountActive
+                    ? $"Cost: {displayCost} sanity (discounted)"
+                    : $"Cost: {displayCost} sanity")
+                : "Purchased";
             Color costColor = isLocked ? new Color(0xc0, 0x50, 0x30) : new Color(0x20, 0x80, 0x30);
-            spriteBatch.DrawString(font, costStr, new Vector2(lx, ty), costColor, 0, Vector2.Zero, textSc, SpriteEffects.None, 0);
-            ty += lineH + 4;
-            if (isLocked)
-                spriteBatch.DrawString(font, "Double click to buy", new Vector2(lx, ty), new Color(0x40, 0x90, 0xff), 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
-            ty += lineH + 6;
-        }
 
-        ty += 6;
+            spriteBatch.DrawString(font, costStr,
+                new Vector2(textX, textY), costColor,
+                0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            textY += lineH;
+
+            if (isLocked)
+            {
+                spriteBatch.DrawString(font, "Drag to buy & place instantly",
+                    new Vector2(textX, textY), infoColor,
+                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            }
+            int maxStack = GetMaxStack(ExpandedCard);
+
+            if (IsBarrierCard(ExpandedCard) && !isLocked)
+            {
+                int barWidth  = 220;
+                int barHeight = 14;
+
+                Rectangle barRect = new Rectangle(
+                    (int)textX,
+                    (int)textY + 6,
+                    barWidth,
+                    barHeight
+                );
+
+                DrawStackBar(spriteBatch, dummy,
+                    barRect,
+                    ExpandedCard.StackCount,
+                    maxStack
+                );
+
+                textY += barHeight + 10;
+
+                string stackText = $"{ExpandedCard.StackCount}/{maxStack} remaining";
+
+                spriteBatch.DrawString(font, stackText,
+                    new Vector2(textX, textY),
+                    new Color(80, 80, 80),
+                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+
+                textY += lineH;
+            }
+        }
     }
 
-    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory, ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn)
+    public void UpdateUIButtonLayout(int screenW, int screenH, bool showInventory,
+        ref Rectangle showCardsBtn, ref Rectangle towerRangeBtn, ref Rectangle nightBtn, ref Rectangle destroyBtn,
+        ref Rectangle moveBtn)
     {
-        // Fixed size matching float_button sprite at 3×
-        // so PickFloatSrc uses the regular (non-long) variant and the right
-        // edge sits 20 px from the screen edge, matching the tutorial button.
         int margin = 20, spacing = 12;
         int btnW = 240, btnH = 96;
+
         int x = screenW - btnW - margin;
 
         int y3 = screenH - btnH - margin;
@@ -244,7 +474,114 @@ public class CardRenderer
 
         showCardsBtn  = new Rectangle(x, y1, btnW, btnH);
         towerRangeBtn = new Rectangle(x, y2, btnW, btnH);
-        nightBtn      = new Rectangle(x, y3, btnW, btnH);
+        nightBtn   = new Rectangle(x, y3, btnW, btnH);
+
+        // ----------------------------
+        // Move / Destroy buttons (FIXED)
+        // ----------------------------
+        int actionBtnW = btnW;
+        int actionBtnH = btnH;
+
+        int leftMargin = margin;
+
+        int destroyY = screenH - margin - actionBtnH;
+        int moveY    = destroyY - actionBtnH - spacing;
+
+        moveBtn    = new Rectangle(leftMargin, moveY, actionBtnW, actionBtnH);
+        destroyBtn = new Rectangle(leftMargin, destroyY, actionBtnW, actionBtnH);
+
+        // ----------------------------
+        // Expanded panel (unchanged logic, cleaned)
+        // ----------------------------
+
+        int panelH = CARD_H + 120;
+        int panelY = CardStripBounds.Y - panelH - 10;
+
+        int panelW = x - leftMargin - 5;
+
+        _expandedPanelRect = panelW > 60
+            ? new Rectangle(5, panelY, panelW, panelH)
+            : Rectangle.Empty;
+    }
+    private int GetMaxStack(Card card)
+    {
+        var template = CardManager.BarrierTemplates
+            .FirstOrDefault(t => t.SpriteName == card.SpriteName);
+
+        return template?.StackCount ?? 0;
+    }
+    private bool IsBarrierCard(Card card)
+    {
+        return CardManager.BarrierTemplates
+            .Any(t => t.SpriteName == card.SpriteName);
+    }
+
+    private void DrawStackBar(SpriteBatch spriteBatch, Texture2D dummy,
+    Rectangle area, int current, int max)
+    {
+        if (max <= 0) return;
+
+        float ratio = MathHelper.Clamp(current / (float)max, 0f, 1f);
+
+        spriteBatch.Draw(dummy, area, new Color(40, 40, 40));
+
+        var fillRect = new Rectangle(
+            area.X,
+            area.Y,
+            (int)(area.Width * ratio),
+            area.Height
+        );
+
+        Color fillColor =
+            ratio > 0.6f ? new Color(60, 180, 75) :
+            ratio > 0.3f ? new Color(230, 180, 50) :
+                        new Color(200, 60, 60);
+
+        spriteBatch.Draw(dummy, fillRect, fillColor);
+
+        int t = 2;
+        spriteBatch.Draw(dummy, new Rectangle(area.X, area.Y, area.Width, t), Color.Black);
+        spriteBatch.Draw(dummy, new Rectangle(area.X, area.Bottom - t, area.Width, t), Color.Black);
+        spriteBatch.Draw(dummy, new Rectangle(area.X, area.Y, t, area.Height), Color.Black);
+        spriteBatch.Draw(dummy, new Rectangle(area.Right - t, area.Y, t, area.Height), Color.Black);
+    }
+
+    private string GetCardStats(Card card)
+    {
+        if (card == null) return "";
+
+        switch (card.SpriteName)
+        {
+            case "sniper":
+                return "Range: 3 | Damage: 9 | Health: 15";
+
+            case "aoe":
+                return "Range: 2 | Damage: 9 | Health: 15";
+
+            case "spikes":
+                return "Damage: 7 | Indestructible";
+
+            case "fence":
+                return "Health: 24";
+
+            case "dreamcatcher":
+                return "Health: 24";
+
+            case "decoy":
+                return "Health: 15";
+
+            case "buff":
+                return "Health: 15";
+
+            case "void":
+                return "Indestructible";
+
+            case "polymorph":
+                return "Duration: 1 night";
+
+            default:
+                return "";
+        }
     }
 
     private static readonly Color PLACEMENT_OK  = new Color(0x11, 0x7a, 0x15);
