@@ -42,9 +42,9 @@ public class MapRenderer
                     //the offset from the falling anim
                     Vector2 offset = Vector2.Zero;
                     float offsetProgressInv = 1;
-                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos)))
+                    if(!(MapUtils.IsInBounds(localTilePos) && combatManager.PlayingField.Contains(localTilePos))
+                        || mapManager.IsVoidFallingTile(localTilePos.col, localTilePos.row))
                     {
-                        //if the tile is outside the playing fild add the falling offset
                         offset = mapManager.TilesOfsets[globalTilePos.col, globalTilePos.row];
                         offsetProgressInv = 1-(Math.Clamp((float)mapManager.FallTimer[globalTilePos.col, globalTilePos.row].TotalSeconds, 0 , (float)mapManager.MaxFallTime.TotalSeconds)/ (float)mapManager.MaxFallTime.TotalSeconds);
                     }                    

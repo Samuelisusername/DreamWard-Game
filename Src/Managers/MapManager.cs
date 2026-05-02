@@ -44,6 +44,8 @@ public class MapManager
     public readonly MonsterGroupContainer[,] MonsterContainers; //colfirst
     // NEW: Tracks which specific tiles in the [Columns*3, Rows*3] grid are falling
     private bool[,] _isFallingTile;
+    private HashSet<(int col, int row)> _pendingTileClear = new();
+    public bool IsVoidFallingTile(int col, int row) => _pendingTileClear.Contains((col, row));
 
 #endregion
 
@@ -221,6 +223,12 @@ public class MapManager
             if (FallTimer.Cast<TimeSpan>().All(i => i > MaxFallTime))
             {
                 isFalling = false;
+                foreach (var (col, row) in _pendingTileClear)
+                {
+                    RemoveStructure((col, row));
+                    _tiles[col, row] = -1;
+                }
+                _pendingTileClear.Clear();
                 gamePhaseManager.FinishSwitchToNight();
             }
         }
@@ -371,15 +379,10 @@ public class MapManager
                 int mapJ = row + Rows;
 
                 _isFallingTile[mapI, mapJ] = true;
+                SetDistanceFallTimer(mapI, mapJ);
 
-                // Make the chunks violently fall away immediately
-                FallTimer[mapI, mapJ] = TimeSpan.FromSeconds(0.1f);
-                
-                // Clear whatever tree/rock/enemy (or the VoidTile!) was on that tile
-                RemoveStructure((col, row));
-                
-                // Set the ground tile to empty space (-1) so it draws as pure black
-                _tiles[col, row] = -1;
+                // Defer clearing until animation completes so the tile stays visible while falling
+                _pendingTileClear.Add((col, row));
             }
         }
     }
@@ -1072,6 +1075,12 @@ public class MapManager
 
 #region Animation
     
+    private void SetDistanceFallTimer(int mapI, int mapJ)
+    {
+        int dist = MapUtils.CalculateTileDistance((mapI - Columns, mapJ - Rows), GetTent());
+        FallTimer[mapI, mapJ] = TimeSpan.FromSeconds(-((shakeMax * (float)Random.Shared.NextDouble()) + (Math.Min(dist, 25) * shakeOffset)));
+    }
+
     public void StartFalling()
 {
     isFalling = true;
@@ -1079,16 +1088,9 @@ public class MapManager
     {
         for (int j = 0; j < Rows * 3; j++)
         {
-            // NEW: If this tile was already marked to fall by the Void Enclosure logic 
-            // a millisecond ago, SKIP IT so we don't overwrite its animation!
             if (_isFallingTile[i, j]) continue;
-            
-            // Otherwise, mark the tile as falling for the night transition
             _isFallingTile[i, j] = true;
-
-            // Use your original circular distance logic
-            int dist = MapUtils.CalculateTileDistance((i - Columns, j - Rows), GetTent());
-            FallTimer[i, j] = TimeSpan.FromSeconds(-((shakeMax * (float)Random.Shared.NextDouble()) + (Math.Min(dist, 25) * shakeOffset)));
+            SetDistanceFallTimer(i, j);
         }
     }
 }
