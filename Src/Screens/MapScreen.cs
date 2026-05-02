@@ -42,7 +42,6 @@ public class MapScreen : GamelabGameScreen
     private int _previousTutorialStep = -1;
     private bool _tutorialTextComplete = false;
 
-
     // Cards
     private SpriteFont _font;
     private Texture2D _dummy, _cardTexture, _sanityIconTexture, _dayIconTexture;
@@ -58,10 +57,12 @@ public class MapScreen : GamelabGameScreen
     private bool _inventoryBtnPressed  = false;
     private bool _towerRangeBtnPressed = false;
 
-    // Hammer (destroy mode) toggle
-    private Rectangle _hammerBtn;
-    private bool _hammerBtnPressed = false;
+    private bool _moveActive    = false;
     private bool _hammerActive = false;
+    private bool _movePressed   = false;
+    private bool _hammerBtnPressed = false;
+    private Rectangle _moveBtn;
+    private Rectangle _hammerBtn;
     
     private Rectangle _startNightBtn;
     private TimeSpan _startNightTime = TimeSpan.FromSeconds(1);
@@ -82,6 +83,13 @@ public class MapScreen : GamelabGameScreen
     private Texture2D _dayInterfaceTexture;
     private double _lastClickTime = 0;
     private const double DOUBLE_CLICK_TIME = 300; // ms
+
+    //  — card drag-to-buy state ──────────────────────────────────────
+    private Card    _dragCard         = null;
+    private bool    _isDraggingCard   = false;
+    private Vector2 _dragStartPos;
+    private const float DRAG_THRESHOLD = 10f;   // virtual pixels before drag is confirmed
+
     private Texture2D InterfaceTexture => gamePhaseManager.IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private float SpriteScale => viewportAdapter.VirtualWidth / 640f;
     private static readonly Rectangle FloatBtn        = new(0, 176, 80,  32);
@@ -154,8 +162,7 @@ public class MapScreen : GamelabGameScreen
             { "void",         new(0, 1664, 128, 128) },
             { "spikes",       new(0, 1792, 128, 128) },
             { "decoy",        new(0, 1920, 128, 128) },
-            { "buff",         new(0, 2048, 128, 128) }
-
+            { "buff",         new(0, 2048, 128, 128) },
         };
         
         if (!_offsetInitialized)
@@ -185,14 +192,8 @@ public class MapScreen : GamelabGameScreen
         _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
         if (!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn);
+            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn, ref _hammerBtn, ref _moveBtn);
         }
-        // Hammer (destroy mode) button: square, sits to the LEFT of the right-aligned button column
-        int hSize = Math.Max(_startNightBtn.Height, 56);
-        int hMargin = 12;
-        int hX = (_startNightBtn.Width > 0 ? _startNightBtn.X : vw - 20) - hSize - hMargin;
-        int hY = _startNightBtn.Height > 0 ? _startNightBtn.Y : vh - hSize - 20;
-        _hammerBtn = new Rectangle(hX, hY, hSize, hSize);
     }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
@@ -277,25 +278,23 @@ public class MapScreen : GamelabGameScreen
                 cardRenderer.CollapseExpanded();
             }
 #if DEBUG
-            // Build cards 
-            if (keyboard.WasKeyReleased(Keys.D1)) cardManager.ForceSpawnInto("sniper",        cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.D2)) cardManager.ForceSpawnInto("aoe",           cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.D3)) cardManager.ForceSpawnInto("meadow",        cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.D4)) cardManager.ForceSpawnInto("dreamcatcher",  cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.D5)) cardManager.ForceSpawnInto("fence",         cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.E))  cardManager.ForceSpawnInto("void",          cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.R))  cardManager.ForceSpawnInto("spikes",        cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.T))  cardManager.ForceSpawnInto("decoy",         cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.Y))  cardManager.ForceSpawnInto("buff",          cardManager.BuildSlots);
-            // Map action cards
-            if (keyboard.WasKeyReleased(Keys.D6)) cardManager.ForceSpawnInto("polymorph",     cardManager.MapSlots);
-            if (keyboard.WasKeyReleased(Keys.D7)) cardManager.ForceSpawnInto("destroy",       cardManager.MapSlots);
-            if (keyboard.WasKeyReleased(Keys.D8)) cardManager.ForceSpawnInto("move",          cardManager.MapSlots);
-            // Stack action cards
-            if (keyboard.WasKeyReleased(Keys.D9)) cardManager.ForceSpawnInto("shuffle",       cardManager.StackSlots);
-            if (keyboard.WasKeyReleased(Keys.D0)) cardManager.ForceSpawnInto("discount",      cardManager.StackSlots);
-            if (keyboard.WasKeyReleased(Keys.Q))  cardManager.ForceSpawnInto("top3",          cardManager.StackSlots);
-            if (keyboard.WasKeyReleased(Keys.W))  cardManager.ForceSpawnInto("discard",       cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.D1)) cardManager.ForceSpawnInto("sniper",       cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D2)) cardManager.ForceSpawnInto("aoe",          cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D3)) cardManager.ForceSpawnInto("meadow",       cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D4)) cardManager.ForceSpawnInto("dreamcatcher", cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D5)) cardManager.ForceSpawnInto("fence",        cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.Q))  cardManager.ForceSpawnInto("void",         cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.W))  cardManager.ForceSpawnInto("spikes",       cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.E))  cardManager.ForceSpawnInto("decoy",        cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.R))  cardManager.ForceSpawnInto("buff",         cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D6)) cardManager.ForceSpawnInto("polymorph",    cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.D7)) cardManager.ForceSpawnInto("shuffle",      cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.D8)) cardManager.ForceSpawnInto("discount",     cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.D9)) cardManager.ForceSpawnInto("top3",         cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.D0)) cardManager.ForceSpawnInto("discard",      cardManager.StackSlots);
+            if (keyboard.WasKeyReleased(Keys.T))  cardManager.AddSlots(1);
+            if (keyboard.WasKeyReleased(Keys.Y))  cardManager.AddSlots(2);
+            if (keyboard.WasKeyReleased(Keys.U))  cardManager.AddSlots(3);
 #endif
         }
 
@@ -368,7 +367,6 @@ public class MapScreen : GamelabGameScreen
 #if DEBUG
                     mapManager.TriggerVoidEnclosureFall();
                     gamePhaseManager.SwitchToNight();
-
 #else
                     if(gamePhaseManager.IsDay){
                         mapManager.TriggerVoidEnclosureFall();
@@ -394,9 +392,26 @@ public class MapScreen : GamelabGameScreen
                 _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
                 _tutorial_btn_pressed = _tutorial_btn.Contains(pos);
                 _speedBtnPressed      = _speedBtn.Contains(pos);
+                _movePressed          = _moveBtn.Contains(pos);
                 _hammerBtnPressed     = _hammerBtn.Contains(pos);
                 _oldPos       = pos;
                 _clickStarted = true;
+
+                // Begin possible card drag
+                _dragCard       = null;
+                _isDraggingCard = false;
+                if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay && _showInventory)
+                {
+                    foreach (var (rect, card) in cardManager.CardRects)
+                    {
+                        if ((card?.Type == CardType.Build || card?.Type == CardType.MapAction) && rect.Contains(pos))
+                        {
+                            _dragCard     = card;
+                            _dragStartPos = pos;
+                            break;
+                        }
+                    }
+                }
 
                 // trigger unaffordable flash
                 if(!gamePhaseManager.IsInTransition && _hoveredStructure is Meadow cantAffordSpot && !cantAffordSpot.HasSheep)
@@ -407,26 +422,70 @@ public class MapScreen : GamelabGameScreen
                 }
             }
 
-            if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted &&
-                (!_showInventory || !cardRenderer.CardStripBounds.Contains(mousePos)))
+            // ── Mouse held ───────────────────────────────────────────────────
+            if (mouse.IsButtonDown(MouseButton.Left) && _clickStarted)
             {
-                Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
-
-                if (deltaPos.Length() > 0)
+                // ── Card drag: promote to dragging once threshold crossed ──────
+                if (_dragCard != null && !_isDraggingCard)
                 {
-                    mapManager.MoveMap(deltaPos, screenSize);
-                    _isDrag = true;
-                    _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                    Vector2 dragDelta = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _dragStartPos;
+                    if (dragDelta.Length() > DRAG_THRESHOLD)
+                    {
+                        CardSlot slot = cardManager.GetSlotForCard(_dragCard);
+                        if (slot != null)
+                        {
+                            if (!slot.Purchased)
+                            {
+                                // Try to purchase on drag-start
+                                if (cardManager.TryPurchaseBuildCard(slot, sanityManager))
+                                {
+                                    AudioManager.Play("coinsplash");
+                                    _isDraggingCard = true;
+                                    cardManager._activeMapCard    = _dragCard;
+                                    cardManager._selectedTile     = (-1, -1);
+                                    cardManager._previewStructure = null;
+                                }
+                                else
+                                {
+                                    // Can't afford — abort drag
+                                    _dragCard = null;
+                                }
+                            }
+                            else
+                            {
+                                // Already purchased — drag directly into placement
+                                _isDraggingCard = true;
+                                cardManager._activeMapCard    = _dragCard;
+                                cardManager._selectedTile     = (-1, -1);
+                                cardManager._previewStructure = null;
+                            }
+                        }
+                    }
                 }
 
-                if (!_isDrag && !gamePhaseManager.IsInTransition && _hoveredStructure is Meadow grazingSpot && !grazingSpot.HasSheep && !grazingSpot.IsGrazed)
+                // ── Map drag (only when not dragging a card and not over card strip) ──
+                if (!_isDraggingCard &&
+                    (!_showInventory || !cardRenderer.CardStripBounds.Contains(mousePos)))
+                {
+                    Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
+                    if (deltaPos.Length() > 0)
+                    {
+                        mapManager.MoveMap(deltaPos, screenSize);
+                        _isDrag = true;
+                        _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+                    }
+                }
+
+                // ── Sheep grazing hold ────────────────────────────────────────
+                if (!_isDrag && !_isDraggingCard && !gamePhaseManager.IsInTransition
+                    && _hoveredStructure is Meadow grazingSpot
+                    && !grazingSpot.HasSheep && !grazingSpot.IsGrazed)
                 {
                     int moveCost = (int)MathF.Round(
                         MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
                         * MapManager.MoveCostMultiplier);
-
-                    if (GamelabGame.SanityManager.Sanity >= moveCost &&
-                        grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                    if (GamelabGame.SanityManager.Sanity >= moveCost
+                        && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                     {
                         mapManager.TryMoveSheep(mousePos);
                     }
@@ -434,7 +493,16 @@ public class MapScreen : GamelabGameScreen
             }
 
             //set the hovered tile
-            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&  ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos)) || _inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))) || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
+            bool mouseOverUI = (!gamePhaseManager.IsInTransition &&
+                ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
+                 || _inventoryBtn.Contains(mousePos)
+                 || _towerRangeBtn.Contains(mousePos)
+                 || _tutorial_btn.Contains(mousePos)
+                 || _startNightBtn.Contains(mousePos)
+                 || _moveBtn.Contains(mousePos)
+                 || _hammerBtn.Contains(mousePos)))
+                || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
+            
             _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
@@ -464,7 +532,25 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = _hammerBtnPressed = false;
+                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = _movePressed = _hammerBtnPressed = false;
+
+                // ── Drop dragged card onto map ────────────────────────────────
+                if (_isDraggingCard && _dragCard != null)
+                {
+                    if (_hoverTile.col >= 0)
+                    {
+                        if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                            cardRenderer.CollapseExpanded();
+                    }
+                    _isDraggingCard = false;
+                    _dragCard       = null;
+                    _clickStarted   = false;
+                    _isDrag         = false;
+                    return;
+                }
+                _dragCard       = null;
+                _isDraggingCard = false;
+
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
                     mapManager.HandleMapClick(mousePos);
@@ -534,53 +620,108 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false;
                         return;
                     }
-                    // Card strip takes priority over any overlapping buttons
+                    // ── Card strip clicks ─────────────────────────────────────
                     if (_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
                     {
-                        foreach (var (rect, card) in cardManager.CardRects)
+                        Card clickedCard = null;
+                        CardSlot clickedSlot = null;
+
+                        // ── SAME logic as hover: topmost wins ──
+                        for (int i = cardRenderer.TransformCount - 1; i >= 0; i--)
                         {
-                            if (card == null || !rect.Contains(mousePos)) continue;
-                            CardSlot slot = cardManager.GetSlotForCard(card);
-                            bool isDouble = IsDoubleClick(mouse, gameTime);
-                            if (card.Type == CardType.Build)
+                            var t = cardRenderer.GetTransform(i);
+
+                            if (t.HalfW == 0 || t.HalfH == 0)
+                                continue;
+
+                            float rad = MathHelper.ToRadians(t.AngleDeg);
+                            Vector2 local = CardRenderer.Rot(mousePos - t.Center, -rad);
+
+                            if (MathF.Abs(local.X) <= t.HalfW &&
+                                MathF.Abs(local.Y) <= t.HalfH)
                             {
-                                if (slot != null && !slot.Purchased)
+                                if (i < cardManager.CardRects.Count)
                                 {
-                                    if (isDouble)
-                                    {
-                                        bool bought = cardManager.TryPurchaseBuildCard(slot, sanityManager);
-                                        if (bought)
-                                            AudioManager.Play("coinsplash");
-                                    }
-                                    _clickStarted = false;
-                                    return;
-                                }
-                                if (slot != null && slot.Purchased)
-                                {
-                                    ToggleActiveCard(cardManager, card);
-                                    _clickStarted = false;
-                                    return;
+                                    var (_, card) = cardManager.CardRects[i];
+                                    if (card == null) continue;
+
+                                    clickedCard = card;
+                                    clickedSlot = cardManager.GetSlotForCard(card);
+                                    break;
                                 }
                             }
-                            if (card.Type == CardType.StackAction)
+                        }
+
+                        if (clickedCard == null)
+                            return;
+
+                        bool isDouble = IsDoubleClick(mouse, gameTime);
+
+                        // ── BUILD / MAP ACTION ─────────────────────────────
+                        if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
+                        {
+                            if (cardManager.PendingStackAction != null && clickedSlot != null)
                             {
-                                if (card.Effect == CardEffect.Shuffle)
+                                if (cardManager.PendingStackAction == CardEffect.SaveCard)
+                                    cardManager.SaveCardFromSlot(clickedSlot);
+                                else if (cardManager.PendingStackAction == CardEffect.Discard)
+                                    cardManager.DiscardCardFromSlot(clickedSlot, gamePhaseManager.DayCount);
+
+                                cardManager.PendingStackAction = null;
+                                _clickStarted = false;
+                                return;
+                            }
+
+                            if (clickedSlot != null && !clickedSlot.Purchased)
+                            {
+                                if (isDouble)
                                 {
-                                    if (isDouble)
+                                    if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
+                                        AudioManager.Play("coinsplash");
+                                }
+
+                                _clickStarted = false;
+                                return;
+                            }
+
+                            if (clickedSlot != null && clickedSlot.Purchased)
+                            {
+                                ToggleActiveCard(cardManager, clickedCard);
+                                _clickStarted = false;
+                                return;
+                            }
+                        }
+
+                        // ── STACK ACTION ───────────────────────────────────
+                        if (clickedCard.Type == CardType.StackAction)
+                        {
+                            if (clickedCard.Effect == CardEffect.Shuffle || clickedCard.Effect == CardEffect.Discount)
+                            {
+                                if (isDouble)
+                                {
+                                    cardManager.UseCard(clickedCard);
+                                    AudioManager.Play("card-place");
+                                }
+                            }
+                            else
+                            {
+                                if (isDouble)
+                                {
+                                    if (cardManager.PendingStackCard != null &&
+                                        ReferenceEquals(cardManager.PendingStackCard, clickedCard))
                                     {
-                                        cardManager.UseCard(card);
+                                        cardManager.ClearPendingStackAction();
+                                    }
+                                    else
+                                    {
+                                        cardManager.UseCard(clickedCard);
                                         AudioManager.Play("card-place");
                                     }
                                 }
-                                _clickStarted = false;
-                                return;
                             }
-                            if (card.Type == CardType.MapAction)
-                            {
-                                ToggleActiveCard(cardManager, card);
-                                _clickStarted = false;
-                                return;
-                            }
+
+                            _clickStarted = false;
+                            return;
                         }
                     }
 
@@ -594,6 +735,32 @@ public class MapScreen : GamelabGameScreen
                     if (_towerRangeBtn.Contains(mousePos))
                     {
                         _showTowerRange = !_showTowerRange;
+                        _clickStarted = false;
+                        return;
+                    }
+                    if (_moveBtn.Contains(mousePos))
+                    {
+                        _moveActive = !_moveActive;
+                        _hammerActive = false;
+
+                        if (_moveActive)
+                        {
+                            if (GamelabGame.SanityManager.Sanity <= 2)
+                            {
+                                _moveActive = false;
+                                _clickStarted = false;
+                                return;
+                            }
+
+                            cardManager._activeMapCard = null;
+                            cardManager._previewStructure = null;
+                            cardManager._selectedTile = (-1, -1);
+                        }
+                        else
+                        {
+                            cardManager._selectedTile = (-1, -1);
+                        }
+
                         _clickStarted = false;
                         return;
                     }
@@ -620,6 +787,19 @@ public class MapScreen : GamelabGameScreen
                             {
                                 mapManager.RemoveStructure(tile);
                             }
+                            _clickStarted = false;
+                            _isDrag = false;
+                            return;
+                        }         
+                        if (_moveActive)
+                        {
+                            (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
+
+                            if (tile.col >= 0)
+                            {
+                                cardManager.TryMoveStructure(mapManager, tile);
+                            }
+
                             _clickStarted = false;
                             _isDrag = false;
                             return;
@@ -720,8 +900,9 @@ public class MapScreen : GamelabGameScreen
 
         // ✅ Map        
         if (cardManager._activeMapCard != null &&
-            (cardManager._activeMapCard.Effect == CardEffect.Move ||
-            cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
+            (cardManager._activeMapCard.Effect == CardEffect.Move     ||
+             cardManager._activeMapCard.Effect == CardEffect.Destroy  ||
+             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange, cardRenderer);
@@ -761,9 +942,6 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-
-
-            
         }
         if(!gamePhaseManager.IsInTransition)
         {
@@ -785,15 +963,71 @@ public class MapScreen : GamelabGameScreen
                 }
             }
         }
+        if (_moveActive)
+        {
+            Color moveHighlight = Color.Yellow;
+
+            for (int col = 0; col < mapManager.Columns; col++)
+            {
+                for (int row = 0; row < mapManager.Rows; row++)
+                {
+                    var s = mapManager.GetStructure((col, row));
+
+                    if (cardManager._selectedTile == (-1, -1))
+                    {
+                        // show pickable tiles
+                        if (s != null && s.CanMove)
+                            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), moveHighlight);
+                    }
+                    else
+                    {
+                        // show valid drop tiles
+                        if (s != null)
+                            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), Color.Red);
+                    }
+                }
+            }
+        }
+
+        // ── Move-mode placement preview ───────────────────────────────────────
+        // When the player has picked up a structure (_selectedTile is set) and is
+        // hovering a valid drop tile, show the ghost of the structure there.
+        // ── Move-mode placement preview ───────────────────────────────────────
+        if (_moveActive && cardManager._selectedTile != (-1, -1)
+            && cardManager._previewStructure != null && _hoverTile.col >= 0)
+        {
+            var moving  = cardManager._previewStructure;
+            bool valid  = mapManager.GetStructure(_hoverTile) == null;
+            Color ghost = valid ? new Color(0x11, 0x7a, 0x15) : new Color(220, 60, 60);
+
+            var oldPos = moving.TilePosition;
+            moving.TilePosition = _hoverTile;
+            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, _hoverTile, ghost);
+
+            // ── NEW: show tower range while moving a tower ──────────────────
+            if (moving is Tower movingTower)
+                cardRenderer.DrawTowerRangePreview(spriteBatch, mapManager, movingTower, ghost);
+
+            var prev = moving.PreviewTint;
+            moving.PreviewTint = ghost;
+            moving.DrawBase(spriteBatch, alpha: 0.5f);
+            moving.Draw(spriteBatch, alpha: 0.5f);
+            moving.PreviewTint = prev;
+            moving.TilePosition = oldPos;
+        }
 
         spriteBatch.End();
 
-        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.PointClamp : SamplerState.PointClamp;
+        SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.LinearClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
-        (int col, int row) skipOrHover = (cardManager._activeMapCard != null &&
-            (cardManager._activeMapCard.Effect == CardEffect.Move ||
-             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
-            _hoverTile.col >= 0) ? _hoverTile : (-1, -1);
+        (int col, int row) skipOrHover = (
+            (cardManager._activeMapCard != null &&
+             (cardManager._activeMapCard.Effect == CardEffect.Move ||
+              cardManager._activeMapCard.Effect == CardEffect.Destroy ||
+              cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
+             _hoverTile.col >= 0)
+            || (_moveActive && cardManager._selectedTile != (-1, -1) && _hoverTile.col >= 0)
+            ) ? _hoverTile : (-1, -1);
         entityRenderer.Draw(spriteBatch, skipOrHover.col >= 0 ? skipOrHover : null);
         spriteBatch.End();
 
@@ -824,7 +1058,8 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
             DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
             DrawButton(_startNightBtn, "Start night", false, (float)(_elapsedStartNightTime/_startNightTime));
-            DrawHammerButton();
+            DrawButton(_moveBtn, _moveActive ? "Move (ON)" : "Move (2 Sanity)", _moveActive);
+            DrawButton(_hammerBtn, _hammerActive ? "Destroy (ON)" : "Destroy", _hammerActive);
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
@@ -1014,30 +1249,13 @@ public class MapScreen : GamelabGameScreen
         // --- 2. TUTORIAL STEPS ---
         switch (_tutorial_step)
         {
-            case 0:
-                speaker = "Human";
-                text = "Huh... where am I? What is happening?";
-                _targetZoom = 1.7f; // Zoom in close to the player
-                _showInventory = false;
-                break;
-            case 1:
-                speaker = "Sheep";
-                text = "Oh good, you're awake! Last night when you were sleeping, nightmares came and attacked us.";
-                _targetZoom = 1.7f;
-                _showInventory = false;
-                break;
-            case 2:
-                speaker = "Human";
-                text = "Did they do something to us?";
-                _targetZoom = 1.7f;
-                _showInventory = false;
-                break;
+            case 0:  speaker = "Human"; text = "Huh... where am I? What is happening?"; _targetZoom = 1.7f; _showInventory = false; break;
+            case 1:  speaker = "Sheep"; text = "Oh good, you're awake! Last night when you were sleeping, nightmares came and attacked us."; _targetZoom = 1.7f; _showInventory = false; break;
+            case 2:  speaker = "Human"; text = "Did they do something to us?"; _targetZoom = 1.7f; _showInventory = false; break;
             case 3:
                 speaker = "Sheep";
                 text = "The nightmares come from the forest at night and wanted to your tent and sanity. They also tried to eat me.";
-                _targetZoom = 1.0f; // Zoom back out to see the UI
-                _showInventory = false;
-
+                _targetZoom = 1.0f; _showInventory = false;
                 // Calculate Sanity UI Highlight
                 int barW = 240;
                 int barH = (int)_font.MeasureString("X").Y;
@@ -1047,128 +1265,27 @@ public class MapScreen : GamelabGameScreen
                 int boxHeight = panelH + 20;
                 highlightBox = new Rectangle(10, 10, boxWidth, boxHeight);
                 break;
-            case 4: 
-                speaker = "Human";
-                text = "Oh no, I hope you are okay. Why did they attack you?";
-                _targetZoom = 1.7f;
-                _showInventory = false;
-                break;
-            case 5: 
-                speaker = "Sheep";
-                text = "The nightmares attack your sanity and I produce sanity each morning, if I survive the night.";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-            case 6:
-                speaker = "Sheep";
-                text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs sanity per tile I have to traverse and secondly the nightmares spawn near the forest close to the good grazing spots";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-            case 7: 
-                speaker = "Sheep";
-                text = "Bonus tip: Place a Build-Card Meadow next to me and you'll be EVEN MORE sane!";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                _tutorialHighlight = TutorialHighlight.MeadowTiles;
-                break;
-            case 8:
-                speaker = "Human";
-                text = "Okay, this is a lot. You said something about cards?";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
 
-            case 9:  
-                speaker = "Sheep";
-                text = "Yes! Look at the bottom of the screen - that's your hand. There are 3 types of cards. Map Action, and Stack Action, and Build cards.";
-                _targetZoom = 1.0f;
-                _showInventory = true; // open inventory for this step
-                _tutorialHighlight = TutorialHighlight.CardStrip;
-                break;
-
-            case 10:
-                speaker = "Sheep";
-                text = "Build Cards are your defenses. Dark ones are locked - DOUBLE-CLICK to buy with Sanity, then click once to select and click a tile to place!";
-                _targetZoom = 1.0f;
-                _showInventory = true;
-                _tutorialHighlight = TutorialHighlight.BuildSlots;
-                break;
-
-            case 11:
-                speaker = "Human";
-                text = "Double-click to buy, single click to select, then click the map tile... got it.";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-
-            case 12:
-                speaker = "Sheep";
-                text = "Hover any card to peek at its details in the expanded panel. Towers, fence, spikes, dream-catcher, you name it! Go ahead, try it now.";
-                _targetZoom = 1.0f;
-                _showInventory = true;
-                _tutorialHighlight = TutorialHighlight.Expanded;
-                break;
-            
-            case 13:
-                speaker = "Human";
-                text = "Okay, what about the action cards?";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-
-            case 14:
-                speaker = "Sheep";
-                text = "Map Action cards let you mess with the map itself. Click one to select it, then click a structure on the map to apply it.";
-                _targetZoom = 1.0f;
-                _showInventory = true;
-                _tutorialHighlight = TutorialHighlight.MapSlots;
-                break;
-
-            case 15:
-                speaker = "Sheep";
-                text = "Move repositions a structure. And Polymorph? It turns me into a rat! They won't attack a rat!";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-
-            case 16:
-                speaker = "Human";
-                text = "So I click the map card once, then click the structure on the map?";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-
-            case 17:
-                speaker = "Sheep";
-                text = "Precisely. Select the card then click map tile. Simple as that. Great for repositioning towers as I wander further from the tent.";
-                _targetZoom = 1.0f;
-                _showInventory = false;
-                break;
-
-            case 18:
-                speaker = "Sheep";
-                text = "Stack Action cards modify your build deck. DOUBLE-CLICK them to activate - like Shuffle!";
-                _targetZoom = 1.0f;
-                _showInventory = true;
-                _tutorialHighlight = TutorialHighlight.StackSlots;
-                break;
-
-            case 19: 
-                speaker = "Human";
-                text = "Okay, okay I'm bored of explanations, I wanna learn by doing!";
-                break;
-
-            case 20: 
-                speaker = "Sheep"; 
-                text = "Okay cool! For any more tips and infos you can hover over tiles like meadows, cards and defense towers. Survive 10 nights to win the game! Good Luck!";
-                break;
-
-            default:
-                speaker = (_tutorial_step%2==0)?"Sheep" : "Human";
-                text = "DREAMWARD!!!!";
-                break;
+            case 4:  speaker = "Human"; text = "Oh no, I hope you are okay. Why did they attack you?"; _targetZoom = 1.7f; _showInventory = false; break;
+            case 5:  speaker = "Sheep"; text = "The nightmares attack your sanity and I produce sanity each morning, if I survive the night."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 6:  speaker = "Sheep"; text = "I like to graze on meadows far away. The further away the more sanity I produce for you each morning! However there are some downsides too. Firstly, moving me costs sanity per tile I have to traverse and secondly the nightmares spawn near the forest close to the good grazing spots"; _targetZoom = 1.0f; _showInventory = false; break;
+            case 7:  speaker = "Sheep"; text = "Bonus tip: Place a Build-Card Meadow next to me and you'll be EVEN MORE sane!"; _targetZoom = 1.0f; _showInventory = false; _tutorialHighlight = TutorialHighlight.MeadowTiles; break;
+            case 8:  speaker = "Human"; text = "Okay, this is a lot. You said something about cards?"; _targetZoom = 1.0f; _showInventory = false; break;
+            case 9:  speaker = "Sheep"; text = "Yes! Look at the bottom of the screen - that's your hand of cards, arranged in a fan. There are 2 types: Build cards and Stack Action cards."; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.CardStrip; break;
+            case 10: speaker = "Sheep"; text = "Build Cards are your defenses. Dark ones are locked - DOUBLE-CLICK to buy with Sanity, then click once to select and click a tile to place! You can also DRAG a build card onto the map to buy and place in one motion."; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.BuildSlots; break;
+            case 11: speaker = "Human"; text = "Double-click to buy, single click to select, then click the map tile... or just drag it. Got it."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 12: speaker = "Sheep"; text = "Hover any card to see its details in the panel on the left. Towers, fence, spikes, dream-catcher, you name it! Go ahead, try it now."; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.Expanded; break;
+            case 13: speaker = "Human"; text = "Okay, what about the action cards?"; _targetZoom = 1.0f; _showInventory = false; break;
+            case 14: speaker = "Sheep"; text = "Stack Action cards appear in the two slots on the right of your hand. You EARN them by moving me to a new meadow. Double-click to use them!"; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.StackSlots; break;
+            case 15: speaker = "Sheep"; text = "Shuffle reshuffles your build cards. Discount makes the next card cheaper. SaveCard keeps a card for tomorrow. Discard swaps a card for a new one."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 16: speaker = "Human"; text = "So I move my sheep to earn stack cards? Neat!"; _targetZoom = 1.0f; _showInventory = false; break;
+            case 17: speaker = "Sheep"; text = "Exactly. And you can hover any structure on the map to see its info card with Move and Destroy buttons."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 18: speaker = "Sheep"; text = "Moving a structure costs 2 sanity. Destroying is free. Both need a double-click to confirm."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 19: speaker = "Human"; text = "Okay, okay I'm bored of explanations, I wanna learn by doing!"; break;
+            case 20: speaker = "Sheep"; text = "Okay cool! Survive 10 nights to win the game! Good Luck!"; break;
+            default: speaker = (_tutorial_step % 2 == 0) ? "Sheep" : "Human"; text = "DREAMWARD!!!!"; break;
         }
+
 
         // --- 3. DRAW HIGHLIGHT & ARROW ---
         if (highlightBox.HasValue)
@@ -1294,85 +1411,55 @@ public class MapScreen : GamelabGameScreen
     // ── Draws a yellow highlight box + arrow around a card-strip region ─────────
     private void DrawCardRegionHighlight(GameTime gameTime, TutorialHighlight region, int vw, int vh)
     {
-        // We need an approximate bounding rect for each sub-region of the card strip.
-        // CardStripBounds covers the full strip. We subdivide it for build/map/stack.
         Rectangle stripBounds = cardRenderer.CardStripBounds;
-
-        // Determine the box to highlight
         Rectangle targetRect;
-        string     regionLabel;
+        string    regionLabel;
         int slotW = stripBounds.Width / 6;
 
-    switch (region)
-    {
-        case TutorialHighlight.CardStrip:
-            targetRect  = stripBounds;
-            regionLabel = "Your Cards";
-            break;
+        switch (region)
+        {
+            case TutorialHighlight.CardStrip:
+                targetRect  = stripBounds;
+                regionLabel = "Your Cards";
+                break;
+            case TutorialHighlight.MapSlots:
+                targetRect  = new Rectangle(stripBounds.X, stripBounds.Y, slotW, stripBounds.Height);
+                regionLabel = "Map Action Cards";
+                break;
+            case TutorialHighlight.StackSlots:
+                // Stack slots are the last 2 in the 6-card fan
+                targetRect  = new Rectangle(stripBounds.X + 4 * slotW, stripBounds.Y, 2 * slotW, stripBounds.Height);
+                regionLabel = "Stack Action Cards";
+                break;
+            case TutorialHighlight.BuildSlots:
+                // Build slots are the first 4
+                targetRect  = new Rectangle(stripBounds.X, stripBounds.Y, 4 * slotW, stripBounds.Height);
+                regionLabel = "Build Cards";
+                break;
+            case TutorialHighlight.Expanded:
+                targetRect  = cardRenderer.ExpandedPanelBounds;
+                regionLabel = "Card Info Panel";
+                break;
+            default:
+                return;
+        }
 
-        case TutorialHighlight.MapSlots:
-            // leftmost slot
-            targetRect = new Rectangle(
-                stripBounds.X,
-                stripBounds.Y,
-                slotW,
-                stripBounds.Height);
-            regionLabel = "Map Action Cards";
-            break;
-
-        case TutorialHighlight.StackSlots:
-            // second slot
-            targetRect = new Rectangle(
-                stripBounds.X + slotW,
-                stripBounds.Y,
-                slotW,
-                stripBounds.Height);
-            regionLabel = "Stack Action Cards";
-            break;
-
-        case TutorialHighlight.BuildSlots:
-            // right 4 slots
-            targetRect = new Rectangle(
-                stripBounds.X + 2 * slotW,
-                stripBounds.Y,
-                4 * slotW,
-                stripBounds.Height);
-            regionLabel = "Build Cards";
-            break;
-
-        case TutorialHighlight.Expanded:
-            targetRect  = cardRenderer.ExpandedPanelBounds;
-            regionLabel = "Card Info Panel";
-            break;
-
-        default:
-            return;
-    }
-
-        // Draw yellow border around the target rect
         int border = 4;
         Color hc   = Color.Yellow;
         spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Y - border, targetRect.Width + border * 2, border), hc);
-        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Bottom,     targetRect.Width + border * 2, border), hc);
-        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Y,          border, targetRect.Height), hc);
-        spriteBatch.Draw(_dummy, new Rectangle(targetRect.Right,      targetRect.Y,          border, targetRect.Height), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Bottom, targetRect.Width + border * 2, border), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.X - border, targetRect.Y, border, targetRect.Height), hc);
+        spriteBatch.Draw(_dummy, new Rectangle(targetRect.Right, targetRect.Y, border, targetRect.Height), hc);
 
-        // Draw region label above the box
         if (!string.IsNullOrEmpty(regionLabel))
         {
-            float padding = 6f;
             float labelScale = 0.75f;
-
             Vector2 labelSize = _font.MeasureString(regionLabel) * labelScale;
-
-            Vector2 labelPos = new Vector2(
-                targetRect.X,                        
-                targetRect.Y - labelSize.Y - padding   
-            );
-            spriteBatch.DrawString(_font, regionLabel, labelPos, Color.Yellow, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, regionLabel,
+                new Vector2(targetRect.X, targetRect.Y - labelSize.Y - 6f),
+                Color.Yellow, 0f, Vector2.Zero, labelScale, SpriteEffects.None, 0f);
         }
 
-        // Bouncing arrow pointing down into the highlighted box from above
         float bounce   = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * 8) * 6;
         Vector2 arrowTip = new Vector2(targetRect.Center.X, targetRect.Y - border - 60 - bounce);
         DrawPointerArrowDown(arrowTip, hc);
@@ -1451,7 +1538,6 @@ public class MapScreen : GamelabGameScreen
                         drawDest.Center.Y - size.Y * sc * 0.5f + pressOffset),
             COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
     }
-
     
     private bool IsDoubleClick(MouseStateExtended mouse, GameTime gameTime)
     {
