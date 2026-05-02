@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -144,25 +145,7 @@ public class MapScreen : GamelabGameScreen
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
-        _cardRegions = new()
-        {
-            { "sniper",       new(0,    0, 128, 128) },
-            { "aoe",          new(0,  128, 128, 128) },
-            { "dreamcatcher", new(0,  256, 128, 128) },
-            { "fence",        new(0,  384, 128, 128) },
-            { "meadow",       new(0,  512, 128, 128) },
-            { "shuffle",      new(0,  640, 128, 128) },
-            { "discount",     new(0,  768, 128, 128) },
-            { "top3",         new(0,  896, 128, 128) },
-            { "deck",         new(0, 1152, 128, 128) },
-            { "polymorph",    new(0, 1280, 128, 128) },
-            { "move",         new(0, 1408, 128, 128) },
-            { "destroy",      new(0, 1536, 128, 128) },
-            { "void",         new(0, 1664, 128, 128) },
-            { "spikes",       new(0, 1792, 128, 128) },
-            { "decoy",        new(0, 1920, 128, 128) },
-            { "buff",         new(0, 2048, 128, 128) },
-        };
+        _cardRegions = TextureAtlas.LoadRegions(Content, "Sprites/cards.json");
         
         if (!_offsetInitialized)
         {
@@ -1574,4 +1557,5 @@ public class MapScreen : GamelabGameScreen
             cm._previewStructure = null;
         }
     }
+
 }

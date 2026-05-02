@@ -150,6 +150,25 @@ public class TextureAtlas
         }
     }
 
+    public static Dictionary<string, Rectangle> LoadRegions(ContentManager content, string fileName)
+    {
+        var regions = new Dictionary<string, Rectangle>();
+        string filePath = Path.Combine(content.RootDirectory, fileName);
+        using var stream = TitleContainer.OpenStream(filePath);
+        using var doc = JsonDocument.Parse(stream);
+        foreach (var slice in doc.RootElement.GetProperty("meta").GetProperty("slices").EnumerateArray())
+        {
+            string name = slice.GetProperty("name").GetString();
+            var bounds = slice.GetProperty("keys")[0].GetProperty("bounds");
+            regions[name] = new Rectangle(
+                bounds.GetProperty("x").GetInt32(),
+                bounds.GetProperty("y").GetInt32(),
+                bounds.GetProperty("w").GetInt32(),
+                bounds.GetProperty("h").GetInt32());
+        }
+        return regions;
+    }
+
     public static TextureAtlas FromJsonFile(ContentManager content, string fileName)
     {
         TextureAtlas atlas = new TextureAtlas();

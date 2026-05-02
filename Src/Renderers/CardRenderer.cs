@@ -30,7 +30,7 @@ public class CardRenderer
 
     // ── Tunable hand constants ────────────────────────────────────────────────
     // Change CARD_W / CARD_H freely. Everything else recomputes automatically.
-    private const int   CARD_W       = 128 * 2;   // card width  in virtual pixels
+    private const int   CARD_W       = 92 *2;   // card width  in virtual pixels
     private const int   CARD_H       = 128 * 2;   // card height in virtual pixels
 
     // How much of each card peeks above the bottom edge of the screen
@@ -382,10 +382,7 @@ public class CardRenderer
 
         if (ExpandedCard.Type == CardType.StackAction)
         {
-            string usage = (ExpandedCard.Effect == CardEffect.Shuffle ||
-                            ExpandedCard.Effect == CardEffect.Discount)
-                ? "Double Click to apply"
-                : "Double Click --> Select card";
+            string usage = "Double Click to apply";
             spriteBatch.DrawString(font, usage,
                 new Vector2(textX, textY), infoColor,
                 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
