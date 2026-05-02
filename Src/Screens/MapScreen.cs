@@ -1043,7 +1043,7 @@ public class MapScreen : GamelabGameScreen
                 int barH = (int)_font.MeasureString("X").Y;
                 int panelH = barH + barH + (70 - 20 - barH);
                 int iconCol = panelH / 3 + 8;
-                int boxWidth = iconCol + barW + 20;
+                int boxWidth = iconCol + barW + 71;
                 int boxHeight = panelH + 20;
                 highlightBox = new Rectangle(10, 10, boxWidth, boxHeight);
                 break;
