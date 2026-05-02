@@ -15,6 +15,11 @@ public class FlyingMonster : Monster
         if (entity is Spike) return false;
         return true;
     }
+    public override bool CanStepOnTile(int tileIndex)
+    {
+        // Flying monsters can be over empty space or regular grass.
+        return true; 
+    }
 
     public override bool CanStepOn(Entity entity)
     {

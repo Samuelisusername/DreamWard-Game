@@ -533,6 +533,13 @@ public class PathFindingManager
                 {
                     continue;
                 }
+                int tileIndex = mapManager.GetTileIndex(neighbor);
+                
+                // If the ground is gone and the monster is not a flyer, skip this neighbor
+                if (!monster.CanStepOnTile(tileIndex))
+                {
+                    continue; 
+    }
 
                 Entity structureOnNeighbor = mapManager.GetStructure(neighbor);
                 if (structureOnNeighbor != null && !monster.CanStepOn(structureOnNeighbor))

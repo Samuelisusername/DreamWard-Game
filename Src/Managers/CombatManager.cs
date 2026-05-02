@@ -5,6 +5,7 @@ using Gamelab.Managers;
 using System.Collections.Generic;
 using System.Linq;
 using Gamelab.Utils.Logging;
+using Gamelab.Screens;
 
 public class CombatManager
 {
@@ -46,13 +47,30 @@ public class CombatManager
         // }
         // mapManager.AddNewMonster((6,15));
         // mapManager.AddNewMonster((6,16));
+        int maxattempts = 5*count;
+        int attempts = 0; 
+        
         for (int i = 0; i < count; i++)
         {
+            attempts++;
+            if(SpawnableArea.Count == 0)
+            {
+                Console.WriteLine("no spawnable areas for monsters");
+                GameOverScreen.DidWin = false; 
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                return;
+            }
             (int, int) pos = SpawnableArea[GamelabGame.Rng.Next(SpawnableArea.Count)];
             if(!mapManager.AddNewMonster(pos, level))
             {
                 i--;
-            }            
+            }   
+            if(attempts > maxattempts){
+                Console.WriteLine("not enough spawnable areas for monsters");
+                GameOverScreen.DidWin = false; 
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                return;
+            }         
         }    
 
         // 2. Update all the Mergeanims
@@ -81,12 +99,15 @@ public class CombatManager
             {
                 if(MapUtils.IsInBounds(tile))
                 {
-                    if(mapManager.GetStructure(tile) is not TreeTile && !canSpawn[tile.col, tile.row])
-                    {
-                        // logger.Info($"tile: {tile} got added by: {search[0]}");
-                        search.Add(tile);
+                    int tileIndex = mapManager.GetTileIndex(tile);
+                    if(tileIndex != -1){
+                        if(mapManager.GetStructure(tile) is not TreeTile && !canSpawn[tile.col, tile.row])
+                        {
+                            // logger.Info($"tile: {tile} got added by: {search[0]}");
+                            search.Add(tile);
+                        }
+                        canSpawn[tile.col, tile.row] = true;
                     }
-                    canSpawn[tile.col, tile.row] = true;
                 }
             }
             search.RemoveAt(0);
@@ -157,6 +178,7 @@ public class CombatManager
         }
 
         SpawnableArea = res;
+        Console.WriteLine("getspawnableAre finished");
     }
     
 

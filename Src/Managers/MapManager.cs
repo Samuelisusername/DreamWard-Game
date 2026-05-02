@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using Gamelab.Managers;
 using System.Linq;
 using Gamelab.Utils.Logging;
+using Gamelab.Screens;
+using Microsoft.Xna.Framework.Graphics;
 
 public class MapManager
 { 
@@ -311,7 +313,7 @@ public class MapManager
     /// Create a new monster at the given location
     /// </summary>
 
-public void TriggerVoidEnclosureFall()
+    public void TriggerVoidEnclosureFall()
 {
     Array.Clear(_isFallingTile, 0, _isFallingTile.Length);
     bool[,] isSafe = new bool[Columns, Rows];
@@ -382,6 +384,11 @@ public void TriggerVoidEnclosureFall()
         }
     }
 }
+    // In MapManager.cs
+    public int GetTileIndex((int col, int row) pos) {
+        if (!MapUtils.IsInBounds(pos)) return -1;
+        return _tiles[pos.col, pos.row];
+    }
     public bool AddNewMonster((int col, int row) pos, int level)
     {
         Structure structureOnTile = Structures[pos.col,pos.row];
@@ -498,6 +505,11 @@ public void TriggerVoidEnclosureFall()
             default:
                 newMonster = new BigMonster(pos); 
                 break;
+        }
+        int tileIndex = _tiles[pos.col, pos.row];
+        if (!newMonster.CanStepOnTile(tileIndex))
+        {
+            return false;
         }
         if(structureOnTile is not null && !newMonster.CanStepOn(structureOnTile))
         {
@@ -706,6 +718,14 @@ public void TriggerVoidEnclosureFall()
         // 🌲 Random trees
         AddTrees();
         combatManager.GetSpawnableArea();
+        if (combatManager.SpawnableArea.Count-2 == 0)
+        {
+            Console.WriteLine("spawnableArea.count was 0");
+            logger.Error("TENT IS ISOLATED! No ground connected to tent. Cancelling night.");
+            GameOverScreen.DidWin = false; 
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            return; 
+        }
         AddMeadows();
     }
 
