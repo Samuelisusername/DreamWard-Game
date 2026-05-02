@@ -5,7 +5,7 @@ using Gamelab;
 using Microsoft.Xna.Framework;
 
 public enum CardType { MapAction, StackAction, Build }
-public enum CardEffect { None, Shuffle, Discard, Discount, Polymorph, Move, Destroy, SaveCard }
+public enum CardEffect { None, Shuffle, Discount, Polymorph, Move, Destroy, Refill }
 
 public record Card
 {
@@ -24,7 +24,6 @@ public class CardSlot
     public bool Purchased;
     public bool IsFilled  => Card != null;
     public bool IsUnlocked => Purchased;
-    public bool IsSaved;
 }
 
 public class CardManager
@@ -81,37 +80,9 @@ public class CardManager
             null
         );
     }
-    
-    public CardEffect? PendingStackAction = null;
 
     // Powers
     public bool DiscountActive { get; private set; }
-    public Card SavedCard      { get; private set; }
-    public int  SavedSlotIndex { get; private set; } = -1;
-    public int SavedCardExpiresInDays = 0;
-
-    public void SaveCardFromSlot(CardSlot slot)
-    {
-        int index = BuildSlots.IndexOf(slot);
-        if (index == -1 || slot.Card == null)
-            return;
-
-        SavedCard = slot.Card with {};
-        SavedSlotIndex = index;
-        slot.IsSaved = true;
-        SavedCardExpiresInDays = 1;
-        RemovePendingStackCard();
-    }
-    public void DiscardCardFromSlot(CardSlot slot, int day)
-    {
-        int index = BuildSlots.IndexOf(slot);
-        if (index == -1) return;
-        if (slot.Purchased || slot.IsSaved)
-            return;
-        slot.Card = GetRandomBuildCardForSlot(index, day, BuildSlots[index].Card);
-        RemovePendingStackCard();
-    }
-
     public Card      _activeMapCard    = null;
     public (int,int) _selectedTile     = (-1,-1);
     public Structure _previewStructure = null;
@@ -143,8 +114,7 @@ public class CardManager
     {
         new Card { Name = "Discount", Type = CardType.StackAction, Effect = CardEffect.Discount, SpriteName = "discount", Weight = 1 },
         new Card { Name = "Shuffle",  Type = CardType.StackAction, Effect = CardEffect.Shuffle,  SpriteName = "shuffle",  Weight = 1 },
-        new Card { Name = "SaveCard", Type = CardType.StackAction, Effect = CardEffect.SaveCard, SpriteName = "top3",     Weight = 1 },
-        new Card { Name = "Discard", Type = CardType.StackAction, Effect = CardEffect.Discard, SpriteName = "discard",   Weight = 1 },
+        new Card { Name = "Refill",   Type = CardType.StackAction, Effect = CardEffect.Refill,   SpriteName = "top3",   Weight = 1 },
     };
 
     public CardManager()
@@ -157,27 +127,14 @@ public class CardManager
 
     public void GenerateDailyCards(int day)
     {
-        ClearPendingStackAction();
-
         foreach (var s in BuildSlots)
         {
-            if (s.IsSaved)
-                continue;
             s.Card = null;
             s.Purchased = false;
         }
 
-        int savedIndex = SavedSlotIndex;
-
-        if (SavedCard != null && savedIndex >= 0 && savedIndex < BuildSlots.Count)
-        {
-                var slot = BuildSlots[SavedSlotIndex];
-                slot.Card = SavedCard with {};
-        }
-
         for (int i = 0; i < BuildSlots.Count; i++)
         {
-            if (BuildSlots[i].Card != null) continue; // skip saved slot
             BuildSlots[i].Card = GetRandomBuildCardForSlot(i, day, BuildSlots[i].Card);
         }
 
@@ -185,19 +142,8 @@ public class CardManager
         _activeMapCard = null;
         _selectedTile = (-1, -1);
         _previewStructure = null;
-
-        if (SavedCardExpiresInDays > 0)
-            SavedCardExpiresInDays--;
-
-        if (SavedCardExpiresInDays == 0)
-        {
-            SavedCard = null;
-            SavedSlotIndex = -1;
-
-            foreach (var s in BuildSlots)
-                s.IsSaved = false;
-        }
     }
+
     public bool TryPurchaseBuildCard(CardSlot slot, SanityManager sanity)
     {
         if (slot == null || slot.Card == null || slot.Purchased) return false;
@@ -218,7 +164,7 @@ public class CardManager
             {
                 bool anyValid = false;
 
-                foreach (var slot in BuildSlots.Where(s => s.IsFilled && !s.Purchased && !s.IsSaved))
+                foreach (var slot in BuildSlots.Where(s => s.IsFilled && !s.Purchased))
                 {
                     anyValid = true;
 
@@ -249,20 +195,37 @@ public class CardManager
                 break;
             }
 
-            case CardEffect.SaveCard:
-                PendingStackAction = CardEffect.SaveCard;
-                PendingStackCard = card;
-                return;
+            case CardEffect.Refill:
+            {
+                bool anyEmpty = BuildSlots.Any(s => !s.IsFilled);
 
-            case CardEffect.Discard:
-                PendingStackAction = CardEffect.Discard;
-                PendingStackCard = card;
-                return;
+                if (anyEmpty)
+                {
+                    RefillEmptySlots(gamePhaseManager.DayCount);
+                    usedSuccessfully = true;
+                }
+
+                break;
+            }
         }
 
         if (usedSuccessfully)
         {
             RemoveFromSlots(card);
+        }
+    }
+
+    /// <summary>
+    /// Fills any empty (unpurchased, unfilled) build slots with a new random card.
+    /// </summary>
+    public void RefillEmptySlots(int day)
+    {
+        for (int i = 0; i < BuildSlots.Count; i++)
+        {
+            var slot = BuildSlots[i];
+            if (slot.IsFilled) continue;
+            slot.Card = GetRandomBuildCardForSlot(i, day, null);
+            slot.Purchased = false;
         }
     }
 
@@ -375,13 +338,6 @@ public class CardManager
             if (!ReferenceEquals(slot.Card, card)) continue;
             slot.Card = null;
             slot.Purchased = false;
-            if (slot.IsSaved)
-            {
-                slot.IsSaved = false;
-                SavedCard = null;
-                SavedSlotIndex = -1;
-                SavedCardExpiresInDays = 0;
-            }
             return;
         }
     }
@@ -461,21 +417,6 @@ public class CardManager
         while (!isDifferent(newCard));
 
         return newCard;
-    }
-
-    public Card PendingStackCard { get; set; }
-    public void RemovePendingStackCard()
-    {
-        if (PendingStackCard != null)
-        {
-            RemoveFromSlots(PendingStackCard);
-            PendingStackCard = null;
-        }
-    }
-    public void ClearPendingStackAction()
-    {
-        PendingStackAction = CardEffect.None;
-        PendingStackCard = null;
     }
 
     /// <summary>
