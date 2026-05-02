@@ -685,7 +685,7 @@ public class MapScreen : GamelabGameScreen
         GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
         // this still does not account for pixel tearing, but I think I prefer that over blurriness or choppy zoom
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
-        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.PointClamp : SamplerState.PointClamp;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
 
         DrawNightBackgroundIfNight();
 
@@ -705,7 +705,7 @@ public class MapScreen : GamelabGameScreen
         GraphicsDevice.Clear(Color.Lerp(Color.CornflowerBlue, Color.Black, currentMin));
 
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
-        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.PointClamp : SamplerState.PointClamp;
+        SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
 
         DrawNightBackgroundIfNight();
 
