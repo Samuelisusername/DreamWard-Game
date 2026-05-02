@@ -154,7 +154,6 @@ public class MapScreen : GamelabGameScreen
             { "shuffle",      new(0,  640, 128, 128) },
             { "discount",     new(0,  768, 128, 128) },
             { "top3",         new(0,  896, 128, 128) },
-            { "discard",      new(0, 1024, 128, 128) },
             { "deck",         new(0, 1152, 128, 128) },
             { "polymorph",    new(0, 1280, 128, 128) },
             { "move",         new(0, 1408, 128, 128) },
@@ -291,7 +290,6 @@ public class MapScreen : GamelabGameScreen
             if (keyboard.WasKeyReleased(Keys.D7)) cardManager.ForceSpawnInto("shuffle",      cardManager.StackSlots);
             if (keyboard.WasKeyReleased(Keys.D8)) cardManager.ForceSpawnInto("discount",     cardManager.StackSlots);
             if (keyboard.WasKeyReleased(Keys.D9)) cardManager.ForceSpawnInto("top3",         cardManager.StackSlots);
-            if (keyboard.WasKeyReleased(Keys.D0)) cardManager.ForceSpawnInto("discard",      cardManager.StackSlots);
             if (keyboard.WasKeyReleased(Keys.T))  cardManager.AddSlots(1);
             if (keyboard.WasKeyReleased(Keys.Y))  cardManager.AddSlots(2);
             if (keyboard.WasKeyReleased(Keys.U))  cardManager.AddSlots(3);
@@ -660,18 +658,6 @@ public class MapScreen : GamelabGameScreen
                         // ── BUILD / MAP ACTION ─────────────────────────────
                         if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
                         {
-                            if (cardManager.PendingStackAction != null && clickedSlot != null)
-                            {
-                                if (cardManager.PendingStackAction == CardEffect.SaveCard)
-                                    cardManager.SaveCardFromSlot(clickedSlot);
-                                else if (cardManager.PendingStackAction == CardEffect.Discard)
-                                    cardManager.DiscardCardFromSlot(clickedSlot, gamePhaseManager.DayCount);
-
-                                cardManager.PendingStackAction = null;
-                                _clickStarted = false;
-                                return;
-                            }
-
                             if (clickedSlot != null && !clickedSlot.Purchased)
                             {
                                 if (isDouble)
@@ -695,7 +681,7 @@ public class MapScreen : GamelabGameScreen
                         // ── STACK ACTION ───────────────────────────────────
                         if (clickedCard.Type == CardType.StackAction)
                         {
-                            if (clickedCard.Effect == CardEffect.Shuffle || clickedCard.Effect == CardEffect.Discount)
+                            if (clickedCard.Effect == CardEffect.Shuffle || clickedCard.Effect == CardEffect.Discount || clickedCard.Effect == CardEffect.Refill)
                             {
                                 if (isDouble)
                                 {
@@ -703,23 +689,6 @@ public class MapScreen : GamelabGameScreen
                                     AudioManager.Play("card-place");
                                 }
                             }
-                            else
-                            {
-                                if (isDouble)
-                                {
-                                    if (cardManager.PendingStackCard != null &&
-                                        ReferenceEquals(cardManager.PendingStackCard, clickedCard))
-                                    {
-                                        cardManager.ClearPendingStackAction();
-                                    }
-                                    else
-                                    {
-                                        cardManager.UseCard(clickedCard);
-                                        AudioManager.Play("card-place");
-                                    }
-                                }
-                            }
-
                             _clickStarted = false;
                             return;
                         }
@@ -1277,7 +1246,7 @@ public class MapScreen : GamelabGameScreen
             case 12: speaker = "Sheep"; text = "Hover any card to see its details in the panel on the left. Towers, fence, spikes, dream-catcher, you name it! Go ahead, try it now."; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.Expanded; break;
             case 13: speaker = "Human"; text = "Okay, what about the action cards?"; _targetZoom = 1.0f; _showInventory = false; break;
             case 14: speaker = "Sheep"; text = "Stack Action cards appear in the two slots on the right of your hand. You EARN them by moving me to a new meadow. Double-click to use them!"; _targetZoom = 1.0f; _showInventory = true; _tutorialHighlight = TutorialHighlight.StackSlots; break;
-            case 15: speaker = "Sheep"; text = "Shuffle reshuffles your build cards. Discount makes the next card cheaper. SaveCard keeps a card for tomorrow. Discard swaps a card for a new one."; _targetZoom = 1.0f; _showInventory = false; break;
+            case 15: speaker = "Sheep"; text = "Shuffle reshuffles your build cards. Discount makes the next card cheaper. Refill fills your hand cards."; _targetZoom = 1.0f; _showInventory = false; break;
             case 16: speaker = "Human"; text = "So I move my sheep to earn stack cards? Neat!"; _targetZoom = 1.0f; _showInventory = false; break;
             case 17: speaker = "Sheep"; text = "Exactly. And you can hover any structure on the map to see its info card with Move and Destroy buttons."; _targetZoom = 1.0f; _showInventory = false; break;
             case 18: speaker = "Sheep"; text = "Moving a structure costs 2 sanity. Destroying is free. Both need a double-click to confirm."; _targetZoom = 1.0f; _showInventory = false; break;
