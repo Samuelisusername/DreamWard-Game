@@ -130,6 +130,13 @@ public abstract class Monster : Entity
     /// WallTile/Fence/Tower: regular monsters cannot step on it (must attack first), flying ignores it.
     /// </summary>
     public abstract bool CanStepOn(Entity entity);
+    // Inside your base Monster.cs class
+    public virtual bool CanStepOnTile(int tileIndex)
+{
+    // By default, if the ground is missing (-1), monsters cannot walk there.
+    return tileIndex != -1;
+}
+
 
     /// <summary>
     /// Steps the monster forward on its path by one tile.

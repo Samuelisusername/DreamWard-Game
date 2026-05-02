@@ -1,6 +1,7 @@
 using Gamelab;
 using Gamelab.Screens;
 using Gamelab.Managers;
+using System;
 
 public class GamePhaseManager
 {
@@ -37,8 +38,35 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToNight()
     {
+        if (combatManager.SpawnableArea.Count-2 == 0)
+        {
+            Console.WriteLine("spawnableArea.count was 0");
+            // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
+            GameOverScreen.DidWin = false; 
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+
+            return; 
+        }
+        else
+        {
+            Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count-2}");
+        }
+
         mapManager.StartFalling();
         IsInTransition = true;
+                if (combatManager.SpawnableArea.Count == 0)
+        {
+            Console.WriteLine("spawnableArea.count was 0");
+            // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
+            GameOverScreen.DidWin = false; 
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            return; 
+        }
+        else
+        {
+            Console.WriteLine($"spawanablearea count was not zero but this: {combatManager.SpawnableArea.Count-2}");
+        }
+
     }
     private int[] monsterCount = [3, 6, 12, 18, 30, 50, 90, 80, 80, 100];
 
@@ -47,6 +75,18 @@ public class GamePhaseManager
         combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
         IsDay = false;
         AudioManager.PlayMusic("night_music");
+        combatManager.GetSpawnableArea();
+        if (combatManager.SpawnableArea.Count-2 == 0)
+        {
+            // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
+            GameOverScreen.DidWin = false; 
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            return; 
+        }
+        else
+        {
+            Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count-2}");
+        }
     }
 
     public void checkGameOver()

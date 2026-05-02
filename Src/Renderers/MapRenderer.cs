@@ -55,6 +55,8 @@ public class MapRenderer
 
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
+                    if (tile == null) continue;
+
 
                     Color tileColor = Color.White;
                     #if DEBUG
@@ -101,6 +103,7 @@ public class MapRenderer
                     // TILEDRAWING
                     //get the tile and its position
                     TextureRegion tile = mapManager.GetTile(globalTilePos);
+                    if (tile == null) continue;
 
                     Color tileColor = Color.White;
                     #if DEBUG
