@@ -315,6 +315,7 @@ public class MapScreen : GamelabGameScreen
             //Gameover
             if (mapManager.TentDestroyed)
             {
+                GamelabGame.GameSpeed = 1f;
                 Game.SwitchToScreen(new GameOverScreen(Game));
                 return;
             }
@@ -365,9 +366,12 @@ public class MapScreen : GamelabGameScreen
                 {
                     _elapsedStartNightTime = TimeSpan.Zero;
 #if DEBUG
+                    mapManager.TriggerVoidEnclosureFall();
                     gamePhaseManager.SwitchToNight();
+
 #else
                     if(gamePhaseManager.IsDay){
+                        mapManager.TriggerVoidEnclosureFall();
                         gamePhaseManager.SwitchToNight();
                     }
 #endif
@@ -487,8 +491,10 @@ public class MapScreen : GamelabGameScreen
 #if DEBUG
                         gamePhaseManager.SwitchToNight();
 #else
-                        if (gamePhaseManager.IsDay)
-                            gamePhaseManager.SwitchToNight();
+                        if (gamePhaseManager.IsDay){
+                                mapManager.TriggerVoidEnclosureFall();
+                                gamePhaseManager.SwitchToNight();
+                            }
 #endif
                         _clickStarted = false;
                         return;
