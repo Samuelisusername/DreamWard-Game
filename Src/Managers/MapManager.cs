@@ -958,6 +958,8 @@ public class MapManager
                 meadow.AddSheep(wasPolymorphed);
                 GamelabGame.PathFindingManager.NotifyStructuresChanged();
                 SheepPosition = (tilePos.col, tilePos.row);
+                // Get New Stack Cards
+                GamelabGame.CardManager.GrantStackCard();
             }
         }
     }
