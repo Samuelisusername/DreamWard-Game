@@ -24,8 +24,7 @@ public class CardRenderer
         { "buff",         "Kindle of Resolve\nRepels nightmares.\n" },
         { "shuffle",      "Shuffler of Fates\nShuffles build cards.\n" },
         { "discount",     "Discounter of Burdens\nNext card purchased gets a discount.\n" },
-        { "top3",         "Choice of Illusions\nSave a card for tomorrow.\n" },
-        { "discard",      "Burning of Hands\nDiscard a card. Get a new card.\n" },
+        { "top3",         "Dreamer's Bounty\nFills all empty build slots with new cards.\n" },
         { "polymorph",    "Vermin of Shadows\nTurn sheep to rats. Ignored by nightmares.\n" },
     };
 
@@ -189,8 +188,7 @@ public class CardRenderer
         for (int i = 0; i < cardManager.BuildSlots.Count; i++)
         {
             var slot = cardManager.BuildSlots[i];
-            bool isSaved = slot.IsSaved && cardManager.SavedSlotIndex == i;
-            orderedSlots.Add((slot, isSaved));
+            orderedSlots.Add((slot, false));
         }
         for (int i = 0; i < cardManager.StackSlots.Count; i++)
             orderedSlots.Add((cardManager.StackSlots[i], false));
@@ -230,8 +228,6 @@ public class CardRenderer
             bool isHovered  = ExpandedCard != null && ReferenceEquals(slot.Card, ExpandedCard);
             bool isActive   = ReferenceEquals(slot.Card, cardManager._activeMapCard);
             bool isLocked   = (slot.Card.Type == CardType.Build || slot.Card.Type == CardType.MapAction) && !slot.Purchased;
-            bool isPending  = cardManager.PendingStackCard != null
-                           && ReferenceEquals(slot.Card, cardManager.PendingStackCard);
 
             float lift = isHovered ? CARD_HOVER_LIFT : 0f;
 
@@ -279,14 +275,9 @@ public class CardRenderer
             Vector2 texOrigin = new(region.Width / 2f, region.Height / 2f);
             Vector2 texScale  = new(CARD_W / (float)region.Width, CARD_H / (float)region.Height);
 
-
             // ── Draw card art ─────────────────────────────────────────────────
             spriteBatch.Draw(cardTexture, drawCenter, region,
                 Color.White, rad, texOrigin, texScale, SpriteEffects.None, 0f);
-
-            // ── Overlays ──────────────────────────────────────────────────────
-            if (isSaved || slot.IsSaved)
-                DrawRotatedSolid(spriteBatch, dummy, drawCenter, halfW, halfH, rad, Color.Cyan * 0.22f);
         }
 
         // ── Overall strip bounds ──────────────────────────────────────────────
