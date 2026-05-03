@@ -28,6 +28,6 @@ public abstract class Tower : Structure
     /// </summary>
     public List<(int,int)> GetTilesInRange()
     {
-        return MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth+1);
+        return MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth+2);
     }
 }
