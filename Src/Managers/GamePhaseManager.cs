@@ -41,40 +41,21 @@ public class GamePhaseManager
         if (combatManager.SpawnableArea.Count-2 == 0)
         {
             Console.WriteLine("spawnableArea.count was 0");
-            // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
             GameOverScreen.DidWin = false; 
             GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
-
             return; 
         }
         else
         {
-            Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count-2}");
+            Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count}");
         }
-
         mapManager.StartFalling();
         IsInTransition = true;
-                if (combatManager.SpawnableArea.Count == 0)
-        {
-            Console.WriteLine("spawnableArea.count was 0");
-            // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
-            GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
-            return; 
-        }
-        else
-        {
-            Console.WriteLine($"spawanablearea count was not zero but this: {combatManager.SpawnableArea.Count-2}");
-        }
-
     }
     private int[] monsterCount = [3, 6, 12, 18, 30, 50, 90, 80, 80, 100];
 
     public void FinishSwitchToNight()
     {      
-        combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
-        IsDay = false;
-        AudioManager.PlayMusic("night_music");
         combatManager.GetSpawnableArea();
         if (combatManager.SpawnableArea.Count-2 == 0)
         {
@@ -87,6 +68,10 @@ public class GamePhaseManager
         {
             Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count-2}");
         }
+        combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
+        IsDay = false;
+        AudioManager.PlayMusic("night_music");
+
     }
 
     public void checkGameOver()

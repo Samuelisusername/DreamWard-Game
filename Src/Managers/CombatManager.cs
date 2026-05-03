@@ -158,9 +158,11 @@ public class CombatManager
                 }
             }
         }
-
-        
-
+        bool tent_connected_to_border = PlayingField.Any(k=> MapUtils.GetSurroundingTiles(k).Any(l => !MapUtils.IsInBounds(l)));
+        if (!tent_connected_to_border)
+        {
+            GameOverScreen.DidWin = false;
+        }
         //take the border of the spawnable area and save it as the spawnable tiles
         for(int i = 0; i < mapManager.Columns; i++)
         {
@@ -171,6 +173,7 @@ public class CombatManager
                     List<(int col, int row)> toCheck = MapUtils.GetSurroundingTiles((i,j), true);
                     if(toCheck.Any(k => !MapUtils.IsInBounds(k) || !canSpawn[k.col,k.row]))
                     {
+                        if(toCheck.Any(k=> MapUtils.IsInBounds(k) && mapManager.GetTileIndex(k)==-1)) continue;
                         res.Add((i,j));
                     }
                 }
@@ -179,6 +182,11 @@ public class CombatManager
 
         SpawnableArea = res;
         Console.WriteLine("getspawnableAre finished");
+        Console.WriteLine($"Playing field count: {PlayingField.Count};        Spawnable area count: {res.Count}");
+        // foreach(var tiles in res)
+        // {
+        //     Console.WriteLine($"{mapManager.GetTileIndex(tiles)}");
+        // }
     }
     
 

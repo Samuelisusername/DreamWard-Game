@@ -21,6 +21,11 @@ public class SanityManager
     /// Deducts sanity from the players total. The game might end if sanity goes to 0.
     /// </summary>
     /// <param name="amount">the amount of sanity to remove</param>
+    public void AddSanity(int amount)
+{
+    if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
+    Sanity += amount;
+}
     public void DeductSanity(int amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");

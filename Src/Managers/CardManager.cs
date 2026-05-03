@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Gamelab;
 using Microsoft.Xna.Framework;
+using Gamelab.Managers;
+using Gamelab.Screens;
 
 public enum CardType { MapAction, StackAction, Build }
 public enum CardEffect { None, Shuffle, Discount, Polymorph, Move, Destroy, Refill }
@@ -28,6 +30,8 @@ public class CardSlot
 
 public class CardManager
 {
+    // In CardManager — add this field:
+    private (int col, int row)? _voidWarningTile = null; // the tile that last triggered the warning
     private Random _random => GamelabGame.Rng;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private SanityManager    sanityManager    => GamelabGame.SanityManager;
@@ -59,6 +63,34 @@ public class CardManager
         for (int i = 0; i < 2; i++)
             StackSlots.Add(new CardSlot());
     }
+    private bool IsTentEnclosed()
+{
+    var mapManager = GamelabGame.MapManager;
+    bool[,] visited = new bool[mapManager.Columns, mapManager.Rows];
+    var tentPos = mapManager.GetTent();
+    if (tentPos.col == -1) return false;
+
+    Queue<(int, int)> queue = new();
+    queue.Enqueue(tentPos);
+    visited[tentPos.col, tentPos.row] = true;
+
+    while (queue.Count > 0)
+    {
+        var current = queue.Dequeue();
+        foreach (var neighbor in MapUtils.GetSurroundingTiles(current, true))
+        {
+            if (!MapUtils.IsInBounds(neighbor)) return false; // reached map border → not enclosed
+            int c = neighbor.Item1, r = neighbor.Item2;
+            if (visited[c, r]) continue;
+            // Block on void tiles (structure) OR missing ground
+            if (mapManager.GetStructure(neighbor) is VoidTile) continue;
+            if (mapManager.GetTileIndex(neighbor) == -1) continue;
+            visited[c, r] = true;
+            queue.Enqueue(neighbor);
+        }
+    }
+    return true;
+}
     public void AddSlots(int type)
     {
         BuildSlotType slotType = type switch
@@ -98,7 +130,7 @@ public class CardManager
     {
         new Card { Name = "fence",        Type = CardType.Build, Cost = 1, SpriteName = "fence",        Weight = 3, StackCount = 10 },
         new Card { Name = "dreamcatcher", Type = CardType.Build, Cost = 2, SpriteName = "dreamcatcher", Weight = 2, StackCount = 10 },
-        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2, StackCount = 5 },
+        new Card { Name = "void",         Type = CardType.Build, Cost = 2, SpriteName = "void",         Weight = 2, StackCount = 10 },
         new Card { Name = "spikes",       Type = CardType.Build, Cost = 2, SpriteName = "spikes",       Weight = 3, StackCount = 3 },
     };
 
@@ -241,6 +273,29 @@ public class CardManager
             bool success = mapManager.PlaceEntity(_activeMapCard, (col, row));
             if (success)
             {
+
+                       if (_activeMapCard.SpriteName == "void" && IsTentEnclosed())
+        {
+            if (_voidWarningTile == (col, row))
+            {
+                // Warned already, placed again → game over
+                GameOverScreen.DidWin = false;
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                return true;
+            }
+            else
+            {
+                // First time: undo, refund, show sheep warning
+                _voidWarningTile = (col, row);
+                mapManager.RemoveStructure((col, row));
+                sanityManager.AddSanity(_activeMapCard.Cost);
+                GamelabGame.Instance.MapScreenInstance?.ShowVoidWarning(
+                    "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?");
+                return false;
+            }
+        }
+
+        _voidWarningTile = null;
                 _activeMapCard.StackCount--;
                 if (_activeMapCard.StackCount <= 0)
                 {

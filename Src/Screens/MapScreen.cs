@@ -24,6 +24,10 @@ public class MapScreen : GamelabGameScreen
     private Texture2D _dayPlayerTexture;
     private RenderTarget2D _nightBackgroundCache;
     private Point _nightBackgroundCacheSize;
+    private string _voidWarningText = "";
+    private float _voidWarningTimer = 0f;
+    private const float VoidWarningDuration = 4f;
+    private const float VoidWarningFadeStart = 2.5f;
     
     private enum TutorialHighlight { None, CardStrip, BuildSlots, MapSlots, StackSlots, Expanded, MeadowTiles }
     private TutorialHighlight _tutorialHighlight = TutorialHighlight.None;
@@ -111,7 +115,11 @@ public class MapScreen : GamelabGameScreen
         cardRenderer = new CardRenderer(); 
         mapManager.fillMap();
     }
-
+    public void ShowVoidWarning(string text)
+{
+    _voidWarningText = text;
+    _voidWarningTimer = 0f;
+}
     public override void LoadContent()
     {
         base.LoadContent();
@@ -283,12 +291,15 @@ public class MapScreen : GamelabGameScreen
 
         if (!string.IsNullOrEmpty(_dayPopupText) && _popupTimer < DayPopupDuration)
             _popupTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (!string.IsNullOrEmpty(_voidWarningText) && _voidWarningTimer < VoidWarningDuration)
+            _voidWarningTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         // Map update
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
         GameTime scaledGameTime = new GameTime(gameTime.TotalGameTime, scaledElapsed);
         mapManager.Update(scaledGameTime);
         ParticleManager.Update(scaledGameTime);
+
 
         if(Game.IsActive)
         {
@@ -1021,9 +1032,44 @@ public class MapScreen : GamelabGameScreen
 
         if (_is_active_tutorial) DrawTutorialState(gameTime);
         DrawDayPopup(vw, vh);
+        DrawVoidWarning(vw, vh);
         ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
     }
+    private void DrawVoidWarning(int vw, int vh)
+{
+    if (string.IsNullOrEmpty(_voidWarningText) || _voidWarningTimer >= VoidWarningDuration) return;
+
+    float fade = _voidWarningTimer < VoidWarningFadeStart
+        ? 1f
+        : 1f - (_voidWarningTimer - VoidWarningFadeStart) / (VoidWarningDuration - VoidWarningFadeStart);
+
+    // Dialog box (same style as tutorial)
+    int dialogHeight = 140;
+    Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
+    spriteBatch.Draw(_dummy, dialogRect, COLOR_L);
+    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
+    spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
+
+    // Sheep portrait (same as tutorial)
+    float portraitScale = 4f;
+    float scaledWidth  = _sheepPortraitRect.Width  * portraitScale;
+    float scaledHeight = _sheepPortraitRect.Height * portraitScale;
+    int portraitX = dialogRect.Right - (int)scaledWidth + 201;
+    int portraitY = dialogRect.Bottom - (int)scaledHeight;
+    if (_dayTopTexture != null)
+        spriteBatch.Draw(_dayTopTexture, new Vector2(portraitX, portraitY),
+            _sheepPortraitRect, Color.White * fade, 0f, Vector2.Zero, portraitScale, SpriteEffects.None, 0f);
+
+    // Text
+    float textScale = 0.5f;
+    float maxTextWidth = portraitX - (dialogRect.X + 20) - 20;
+    string wrapped = WrapText(_font, _voidWarningText, maxTextWidth, textScale);
+    spriteBatch.DrawString(_font, "Sheep:", new Vector2(dialogRect.X + 20, dialogRect.Y + 15),
+        Color.DarkRed * fade, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
+    spriteBatch.DrawString(_font, wrapped, new Vector2(dialogRect.X + 20, dialogRect.Y + 45),
+        COLOR_D * fade, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
+}
 
     private void DrawDayPopup(int vw, int vh)
     {
