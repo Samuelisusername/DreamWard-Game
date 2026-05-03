@@ -162,6 +162,8 @@ public abstract class Structure : Entity
     protected SpriteFont _font = GamelabGame.Font;
     protected abstract (string label, string info)[] infos {get;}
 
+    public string tutorialText;
+
     protected virtual string bottomText => null;
 
     public bool ShouldDrawCard {get; set;}
@@ -201,13 +203,27 @@ public abstract class Structure : Entity
         int midPad = 50;
         int heightPad = 50;
 
-        int boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
-        int boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
-        if(bottomText != null)
+        int boxHeight;
+        int boxWidth;
+        string displayText = "";
+        if(tutorialText != null)
         {
-            boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
-            boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
+            displayText = WrapText(_font, tutorialText, 200, 1);
+            boxWidth = (int)((200 + pad * 2) * sx);
+            boxHeight =  (int)((_font.MeasureString(displayText).Y + pad * 2) * sy);
         }
+        else
+        {
+            boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
+            boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
+            if(bottomText != null)
+            {
+                boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
+                boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
+            }
+        }
+
+        
 
         Vector2 anchor = ToScreen(worldPos.X + 31.5f * mapManager.Scale.X, worldPos.Y);
         if((int)(anchor.X - boxWidth / 2f) < screen.Left + (2*pad))
@@ -227,22 +243,59 @@ public abstract class Structure : Entity
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
 
-        float yOff = MathF.Round(pad * sy);
-        for (int i = 0; i < infos.Length; i++)
+        if(tutorialText != null)
         {
-            var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
-            spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            float infoW = _font.MeasureString(infos[i].info).X * sx;
-            var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
-            spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
+            spriteBatch.DrawString(_font, displayText, new Vector2(left + pad, top + pad) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
-        if(bottomText != null)
+        else
         {
-            float textW = _font.MeasureString(bottomText).X * sx;
-            var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-            spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            float yOff = MathF.Round(pad * sy);
+            for (int i = 0; i < infos.Length; i++)
+            {
+                var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
+                spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                float infoW = _font.MeasureString(infos[i].info).X * sx;
+                var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
+                spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
+            }
+            if(bottomText != null)
+            {
+                float textW = _font.MeasureString(bottomText).X * sx;
+                var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+                spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            } 
         }
+    }
+
+    protected string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
+    {
+        // Remove any hardcoded newlines you might have left in your strings
+        text = text.Replace("\n", " "); 
+        
+        string[] words = text.Split(' ');
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        float lineWidth = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale;
+
+        foreach (string word in words)
+        {
+            Vector2 size = font.MeasureString(word) * scale;
+
+            if (lineWidth + size.X < maxLineWidth)
+            {
+                sb.Append(word + " ");
+                lineWidth += size.X + spaceWidth;
+            }
+            else
+            {
+                // The word is too long, push it to the next line!
+                sb.Append("\n" + word + " ");
+                lineWidth = size.X + spaceWidth;
+            }
+        }
+
+        return sb.ToString();
     }
 
     #endregion

@@ -202,6 +202,7 @@ public class MapScreen : GamelabGameScreen
         //     LifeSpan = TimeSpan.FromSeconds(3),
         //     Color = Color.Orange
         // });
+        TutorialManager.Update(gameTime);
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
         bool isDay         = gamePhaseManager.IsDay;
@@ -542,7 +543,7 @@ public class MapScreen : GamelabGameScreen
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
             {
-                if (_hoveredStructure != null)
+                if (_hoveredStructure != null && _hoveredStructure != TutorialManager.CurrentTutorialStructure)
                     _hoveredStructure.ShouldDrawCard = false;
 
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
@@ -552,7 +553,7 @@ public class MapScreen : GamelabGameScreen
             }
             else
             {
-                if (_hoveredStructure != null)
+                if (_hoveredStructure != null && _hoveredStructure != TutorialManager.CurrentTutorialStructure)
                     _hoveredStructure.ShouldDrawCard = false;
 
                 _hoveredStructure = null;
@@ -1035,7 +1036,11 @@ public class MapScreen : GamelabGameScreen
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
         Structure._screenTransform = viewportAdapter.GetScaleMatrix();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _hoveredStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
+        TutorialManager.CurrentTutorialStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
+        if(TutorialManager.CurrentTutorialStructure != _hoveredStructure)
+        {
+            _hoveredStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
+        }
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied

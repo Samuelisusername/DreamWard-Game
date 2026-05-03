@@ -222,32 +222,45 @@ public class Meadow : Structure
             MathF.Round(y * _screenTransform.M22 + _screenTransform.M42));
 
         // ── Box sizing ─────────────────────────────────────────────────────────
-        int boxWidth = (int)MathF.Round(
-            (infos.Cast<(string,string)>().Max(i => MeasW(i.Item1 + i.Item2)) + 2 * pad + midPad) * sx);
-        int boxHeight = (int)MathF.Round(
-            (infos.Cast<(string,string)>().Sum(i => MeasH(i.Item1)) + pad * (infos.Length + 1)) * sy);
-
-        if (bottomText != null)
+        
+        int boxHeight;
+        int boxWidth;
+        string displayText = "";
+        if(tutorialText != null)
         {
-            boxWidth   = Math.Max(boxWidth, ScW(bottomText));
-            boxHeight += (int)MathF.Round((MeasH(bottomText) + heightPad) * sy);
+            displayText = WrapText(_font, tutorialText, 200, 1);
+            boxWidth = (int)((200 + pad * 2) * sx);
+            boxHeight =  (int)((_font.MeasureString(displayText).Y + pad * 2) * sy);
         }
-
-        if (hasBonusSection)
+        else
         {
-            boxHeight += (int)MathF.Round(pad * sy) + sepH + (int)MathF.Round(pad * sy);
-            boxWidth   = Math.Max(boxWidth, ScW(sectionHeader));
-            boxHeight += ScH(sectionHeader);
+            boxWidth = (int)MathF.Round(
+                (infos.Cast<(string,string)>().Max(i => MeasW(i.Item1 + i.Item2)) + 2 * pad + midPad) * sx);
+            boxHeight = (int)MathF.Round(
+                (infos.Cast<(string,string)>().Sum(i => MeasH(i.Item1)) + pad * (infos.Length + 1)) * sy);
 
-            foreach (var (title, body) in cardBlocks)
+            if (bottomText != null)
             {
-                boxWidth   = Math.Max(boxWidth, ScW(title));
-                boxHeight += ScH(title);
-                foreach (var line in body) { boxWidth = Math.Max(boxWidth, ScW(line)); boxHeight += ScH(line); }
-                boxHeight += (int)MathF.Round(pad * sy);
+                boxWidth   = Math.Max(boxWidth, ScW(bottomText));
+                boxHeight += (int)MathF.Round((MeasH(bottomText) + heightPad) * sy);
             }
 
-            if (showBonusLabel) { boxWidth = Math.Max(boxWidth, ScW(BonusLabel)); boxHeight += ScH(BonusLabel); }
+            if (hasBonusSection)
+            {
+                boxHeight += (int)MathF.Round(pad * sy) + sepH + (int)MathF.Round(pad * sy);
+                boxWidth   = Math.Max(boxWidth, ScW(sectionHeader));
+                boxHeight += ScH(sectionHeader);
+
+                foreach (var (title, body) in cardBlocks)
+                {
+                    boxWidth   = Math.Max(boxWidth, ScW(title));
+                    boxHeight += ScH(title);
+                    foreach (var line in body) { boxWidth = Math.Max(boxWidth, ScW(line)); boxHeight += ScH(line); }
+                    boxHeight += (int)MathF.Round(pad * sy);
+                }
+
+                if (showBonusLabel) { boxWidth = Math.Max(boxWidth, ScW(BonusLabel)); boxHeight += ScH(BonusLabel); }
+            }  
         }
 
         // ── Layout anchors ─────────────────────────────────────────────────────
@@ -269,68 +282,76 @@ public class Meadow : Structure
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
 
-        // ── Draw helpers ───────────────────────────────────────────────────────
-        float yOff = MathF.Round(pad * sy);
-        void DrawCentred(string s, Color c) {
-            spriteBatch.DrawString(_font, s,
-                new Vector2((int)(anchor.X - MeasW(s) * sx / 2f), (int)(top + yOff)),
-                c, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(s) + pad) * sy);
-        }
-        void DrawSep() {
-            spriteBatch.Draw(_dummy,
-                new Rectangle(left + (int)MathF.Round(pad * sx), (int)(top + yOff),
-                            boxWidth - (int)MathF.Round(2 * pad * sx), sepH), dimColor);
-            yOff += sepH;
-        }
-
-        // ── Stat rows ──────────────────────────────────────────────────────────
-        for (int i = 0; i < infos.Length; i++)
+        if(tutorialText != null)
         {
-            spriteBatch.DrawString(_font, infos[i].label,
-                new Vector2(left + MathF.Round(pad * sx), top + yOff),
-                textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            float infoW = MeasW(infos[i].info) * sx;
-            spriteBatch.DrawString(_font, infos[i].info,
-                new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), top + yOff),
-                textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(infos[i].info) + pad) * sy);
+            spriteBatch.DrawString(_font, displayText, new Vector2(left + pad, top + pad) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
-
-        // ── Hold-to-move bar ───────────────────────────────────────────────────
-        if (bottomText != null)
+        else
         {
-            float textW = MeasW(bottomText) * sx;
-            int   barH  = (int)MathF.Round(MeasH(bottomText) * sy);
-            var   pos   = new Vector2((int)(anchor.X - textW / 2f),
-                                    (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-            Color barColor = _cantAffordFlash > TimeSpan.Zero
-                ? Color.Red * ((float)(_cantAffordFlash / FlashDuration) * 0.6f)
-                : loadColor * 0.5f;
-            int fillW = _cantAffordFlash > TimeSpan.Zero
-                ? (int)textW
-                : (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
-            spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), barColor);
-            spriteBatch.DrawString(_font, bottomText, pos, textColor,
-                0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(bottomText) + heightPad) * sy);
-        }
-
-        // ── Bonus section ──────────────────────────────────────────────────────
-        if (hasBonusSection)
-        {
-            yOff += MathF.Round(pad * sy);
-            DrawSep();
-            yOff += MathF.Round(pad * sy);
-            DrawCentred(sectionHeader, dimColor);
-            foreach (var (title, body) in cardBlocks)
-            {
-                DrawCentred(title, goldColor);
-                foreach (var line in body) DrawCentred(line, textColor);
-                yOff += MathF.Round(pad * sy);
+            // ── Draw helpers ───────────────────────────────────────────────────────
+            float yOff = MathF.Round(pad * sy);
+            void DrawCentred(string s, Color c) {
+                spriteBatch.DrawString(_font, s,
+                    new Vector2((int)(anchor.X - MeasW(s) * sx / 2f), (int)(top + yOff)),
+                    c, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(s) + pad) * sy);
             }
-            if (showBonusLabel) DrawCentred(BonusLabel, goldColor);
+            void DrawSep() {
+                spriteBatch.Draw(_dummy,
+                    new Rectangle(left + (int)MathF.Round(pad * sx), (int)(top + yOff),
+                                boxWidth - (int)MathF.Round(2 * pad * sx), sepH), dimColor);
+                yOff += sepH;
+            }
+
+            // ── Stat rows ──────────────────────────────────────────────────────────
+            for (int i = 0; i < infos.Length; i++)
+            {
+                spriteBatch.DrawString(_font, infos[i].label,
+                    new Vector2(left + MathF.Round(pad * sx), top + yOff),
+                    textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                float infoW = MeasW(infos[i].info) * sx;
+                spriteBatch.DrawString(_font, infos[i].info,
+                    new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), top + yOff),
+                    textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(infos[i].info) + pad) * sy);
+            }
+
+            // ── Hold-to-move bar ───────────────────────────────────────────────────
+            if (bottomText != null)
+            {
+                float textW = MeasW(bottomText) * sx;
+                int   barH  = (int)MathF.Round(MeasH(bottomText) * sy);
+                var   pos   = new Vector2((int)(anchor.X - textW / 2f),
+                                        (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+                Color barColor = _cantAffordFlash > TimeSpan.Zero
+                    ? Color.Red * ((float)(_cantAffordFlash / FlashDuration) * 0.6f)
+                    : loadColor * 0.5f;
+                int fillW = _cantAffordFlash > TimeSpan.Zero
+                    ? (int)textW
+                    : (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), barColor);
+                spriteBatch.DrawString(_font, bottomText, pos, textColor,
+                    0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(bottomText) + heightPad) * sy);
+            }
+
+            // ── Bonus section ──────────────────────────────────────────────────────
+            if (hasBonusSection)
+            {
+                yOff += MathF.Round(pad * sy);
+                DrawSep();
+                yOff += MathF.Round(pad * sy);
+                DrawCentred(sectionHeader, dimColor);
+                foreach (var (title, body) in cardBlocks)
+                {
+                    DrawCentred(title, goldColor);
+                    foreach (var line in body) DrawCentred(line, textColor);
+                    yOff += MathF.Round(pad * sy);
+                }
+                if (showBonusLabel) DrawCentred(BonusLabel, goldColor);
+            }
         }
+        
     }
 
 }
