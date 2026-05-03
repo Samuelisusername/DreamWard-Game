@@ -80,7 +80,6 @@ public class GamelabGame : Game
     private MouseCursor CursorHover => GamePhaseManager?.IsDay == true ? dayCursorHover : cursorHover;
     private MouseCursor CursorClick => GamePhaseManager?.IsDay == true ? dayCursorClick : cursorClick;
     private MouseCursor hammerCursor;
-    public Texture2D HammerTexture { get; private set; }
 
     /// <summary>
     /// Set to true during Update to show the hover cursor. Reset automatically each frame.
@@ -213,8 +212,7 @@ public class GamelabGame : Game
         dayCursorHover = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
         dayCursorClick = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
 
-        HammerTexture = Content.Load<Texture2D>("Sprites/hammer");
-        hammerCursor = CreateHammerCursor(HammerTexture, 32);
+        hammerCursor = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer0").SourceRectangle, 6, 8, 2);
 
         Mouse.SetCursor(CursorArrow);
 
@@ -253,29 +251,6 @@ public class GamelabGame : Game
         }
         else
             Mouse.SetCursor(CursorArrow);
-    }
-
-    private MouseCursor CreateHammerCursor(Texture2D source, int targetSize)
-    {
-        int srcW = source.Width;
-        int srcH = source.Height;
-        var srcData = new Color[srcW * srcH];
-        source.GetData(srcData);
-
-        var dst = new Color[targetSize * targetSize];
-        for (int y = 0; y < targetSize; y++)
-        {
-            for (int x = 0; x < targetSize; x++)
-            {
-                int sx = x * srcW / targetSize;
-                int sy = y * srcH / targetSize;
-                dst[y * targetSize + x] = srcData[sy * srcW + sx];
-            }
-        }
-
-        var tex = new Texture2D(GraphicsDevice, targetSize, targetSize);
-        tex.SetData(dst);
-        return MouseCursor.FromTexture2D(tex, targetSize / 2, targetSize / 2);
     }
 
     private MouseCursor CursorFromRegion(Texture2D source, Rectangle region, int originX, int originY, int scale = 1)

@@ -45,8 +45,9 @@ public class MapScreen : GamelabGameScreen
 
     // Cards
     private SpriteFont _font;
-    private Texture2D _dummy, _cardTexture, _sanityIconTexture, _dayIconTexture;
-    private Texture2D _hammerTexture;
+    private Texture2D _dummy, _cardTexture;
+    private TextureAtlas InterfaceAtlas => GamelabGame.textureAtlas[gamePhaseManager.IsDay ? "day_interface" : "interface"];
+    private Rectangle Region(string name) => InterfaceAtlas.GetRegion(name + "0").SourceRectangle;
     private Dictionary<string, Rectangle> _cardRegions;
 
     // Navigation button
@@ -139,9 +140,6 @@ public class MapScreen : GamelabGameScreen
         entityRenderer.SetHealthBarTexture(_dummy);
         _interfaceTexture = Content.Load<Texture2D>("Sprites/interface");
         _dayInterfaceTexture = Content.Load<Texture2D>("Sprites/day_interface");
-        _sanityIconTexture = Content.Load<Texture2D>("Sprites/sanity_icon_big");
-        _dayIconTexture = Content.Load<Texture2D>("Sprites/day-and-night_icon");
-        _hammerTexture = GamelabGame.Instance.HammerTexture;
 
         // Card textures
         _cardTexture = Content.Load<Texture2D>("Sprites/cards");
@@ -1075,22 +1073,15 @@ public class MapScreen : GamelabGameScreen
         int dayBarWidth = 200;
         int barHeight = (int)_font.MeasureString("X").Y;
 
-        int panelHeight = (int)(barHeight + barHeight + (pos2.Y - pos1.Y - barHeight));
-        int iconSize = panelHeight / 3;
+        int iconSize = (int)(16 * SpriteScale);
         int iconGap = 8;
 
-        if (_sanityIconTexture != null)
-        {
-            spriteBatch.Draw(_sanityIconTexture,
-                new Rectangle((int)pos1.X, (int)pos1.Y + 6, iconSize, iconSize),
-                Color.White);
-        }
-        if (_dayIconTexture != null)
-        {
-            spriteBatch.Draw(_dayIconTexture,
-                new Rectangle((int)pos1.X, (int)pos2.Y + 6, iconSize, iconSize),
-                Color.White);
-        }
+        spriteBatch.Draw(InterfaceTexture,
+            new Rectangle((int)pos1.X, (int)pos1.Y + 6, iconSize, iconSize),
+            Region("sanityIcon"), Color.White);
+        spriteBatch.Draw(InterfaceTexture,
+            new Rectangle((int)pos1.X, (int)pos2.Y + 6, iconSize, iconSize),
+            Region("timeIcon"), Color.White);
 
         int textX = (int)pos1.X + iconSize + iconGap;
         DrawValueBar(textX, (int)pos1.Y, sanityBarWidth, barHeight,
@@ -1526,7 +1517,6 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.Draw(InterfaceTexture, hammerDest, src, Color.White);
 
         // Hammer overlay, centered with a small inset
-        if (_hammerTexture != null)
         {
             int inset = Math.Max(6, _hammerBtn.Width / 8);
             Rectangle overlay = new Rectangle(
@@ -1534,9 +1524,8 @@ public class MapScreen : GamelabGameScreen
                 _hammerBtn.Y + inset,
                 _hammerBtn.Width  - inset * 2,
                 _hammerBtn.Height - inset * 2);
-            // Gray out when active (selected); full color otherwise
             Color tint = _hammerActive ? new Color(140, 140, 140) : Color.White;
-            spriteBatch.Draw(_hammerTexture, overlay, null, tint);
+            spriteBatch.Draw(InterfaceTexture, overlay, Region("hammer"), tint);
         }
     }
 

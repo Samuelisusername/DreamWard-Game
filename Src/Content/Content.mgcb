@@ -439,18 +439,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/daypalette.png
 
-#begin Sprites/hammer.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/hammer.png
-
 #begin Sprites/icon.json
 /copy:Sprites/icon.json
 
@@ -586,41 +574,6 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/nightpalette.png
 
-#begin Sprites/sanity_icon_big.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/sanity_icon_big.png
-
-#begin Sprites/sanity_icon_particle.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/sanity_icon_particle.png
-
-#begin Sprites/sanity_icon_small.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/sanity_icon_small.png
 
 #begin Sprites/shadowDummy.png
 /importer:TextureImporter
@@ -641,4 +594,9 @@
 
 #begin Sprites/day_bakground.json
 /copy:Sprites/day_bakground.json
+
+#begin Sprites/sanity_icon_particle.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/sanity_icon_particle.png
 
