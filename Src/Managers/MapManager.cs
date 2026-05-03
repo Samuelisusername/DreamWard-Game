@@ -863,57 +863,71 @@ public class MapManager
     {
         (int col, int row) sheepStart = SheepPosition;
 
-        List<(int,int)> firstZone = MapUtils.GetSurroundingCircle(sheepStart,4,5);        
-        int randomIndexFirst = GamelabGame.Rng.Next(firstZone.Count);
-        for(int i = 0; i < 3; i++)
+        var zone1 = ShuffleList(new List<(List<string> displays, string label, Action<Meadow> grant)>
         {
-            randomIndexFirst += firstZone.Count/3;
-            randomIndexFirst %= firstZone.Count;
-            (int,int) newPos = firstZone[randomIndexFirst];
-            Meadow m = new Meadow(newPos, 10);
-            while(!PlaceEntity(m ,newPos))
-            {
-                randomIndexFirst++;
-                randomIndexFirst %= firstZone.Count;
-                newPos = firstZone[randomIndexFirst];
-                m = new Meadow(newPos, 10);
-            }
-        }
+            (new List<string>{ "aoe" },    null,                     m => cardManager.UnlockCard("aoe")),
+            (new List<string>{ "spikes" }, null,                     m => cardManager.UnlockCard("spikes")),
+            (null,                         "Adds New Tower Card Slot", m => cardManager.AddSlots(1)),
+        });
 
+        var zone2 = ShuffleList(new List<(List<string> displays, string label, Action<Meadow> grant)>
+        {
+            (new List<string>{ "dreamcatcher", "void" }, null,
+                m => { cardManager.UnlockCard("dreamcatcher"); cardManager.UnlockCard("void"); }),
+            (new List<string>{ "polymorph", "decoy" }, null,
+                m => { cardManager.UnlockCard("polymorph"); cardManager.UnlockCard("decoy"); }),
+            (null, "Adds New Barrier Card Slot",
+                m => cardManager.AddSlots(2)),
+        });
 
-        List<(int,int)> secondZone = MapUtils.GetSurroundingCircle(sheepStart,7,8);        
-        int randomIndexSecond = GamelabGame.Rng.Next(secondZone.Count);
-        for(int i = 0; i < 3; i++)
-        {            
-            randomIndexSecond += secondZone.Count/3;
-            randomIndexSecond %= secondZone.Count;
-            (int,int) newPos = secondZone[randomIndexSecond];
-            Meadow m = new Meadow(newPos, 15);
-            while(!PlaceEntity(m ,newPos))
-            {
-                randomIndexSecond++;
-                randomIndexSecond %= secondZone.Count;
-                newPos = secondZone[randomIndexSecond];
-                m = new Meadow(newPos, 15);
-            }
-        }
+        var zone3 = ShuffleList(new List<(List<string> displays, string label, Action<Meadow> grant)>
+        {
+            (new List<string>{ "meadow", "buff" }, null,
+                m => { cardManager.UnlockCard("meadow"); cardManager.UnlockCard("buff"); }),
+            (null, "Bonus 10 Sanity",  m => { }),
+            (null, "Adds New Support Card Slot", m => cardManager.AddSlots(3)),
+        });
 
-        List<(int,int)> thirdZone = MapUtils.GetSurroundingCircle(sheepStart,10,11);
-        int randomIndexThird = GamelabGame.Rng.Next(thirdZone.Count);
-        for(int i = 0; i < 3; i++)
-        {            
-            randomIndexThird += thirdZone.Count/3;
-            randomIndexThird %= thirdZone.Count;
-            (int,int) newPos = thirdZone[randomIndexThird];
-            Meadow m = new Meadow(newPos, 20);
-            while(!PlaceEntity(m ,newPos))
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 4,  5),  10, zone1);
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 7,  8),  15, zone2);
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 10, 11), 20, zone3);
+    }
+
+    private void PlaceMeadowsInZone(
+        List<(int,int)> zone,
+        int sanityGain,
+        List<(List<string> displays, string label, Action<Meadow> grant)> bonuses)
+    {
+        if (zone.Count == 0) return;
+        int randomIndex = GamelabGame.Rng.Next(zone.Count);
+        for (int i = 0; i < 3; i++)
+        {
+            randomIndex = (randomIndex + zone.Count / 3) % zone.Count;
+            (int,int) newPos = zone[randomIndex];
+            Meadow m = new Meadow(newPos, sanityGain);
+            while (!PlaceEntity(m, newPos))
             {
-                randomIndexThird++;
-                randomIndexThird %= thirdZone.Count;
-                newPos = thirdZone[randomIndexThird];
-                m = new Meadow(newPos, 20);
+                randomIndex = (randomIndex + 1) % zone.Count;
+                newPos = zone[randomIndex];
+                m = new Meadow(newPos, sanityGain);
             }
+            m.UnlockCardSprites = bonuses[i].displays;
+            m.BonusLabel        = bonuses[i].label;
+            m.MeadowGrant       = bonuses[i].grant;
+
+            if (bonuses[i].label == "Bonus 10 Sanity")
+                m.BonusSanity = 10;
         }
+    }
+
+    private List<T> ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = GamelabGame.Rng.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+        return list;
     }
 
     /// <summary>
