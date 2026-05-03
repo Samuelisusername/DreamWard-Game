@@ -381,14 +381,11 @@ public class MapScreen : GamelabGameScreen
                 _isDraggingCard = false;
                 if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay && _showInventory)
                 {
-                    foreach (var (rect, card) in cardManager.CardRects)
+                    var (dragCandidate, _) = cardRenderer.HandleClick(pos, cardManager);
+                    if (dragCandidate?.Type == CardType.Build || dragCandidate?.Type == CardType.MapAction)
                     {
-                        if ((card?.Type == CardType.Build || card?.Type == CardType.MapAction) && rect.Contains(pos))
-                        {
-                            _dragCard     = card;
-                            _dragStartPos = pos;
-                            break;
-                        }
+                        _dragCard     = dragCandidate;
+                        _dragStartPos = pos;
                     }
                 }
 
@@ -602,55 +599,25 @@ public class MapScreen : GamelabGameScreen
                     // ── Card strip clicks ─────────────────────────────────────
                     if (_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
                     {
-                        Card clickedCard = null;
-                        CardSlot clickedSlot = null;
-
-                        // ── SAME logic as hover: topmost wins ──
-                        for (int i = cardRenderer.TransformCount - 1; i >= 0; i--)
-                        {
-                            var t = cardRenderer.GetTransform(i);
-
-                            if (t.HalfW == 0 || t.HalfH == 0)
-                                continue;
-
-                            float rad = MathHelper.ToRadians(t.AngleDeg);
-                            Vector2 local = CardRenderer.Rot(mousePos - t.Center, -rad);
-
-                            if (MathF.Abs(local.X) <= t.HalfW &&
-                                MathF.Abs(local.Y) <= t.HalfH)
-                            {
-                                if (i < cardManager.CardRects.Count)
-                                {
-                                    var (_, card) = cardManager.CardRects[i];
-                                    if (card == null) continue;
-
-                                    clickedCard = card;
-                                    clickedSlot = cardManager.GetSlotForCard(card);
-                                    break;
-                                }
-                            }
-                        }
-
+                        var (clickedCard, clickedSlot) = cardRenderer.HandleClick(mousePos, cardManager);
+ 
                         if (clickedCard == null)
                             return;
-
+ 
                         bool isDouble = IsDoubleClick(mouse, gameTime);
-
+ 
                         // ── BUILD / MAP ACTION ─────────────────────────────
                         if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
                         {
                             if (clickedSlot != null && !clickedSlot.Purchased)
                             {
                                 if (isDouble)
-                                {
                                     if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
                                         AudioManager.Play("coinsplash");
-                                }
-
                                 _clickStarted = false;
                                 return;
                             }
-
+ 
                             if (clickedSlot != null && clickedSlot.Purchased)
                             {
                                 ToggleActiveCard(cardManager, clickedCard);
@@ -658,11 +625,13 @@ public class MapScreen : GamelabGameScreen
                                 return;
                             }
                         }
-
+ 
                         // ── STACK ACTION ───────────────────────────────────
                         if (clickedCard.Type == CardType.StackAction)
                         {
-                            if (clickedCard.Effect == CardEffect.Shuffle || clickedCard.Effect == CardEffect.Discount || clickedCard.Effect == CardEffect.Refill)
+                            if (clickedCard.Effect == CardEffect.Shuffle ||
+                                clickedCard.Effect == CardEffect.Discount ||
+                                clickedCard.Effect == CardEffect.Refill)
                             {
                                 if (isDouble)
                                 {
