@@ -121,7 +121,7 @@ public class CombatManager
                 if(canSpawn[i,j])
                 {
                     List<(int col, int row)> toCheck = MapUtils.GetSurroundingTiles((i,j), true);
-                    if(toCheck.Any(k => !MapUtils.IsInBounds(k)) && mapManager.GetStructure((i,j)) is TreeTile)
+                    if(toCheck.Any(k => !MapUtils.IsInBounds(k) || (!canSpawn[k.col,k.row] && MapUtils.IsInBounds(k) && mapManager.GetStructure(k) != null)) && mapManager.GetStructure((i,j)) is TreeTile)
                     {
                         //found a tree on the edge/ in a big cluster so do bfs to find all the trees in that group
                         canSpawn[i,j] = false;

@@ -386,6 +386,10 @@ public class MapManager
             }
         }
     }
+
+    // Refresh PlayingField now that void tiles and enclosed tiles are cleared,
+    // so the fall renderer sees the updated boundary and animates cluster trees correctly.
+    combatManager.GetSpawnableArea();
 }
     // In MapManager.cs
     public int GetTileIndex((int col, int row) pos) {
