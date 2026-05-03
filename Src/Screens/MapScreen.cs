@@ -1015,7 +1015,7 @@ public class MapScreen : GamelabGameScreen
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
-                cardRenderer.DrawExpandedPanel(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager,vw, vh); 
+                cardRenderer.DrawExpandedPanel(spriteBatch, _dummy, _font, cardManager, vw, vh);
             }
         }
 
