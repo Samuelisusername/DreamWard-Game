@@ -2,21 +2,26 @@ using System;
 using System.Collections.Generic;
 using Gamelab;
 
+// Default configuration values for pathfinding behavior. These can be overriden for specific monster types in the PathFindingManager constructor.
+public class PathFindingConfig
+{
+    public int VisionRange { get; set; } = 5; // how far away targets can the monster see (note that target information is shared between monsters)
+    public int DiscoveryPhaseMinTileCost { get; set; } = 20; // higher number encourages taking a shorter route when discovering targets
+    public int AttackPhaseMinTileCost { get; set; } = 2; // higher number encourages taking a shorter route when going to a target
+    public int GlobalVisitedPenalty { get; set; } = 10; // higher number encourages the monsters as a whole to spread out and explore
+    public int LocalRecentlyVisitedPenalty { get; set; } = 10; // higher number discourages an individual monster from going back to a recently visited tile
+    public int RecentPathLength { get; set; } = 5; // LocalRecentlyVisitedPenalty is applied to the last RecentPathLength tiles the monster has been on
+    public int NormalDefenceStrength { get; set; } = 10; // the defence strength of all towers is estimated as this number (TODO: consider DamagePerSecond)
+    public int BuffPenalty { get; set; } = 50; // higher number means monsters are more repelled by buffed tiles
+    public int FencePenalty { get; set; } = 4; // higher number means monster are more likely to go around fences/walls
+    public int RandomTileMaxDistanceFromCenter { get; set; } = 8; // if the monsters haven't found any targets, they will move towards a random tile at most RandomTileMaxDistanceFromCenter tiles from the center
+}
+
 public class PathFindingManager
 {
     private MapManager mapManager => GamelabGame.MapManager;
 
-    // Tunable parameters for pathfinding behavior
-    private const int RegularMonsterVisionRange = 5;
-    private const int FlyingMonsterVisionRange = 8;
-    private const int SimplePathMinDefenceStrength = 20; // higher number encourages taking a shorter route when discovering targets
-    private const int MinDefenceStrength = 1; // higher number encourages taking a shorter route when going to a target
-    private const int VisitedPenalty = 10; // per-occurrence penalty added to local cost for tiles in a monster's recent path
-    private const int RecentPathLength = 5;
-    private const int NormalDefenceStrength = 10;
-    private const int BuffPenalty = 50;
-    private const int FencePenalty = 4;
-    private const int RandomTileMaxDistanceFromCenter = 7;
+    private readonly Dictionary<MonsterType, PathFindingConfig> _configOverrides = new();
 
     // Keep track of all tiles that are going to be attacked and by who
     private readonly HashSet<(int col, int row)> _discoveredTargets;
@@ -53,6 +58,10 @@ public class PathFindingManager
     /// </summary>
     public PathFindingManager()
     {
+        _configOverrides[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
+        _configOverrides[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
+        _configOverrides[MonsterType.Small] = new PathFindingConfig { VisionRange = 4, AttackPhaseMinTileCost = 1, FencePenalty = 10 };
+
         _discoveredTargets = new HashSet<(int col, int row)>();
         _targetToMonsters = new Dictionary<(int, int), HashSet<Monster>>();
         _monsterToTarget = new Dictionary<Monster, (int, int)>();
@@ -73,6 +82,16 @@ public class PathFindingManager
         _cachedPaths.Clear();
     }
 
+    private PathFindingConfig GetConfig(Monster monster)
+    {
+        if (!_configOverrides.TryGetValue(monster.Type, out var config))
+        {
+            config = new PathFindingConfig();
+            _configOverrides[monster.Type] = config;
+        }
+        return config;
+    }
+
     /// <summary>
     /// Gives the monster's actual target.
     /// </summary>
@@ -83,6 +102,7 @@ public class PathFindingManager
 
     public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) candidateTile)
     {
+        var config = GetConfig(monster);
         var endStructure = mapManager.GetStructure(candidateTile);
         var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == candidateTile;
         if (endStructure != null && !monster.CanStepOn(endStructure))
@@ -96,20 +116,21 @@ public class PathFindingManager
         {
             _monsterToTargetDist[monster] = 0;
         }
-        _visited[candidateTile.Item1, candidateTile.Item2] += VisitedPenalty;
+        _visited[candidateTile.Item1, candidateTile.Item2] += config.GlobalVisitedPenalty;
         PushToRecentPath(monster, candidateTile);
         return candidateTile;
     }
 
     private void PushToRecentPath(Monster monster, (int col, int row) tile)
     {
+        var config = GetConfig(monster);
         if (!_monsterToRecentPath.TryGetValue(monster, out var queue))
         {
             queue = new Queue<(int col, int row)>();
             _monsterToRecentPath[monster] = queue;
         }
         queue.Enqueue(tile);
-        if (queue.Count > RecentPathLength)
+        if (queue.Count > config.RecentPathLength)
             queue.Dequeue();
     }
 
@@ -293,7 +314,8 @@ public class PathFindingManager
             _stepTimer.Restart();
         }
 
-        for (int i = RandomTileMaxDistanceFromCenter; i >= 0; --i)
+        var config = GetConfig(monster);
+        for (int i = config.RandomTileMaxDistanceFromCenter; i >= 0; --i)
         {
             var randomCenterTile = GetRandomTileNearCenter(i);
             if (localPenalty[randomCenterTile.col, randomCenterTile.row] > 0)
@@ -327,7 +349,7 @@ public class PathFindingManager
     private void UpdateDiscoveredTargets(Monster monster)
     {
         (int, int) currentTile = monster.TilePosition;
-        int visionRange = GetVisionRange(monster);
+        int visionRange = GetConfig(monster).VisionRange;
         List<(int,int)> surroundingTiles = MapUtils.GetSurroundingCircle(currentTile, 0, visionRange);
         foreach (var surroundingTile in surroundingTiles)
         {
@@ -343,15 +365,6 @@ public class PathFindingManager
                 _cachedPaths.Clear();
             }
         }
-    }
-
-    private static int GetVisionRange(Monster monster)
-    {
-        return monster.Type switch
-        {
-            MonsterType.Flying => FlyingMonsterVisionRange,
-            _ => RegularMonsterVisionRange
-        };
     }
 
     private void LogProfilingMetrics()
@@ -430,14 +443,15 @@ public class PathFindingManager
     /// </summary>
     private int[,] UpdateDefenceStrengths(Monster monster)
     {
+        var config = GetConfig(monster);
         // reset data structures
         _defenders.Clear();
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
             {
-                _defenceStrength[col, row] = MinDefenceStrength;
-                _simplePathDefenceStrength[col, row] = SimplePathMinDefenceStrength + _visited[col, row];
+                _defenceStrength[col, row] = config.AttackPhaseMinTileCost;
+                _simplePathDefenceStrength[col, row] = config.DiscoveryPhaseMinTileCost + _visited[col, row];
             }
         }
 
@@ -452,22 +466,22 @@ public class PathFindingManager
                 if (structure is Tower tower)
                 {
                     defendedTiles = tower.GetTilesInRange();
-                    strength = NormalDefenceStrength;
+                    strength = config.NormalDefenceStrength;
                 }
                 else if (structure is Buff buff)
                 {
                     defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
-                    strength = BuffPenalty; // make buffed tiles more powerful
+                    strength = config.BuffPenalty; // make buffed tiles more powerful
                 }
                 else if (monster is not FlyingMonster && (structure is Fence fence || structure is WallTile || structure is Wall))
                 {
                     defendedTiles = new List<(int, int)> { (col, row) };
-                    strength = FencePenalty;
+                    strength = config.FencePenalty;
                 }
                 else if (monster is FlyingMonster && structure is Wall)
                 {
                     defendedTiles = new List<(int, int)> { (col, row) };
-                    strength = FencePenalty;
+                    strength = config.FencePenalty;
                 }
                 else
                 {
@@ -493,7 +507,7 @@ public class PathFindingManager
         if (_monsterToRecentPath.TryGetValue(monster, out var recentQueue))
         {
             foreach (var (col, row) in recentQueue)
-                localPenalty[col, row] += VisitedPenalty;
+                localPenalty[col, row] += config.GlobalVisitedPenalty;
         }
         return localPenalty;
     }
