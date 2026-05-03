@@ -3,6 +3,7 @@
 /// </summary>
 public class VoidTile : Structure
 {
+    public override bool CanMove => false;
     public VoidTile((int,int) pos)
         : base("void_idle", pos)
     {
