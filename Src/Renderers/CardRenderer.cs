@@ -64,7 +64,6 @@ public class CardRenderer
 
     public Rectangle CardStripBounds     { get; private set; }
     public Rectangle ExpandedPanelBounds { get; private set; }
-    private Rectangle _expandedPanelRect = Rectangle.Empty;
     public int TransformCount => _transforms.Count;
     public CardTransform GetTransform(int i) => _transforms[i];
     public Card     ExpandedCard  { get; private set; }
@@ -302,149 +301,155 @@ public class CardRenderer
     }
 
     // ── Expanded panel ────────────────────────────────────────────────────────
-    public void SetExpandedPanelRect(Rectangle rect) => _expandedPanelRect = rect;
-
     public void DrawExpandedPanel(
         SpriteBatch spriteBatch,
         Texture2D dummy,
-        Texture2D cardTexture,
-        Dictionary<string, Rectangle> cardRegions,
         SpriteFont font,
         CardManager cardManager,
         int screenW,
         int screenH)
     {
-        if (ExpandedCard == null || _expandedPanelRect == Rectangle.Empty)
-        {
-            ExpandedPanelBounds = Rectangle.Empty;
-            return;
-        }
+        if (ExpandedCard == null) { ExpandedPanelBounds = Rectangle.Empty; return; }
 
-        Rectangle panel = _expandedPanelRect;
-        ExpandedPanelBounds = panel;
-
-        // Background chrome
-        spriteBatch.Draw(dummy, panel, COLOR_L * 0.93f);
-        spriteBatch.Draw(dummy, new Rectangle(panel.X + 2, panel.Y + 2, panel.Width - 4, panel.Height - 4), COLOR_D);
-        spriteBatch.Draw(dummy, new Rectangle(panel.X + 4, panel.Y + 4, panel.Width - 8, panel.Height - 8), COLOR_L);
-
-        int   pad    = 12;
-        float lx     = panel.X + pad;
-        float ty     = panel.Y + pad;
-        float textSc = 1f;
-        float lineH  = font.LineSpacing * textSc + 2f;
+        const int   pad    = 12;
+        const float textSc = 0.6f;
+        float lineH = font.LineSpacing * textSc + 2f;
 
         CardSlot slot     = cardManager.GetSlotForCard(ExpandedCard);
-        bool     isLocked = slot != null && (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)  && !slot.Purchased;
+        bool     isLocked = slot != null && (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction) && !slot.Purchased;
+        Color infoColor   = new Color(0x40, 0x80, 0xc0);
 
-        // Large card image
-        int bigCard = 128 * 3;
-        Rectangle bigCardRect = new((int)lx, (int)ty, bigCard, bigCard);
-        if (cardRegions.TryGetValue(ExpandedCard.SpriteName, out var bigRegion))
-            spriteBatch.Draw(cardTexture, bigCardRect, bigRegion, Color.White);
+        // ── Measure content to size the panel ────────────────────────────────
+        float contentW = 0, contentH = 0;
 
-        float textX = lx + bigCard + pad;
-        float textY = ty;
+        void Measure(string text, float sc, float extraH = 0)
+        {
+            contentW = Math.Max(contentW, font.MeasureString(text).X * sc);
+            contentH += (extraH > 0 ? extraH : lineH);
+        }
 
         if (CardDescriptions.TryGetValue(ExpandedCard.SpriteName, out var desc))
         {
-            var lines = desc.Split('\n');
-
-            // Title
-            spriteBatch.DrawString(font, lines[0].Trim(),
-                new Vector2(textX, textY), COLOR_D,
-                0f, Vector2.Zero, textSc * 1.3f, SpriteEffects.None, 0f);
-            textY += lineH * 1.6f;
-
-            // Divider
-            int lineWidth = panel.Right - (int)textX - pad;
-            spriteBatch.Draw(dummy,
-                new Rectangle((int)textX, (int)textY, lineWidth, 1),
-                COLOR_G * 0.6f);
-
-            for (int i = 1; i < lines.Length; i++)
+            var descLines = desc.Split('\n');
+            Measure(descLines[0].Trim(), textSc * 1.3f, lineH * 1.6f);
+            for (int i = 1; i < descLines.Length; i++)
             {
-                string line = lines[i].Trim();
-                if (string.IsNullOrEmpty(line)) continue;
-                spriteBatch.DrawString(font, line,
-                    new Vector2(textX, textY), COLOR_D,
-                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
-                textY += lineH;
+                string l = descLines[i].Trim();
+                if (!string.IsNullOrEmpty(l)) Measure(l, textSc);
             }
         }
 
         string stats = GetCardStats(ExpandedCard);
+        if (!string.IsNullOrEmpty(stats)) Measure(stats, textSc);
+
+        if (ExpandedCard.Type == CardType.StackAction)
+            Measure("Double Click to apply", textSc);
+
+        if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
+        {
+            int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
+            string costStr  = isLocked
+                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
+                : "Purchased";
+            Measure(costStr, textSc);
+            if (isLocked) Measure("Drag to buy & place instantly", textSc);
+
+            if (IsBarrierCard(ExpandedCard) && !isLocked)
+            {
+                int maxStack    = GetMaxStack(ExpandedCard);
+                string stackTxt = $"{ExpandedCard.StackCount}/{maxStack} remaining";
+                contentH += 14 + 10; // bar height + gap
+                Measure(stackTxt, textSc);
+            }
+        }
+
+        int panelW = (int)(contentW + pad * 2);
+        int panelH = (int)(contentH + pad * 2);
+
+        // ── Position above the hovered card ──────────────────────────────────
+        int panelX = 5, panelY = CardStripBounds.Y - panelH - 10;
+
+        for (int i = 0; i < cardManager.CardRects.Count && i < _transforms.Count; i++)
+        {
+            var (_, card) = cardManager.CardRects[i];
+            if (card != null && ReferenceEquals(card, ExpandedCard))
+            {
+                var t = _transforms[i];
+                panelX = (int)(t.Center.X - panelW / 2f);
+                panelY = (int)(t.Center.Y - t.HalfH - panelH - 10);
+                break;
+            }
+        }
+
+        panelX = Math.Clamp(panelX, 5, screenW - panelW - 5);
+        panelY = Math.Max(5, panelY);
+
+        Rectangle panel = new Rectangle(panelX, panelY, panelW, panelH);
+        ExpandedPanelBounds = panel;
+
+        // ── Background chrome ─────────────────────────────────────────────────
+        spriteBatch.Draw(dummy, panel, COLOR_L * 0.93f);
+        spriteBatch.Draw(dummy, new Rectangle(panel.X + 2, panel.Y + 2, panel.Width - 4, panel.Height - 4), COLOR_D);
+        spriteBatch.Draw(dummy, new Rectangle(panel.X + 4, panel.Y + 4, panel.Width - 8, panel.Height - 8), COLOR_L);
+
+        float textX = panel.X + pad;
+        float textY = panel.Y + pad;
+
+        // ── Draw content ──────────────────────────────────────────────────────
+        if (CardDescriptions.TryGetValue(ExpandedCard.SpriteName, out desc))
+        {
+            var descLines = desc.Split('\n');
+            spriteBatch.DrawString(font, descLines[0].Trim(), new Vector2(textX, textY), COLOR_D, 0f, Vector2.Zero, textSc * 1.3f, SpriteEffects.None, 0f);
+            textY += lineH * 1.6f;
+
+            spriteBatch.Draw(dummy, new Rectangle((int)textX, (int)textY, panelW - pad * 2, 1), COLOR_G * 0.6f);
+
+            for (int i = 1; i < descLines.Length; i++)
+            {
+                string line = descLines[i].Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+                spriteBatch.DrawString(font, line, new Vector2(textX, textY), COLOR_D, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                textY += lineH;
+            }
+        }
+
         if (!string.IsNullOrEmpty(stats))
         {
             spriteBatch.DrawString(font, stats, new Vector2(textX, textY), COLOR_D, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
             textY += lineH;
         }
 
-        Color infoColor = new Color(0x40, 0x80, 0xc0);
-
         if (ExpandedCard.Type == CardType.StackAction)
         {
-            string usage = "Double Click to apply";
-            spriteBatch.DrawString(font, usage,
-                new Vector2(textX, textY), infoColor,
-                0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(font, "Double Click to apply", new Vector2(textX, textY), infoColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
             textY += lineH;
         }
 
         if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
         {
-            int displayCost = cardManager.DiscountActive
-                ? Math.Max(ExpandedCard.Cost - 2, 0)
-                : ExpandedCard.Cost;
-
+            int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
             string costStr  = isLocked
-                ? (cardManager.DiscountActive
-                    ? $"Cost: {displayCost} sanity (discounted)"
-                    : $"Cost: {displayCost} sanity")
+                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
                 : "Purchased";
             Color costColor = isLocked ? new Color(0xc0, 0x50, 0x30) : new Color(0x20, 0x80, 0x30);
 
-            spriteBatch.DrawString(font, costStr,
-                new Vector2(textX, textY), costColor,
-                0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(font, costStr, new Vector2(textX, textY), costColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
             textY += lineH;
 
             if (isLocked)
             {
-                spriteBatch.DrawString(font, "Drag to buy & place instantly",
-                    new Vector2(textX, textY), infoColor,
-                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(font, "Drag to buy & place instantly", new Vector2(textX, textY), infoColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                textY += lineH;
             }
-            int maxStack = GetMaxStack(ExpandedCard);
 
+            int maxStack = GetMaxStack(ExpandedCard);
             if (IsBarrierCard(ExpandedCard) && !isLocked)
             {
-                int barWidth  = 220;
+                int barWidth = Math.Max(panelW - pad * 2, 60);
                 int barHeight = 14;
-
-                Rectangle barRect = new Rectangle(
-                    (int)textX,
-                    (int)textY + 6,
-                    barWidth,
-                    barHeight
-                );
-
-                DrawStackBar(spriteBatch, dummy,
-                    barRect,
-                    ExpandedCard.StackCount,
-                    maxStack
-                );
-
+                DrawStackBar(spriteBatch, dummy, new Rectangle((int)textX, (int)textY + 6, barWidth, barHeight), ExpandedCard.StackCount, maxStack);
                 textY += barHeight + 10;
-
-                string stackText = $"{ExpandedCard.StackCount}/{maxStack} remaining";
-
-                spriteBatch.DrawString(font, stackText,
-                    new Vector2(textX, textY),
-                    new Color(80, 80, 80),
-                    0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
-
-                textY += lineH;
+                spriteBatch.DrawString(font, $"{ExpandedCard.StackCount}/{maxStack} remaining", new Vector2(textX, textY), new Color(80, 80, 80), 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
             }
         }
     }
@@ -481,17 +486,6 @@ public class CardRenderer
         destroyBtn = new Rectangle(leftMargin, destroyY, actionBtnW, actionBtnH);
 
         // ----------------------------
-        // Expanded panel (unchanged logic, cleaned)
-        // ----------------------------
-
-        int panelH = CARD_H + 120;
-        int panelY = CardStripBounds.Y - panelH - 10;
-
-        int panelW = x - leftMargin - 5;
-
-        _expandedPanelRect = panelW > 60
-            ? new Rectangle(5, panelY, panelW, panelH)
-            : Rectangle.Empty;
     }
     private int GetMaxStack(Card card)
     {
