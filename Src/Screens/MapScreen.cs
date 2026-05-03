@@ -230,7 +230,22 @@ public class MapScreen : GamelabGameScreen
         {
             // Exit
             if (keyboard.WasKeyReleased(Keys.Escape) || gamePads.Values.Any(gp => gp.Buttons.Back == ButtonState.Pressed))
-            Game.SwitchToScreen(Game.StartScreenInstance);
+            {
+                if (cardManager._activeMapCard != null || _moveActive || _hammerActive)
+                {
+                    CancelMoveMode();
+                    cardManager._activeMapCard = null;
+                    cardManager._previewStructure = null;
+                    cardManager._selectedTile = (-1, -1);
+                    _isDraggingCard = false;
+                    _dragCard = null;
+                    _hammerActive = false;
+                }
+                else
+                {
+                    Game.SwitchToScreen(Game.StartScreenInstance);
+                }
+            }
             
             // Spawn monster at edge heading toward tent
             
@@ -363,6 +378,11 @@ public class MapScreen : GamelabGameScreen
                         gamePhaseManager.SwitchToNight();
                     }
 #endif
+                    CancelMoveMode();
+                    _hammerActive = false;
+                    cardManager._selectedTile = (-1, -1);
+                    cardManager._previewStructure = null;
+                    cardManager._activeMapCard = null;  
                 }
             }
                        
@@ -373,6 +393,18 @@ public class MapScreen : GamelabGameScreen
                 SpawnSanityGainOverSheep(20);
             }
 #endif
+            // Right-click to purchase a hovered build card
+            if (mouse.WasButtonReleased(MouseButton.Right) && !gamePhaseManager.IsInTransition
+                && gamePhaseManager.IsDay && _showInventory)
+            {
+                var (hoveredCard, hoveredSlot) = cardRenderer.HandleClick(mousePos, cardManager);
+                if (hoveredCard != null && hoveredSlot != null && !hoveredSlot.Purchased
+                    && (hoveredCard.Type == CardType.Build || hoveredCard.Type == CardType.MapAction))
+                {
+                    if (cardManager.TryPurchaseBuildCard(hoveredSlot, sanityManager))
+                        AudioManager.Play("coinsplash");
+                }
+            }
 
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
@@ -524,7 +556,9 @@ public class MapScreen : GamelabGameScreen
                 // ── Drop dragged card onto map ────────────────────────────────
                 if (_isDraggingCard && _dragCard != null)
                 {
-                    if (_hoverTile.col >= 0)
+                    bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
+                        || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
+                    if (_hoverTile.col >= 0 && !overCardUI)
                     {
                         if (cardManager.HandleMapCardUse(mapManager, mousePos))
                             cardRenderer.CollapseExpanded();
@@ -569,6 +603,11 @@ public class MapScreen : GamelabGameScreen
                                 gamePhaseManager.SwitchToNight();
                             }
 #endif
+                        CancelMoveMode();
+                        _hammerActive = false;
+                        cardManager._selectedTile = (-1, -1);
+                        cardManager._previewStructure = null;
+                        cardManager._activeMapCard = null;  
                         _clickStarted = false;
                         return;
                     }
@@ -671,10 +710,9 @@ public class MapScreen : GamelabGameScreen
                     if (_moveBtn.Contains(mousePos))
                     {
                         _moveActive = !_moveActive;
-                        _hammerActive = false;
-
                         if (_moveActive)
                         {
+                            _hammerActive = false;
                             if (GamelabGame.SanityManager.Sanity <= 2)
                             {
                                 _moveActive = false;
@@ -699,6 +737,7 @@ public class MapScreen : GamelabGameScreen
                         _hammerActive = !_hammerActive;
                         if (_hammerActive)
                         {
+                            CancelMoveMode();
                             // Cancel any active map card so the two modes don't conflict
                             cardManager._activeMapCard = null;
                             cardManager._previewStructure = null;
@@ -736,8 +775,13 @@ public class MapScreen : GamelabGameScreen
                         }
                         if (cardManager._activeMapCard != null)
                         {
-                            if (cardManager.HandleMapCardUse(mapManager, mousePos))
-                                cardRenderer.CollapseExpanded();
+                            bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
+                                || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
+                            if (!overCardUI)
+                            {
+                                if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                                    cardRenderer.CollapseExpanded();
+                            }
                             _clickStarted = false;
                             _isDrag = false;
                             return;
@@ -876,74 +920,74 @@ public class MapScreen : GamelabGameScreen
         if(!gamePhaseManager.IsInTransition)
         {
             cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
-        }
-
-        // Hammer (destroy mode): highlight every player-placed structure tile in yellow
-        if (_hammerActive)
-        {
-            Color hammerHighlight = Color.Yellow;
-            for (int col = 0; col < mapManager.Columns; col++)
+            if (!gamePhaseManager.IsInTransition &&
+                (cardManager._activeMapCard != null || _isDraggingCard))
             {
-                for (int row = 0; row < mapManager.Rows; row++)
+                cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
+            }
+            // Hammer (destroy mode): highlight every player-placed structure tile in yellow
+            if (_hammerActive)
+            {
+                Color hammerHighlight = Color.Yellow;
+                for (int col = 0; col < mapManager.Columns; col++)
                 {
-                    if (IsHammerDestroyable(mapManager.GetStructure((col, row))))
+                    for (int row = 0; row < mapManager.Rows; row++)
                     {
-                        cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), hammerHighlight);
+                        if (IsHammerDestroyable(mapManager.GetStructure((col, row))))
+                        {
+                            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), hammerHighlight);
+                        }
                     }
                 }
             }
-        }
-        if (_moveActive)
-        {
-            Color moveHighlight = Color.Yellow;
-
-            for (int col = 0; col < mapManager.Columns; col++)
+            if (_moveActive)
             {
-                for (int row = 0; row < mapManager.Rows; row++)
+                if (cardManager._selectedTile == (-1, -1))
                 {
-                    var s = mapManager.GetStructure((col, row));
-
-                    if (cardManager._selectedTile == (-1, -1))
-                    {
-                        // show pickable tiles
-                        if (s != null && s.CanMove)
-                            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), moveHighlight);
-                    }
-                    else
-                    {
-                        // show valid drop tiles
-                        if (s != null)
-                            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), Color.Red);
-                    }
+                    // Pre-pick: highlight all movable structures in yellow
+                    for (int col = 0; col < mapManager.Columns; col++)
+                        for (int row = 0; row < mapManager.Rows; row++)
+                        {
+                            var s = mapManager.GetStructure((col, row));
+                            if (s != null && s.CanMove)
+                                cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, (col, row), Color.Yellow);
+                        }
+                }
+                else if (_hoverTile.col >= 0)
+                {
+                    // Post-pick: only highlight the hovered tile red if it's blocked
+                    var hovered = mapManager.GetStructure(_hoverTile);
+                    if (hovered != null)
+                        cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, _hoverTile, Color.Red);
                 }
             }
-        }
+            // ── Move-mode placement preview ───────────────────────────────────────
+            if (_moveActive && cardManager._selectedTile != (-1, -1)
+                && cardManager._previewStructure != null && _hoverTile.col >= 0)
+            {
+                var moving = cardManager._previewStructure;
+                bool valid = mapManager.GetStructure(_hoverTile) == null;
+                Color ghost = valid ? new Color(0x11, 0x7a, 0x15) : new Color(220, 60, 60);
 
-        // ── Move-mode placement preview ───────────────────────────────────────
-        // When the player has picked up a structure (_selectedTile is set) and is
-        // hovering a valid drop tile, show the ghost of the structure there.
-        // ── Move-mode placement preview ───────────────────────────────────────
-        if (_moveActive && cardManager._selectedTile != (-1, -1)
-            && cardManager._previewStructure != null && _hoverTile.col >= 0)
-        {
-            var moving  = cardManager._previewStructure;
-            bool valid  = mapManager.GetStructure(_hoverTile) == null;
-            Color ghost = valid ? new Color(0x11, 0x7a, 0x15) : new Color(220, 60, 60);
+                var oldPos = moving.TilePosition;
+                moving.TilePosition = _hoverTile;
 
-            var oldPos = moving.TilePosition;
-            moving.TilePosition = _hoverTile;
-            cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, _hoverTile, ghost);
-
-            // ── NEW: show tower range while moving a tower ──────────────────
-            if (moving is Tower movingTower)
-                cardRenderer.DrawTowerRangePreview(spriteBatch, mapManager, movingTower, ghost);
-
-            var prev = moving.PreviewTint;
-            moving.PreviewTint = ghost;
-            moving.DrawBase(spriteBatch, alpha: 0.5f);
-            moving.Draw(spriteBatch, alpha: 0.5f);
-            moving.PreviewTint = prev;
-            moving.TilePosition = oldPos;
+                // Tower: draw range preview + all existing tower ranges (same as build placement)
+                if (moving is Tower movingTower)
+                {
+                    cardRenderer.DrawTowerRangePreview(spriteBatch, mapManager, movingTower, ghost);
+                    cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
+                }
+                else
+                {
+                    cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, _hoverTile, ghost);
+                }
+                moving.PreviewTint = ghost;
+                moving.DrawBase(spriteBatch, alpha: 0.5f);
+                moving.Draw(spriteBatch, alpha: 0.5f);
+                moving.PreviewTint = null;
+                moving.TilePosition = oldPos;
+            }
         }
 
         spriteBatch.End();
@@ -1522,6 +1566,19 @@ public class MapScreen : GamelabGameScreen
         if (s == null) return false;
         if (s is VoidTile) return false;
         return s.CanMove;
+    }
+
+    private void CancelMoveMode()
+    {
+        // If a structure was picked up but not placed, put it back
+        if (_moveActive && cardManager._selectedTile != (-1, -1) && cardManager._previewStructure != null)
+        {
+            cardManager._previewStructure.TilePosition = cardManager._selectedTile;
+            mapManager.PlaceEntity(cardManager._previewStructure, cardManager._selectedTile);
+        }
+        _moveActive = false;
+        cardManager._selectedTile = (-1, -1);
+        cardManager._previewStructure = null;
     }
 
     private void DrawHammerButton()
