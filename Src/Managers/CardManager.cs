@@ -120,6 +120,14 @@ public class CardManager
     public Structure _previewStructure = null;
     public List<(Rectangle rect, Card card)> CardRects = new();
 
+    public HashSet<string> UnlockedCards { get; private set; } = new() {"sniper","fence"};
+    public bool IsUnlocked(string spriteName) => UnlockedCards.Contains(spriteName);
+    public bool UnlockCard(string spriteName)
+    {
+        if (string.IsNullOrEmpty(spriteName)) return false;
+        return UnlockedCards.Add(spriteName);
+    }
+
     private static readonly List<Card> TowerTemplates = new()
     {
         new Card { Name = "sniper", Type = CardType.Build, Cost = 7, SpriteName = "sniper", Weight = 3 },
@@ -465,11 +473,19 @@ public class CardManager
             _ => TowerTemplates
         };
 
+        // Meadow Bonus Unlock
+        var filteredPool = pool
+            .Where(c => (c.Type == CardType.Build || c.Type == CardType.MapAction)  && IsUnlocked(c.SpriteName))
+            .ToList();
+
+        if (filteredPool.Count == 0)
+            return null;
+
         do
         {
-            newCard = GetWeightedRandom(pool) with {};
+            newCard = GetWeightedRandom(filteredPool) with {};
         }
-        while (!isDifferent(newCard));
+        while (!isDifferent(newCard) && filteredPool.Count > 1); // 🔥 prevent infinite loop
 
         return newCard;
     }
