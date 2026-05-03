@@ -632,7 +632,9 @@ public class CardRenderer
             var preview = cardManager._previewStructure;
             if (preview != null)
             {
-                Color hl = mapManager.GetStructure(hoverTile) == null ? PLACEMENT_OK : PLACEMENT_BAD;
+                var existing = mapManager.GetStructure(hoverTile);
+                bool canHeal = existing != null && existing.GetType() == preview.GetType() && existing.CurrentHealth < existing.MaxHealth;
+                Color hl = (existing == null || canHeal) ? PLACEMENT_OK : PLACEMENT_BAD;
                 DrawPlacementHighlight(spriteBatch, mapManager, preview, hoverTile, hl);
                 DrawTransparentStructure(spriteBatch, preview, hl);
             }
