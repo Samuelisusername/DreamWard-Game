@@ -80,30 +80,67 @@ public class CardRenderer
         return new Vector2(c * v.X - s * v.Y, s * v.X + c * v.Y);
     }
 
-    // ── Hover: transform mouse into card-local space, then AABB test ─────────
-    // This exactly inverts what SpriteBatch.Draw does with a centre-origin + rotation.
+    public bool HitTest(int index, Vector2 mousePos)
+    {
+        if (index < 0 || index >= _transforms.Count) return false;
+        var t = _transforms[index];
+        if (t.HalfW == 0 || t.HalfH == 0) return false;
+        float rad = MathHelper.ToRadians(t.AngleDeg);
+        Vector2 local = Rot(mousePos - t.Center, -rad);
+        return MathF.Abs(local.X) <= t.HalfW
+            && local.Y >= -t.HalfH
+            && local.Y <= t.HalfH + CARD_HOVER_LIFT;
+    }
+
     public void HandleHover(Vector2 mousePos, CardManager cardManager)
     {
-        ExpandedCard = null;
-        // Reverse order: topmost drawn card wins
-        for (int i = _transforms.Count - 1; i >= 0; i--)
+        if (ExpandedCard != null)
         {
-            var t   = _transforms[i];
-            var rad = MathHelper.ToRadians(t.AngleDeg);
-
-            // Translate so card centre is origin, then undo rotation
-            Vector2 local = Rot(mousePos - t.Center, -rad);
-
-            if (MathF.Abs(local.X) <= t.HalfW && local.Y >= -t.HalfH && local.Y <= t.HalfH + t.BottomExtension)
+            for (int i = 0; i < _transforms.Count; i++)
             {
-                // Find the corresponding card
-                if (i < cardManager.CardRects.Count)
-                {
-                    var (_, card) = cardManager.CardRects[i];
-                    if (card != null) { ExpandedCard = card; return; }
-                }
+                if (i >= cardManager.CardRects.Count) continue;
+                var (_, c) = cardManager.CardRects[i];
+                if (!ReferenceEquals(c, ExpandedCard)) continue;
+                if (HitTest(i, mousePos)) return;
+                break;                           
             }
         }
+ 
+        ExpandedCard = null;
+        for (int i = _transforms.Count - 1; i >= 0; i--)
+        {
+            if (!HitTest(i, mousePos)) continue;
+            if (i >= cardManager.CardRects.Count) continue;
+            var (_, c) = cardManager.CardRects[i];
+            if (c != null) { ExpandedCard = c; return; }
+        }
+    }
+
+    public (Card card, CardSlot slot) HandleClick(Vector2 mousePos, CardManager cardManager)
+    {
+        if (ExpandedCard != null)
+        {
+            for (int i = 0; i < _transforms.Count; i++)
+            {
+                if (i >= cardManager.CardRects.Count) continue;
+                var (_, c) = cardManager.CardRects[i];
+                if (!ReferenceEquals(c, ExpandedCard)) continue;
+                if (HitTest(i, mousePos))
+                    return (c, cardManager.GetSlotForCard(c));
+                break;   
+            }
+        }
+ 
+        for (int i = _transforms.Count - 1; i >= 0; i--)
+        {
+            if (!HitTest(i, mousePos)) continue;
+            if (i >= cardManager.CardRects.Count) continue;
+            var (_, c) = cardManager.CardRects[i];
+            if (c == null) continue;
+            return (c, cardManager.GetSlotForCard(c));
+        }
+ 
+        return (null, null);
     }
 
     // ── Compute arc transforms for 'count' cards, fitting inside screenW ──────
