@@ -386,6 +386,10 @@ public class MapManager
             }
         }
     }
+
+    // Refresh PlayingField now that void tiles and enclosed tiles are cleared,
+    // so the fall renderer sees the updated boundary and animates cluster trees correctly.
+    combatManager.GetSpawnableArea();
 }
     // In MapManager.cs
     public int GetTileIndex((int col, int row) pos) {
@@ -394,6 +398,7 @@ public class MapManager
     }
     public bool AddNewMonster((int col, int row) pos, int level)
     {
+        
         Structure structureOnTile = Structures[pos.col,pos.row];
         Monster newMonster = null;
         
@@ -540,6 +545,71 @@ public class MapManager
         return null;
     }
 
+    public List<MonsterGroup> GetMonsterGroupsInRange((int col, int row) pos, int range)
+    {
+        List<MonsterGroup> res = new List<MonsterGroup>();
+        
+        var tilesInRangeGuaranteed = MapUtils.GetSurroundingCircle(pos, 0, range);
+
+        foreach (var tile in tilesInRangeGuaranteed)
+        {
+            // Target the new Container!
+            var targetContainer = GetMonsterContainer(tile);
+            if (targetContainer != null && !targetContainer.IsEmpty)
+            {
+                foreach (var group in targetContainer.MonsterGroups)
+                {
+                    if (!group.IsEmpty)
+                    {
+                        res.Add(group);
+                    }
+                }
+            }
+        }
+
+        var tilesInRangePossible = MapUtils.GetSurroundingCircle(pos, range, range + 2);
+
+        foreach (var tile in tilesInRangePossible)
+        {
+            var targetContainer = GetMonsterContainer(tile);
+            if (targetContainer != null && !targetContainer.IsEmpty)
+            {
+                foreach (var group in targetContainer.MonsterGroups)
+                {
+                    var startDist = MapUtils.CalculateTileDistance(group.TilePosition, pos);
+                    var endDist = MapUtils.CalculateTileDistance(group.CommonNextTarget(), pos);
+                    if (!group.IsEmpty && (startDist <= range || endDist <= range))
+                    {
+                        var worldPosition = group.GetInterpolatedWorldPosition();
+                        //TODO: add the correct offsets
+                        switch (group.MonsterType)
+                        {
+                            case MonsterType.Regular:
+                                worldPosition = worldPosition +  (new Vector2(45, 24) * Scale );
+                                break;
+                            case MonsterType.Flying:
+                                worldPosition = worldPosition +  (new Vector2(21, 24) * Scale );
+                                break;
+                            case MonsterType.Small:
+                                worldPosition = worldPosition +  (new Vector2(33, 31) * Scale );
+                                break;
+                            case MonsterType.Big:
+                                worldPosition = worldPosition +  (new Vector2(33, 30) * Scale );
+                                break;
+                        }
+                        var mapPos = GetTileFromScreenPosition(worldPosition);
+                        if(MapUtils.CalculateTileDistance(pos, mapPos) <= range)
+                        {
+                            res.Add(group); 
+                        }
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
     /// <summary>
     /// returns the structure at the given position
     /// </summary>
@@ -614,13 +684,12 @@ public class MapManager
         Structure existing = Structures[pos.col, pos.row];
         if (existing != null)
         {
-            // Heal-on-replace disabled:
-            // Structure incoming = cardManager.GetStructureFromCard(card, pos);
-            // if (incoming != null && existing.GetType() == incoming.GetType() && existing.CurrentHealth < existing.MaxHealth)
-            // {
-            //     existing.Heal(existing.MaxHealth);
-            //     return true;
-            // }
+            Structure incoming = cardManager.GetStructureFromCard(card, pos);
+            if (incoming != null && existing.GetType() == incoming.GetType() && existing.CurrentHealth < existing.MaxHealth)
+            {
+                existing.Heal(existing.MaxHealth);
+                return true;
+            }
             Console.WriteLine("Tile already occupied!");
             AudioManager.Play("sheep_baa");
             return false;

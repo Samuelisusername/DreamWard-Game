@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime;
 using Gamelab.Managers;
 using Microsoft.Xna.Framework;
@@ -34,7 +35,7 @@ public class SniperTower : Tower
     {
         //TODO: potentially move this responsability to the monsters.
         // the monsters tell the tower if they get in/out of range
-        if(target != null && (MapUtils.CalculateTileDistance(TilePosition, target.TilePosition) > rangeDepth ||  target.IsDestroyed))
+        if(target != null && (!mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth).SelectMany(i => i.Monsters).Contains(target) ||  target.IsDestroyed))
         {
             //target is out of range
             target = null;
@@ -42,23 +43,16 @@ public class SniperTower : Tower
         if(target == null)
         {
             //find new target
-            bool reset = true;
-            var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth + 1);
-            foreach (var item in tilesInRange)
+            var groupsInRange = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
+            foreach (var group in groupsInRange)
             {
-                MonsterGroupContainer container = mapManager.GetMonsterContainer(item);
-                if(container != null && !container.IsEmpty)
+                if(!group.IsEmpty)
                 {
-                    target = container.GetFirstMonster();
-                    if(target != null)
-                    {
-                        
-                        reset = false;
-                        break;
-                    }
+                    target = group.Monsters[0];
+                    elapsedAttackCooldown =TimeSpan.Zero;
+                    break;
                 }
-            }            
-            elapsedAttackCooldown = reset ? TimeSpan.Zero : elapsedAttackCooldown;
+            }        
         }
         if(target != null)
         {   
@@ -76,16 +70,16 @@ public class SniperTower : Tower
                 switch (target.Type)
                 {
                     case MonsterType.Regular:
-                        targetPos = (targetPos +  (new Vector2(45, 5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        targetPos = (targetPos +  (new Vector2(45, 11) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
                         break;
                     case MonsterType.Flying:
-                        targetPos = (targetPos +  (new Vector2(20, 5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        targetPos = (targetPos +  (new Vector2(21, 8) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
                         break;
                     case MonsterType.Small:
-                        targetPos = (targetPos +  (new Vector2(32, 25) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        targetPos = (targetPos +  (new Vector2(33, 28) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
                         break;
                     case MonsterType.Big:
-                        targetPos = (targetPos +  (new Vector2(28, -5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
+                        targetPos = (targetPos +  (new Vector2(33, 5) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
                         break;
                 }
                 //TODO: play anim here
