@@ -20,8 +20,12 @@ public class FlyingMonsterGroup : MonsterGroup
 
 
     public override Vector2 LocalOffset => new Vector2(-44, -90);
-    public override Vector2 GetInterpolatedWorldPosition()
+    public override Vector2 GetInterpolatedWorldPosition(bool basePoint = false)
     {
+        if(basePoint)
+        {
+            return base.GetInterpolatedWorldPosition();
+        }
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
         if (Monsters.Count == 0) return origin;
         if(CommonNextTarget() != TilePosition)
@@ -62,21 +66,6 @@ public class FlyingMonsterGroup : MonsterGroup
         mapManager.Scale,
         SpriteEffects.None,
         0);
-    }
-
-    public override void Draw(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)
-    {
-        if (IsEmpty) return;
-
-        Vector2 worldPos = GetInterpolatedWorldPosition();
-        Vector2 shadowPos = base.GetInterpolatedWorldPosition();
-        
-        // Use the container's rank logic to offset them so they don't overlap perfectly
-        // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
-
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
-        //sprite.Draw(spriteBatch, shadowPos + (_localOffset * mapManager.Scale) + rankOffset);
-
     }
 
 }

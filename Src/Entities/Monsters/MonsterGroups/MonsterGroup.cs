@@ -65,7 +65,7 @@ public abstract class MonsterGroup
         TilePosition = pos;
     }
 
-    public virtual Vector2 GetInterpolatedWorldPosition()
+    public virtual Vector2 GetInterpolatedWorldPosition(bool basePoint = false)
     {
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
         if (Monsters.Count == 0) return origin;
@@ -82,16 +82,16 @@ public abstract class MonsterGroup
         switch (MonsterType)
         {
             case MonsterType.Regular:
-                worldPos = worldPos +  (new Vector2(45, 5) * mapManager.Scale);
+                worldPos = worldPos +  (new Vector2(45, 11) * mapManager.Scale);
                 break;
             case MonsterType.Flying:
-                worldPos = worldPos +  (new Vector2(20, 5) * mapManager.Scale);
+                worldPos = worldPos +  (new Vector2(21, 8) * mapManager.Scale);
                 break;
             case MonsterType.Small:
-                worldPos = worldPos +  (new Vector2(32, 25) * mapManager.Scale);
+                worldPos = worldPos +  (new Vector2(33, 28) * mapManager.Scale);
                 break;
             case MonsterType.Big:
-                worldPos = worldPos +  (new Vector2(28, -5) * mapManager.Scale);
+                worldPos = worldPos +  (new Vector2(33, 5) * mapManager.Scale);
                 break;
         }
         Monsters.RemoveAll(m => m.IsDestroyed);
@@ -275,7 +275,33 @@ public abstract class MonsterGroup
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
         sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
-
+        
+        
+        worldPos = GetInterpolatedWorldPosition(true);
+        // switch (MonsterType)
+        // {
+        //     case MonsterType.Regular:
+        //         worldPos = worldPos +  (new Vector2(45, 24) * mapManager.Scale );
+        //         break;
+        //     case MonsterType.Flying:
+        //         worldPos = worldPos +  (new Vector2(21, 24) * mapManager.Scale );
+        //         break;
+        //     case MonsterType.Small:
+        //         worldPos = worldPos +  (new Vector2(33, 31) * mapManager.Scale );
+        //         break;
+        //     case MonsterType.Big:
+        //         worldPos = worldPos +  (new Vector2(33, 30) * mapManager.Scale );
+        //         break;
+        // }
+        // spriteBatch.Draw(GamelabGame.DummyText,
+        //         worldPos,
+        //         new Rectangle(0, 0, 1, 1),
+        //         Color.Red,
+        //         0,
+        //         Vector2.One,
+        //         GamelabGame.MapManager.Scale * 2,
+        //         SpriteEffects.None,
+        //         0);
     }
 
     public void SetScale(Vector2 scale)

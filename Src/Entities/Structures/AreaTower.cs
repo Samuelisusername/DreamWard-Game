@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Gamelab;
+using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -35,20 +36,35 @@ public class AreaTower : Tower
 
     public override void Attack(GameTime gameTime)
     {
-        base.Attack(gameTime);
 
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        var groupsInRage = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
+        bool dealtDamageThisFrame = false;
         activeBeamTargets.Clear();
-        var tilesInRange = MapUtils.GetSurroundingCircle(TilePosition, 0, rangeDepth + 1);
-        foreach (var tile in tilesInRange)
+
+        foreach (MonsterGroup group in groupsInRage)
         {
-            var container = mapManager.GetMonsterContainer(tile);
-            if (container == null || container.IsEmpty) continue;
-            foreach (var group in container.MonsterGroups)
+            group.TakeDamageAOE(damagePerSecond * dt);
+            totalDamage += (damagePerSecond * dt) * group.Count;
+            dealtDamageThisFrame = true;
+            if (!group.IsEmpty)
             {
-                if (!group.IsEmpty)
-                {
-                    activeBeamTargets.Add(group);
-                }
+                activeBeamTargets.Add(group);
+            }
+        }
+        
+        if (dealtDamageThisFrame)
+        {
+            soundTimer -= dt;
+
+            if (soundTimer <= 0f)
+            {
+                string soundToPlay = this is AreaTower ? "AOE-tower_stomp" : "shoot_01"; 
+                float cooldown = this is AreaTower ? 1.5f : 1.0f;
+
+                AudioManager.Play(soundToPlay);
+                soundTimer = cooldown; 
             }
         }
     }
@@ -76,16 +92,16 @@ public class AreaTower : Tower
             switch (group.MonsterType)
             {
                 case MonsterType.Regular:
-                    endPos = endPos +  (new Vector2(45, 5) * mapManager.Scale );
+                    endPos = endPos +  (new Vector2(45, 11) * mapManager.Scale );
                     break;
                 case MonsterType.Flying:
-                    endPos = endPos +  (new Vector2(20, 5) * mapManager.Scale );
+                    endPos = endPos +  (new Vector2(21, 8) * mapManager.Scale );
                     break;
                 case MonsterType.Small:
-                    endPos = endPos +  (new Vector2(32, 25) * mapManager.Scale );
+                    endPos = endPos +  (new Vector2(33, 28) * mapManager.Scale );
                     break;
                 case MonsterType.Big:
-                    endPos = endPos +  (new Vector2(28, -5) * mapManager.Scale );
+                    endPos = endPos +  (new Vector2(33, 5) * mapManager.Scale );
                     break;
             }
             DrawWavyBeam(spriteBatch, startPos, endPos);
