@@ -56,8 +56,9 @@ public class CardRenderer
     {
         public Vector2 Center;    // drawn centre (SpriteBatch position == center because origin=texCenter)
         public float   AngleDeg;
-        public float   HalfW;    // CARD_W / 2
-        public float   HalfH;    // CARD_H / 2
+        public float   HalfW;         // CARD_W / 2
+        public float   HalfH;         // CARD_H / 2
+        public float   BottomExtension; // extra hitbox height added below when card is lifted
     }
     private readonly List<CardTransform> _transforms = new();
 
@@ -94,7 +95,7 @@ public class CardRenderer
             // Translate so card centre is origin, then undo rotation
             Vector2 local = Rot(mousePos - t.Center, -rad);
 
-            if (MathF.Abs(local.X) <= t.HalfW && MathF.Abs(local.Y) <= t.HalfH)
+            if (MathF.Abs(local.X) <= t.HalfW && local.Y >= -t.HalfH && local.Y <= t.HalfH + t.BottomExtension)
             {
                 // Find the corresponding card
                 if (i < cardManager.CardRects.Count)
@@ -242,10 +243,11 @@ public class CardRenderer
             // ── Store transform (identical coordinate system as what we draw) ──
             _transforms.Add(new CardTransform
             {
-                Center   = drawCenter,
-                AngleDeg = angleDeg,
-                HalfW    = halfW,
-                HalfH    = halfH,
+                Center          = drawCenter,
+                AngleDeg        = angleDeg,
+                HalfW           = halfW,
+                HalfH           = halfH,
+                BottomExtension = isHovered ? CARD_HOVER_LIFT : 0f,
             });
 
             // ── AABB for CardRects (used for bounds / mapOverUI guard).
