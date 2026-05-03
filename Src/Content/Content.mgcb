@@ -634,3 +634,11 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
 
+#begin Sprites/day_bakground.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/day_bakground.png
+
+#begin Sprites/day_bakground.json
+/copy:Sprites/day_bakground.json
+
