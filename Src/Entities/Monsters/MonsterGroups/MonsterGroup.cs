@@ -39,6 +39,7 @@ public abstract class MonsterGroup
         TilePosition = tilePos;
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         sprite = GamelabGame.textureAtlas["monsters"].CreateAnimatedSprite(type+"_idleS");
+        sprite.Animation.Delay = AnimFrameDelay;
         sprite.Scale = mapManager.Scale;
         _elapsed = elapsed;
         _pathProgress = (float)(_elapsed/speed);
@@ -58,6 +59,7 @@ public abstract class MonsterGroup
     private bool isMerging;
 
     public abstract bool isGrounded {get;}
+    protected virtual TimeSpan AnimFrameDelay => TimeSpan.FromMilliseconds(125);
 
     public void ResetGroup((int,int) pos)
     {
@@ -338,6 +340,7 @@ public abstract class MonsterGroup
         }
         //Turn into Amalgam
         sprite.Animation = GamelabGame.textureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim );
+        sprite.Animation.Delay = AnimFrameDelay;
         if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
         else sprite.SpriteEffects = SpriteEffects.None;
     }

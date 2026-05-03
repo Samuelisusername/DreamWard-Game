@@ -5,6 +5,7 @@ public class BigMonsterGroup : MonsterGroup
 {
     public override MonsterType MonsterType => MonsterType.Big;
     protected override int attackFrame => 3;
+    protected override TimeSpan AnimFrameDelay => TimeSpan.FromMilliseconds(250);
 
     public override bool isGrounded => true;
 
