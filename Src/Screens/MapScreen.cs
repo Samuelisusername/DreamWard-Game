@@ -75,6 +75,7 @@ public class MapScreen : GamelabGameScreen
     private bool _isDrag;
     private bool _clickStarted;
     private Vector2 _oldPos;
+    private float _mapDragDistance;
     private (int col, int row) _hoverTile = (-1,-1);
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
@@ -406,8 +407,9 @@ public class MapScreen : GamelabGameScreen
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
                 var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                _oldPos       = pos;
-                _clickStarted = true;
+                _oldPos          = pos;
+                _clickStarted    = true;
+                _mapDragDistance = 0f;
 
                 // Begin possible card drag
                 _dragCard       = null;
@@ -481,7 +483,9 @@ public class MapScreen : GamelabGameScreen
                     if (deltaPos.Length() > 0)
                     {
                         mapManager.MoveMap(deltaPos, screenSize);
-                        _isDrag = true;
+                        _mapDragDistance += deltaPos.Length();
+                        if (_mapDragDistance > DRAG_THRESHOLD)
+                            _isDrag = true;
                         _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                     }
                 }

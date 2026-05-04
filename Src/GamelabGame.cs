@@ -80,6 +80,7 @@ public class GamelabGame : Game
     private MouseCursor CursorHover => GamePhaseManager?.IsDay == true ? dayCursorHover : cursorHover;
     private MouseCursor CursorClick => GamePhaseManager?.IsDay == true ? dayCursorClick : cursorClick;
     private MouseCursor hammerCursor;
+    private MouseCursor hammerClickCursor;
 
     /// <summary>
     /// Set to true during Update to show the hover cursor. Reset automatically each frame.
@@ -217,7 +218,8 @@ public class GamelabGame : Game
         dayCursorHover = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
         dayCursorClick = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
 
-        hammerCursor = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer0").SourceRectangle, 6, 8, 2);
+        hammerCursor      = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer0").SourceRectangle,       6, 8, 2);
+        hammerClickCursor = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer_click0").SourceRectangle, 6, 8, 2);
 
         Mouse.SetCursor(CursorArrow);
 
@@ -248,7 +250,7 @@ public class GamelabGame : Game
         var mouseState = Mouse.GetState();
         if (UseHammerCursor)
         {
-            Mouse.SetCursor(hammerCursor);
+            Mouse.SetCursor(mouseState.LeftButton == ButtonState.Pressed ? hammerClickCursor : hammerCursor);
         }
         else if (IsHovering)
         {
