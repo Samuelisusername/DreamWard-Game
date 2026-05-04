@@ -926,7 +926,8 @@ public class MapScreen : GamelabGameScreen
         }
         if(!gamePhaseManager.IsInTransition)
         {
-            cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
+            if (cardRenderer.ExpandedCard == null)
+                cardRenderer.DrawPreview(spriteBatch, cardManager, mapManager, _hoverTile);
             if (!gamePhaseManager.IsInTransition &&
                 (cardManager._activeMapCard != null || _isDraggingCard))
             {
