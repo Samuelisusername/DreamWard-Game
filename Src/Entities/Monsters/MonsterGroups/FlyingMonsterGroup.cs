@@ -28,19 +28,13 @@ public class FlyingMonsterGroup : MonsterGroup
         }
         Vector2 origin = mapManager.GetWorldPositionOfTile(TilePosition);
         if (Monsters.Count == 0) return origin;
-        if(CommonNextTarget() != TilePosition)
-        {
-            //they are still flying
-            origin -= Vector2.UnitY * 30 * mapManager.Scale;
-        }
+        //they are always flying
+        origin -= Vector2.UnitY * 30 * mapManager.Scale;
         
         var goal = Monsters[0].GetCurrentGoal();
         Vector2 goalPos = mapManager.GetWorldPositionOfTile(goal);
-        if(pathFindingManager.PathLength(Monsters[0]) > 2)
-        {
-            //the monster moves on next step
-            goalPos -= Vector2.UnitY * 30 * mapManager.Scale;
-        }
+        //the monster always flies
+        goalPos -= Vector2.UnitY * 30 * mapManager.Scale;
         return origin + (goalPos - origin) * _pathProgress;
     }
 

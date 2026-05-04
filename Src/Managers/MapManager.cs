@@ -580,7 +580,7 @@ public class MapManager
                     var endDist = MapUtils.CalculateTileDistance(group.CommonNextTarget(), pos);
                     if (!group.IsEmpty && (startDist <= range || endDist <= range))
                     {
-                        var worldPosition = group.GetInterpolatedWorldPosition();
+                        var worldPosition = group.GetInterpolatedWorldPosition(true);
                         //TODO: add the correct offsets
                         switch (group.MonsterType)
                         {

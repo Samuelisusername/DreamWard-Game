@@ -43,16 +43,18 @@ public class SniperTower : Tower
         if(target == null)
         {
             //find new target
+            bool reset = true;
             var groupsInRange = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
             foreach (var group in groupsInRange)
             {
                 if(!group.IsEmpty)
                 {
                     target = group.Monsters[0];
-                    elapsedAttackCooldown =TimeSpan.Zero;
+                    reset = false;
                     break;
                 }
-            }        
+            }    
+            elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;    
         }
         if(target != null)
         {   

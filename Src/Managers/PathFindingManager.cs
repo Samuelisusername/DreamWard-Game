@@ -105,7 +105,7 @@ public class PathFindingManager
         var config = GetConfig(monster);
         var endStructure = mapManager.GetStructure(candidateTile);
         var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == candidateTile;
-        if (endStructure != null && !monster.CanStepOn(endStructure))
+        if (endStructure != null && monster.CanTarget(endStructure))
         {
             _monsterToTargetDist[monster] = 1;
             _monsterToTarget[monster] = candidateTile;
