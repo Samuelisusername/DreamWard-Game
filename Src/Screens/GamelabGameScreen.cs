@@ -76,8 +76,14 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
 
     protected enum ButtonResult { Normal, Hovered, Pressed, Clicked }
 
-    protected ButtonResult UpdateButton(Rectangle rect, MouseStateExtended mouse, Vector2 mousePos, ref bool clickStartedInside)
+    protected ButtonResult UpdateButton(Rectangle rect, MouseStateExtended mouse, Vector2 mousePos, ref bool clickStartedInside, bool active = true)
     {
+        if (!active)
+        {
+            if (mouse.WasButtonPressed(MouseButton.Left) || mouse.WasButtonReleased(MouseButton.Left))
+                clickStartedInside = false;
+            return ButtonResult.Normal;
+        }
         bool over = rect.Contains(mousePos);
         bool held = mouse.IsButtonDown(MouseButton.Left);
 
