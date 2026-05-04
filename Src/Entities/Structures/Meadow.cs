@@ -10,7 +10,7 @@ using System.Collections.Generic;
 /// </summary>
 public class Meadow : Structure
 {
-    private const int MaxGrazingDays = 20;
+    private static int MaxGrazingDays => GamelabGame.Instance.Balance.MaxGrazingDays;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     public bool HasSheep { get; private set; }
 
@@ -55,8 +55,17 @@ public class Meadow : Structure
     private TimeSpan _cantAffordFlash = TimeSpan.Zero;
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
+    private static string SpriteForGain(int sanityGain)
+    {
+        var gains = GamelabGame.Instance.Balance.MeadowSanityGains;
+        if (gains != null)
+            foreach (var kvp in gains)
+                if (kvp.Value == sanityGain) return kvp.Key;
+        return "meadow_idle";
+    }
+
     public Meadow((int, int) pos, int sanityGain)
-        : base(sanityGain == 10 ? "meadow_red_idle" : sanityGain == 15 ? "meadow_blue_idle" : sanityGain == 20 ? "meadow_orange_idle" : "meadow_idle", pos)
+        : base(SpriteForGain(sanityGain), pos)
     {
         _baseSanityGain = sanityGain;
     }

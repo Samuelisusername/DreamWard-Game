@@ -1620,6 +1620,10 @@ public class MapScreen : GamelabGameScreen
         }
         else
         {
+            // Restore any in-progress move before switching cards
+            if (cm._previewStructure != null && cm._selectedTile != (-1, -1))
+                GamelabGame.MapManager.PlaceEntity(cm._previewStructure, cm._selectedTile);
+            CancelMoveMode();
             cm._activeMapCard    = card;
             cm._selectedTile     = (-1, -1);
             cm._previewStructure = null;

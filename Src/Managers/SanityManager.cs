@@ -14,7 +14,7 @@ public class SanityManager
 
     public SanityManager()
     {
-        Sanity = 40; // initialize sanity at the beginning of the game
+        Sanity = GamelabGame.Instance.Balance.StartingSanity;
     }
 
     /// <summary>

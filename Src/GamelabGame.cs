@@ -117,14 +117,14 @@ public class GamelabGame : Game
 
         jsonLoader = new(this, "Data");
 
+        Balance = jsonLoader.LoadJson<BalanceParams>("Balance.json");
+
         screenManager = new();
         CardManager = new();
         CombatManager = new();
         GamePhaseManager = new();
         SanityManager = new();
         Components.Add(screenManager);
-
-        Balance = jsonLoader.LoadJson<BalanceParams>("Balance.json");
     }
 
     protected override void Initialize()

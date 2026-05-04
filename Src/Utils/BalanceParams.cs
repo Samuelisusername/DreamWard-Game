@@ -8,4 +8,8 @@ public class BalanceParams
     public Dictionary<Type,float> EntityHealth;
     public Dictionary<Type,float> MonsterDamage;
     public Dictionary<Type,TimeSpan> MonsterSpeed;
+    public int StartingSanity;
+    public float MoveCostMultiplier;
+    public int MaxGrazingDays;
+    public Dictionary<string,int> MeadowSanityGains;
 }

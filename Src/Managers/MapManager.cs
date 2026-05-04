@@ -86,7 +86,7 @@ public class MapManager
     /// </summary>
     public float ScaledOffset => TileHeight /2;
 
-    public const float MoveCostMultiplier = 1.7f;
+    public static float MoveCostMultiplier => GamelabGame.Instance.Balance.MoveCostMultiplier;
 
     /// <summary>
     /// The position of the Sheep on the map
@@ -888,9 +888,10 @@ public class MapManager
             (null, "Adds New Support Card Slot", m => cardManager.AddSlots(3)),
         });
 
-        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 4,  5),  10, zone1);
-        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 7,  8),  15, zone2);
-        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 10, 11), 20, zone3);
+        var meadowGains = GamelabGame.Instance.Balance.MeadowSanityGains;
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 4,  5),  meadowGains["meadow_red_idle"],    zone1);
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 7,  8),  meadowGains["meadow_blue_idle"],   zone2);
+        PlaceMeadowsInZone(MapUtils.GetSurroundingCircle(sheepStart, 10, 11), meadowGains["meadow_orange_idle"], zone3);
     }
 
     private void PlaceMeadowsInZone(
