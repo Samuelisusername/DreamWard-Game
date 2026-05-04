@@ -49,6 +49,7 @@ public class GamePhaseManager
         {
             Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count}");
         }
+        TutorialManager.HandleTutorialAction(TutorialAction.StartedNight);
         mapManager.StartFalling();
         IsInTransition = true;
     }

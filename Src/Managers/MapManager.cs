@@ -711,6 +711,7 @@ public class MapManager
                 }
             }
             InitScreenShake(TimeSpan.FromSeconds(0.3), 5);
+            TutorialManager.HandleTutorialAction(TutorialAction.PlacedTower);
             return true;
         }
         return false;
@@ -998,13 +999,14 @@ public class MapManager
     public void HandleMapClick(Vector2 pos)
     {
         // At night only shake trees that are in the playing field (visible, not fallen)
-        if (!gamePhaseManager.IsDay)
+        if (gamePhaseManager.IsInTransition)
         {
             var tile = GetTileFromScreenPosition(pos);
             if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
                 return;
         }
         ShakeTree(pos);
+        TutorialClick(pos);
     }
 
     /// <summary>
@@ -1058,6 +1060,16 @@ public class MapManager
         if(entity is TreeTile tree)
         {
             tree.Shake();
+        }
+    }
+
+    private void TutorialClick(Vector2 pos)
+    {
+        (int col, int row) tilePos = GetTileFromScreenPosition(pos, true);
+        Entity entity = GetStructure(tilePos, true);
+        if(entity == TutorialManager.CurrentTutorialStructure)
+        {
+            TutorialManager.HandleTutorialAction(TutorialAction.Click);
         }
     }
 

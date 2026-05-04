@@ -802,12 +802,11 @@ public class MapScreen : GamelabGameScreen
                             _isDrag = false;
                             return;
                         }
-                        mapManager.HandleMapClick(mousePos);
                     }
-                    mapManager.HandleMapClick(mousePos);
                 }
                 _clickStarted = false;
                 _isDrag = false;
+                mapManager.HandleMapClick(mousePos);
             }
         }        
     }
