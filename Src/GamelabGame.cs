@@ -87,6 +87,11 @@ public class GamelabGame : Game
     public static bool IsHovering { get; set; }
 
     /// <summary>
+    /// When true, the click cursor is suppressed even while hovering with a held button (e.g. drag from outside a button onto it).
+    /// </summary>
+    public static bool SuppressClickCursor { get; set; }
+
+    /// <summary>
     /// When true, the cursor is replaced by the hammer (destroy mode).
     /// </summary>
     public static bool UseHammerCursor { get; set; }
@@ -237,6 +242,7 @@ public class GamelabGame : Game
         }
 
         IsHovering = false;
+        SuppressClickCursor = false;
         base.Update(time);
 
         var mouseState = Mouse.GetState();
@@ -244,9 +250,10 @@ public class GamelabGame : Game
         {
             Mouse.SetCursor(hammerCursor);
         }
-        else if (IsHovering){
+        else if (IsHovering)
+        {
             Mouse.SetCursor(CursorHover);
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed && !SuppressClickCursor)
                 Mouse.SetCursor(CursorClick);
         }
         else
