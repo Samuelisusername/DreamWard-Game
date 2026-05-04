@@ -402,7 +402,10 @@ public class MapScreen : GamelabGameScreen
                     && (hoveredCard.Type == CardType.Build || hoveredCard.Type == CardType.MapAction))
                 {
                     if (cardManager.TryPurchaseBuildCard(hoveredSlot, sanityManager))
+                    {
                         AudioManager.Play("coinsplash");
+                        _hammerActive = false;
+                    }
                 }
             }
 
@@ -459,6 +462,7 @@ public class MapScreen : GamelabGameScreen
                                 if (cardManager.TryPurchaseBuildCard(slot, sanityManager))
                                 {
                                     AudioManager.Play("coinsplash");
+                                    _hammerActive = false;
                                     _isDraggingCard = true;
                                     cardManager._activeMapCard    = _dragCard;
                                     cardManager._selectedTile     = (-1, -1);
@@ -663,7 +667,10 @@ public class MapScreen : GamelabGameScreen
                             {
                                 if (isDouble)
                                     if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
+                                    {
                                         AudioManager.Play("coinsplash");
+                                        _hammerActive = false;
+                                    }
                                 _clickStarted = false;
                                 return;
                             }

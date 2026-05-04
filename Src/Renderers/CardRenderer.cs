@@ -58,7 +58,7 @@ public class CardRenderer
         public float   AngleDeg;
         public float   HalfW;         // CARD_W / 2
         public float   HalfH;         // CARD_H / 2
-        public float   BottomExtension; // extra hitbox height added below when card is lifted
+        public float   HoverExtension; // extra hitbox margin on all sides when card is lifted
     }
     private readonly List<CardTransform> _transforms = new();
 
@@ -87,9 +87,9 @@ public class CardRenderer
         if (t.HalfW == 0 || t.HalfH == 0) return false;
         float rad = MathHelper.ToRadians(t.AngleDeg);
         Vector2 local = Rot(mousePos - t.Center, -rad);
-        return MathF.Abs(local.X) <= t.HalfW
-            && local.Y >= -t.HalfH
-            && local.Y <= t.HalfH + CARD_HOVER_LIFT;
+        return MathF.Abs(local.X) <= t.HalfW + t.HoverExtension
+            && local.Y >= -(t.HalfH + t.HoverExtension)
+            && local.Y <= t.HalfH + t.HoverExtension;
     }
 
     public void HandleHover(Vector2 mousePos, CardManager cardManager)
@@ -283,7 +283,7 @@ public class CardRenderer
                 AngleDeg        = angleDeg,
                 HalfW           = halfW,
                 HalfH           = halfH,
-                BottomExtension = isHovered ? CARD_HOVER_LIFT : 0f,
+                HoverExtension  = isHovered ? CARD_HOVER_LIFT : 0f,
             });
 
             // ── AABB for CardRects (used for bounds / mapOverUI guard).
