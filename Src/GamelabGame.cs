@@ -80,11 +80,17 @@ public class GamelabGame : Game
     private MouseCursor CursorHover => GamePhaseManager?.IsDay == true ? dayCursorHover : cursorHover;
     private MouseCursor CursorClick => GamePhaseManager?.IsDay == true ? dayCursorClick : cursorClick;
     private MouseCursor hammerCursor;
+    private MouseCursor hammerClickCursor;
 
     /// <summary>
     /// Set to true during Update to show the hover cursor. Reset automatically each frame.
     /// </summary>
     public static bool IsHovering { get; set; }
+
+    /// <summary>
+    /// When true, the click cursor is suppressed even while hovering with a held button (e.g. drag from outside a button onto it).
+    /// </summary>
+    public static bool SuppressClickCursor { get; set; }
 
     /// <summary>
     /// When true, the cursor is replaced by the hammer (destroy mode).
@@ -212,7 +218,8 @@ public class GamelabGame : Game
         dayCursorHover = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_hover0").SourceRectangle, 0, 0, 2);
         dayCursorClick = CursorFromRegion(dayInterfaceTexture, dayInterfaceAtlas.GetRegion("cursor_click0").SourceRectangle, 0, 0, 2);
 
-        hammerCursor = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer0").SourceRectangle, 6, 8, 2);
+        hammerCursor      = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer0").SourceRectangle,       6, 8, 2);
+        hammerClickCursor = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("hammer_click0").SourceRectangle, 6, 8, 2);
 
         Mouse.SetCursor(CursorArrow);
 
@@ -237,16 +244,18 @@ public class GamelabGame : Game
         }
 
         IsHovering = false;
+        SuppressClickCursor = false;
         base.Update(time);
 
         var mouseState = Mouse.GetState();
         if (UseHammerCursor)
         {
-            Mouse.SetCursor(hammerCursor);
+            Mouse.SetCursor(mouseState.LeftButton == ButtonState.Pressed ? hammerClickCursor : hammerCursor);
         }
-        else if (IsHovering){
+        else if (IsHovering)
+        {
             Mouse.SetCursor(CursorHover);
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed && !SuppressClickCursor)
                 Mouse.SetCursor(CursorClick);
         }
         else
