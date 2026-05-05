@@ -42,20 +42,20 @@ public class SniperTower : Tower
             //target is out of range
             _target = null;
         }
-        if(_target == null || (combatManager.PriorityGroup != null && !combatManager.PriorityGroup.Monsters.Contains(_target)))
+        if(_target == null || _target != combatManager.PriorityMonster)
         {
             //find new target
-            bool reset = true;
+            bool reset = _target == null;
             var groupsInRange = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
             foreach (var group in groupsInRange)
             {
-                if(group == combatManager.PriorityGroup)
+                if(group.Monsters.Contains(combatManager.PriorityMonster))
                 {
-                    _target = group.Monsters.MinBy(i => i.CurrentHealth);
+                    _target = combatManager.PriorityMonster;
                     reset = false;
                     break;
                 }
-                if(_target != null && !group.IsEmpty)
+                if(_target == null && !group.IsEmpty)
                 {
                     _target = group.Monsters.MinBy(i => i.CurrentHealth);
                     reset = false;

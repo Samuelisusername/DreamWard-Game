@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamelab;
 using Gamelab.Managers;
 using Gamelab.Utils.Logging;
@@ -13,6 +14,7 @@ public abstract class Monster : Entity
     protected MapManager mapManager => GamelabGame.MapManager;
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
 
     Logger logger = new Logger("Monster");
     public (int col, int row) NextTarget{get; set;}
@@ -102,6 +104,14 @@ public abstract class Monster : Entity
         if (hitFlashRemaining <= TimeSpan.Zero)
         {
             hitFlashRemaining = hitFlashDuration;
+        }
+        if(IsDestroyed && combatManager.PriorityMonster == this)
+        {
+            var filteredList = mapManager.GetMonsterContainer(TilePosition).GetMonsterGroup(this).Monsters.Where(i => !i.IsDestroyed);
+            if(filteredList.Any())
+            {
+                combatManager.PriorityMonster = filteredList.MinBy(i => i.CurrentHealth);
+            }
         }
     }
 

@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework;
 using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
-using Gamelab.Managers;
-using System.Runtime.InteropServices;
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -99,10 +97,6 @@ public abstract class MonsterGroup
                 break;
         }
         Monsters.RemoveAll(m => m.IsDestroyed);
-        if(Count == 0 && combatManager.PriorityGroup == this)
-        {            
-            combatManager.PriorityGroup = null;
-        }
         if(Count <= 2 && oldCount > 2)
         {
             SetAnimation();
@@ -281,9 +275,9 @@ public abstract class MonsterGroup
 
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
-        if(this == combatManager.PriorityGroup)
+        if(Monsters.Contains(combatManager.PriorityMonster))
         {
-            sprite.Color = Color.DarkRed;
+            sprite.Color = Color.DarkRed * 0.5f;
         }
         sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
         sprite.Color = Color.White;

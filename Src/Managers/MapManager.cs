@@ -1041,7 +1041,7 @@ public class MapManager
             }
         }
         if(currentMin == null) return;
-        combatManager.PriorityGroup = currentMin;
+        combatManager.PriorityMonster = currentMin.Monsters.MinBy(i => i.CurrentHealth);
     }
 
     /// <summary>
