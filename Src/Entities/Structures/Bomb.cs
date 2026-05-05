@@ -3,7 +3,6 @@ using System.Linq;
 using Gamelab;
 using Gamelab.Managers;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 
 public class Bomb : Tower
@@ -13,7 +12,7 @@ public class Bomb : Tower
     public bool ShouldBlowUp {get; set;}
 
     private bool resetBlowProgress = true;
-    public Bomb((int, int) pos) : base("towerAOE_idle", pos)
+    public Bomb((int, int) pos) : base("bomb_idle", pos)
     {
     }
 

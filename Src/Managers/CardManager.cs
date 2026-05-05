@@ -49,7 +49,7 @@ public class CardManager
 
         // Slot 1 → Barrier
         BuildSlots.Add(new CardSlot());
-        _buildSlotTypes.Add(BuildSlotType.Barrier);
+        _buildSlotTypes.Add(BuildSlotType.Tower);
 
         // Slot 2 → Barrier
         BuildSlots.Add(new CardSlot());
@@ -120,7 +120,7 @@ public class CardManager
     public Structure _previewStructure = null;
     public List<(Rectangle rect, Card card)> CardRects = new();
 
-    public HashSet<string> UnlockedCards { get; private set; } = new() {"sniper","fence"};
+    public HashSet<string> UnlockedCards { get; private set; } = new() {"sniper","fence", "aoe"};
     public bool IsUnlocked(string spriteName) => UnlockedCards.Contains(spriteName);
     public bool UnlockCard(string spriteName)
     {
@@ -132,6 +132,7 @@ public class CardManager
     {
         new Card { Name = "sniper", Type = CardType.Build, Cost = 7, SpriteName = "sniper", Weight = 3 },
         new Card { Name = "aoe",    Type = CardType.Build, Cost = 6, SpriteName = "aoe",    Weight = 2 },
+        new Card { Name = "bomb",    Type = CardType.Build, Cost = 5, SpriteName = "bomb",    Weight = 3 },
     };
 
     public static readonly List<Card> BarrierTemplates = new()
@@ -434,6 +435,7 @@ public class CardManager
             "spikes"       => new Spike(pos),
             "decoy"        => new Decoy(pos),
             "buff"         => new Buff(pos),
+            "bomb"         => new Bomb(pos),
             _              => null
         };
     }

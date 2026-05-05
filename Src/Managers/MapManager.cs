@@ -774,14 +774,14 @@ public class MapManager
 
         Meadow starterMeadow = new Meadow((centerX + 1, centerY), 5);
 
-        PlaceEntity(new Bomb((centerX, centerY + 1)), (centerX, centerY + 1));
-        PlaceEntity(new Bomb((centerX, centerY - 1)), (centerX, centerY - 1));
-        PlaceEntity(new Bomb((centerX-1, centerY + 1)), (centerX-1, centerY + 1));
-        PlaceEntity(new Bomb((centerX-1, centerY )), (centerX-1, centerY ));
-        PlaceEntity(new Bomb((centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
-        PlaceEntity(new Bomb((centerX + 1, centerY -1)), (centerX + 1, centerY -1));
-        PlaceEntity(new Bomb((centerX + 2, centerY)), (centerX + 2, centerY ));
-        PlaceEntity(new Bomb((centerX + 2, centerY - 1)), (centerX + 2, centerY - 1));
+        // PlaceEntity(new Bomb((centerX, centerY + 1)), (centerX, centerY + 1));
+        // PlaceEntity(new Bomb((centerX, centerY - 1)), (centerX, centerY - 1));
+        // PlaceEntity(new Bomb((centerX-1, centerY + 1)), (centerX-1, centerY + 1));
+        // PlaceEntity(new Bomb((centerX-1, centerY )), (centerX-1, centerY ));
+        // PlaceEntity(new Bomb((centerX + 1, centerY + 1)), (centerX + 1, centerY + 1));
+        // PlaceEntity(new Bomb((centerX + 1, centerY -1)), (centerX + 1, centerY -1));
+        // PlaceEntity(new Bomb((centerX + 2, centerY)), (centerX + 2, centerY ));
+        // PlaceEntity(new Bomb((centerX + 2, centerY - 1)), (centerX + 2, centerY - 1));
 
 
         // 🐑 Sheep next to tent
@@ -865,7 +865,7 @@ public class MapManager
 
         var zone1 = ShuffleList(new List<(List<string> displays, string label, Action<Meadow> grant)>
         {
-            (new List<string>{ "aoe" },    null,                     m => cardManager.UnlockCard("aoe")),
+            (new List<string>{ "bomb" },    null,                     m => cardManager.UnlockCard("bomb")),
             (new List<string>{ "spikes" }, null,                     m => cardManager.UnlockCard("spikes")),
             (null,                         "Adds New Tower Card Slot", m => cardManager.AddSlots(1)),
         });
