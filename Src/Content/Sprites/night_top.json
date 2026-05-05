@@ -43,6 +43,7 @@
    { "name": "idle", "from": 0, "to": 3, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
+   { "name": "bomb", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1920, "w": 128, "h": 128 } }] },
    { "name": "meadow_orange", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 3072, "w": 128, "h": 128 } }] },
    { "name": "meadow_blue", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2944, "w": 128, "h": 128 } }] },
    { "name": "meadow_red", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 2816, "w": 128, "h": 128 } }] },
