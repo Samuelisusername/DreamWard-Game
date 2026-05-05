@@ -99,6 +99,9 @@ public class MapScreen : GamelabGameScreen
     private static readonly Rectangle FloatBtnPrs     = new(0, 208, 80,  32);
     private static readonly Rectangle LongFloatBtn    = new(0, 240, 105, 32);
     private static readonly Rectangle LongFloatBtnPrs = new(0, 272, 105, 32);
+    private static readonly Rectangle HintC     = new(80, 176, 32, 16);
+    private static readonly Rectangle HintS     = new(80, 192, 32, 16);
+    private static readonly Rectangle HintSpace = new(80, 208, 32, 16);
     private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
     private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
@@ -338,10 +341,12 @@ public class MapScreen : GamelabGameScreen
             if (keyboard.WasKeyReleased(Keys.S))
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
             //Slowdown
+#if DEBUG
             if(keyboard.WasKeyReleased(Keys.D))
             {
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
             }
+#endif
             //set cursor state
             if(!gamePhaseManager.IsInTransition){
                 if (_showInventory)
@@ -356,11 +361,16 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-            if (!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
+            if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
             {
-                _showInventory = !_showInventory;
-                if (!_showInventory) cardRenderer.CollapseExpanded();
-                return;
+                if (keyboard.IsKeyDown(Keys.C))
+                    _btnResults[(int)BtnId.Inventory] = ButtonResult.Pressed;
+                if (keyboard.WasKeyReleased(Keys.C))
+                {
+                    _showInventory = !_showInventory;
+                    if (!_showInventory) cardRenderer.CollapseExpanded();
+                    return;
+                }
             }
             
             if(keyboard.IsKeyDown(Keys.Space) && !_is_active_tutorial && !gamePhaseManager.IsInTransition)
@@ -407,6 +417,7 @@ public class MapScreen : GamelabGameScreen
                     {
                         AudioManager.Play("coinsplash");
                         _hammerActive = false;
+                        CancelMoveMode();
                     }
                 }
             }
@@ -460,6 +471,7 @@ public class MapScreen : GamelabGameScreen
                                 {
                                     AudioManager.Play("coinsplash");
                                     _hammerActive = false;
+                                    CancelMoveMode();
                                     _isDraggingCard = true;
                                     cardManager._activeMapCard    = _dragCard;
                                     cardManager._selectedTile     = (-1, -1);
@@ -517,6 +529,7 @@ public class MapScreen : GamelabGameScreen
             //set the hovered tile
             bool mouseOverUI = (!gamePhaseManager.IsInTransition &&
                 ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
+                 || (_showInventory && cardRenderer.ExpandedPanelBounds != Rectangle.Empty && cardRenderer.ExpandedPanelBounds.Contains(mousePos))
                  || _inventoryBtn.Contains(mousePos)
                  || _towerRangeBtn.Contains(mousePos)
                  || _tutorial_btn.Contains(mousePos)
@@ -525,7 +538,7 @@ public class MapScreen : GamelabGameScreen
                  || _hammerBtn.Contains(mousePos)))
                 || (!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos));
             
-            _hoverTile = mapManager.GetTileFromScreenPosition(mousePos);
+            _hoverTile = mouseOverUI ? (-1, -1) : mapManager.GetTileFromScreenPosition(mousePos);
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
             {
@@ -666,6 +679,7 @@ public class MapScreen : GamelabGameScreen
                                     {
                                         AudioManager.Play("coinsplash");
                                         _hammerActive = false;
+                                        CancelMoveMode();
                                     }
                                 _clickStarted = false;
                                 return;
@@ -712,23 +726,21 @@ public class MapScreen : GamelabGameScreen
                     }
                     if (Btn(BtnId.Move) == ButtonResult.Clicked)
                     {
-                        _moveActive = !_moveActive;
                         if (_moveActive)
+                        {
+                            CancelMoveMode();
+                        }
+                        else
                         {
                             _hammerActive = false;
                             if (GamelabGame.SanityManager.Sanity <= 2)
                             {
-                                _moveActive = false;
                                 _clickStarted = false;
                                 return;
                             }
-
+                            _moveActive = true;
                             cardManager._activeMapCard = null;
                             cardManager._previewStructure = null;
-                            cardManager._selectedTile = (-1, -1);
-                        }
-                        else
-                        {
                             cardManager._selectedTile = (-1, -1);
                         }
 
@@ -967,24 +979,35 @@ public class MapScreen : GamelabGameScreen
             }
             // ── Move-mode placement preview ───────────────────────────────────────
             if (_moveActive && cardManager._selectedTile != (-1, -1)
-                && cardManager._previewStructure != null && _hoverTile.col >= 0)
+                && cardManager._previewStructure != null)
             {
                 var moving = cardManager._previewStructure;
-                bool valid = mapManager.GetStructure(_hoverTile) == null;
-                Color ghost = valid ? new Color(0x11, 0x7a, 0x15) : new Color(220, 60, 60);
+                bool atOrigin = _hoverTile.col < 0;
+                var targetTile = atOrigin ? cardManager._selectedTile : _hoverTile;
 
-                var oldPos = moving.TilePosition;
-                moving.TilePosition = _hoverTile;
-
-                // Tower: draw range preview + all existing tower ranges (same as build placement)
-                if (moving is Tower movingTower)
-                {
-                    cardRenderer.DrawTowerRangePreview(spriteBatch, mapManager, movingTower, ghost);
-                    cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
-                }
+                Color ghost;
+                if (atOrigin)
+                    ghost = Color.White;
                 else
                 {
-                    cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, _hoverTile, ghost);
+                    bool valid = mapManager.GetStructure(_hoverTile) == null;
+                    ghost = valid ? new Color(0x11, 0x7a, 0x15) : new Color(220, 60, 60);
+                }
+
+                var oldPos = moving.TilePosition;
+                moving.TilePosition = targetTile;
+
+                if (!atOrigin)
+                {
+                    if (moving is Tower movingTower)
+                    {
+                        cardRenderer.DrawTowerRangePreview(spriteBatch, mapManager, movingTower, ghost);
+                        cardRenderer.DrawAllTowerRanges(spriteBatch, mapManager);
+                    }
+                    else
+                    {
+                        cardRenderer.DrawTileHighlightPublic(spriteBatch, mapManager, targetTile, ghost);
+                    }
                 }
                 moving.PreviewTint = ghost;
                 moving.DrawBase(spriteBatch, alpha: 0.5f);
@@ -1021,7 +1044,7 @@ public class MapScreen : GamelabGameScreen
         if (!gamePhaseManager.IsDay)
         {
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
-            DrawButton(_speedBtn,      speedLabel,                                                Btn(BtnId.Speed)      == ButtonResult.Pressed);
+            DrawButton(_speedBtn,      speedLabel,                                                Btn(BtnId.Speed)      == ButtonResult.Pressed, keyHint: HintS);
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range",           Btn(BtnId.TowerRange) == ButtonResult.Pressed);
         }
         int vw = (int)viewportAdapter.VirtualWidth;
@@ -1031,10 +1054,10 @@ public class MapScreen : GamelabGameScreen
 
         if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
         {
-            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   Btn(BtnId.Inventory)  == ButtonResult.Pressed);
+            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   Btn(BtnId.Inventory)  == ButtonResult.Pressed, keyHint: HintC);
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed);
             DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", Btn(BtnId.Tutorial) == ButtonResult.Pressed);
-            DrawButton(_startNightBtn, "Start night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime));
+            DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
             DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
             DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
             if (_showInventory)
@@ -1502,19 +1525,21 @@ public class MapScreen : GamelabGameScreen
 
     private ButtonResult Btn(BtnId id) => _btnResults[(int)id];
 
-    private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
+    private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f, Texture2D overrideTexture = null, bool forceLong = false, Rectangle? keyHint = null)
     {
-        Rectangle src = PickFloatSrc(rect, pressed);
+        Texture2D tex = overrideTexture ?? InterfaceTexture;
+        Rectangle src = forceLong ? (pressed ? LongFloatBtnPrs : LongFloatBtn) : PickFloatSrc(rect, pressed);
         float scale = SpriteScale;
         int drawW = (int)(src.Width  * scale);
         int drawH = (int)(src.Height * scale);
-        Rectangle drawDest = new Rectangle(rect.Center.X - drawW / 2, rect.Center.Y - drawH / 2, drawW, drawH);
+        int drawX = forceLong ? rect.Right - drawW : rect.Center.X - drawW / 2;
+        Rectangle drawDest = new Rectangle(drawX, rect.Center.Y - drawH / 2, drawW, drawH);
 
         if(progress > 0)
         {
             spriteBatch.End();
             float progressWidthInPixels = src.X + (src.Width * progress);
-            float uvThreshold = progressWidthInPixels / InterfaceTexture.Width;
+            float uvThreshold = progressWidthInPixels / tex.Width;
 
             GamelabGame.Instance.LoadingShader.Parameters["ProgressThreshold"].SetValue(uvThreshold);
             GamelabGame.Instance.LoadingShader.Parameters["OverlayColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
@@ -1522,13 +1547,13 @@ public class MapScreen : GamelabGameScreen
             spriteBatch.Begin(effect: GamelabGame.Instance.LoadingShader,
                         samplerState: SamplerState.PointClamp,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
-            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
+            spriteBatch.Draw(tex, drawDest, src, Color.White);
             spriteBatch.End();
             spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: viewportAdapter.GetScaleMatrix());
         }
         else
         {
-            spriteBatch.Draw(InterfaceTexture, drawDest, src, Color.White);
+            spriteBatch.Draw(tex, drawDest, src, Color.White);
         }
         var size = _font.MeasureString(text);
         float sc = Math.Min(drawW / size.X * 0.6f, drawH / size.Y * 0.6f);
@@ -1537,6 +1562,15 @@ public class MapScreen : GamelabGameScreen
             new Vector2(drawDest.Center.X - size.X * sc * 0.5f,
                         drawDest.Center.Y - size.Y * sc * 0.5f + pressOffset),
             COLOR_D, 0f, Vector2.Zero, sc, SpriteEffects.None, 0f);
+
+        if (keyHint.HasValue)
+        {
+            var h = keyHint.Value;
+            int hintW = (int)(h.Width  * scale);
+            int hintH = (int)(h.Height * scale);
+            Rectangle hintDest = new(drawDest.Right - hintW, drawDest.Bottom - hintH, hintW, hintH);
+            spriteBatch.Draw(tex, hintDest, h, Color.White);
+        }
     }
     
     private bool IsDoubleClick(MouseStateExtended mouse, GameTime gameTime)
