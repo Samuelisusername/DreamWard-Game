@@ -2,12 +2,14 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
+using Gamelab;
 using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 public class SniperTower : Tower
 {
+    private CombatManager combatManager => GamelabGame.CombatManager;
     private Monster _target = null;
     private MonsterGroup targetGroup = null;
     private Vector2 targetPos;
@@ -40,21 +42,26 @@ public class SniperTower : Tower
             //target is out of range
             _target = null;
         }
-        if(_target == null)
+        if(_target == null || (combatManager.PriorityGroup != null && !combatManager.PriorityGroup.Monsters.Contains(_target)))
         {
             //find new target
             bool reset = true;
             var groupsInRange = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
             foreach (var group in groupsInRange)
             {
-                if(!group.IsEmpty)
+                if(group == combatManager.PriorityGroup)
                 {
-                    _target = group.Monsters[0];
+                    _target = group.Monsters.MinBy(i => i.CurrentHealth);
                     reset = false;
                     break;
                 }
+                if(_target != null && !group.IsEmpty)
+                {
+                    _target = group.Monsters.MinBy(i => i.CurrentHealth);
+                    reset = false;
+                }
             }    
-            elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;    
+            elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;  
         }
         if(_target != null)
         {   

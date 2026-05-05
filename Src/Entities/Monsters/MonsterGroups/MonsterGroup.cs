@@ -15,6 +15,8 @@ public abstract class MonsterGroup
 {    
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
+
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
 
@@ -97,6 +99,10 @@ public abstract class MonsterGroup
                 break;
         }
         Monsters.RemoveAll(m => m.IsDestroyed);
+        if(Count == 0 && combatManager.PriorityGroup == this)
+        {            
+            combatManager.PriorityGroup = null;
+        }
         if(Count <= 2 && oldCount > 2)
         {
             SetAnimation();
@@ -275,9 +281,13 @@ public abstract class MonsterGroup
 
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
-
+        if(this == combatManager.PriorityGroup)
+        {
+            sprite.Color = Color.DarkRed;
+        }
         sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
-        
+        sprite.Color = Color.White;
+
         
         worldPos = GetInterpolatedWorldPosition(true);
         // switch (MonsterType)

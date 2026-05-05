@@ -274,7 +274,9 @@ public class MonsterGroupContainer
         {
             group.RemoveDead();
         }
+        
         MonsterGroups.RemoveAll(g => g.IsEmpty);
+        
     }
 
     public Monster GetFirstMonster()
