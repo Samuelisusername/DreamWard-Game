@@ -286,7 +286,7 @@ public abstract class Structure : Entity
         float maxX = 0f;
         float spaceWidth = font.MeasureString(" ").X * scale.X;
         float lineHeight = font.LineSpacing * scale.Y;
-        TextureRegion sanityIcon = GamelabGame.textureAtlas["day_interface"].GetRegion("sanityIcon0");
+        TextureRegion sanityIcon = GamelabGame.textureAtlas["day_interface"].GetRegion("sanity_small0");
 
         foreach (string word in words)
         {
@@ -300,8 +300,8 @@ public abstract class Structure : Entity
             if (isIcon)
             {
                 // Adjust icon scale here if your texture is too big/small
-                itemWidth = sanityIcon.Width * scale.X; 
-                itemHeight = sanityIcon.Height * scale.Y;
+                itemWidth = sanityIcon.Width * scale.X * 1.3f; 
+                itemHeight = sanityIcon.Height * scale.Y * 1.3f;
             }
             else
             {
@@ -324,7 +324,7 @@ public abstract class Structure : Entity
                 {
                     // Center the icon vertically relative to the text line
                     float yOffset = (lineHeight - itemHeight) / 2f; 
-                    sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX - 5, currentY + yOffset - 5), Color.White, 0f, Vector2.Zero, Vector2.One * 1.5f, SpriteEffects.None, 0f);
+                    sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
                     // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
                 }
                 else
