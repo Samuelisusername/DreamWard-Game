@@ -191,7 +191,8 @@ public class Meadow : Structure
         float sy = MathF.Max(1f, MathF.Floor(_screenTransform.M22));
 
         Vector2 worldPos  = mapManager.GetWorldPositionOfTile(TilePosition);
-        int pad = 10, midPad = 50, heightPad = 50;
+        int pad = 10, midPad = 50, heightPad = 50; 
+        int maxTutorialWidth = 300;
         int sepH = (int)MathF.Round(2 * sy);
 
         bool hasBonusSection = gamePhaseManager.IsDay && MeadowGrant != null;
@@ -225,12 +226,12 @@ public class Meadow : Structure
         
         int boxHeight;
         int boxWidth;
-        string displayText = "";
+        Vector2 boxDimensions = Vector2.Zero;
         if(tutorialText != null)
         {
-            displayText = WrapText(_font, tutorialText, 200, 1);
-            boxWidth = (int)((200 + pad * 2) * sx);
-            boxHeight =  (int)((_font.MeasureString(displayText).Y + pad * 2) * sy);
+            boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
+            boxWidth = (int)boxDimensions.X + (pad * 2);
+            boxHeight = (int)boxDimensions.Y + (pad * 2);
         }
         else
         {
@@ -284,7 +285,11 @@ public class Meadow : Structure
 
         if(tutorialText != null)
         {
-            spriteBatch.DrawString(_font, displayText, new Vector2(left + pad, top + pad) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
+    
+            // Pass false for isMeasuring, pass the actual SpriteBatch
+            ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
         else
         {

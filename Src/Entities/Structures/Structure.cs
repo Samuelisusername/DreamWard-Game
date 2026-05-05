@@ -202,15 +202,16 @@ public abstract class Structure : Entity
         int pad = 10;
         int midPad = 50;
         int heightPad = 50;
+        int maxTutorialWidth = 300;
 
         int boxHeight;
         int boxWidth;
-        string displayText = "";
+        Vector2 boxDimensions = Vector2.Zero;
         if(tutorialText != null)
         {
-            displayText = WrapText(_font, tutorialText, 200, 1);
-            boxWidth = (int)((200 + pad * 2) * sx);
-            boxHeight =  (int)((_font.MeasureString(displayText).Y + pad * 2) * sy);
+            boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
+            boxWidth = (int)boxDimensions.X + (pad * 2);
+            boxHeight = (int)boxDimensions.Y + (pad * 2);
         }
         else
         {
@@ -245,7 +246,11 @@ public abstract class Structure : Entity
 
         if(tutorialText != null)
         {
-            spriteBatch.DrawString(_font, displayText, new Vector2(left + pad, top + pad) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
+    
+            // Pass false for isMeasuring, pass the actual SpriteBatch
+            ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
         else
         {
@@ -268,34 +273,72 @@ public abstract class Structure : Entity
         }
     }
 
-    protected string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
+    protected Vector2 ProcessTextWithIcons(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 startPosition, Color color, float maxLineWidth, Vector2 scale, bool isMeasuring) 
     {
-        // Remove any hardcoded newlines you might have left in your strings
-        text = text.Replace("\n", " "); 
-        
+        // Clean up the text and isolate our tag so it always splits neatly
+        text = text.Replace("\n", " ").Replace("[SANITY]", " [SANITY] ");
+        while (text.Contains("  ")) text = text.Replace("  ", " ");
+
         string[] words = text.Split(' ');
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        float lineWidth = 0f;
-        float spaceWidth = font.MeasureString(" ").X * scale;
+        
+        float currentX = 0f;
+        float currentY = 0f;
+        float maxX = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale.X;
+        float lineHeight = font.LineSpacing * scale.Y;
+        TextureRegion sanityIcon = GamelabGame.textureAtlas["day_interface"].GetRegion("sanityIcon0");
 
         foreach (string word in words)
         {
-            Vector2 size = font.MeasureString(word) * scale;
+            if (string.IsNullOrWhiteSpace(word)) continue;
 
-            if (lineWidth + size.X < maxLineWidth)
+            float itemWidth;
+            float itemHeight;
+
+            bool isIcon = word == "[SANITY]";
+
+            if (isIcon)
             {
-                sb.Append(word + " ");
-                lineWidth += size.X + spaceWidth;
+                // Adjust icon scale here if your texture is too big/small
+                itemWidth = sanityIcon.Width * scale.X; 
+                itemHeight = sanityIcon.Height * scale.Y;
             }
             else
             {
-                // The word is too long, push it to the next line!
-                sb.Append("\n" + word + " ");
-                lineWidth = size.X + spaceWidth;
+                Vector2 wordSize = font.MeasureString(word) * scale;
+                itemWidth = wordSize.X;
+                itemHeight = wordSize.Y;
             }
+
+            // Wrap to next line if it exceeds max width
+            if (currentX + itemWidth > maxLineWidth && currentX > 0)
+            {
+                currentX = 0f;
+                currentY += lineHeight;
+            }
+
+            // Draw logic (skipped if we are just measuring)
+            if (!isMeasuring && spriteBatch != null)
+            {
+                if (isIcon)
+                {
+                    // Center the icon vertically relative to the text line
+                    float yOffset = (lineHeight - itemHeight) / 2f; 
+                    sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX - 5, currentY + yOffset - 5), Color.White, 0f, Vector2.Zero, Vector2.One * 1.5f, SpriteEffects.None, 0f);
+                    // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                }
+                else
+                {
+                    spriteBatch.DrawString(font, word, startPosition + new Vector2(currentX, currentY), color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                }
+            }
+
+            currentX += itemWidth + spaceWidth;
+            if (currentX > maxX) maxX = currentX;
         }
 
-        return sb.ToString();
+        // Return total dimensions used
+        return new Vector2(maxX - spaceWidth, currentY + lineHeight);
     }
 
     #endregion

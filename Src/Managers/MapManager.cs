@@ -1049,6 +1049,7 @@ public class MapManager
                 SheepPosition = (tilePos.col, tilePos.row);
                 // Get New Stack Cards
                 GamelabGame.CardManager.GrantStackCard();
+                TutorialManager.HandleTutorialAction(TutorialAction.MovedSheep);
             }
         }
     }

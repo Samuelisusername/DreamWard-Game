@@ -18,6 +18,7 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
+        TutorialManager.AdvanceDay();
         IsDay = true;
         IsInTransition = false;
         DayCount += 1;
