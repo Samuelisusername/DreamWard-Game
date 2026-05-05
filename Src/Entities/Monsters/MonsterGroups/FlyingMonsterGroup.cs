@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 public class FlyingMonsterGroup : MonsterGroup
 {
     private Texture2D shadow;
-    public override bool isGrounded => pathFindingManager.PathLength(Monsters[0]) > 2 ? false : true;
+    public override bool isGrounded => false;
     public FlyingMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
     {
         shadow = GamelabGame.Instance.Content.Load<Texture2D>("Sprites/shadowDummy");

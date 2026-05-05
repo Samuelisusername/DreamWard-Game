@@ -510,18 +510,29 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
 
-                // ── Sheep grazing hold ────────────────────────────────────────
-                if (!_isDrag && !_isDraggingCard && !gamePhaseManager.IsInTransition
+                // ── General hold ────────────────────────────────────────
+                if (!_isDrag && !_isDraggingCard)
+                {
+                    // ── Sheep Hold grazing hold ────────────────────────────────────────
+                    if(!gamePhaseManager.IsInTransition
                     && _hoveredStructure is Meadow grazingSpot
                     && !grazingSpot.HasSheep && !grazingSpot.IsGrazed)
-                {
-                    int moveCost = (int)MathF.Round(
-                        MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
-                        * MapManager.MoveCostMultiplier);
-                    if (GamelabGame.SanityManager.Sanity >= moveCost
-                        && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                     {
-                        mapManager.TryMoveSheep(mousePos);
+                        int moveCost = (int)MathF.Round(
+                            MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
+                            * MapManager.MoveCostMultiplier);
+                        if (GamelabGame.SanityManager.Sanity >= moveCost
+                            && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                        {
+                            mapManager.TryMoveSheep(mousePos);
+                        }
+                    }
+                    if(!gamePhaseManager.IsDay && _hoveredStructure is Bomb bomb)
+                    {
+                       if(bomb.AddProgress(gameTime.ElapsedGameTime))
+                        {
+                            bomb.ShouldBlowUp = true;
+                        }
                     }
                 }
             }
