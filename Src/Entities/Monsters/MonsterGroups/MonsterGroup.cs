@@ -275,15 +275,30 @@ public abstract class MonsterGroup
 
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
+        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
         if(Monsters.Contains(combatManager.PriorityMonster))
         {
-            sprite.Color = Color.DarkRed * 0.5f;
+            TextureRegion target =  GamelabGame.textureAtlas["interface"].GetRegion("target0");
+            switch (MonsterType)
+            {
+                case MonsterType.Regular:
+                    worldPos = worldPos +  (new Vector2(35, -25) * mapManager.Scale);
+                    break;
+                case MonsterType.Flying:
+                    worldPos = worldPos +  (new Vector2(35, -25) * mapManager.Scale);
+                    break;
+                case MonsterType.Small:
+                    worldPos = worldPos +  (new Vector2(35, -25) * mapManager.Scale);
+                    break;
+                case MonsterType.Big:
+                    worldPos = worldPos +  (new Vector2(35, -25) * mapManager.Scale);
+                    break;
+            }
+            target.Draw(spriteBatch,worldPos,Color.White, 0, Vector2.Zero, mapManager.Scale / 2, SpriteEffects.None, 0);
         }
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
-        sprite.Color = Color.White;
 
         
-        worldPos = GetInterpolatedWorldPosition(true);
+        //worldPos = GetInterpolatedWorldPosition(true);
         // switch (MonsterType)
         // {
         //     case MonsterType.Regular:
