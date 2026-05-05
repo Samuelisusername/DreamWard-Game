@@ -294,7 +294,7 @@ public abstract class MonsterGroup
                     worldPos = worldPos +  (new Vector2(35, -25) * mapManager.Scale);
                     break;
             }
-            target.Draw(spriteBatch,worldPos,Color.White, 0, Vector2.Zero, mapManager.Scale / 2, SpriteEffects.None, 0);
+            target.Draw(spriteBatch,worldPos,Color.White, 0, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 0);
         }
 
         
