@@ -198,6 +198,12 @@ public static class TutorialManager
         tutorialSubStep = -1;
         tutorialStep = 0;
         tutorialTimer = TimeSpan.FromSeconds(1);
+        if(CurrentTutorialStructure != null)
+        {
+            CurrentTutorialStructure.ShouldDrawCard = false;
+            CurrentTutorialStructure.tutorialText = null;
+            CurrentTutorialStructure = null;
+        }            
     }
     private enum TutorialStructureType
     {
