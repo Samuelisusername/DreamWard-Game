@@ -30,17 +30,16 @@ public class MapScreen : GamelabGameScreen
     private const float VoidWarningFadeStart = 2.5f;
     
     private enum TutorialHighlight { None, CardStrip, BuildSlots, MapSlots, StackSlots, Expanded, MeadowTiles }
+    private enum BtnId { Inventory, TowerRange, Tutorial, Speed, Move, Hammer, StartNight, Count }
     private TutorialHighlight _tutorialHighlight = TutorialHighlight.None;
 
     // The exact coordinates from your JSON files
     private readonly Rectangle _sheepPortraitRect = new Rectangle(0, 1408, 128, 128); 
     private readonly Rectangle _humanPortraitRect = new Rectangle(0, 0, 16, 32);
     private Rectangle _speedBtn;
-    private bool _speedBtnPressed = false;
     private bool _is_active_tutorial = false;
     private Rectangle _tutorial_btn;
     private int _tutorial_step = 0;
-    private bool _tutorial_btn_pressed = false; 
     private float _textTimer = 0f;
     private float _zoomTimer = 0f;
     private int _charIndex = 0;
@@ -60,13 +59,10 @@ public class MapScreen : GamelabGameScreen
     private bool _showTowerRange = false;
     private Rectangle _towerRangeBtn;
     private bool _offsetInitialized = false;
-    private bool _inventoryBtnPressed  = false;
-    private bool _towerRangeBtnPressed = false;
-
-    private bool _moveActive    = false;
+    private bool _moveActive  = false;
     private bool _hammerActive = false;
-    private bool _movePressed   = false;
-    private bool _hammerBtnPressed = false;
+    private readonly bool[]         _btnClickedInside = new bool[(int)BtnId.Count];
+    private readonly ButtonResult[] _btnResults       = new ButtonResult[(int)BtnId.Count];
     private Rectangle _moveBtn;
     private Rectangle _hammerBtn;
     
@@ -79,6 +75,7 @@ public class MapScreen : GamelabGameScreen
     private bool _isDrag;
     private bool _clickStarted;
     private Vector2 _oldPos;
+    private float _mapDragDistance;
     private (int col, int row) _hoverTile = (-1,-1);
     private string _dayPopupText = "";
     private float _popupTimer = 0f;
@@ -178,10 +175,7 @@ public class MapScreen : GamelabGameScreen
         int vh = viewportAdapter.VirtualHeight;
         _tutorial_btn = new Rectangle(vw - 260, 20, 240, 96);
         _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
-        if (!gamePhaseManager.IsInTransition)
-        {
-            cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn, ref _hammerBtn, ref _moveBtn);
-        }
+        cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn, ref _hammerBtn, ref _moveBtn);
     }
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
@@ -207,6 +201,20 @@ public class MapScreen : GamelabGameScreen
         // });
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
+        bool isDay         = gamePhaseManager.IsDay;
+        bool notTransition = !gamePhaseManager.IsInTransition;
+        Rectangle[] btns   = { _inventoryBtn, _towerRangeBtn, _tutorial_btn, _speedBtn, _moveBtn, _hammerBtn, _startNightBtn };
+        bool[] btnActive   = {
+            notTransition && isDay,             // Inventory
+            !isDay || (notTransition && isDay), // TowerRange: night block OR day block
+            notTransition && isDay,             // Tutorial
+            !isDay,                             // Speed (night only)
+            notTransition && isDay,             // Move
+            notTransition && isDay,             // Hammer
+            notTransition && isDay,             // StartNight
+        };
+        for (int i = 0; i < btns.Length; i++)
+            _btnResults[i] = UpdateButton(btns[i], mouse, mousePos, ref _btnClickedInside[i], btnActive[i]);
         entityRenderer.HoveredTile = _hoverTile.col >= 0 ? _hoverTile : null;
 
         if (cardManager._activeMapCard?.Type == CardType.Build && _hoverTile.col >= 0)
@@ -325,10 +333,10 @@ public class MapScreen : GamelabGameScreen
             }
             cardManager._previewStructure?.Update(gameTime);
             //Speedup
-            if(keyboard.WasKeyReleased(Keys.S))
-            {
+            if (keyboard.IsKeyDown(Keys.S))
+                _btnResults[(int)BtnId.Speed] = ButtonResult.Pressed;
+            if (keyboard.WasKeyReleased(Keys.S))
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
-            }
             //Slowdown
             if(keyboard.WasKeyReleased(Keys.D))
             {
@@ -336,9 +344,6 @@ public class MapScreen : GamelabGameScreen
             }
             //set cursor state
             if(!gamePhaseManager.IsInTransition){
-                if (_inventoryBtn.Contains(mousePos) || _towerRangeBtn.Contains(mousePos) || _tutorial_btn.Contains(mousePos) || _startNightBtn.Contains(mousePos) || _hammerBtn.Contains(mousePos))
-                    GamelabGame.IsHovering = true;
-                    
                 if (_showInventory)
                 {
                     foreach (var (rect, card) in cardManager.CardRects)
@@ -351,10 +356,6 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-            else if(!gamePhaseManager.IsDay && _speedBtn.Contains(mousePos))
-            {
-                GamelabGame.IsHovering = true;
-            }
             if (!gamePhaseManager.IsInTransition && keyboard.WasKeyReleased(Keys.C))
             {
                 _showInventory = !_showInventory;
@@ -364,6 +365,7 @@ public class MapScreen : GamelabGameScreen
             
             if(keyboard.IsKeyDown(Keys.Space) && !_is_active_tutorial && !gamePhaseManager.IsInTransition)
             {
+                _btnResults[(int)BtnId.StartNight] = ButtonResult.Pressed;
                 _resetStartNightTimer = false;
                 _elapsedStartNightTime += gameTime.ElapsedGameTime;
                 if(_elapsedStartNightTime > _startNightTime)
@@ -413,14 +415,9 @@ public class MapScreen : GamelabGameScreen
             if (mouse.WasButtonPressed(MouseButton.Left))
             {
                 var pos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-                _inventoryBtnPressed  = _inventoryBtn.Contains(pos);
-                _towerRangeBtnPressed = _towerRangeBtn.Contains(pos);
-                _tutorial_btn_pressed = _tutorial_btn.Contains(pos);
-                _speedBtnPressed      = _speedBtn.Contains(pos);
-                _movePressed          = _moveBtn.Contains(pos);
-                _hammerBtnPressed     = _hammerBtn.Contains(pos);
-                _oldPos       = pos;
-                _clickStarted = true;
+                _oldPos          = pos;
+                _clickStarted    = true;
+                _mapDragDistance = 0f;
 
                 // Begin possible card drag
                 _dragCard       = null;
@@ -487,14 +484,16 @@ public class MapScreen : GamelabGameScreen
                 }
 
                 // ── Map drag (only when not dragging a card and not over card strip) ──
-                if (!_isDraggingCard &&
+                if (!_isDraggingCard && !_btnClickedInside.Any(b => b) &&
                     (!_showInventory || !cardRenderer.CardStripBounds.Contains(mousePos)))
                 {
                     Vector2 deltaPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _oldPos;
                     if (deltaPos.Length() > 0)
                     {
                         mapManager.MoveMap(deltaPos, screenSize);
-                        _isDrag = true;
+                        _mapDragDistance += deltaPos.Length();
+                        if (_mapDragDistance > DRAG_THRESHOLD)
+                            _isDrag = true;
                         _oldPos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
                     }
                 }
@@ -555,8 +554,6 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                _tutorial_btn_pressed = _inventoryBtnPressed = _towerRangeBtnPressed = _speedBtnPressed = _movePressed = _hammerBtnPressed = false;
-
                 // ── Drop dragged card onto map ────────────────────────────────
                 if (_isDraggingCard && _dragCard != null)
                 {
@@ -578,26 +575,25 @@ public class MapScreen : GamelabGameScreen
 
                 if(!gamePhaseManager.IsDay) // Night specific clicks
                 {
-                    mapManager.HandleMapClick(mousePos);
-                    if (_speedBtn.Contains(mousePos))
+                    if (Btn(BtnId.Speed) == ButtonResult.Clicked)
                     {
-                        // Toggle speed: 1x -> 3x -> 1x
                         GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
                         AudioManager.Play("rustle01");
                         return;
                     }
-                    if (_towerRangeBtn.Contains(mousePos))
+                    if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
                     {
                         _showTowerRange = !_showTowerRange;
                         _clickStarted = false;
                         return;
                     }
+                    mapManager.HandleMapClick(mousePos);
                 }
                 if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                 {
                     bool overCardStrip = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
                     //start night
-                    if (!overCardStrip && _startNightBtn.Contains(mousePos))
+                    if (!overCardStrip && Btn(BtnId.StartNight) == ButtonResult.Clicked)
                     {
 #if DEBUG
                         gamePhaseManager.SwitchToNight();
@@ -616,7 +612,7 @@ public class MapScreen : GamelabGameScreen
                         return;
                     }
                     //start tutorial
-                    if (!overCardStrip && _tutorial_btn.Contains(mousePos))
+                    if (!overCardStrip && Btn(BtnId.Tutorial) == ButtonResult.Clicked)
                     {
                         _is_active_tutorial = !_is_active_tutorial;
                         _tutorial_step = 0; 
@@ -701,20 +697,20 @@ public class MapScreen : GamelabGameScreen
                         }
                     }
 
-                    if (_inventoryBtn.Contains(mousePos))
+                    if (Btn(BtnId.Inventory) == ButtonResult.Clicked)
                     {
                         _showInventory = !_showInventory;
                         if (!_showInventory) cardRenderer.CollapseExpanded();
                         _clickStarted = false;
                         return;
                     }
-                    if (_towerRangeBtn.Contains(mousePos))
+                    if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
                     {
                         _showTowerRange = !_showTowerRange;
                         _clickStarted = false;
                         return;
                     }
-                    if (_moveBtn.Contains(mousePos))
+                    if (Btn(BtnId.Move) == ButtonResult.Clicked)
                     {
                         _moveActive = !_moveActive;
                         if (_moveActive)
@@ -739,7 +735,7 @@ public class MapScreen : GamelabGameScreen
                         _clickStarted = false;
                         return;
                     }
-                    if (_hammerBtn.Contains(mousePos))
+                    if (Btn(BtnId.Hammer) == ButtonResult.Clicked)
                     {
                         _hammerActive = !_hammerActive;
                         if (_hammerActive)
@@ -1024,24 +1020,23 @@ public class MapScreen : GamelabGameScreen
                         transformMatrix: viewportAdapter.GetScaleMatrix());
         if (!gamePhaseManager.IsDay)
         {
-            // Label showing current speed
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
-            DrawButton(_speedBtn, speedLabel, _speedBtnPressed);
-            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range", _towerRangeBtnPressed);
+            DrawButton(_speedBtn,      speedLabel,                                                Btn(BtnId.Speed)      == ButtonResult.Pressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range",           Btn(BtnId.TowerRange) == ButtonResult.Pressed);
         }
         int vw = (int)viewportAdapter.VirtualWidth;
         int vh = (int)viewportAdapter.VirtualHeight;
 
         DrawSanityPanel();
 
-        if (!gamePhaseManager.IsInTransition)
+        if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
         {
-            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   _inventoryBtnPressed);
-            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  _towerRangeBtnPressed);
-            DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", _tutorial_btn_pressed);
-            DrawButton(_startNightBtn, "Start night", false, (float)(_elapsedStartNightTime/_startNightTime));
-            DrawButton(_moveBtn, _moveActive ? "Move (ON)" : "Move (2 Sanity)", _moveActive);
-            DrawButton(_hammerBtn, _hammerActive ? "Destroy (ON)" : "Destroy", _hammerActive);
+            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   Btn(BtnId.Inventory)  == ButtonResult.Pressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed);
+            DrawButton(_tutorial_btn,  _is_active_tutorial ? "Close Tutorial" : "Tutorial", Btn(BtnId.Tutorial) == ButtonResult.Pressed);
+            DrawButton(_startNightBtn, "Start night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime));
+            DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
+            DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh, _is_active_tutorial);
@@ -1505,12 +1500,7 @@ public class MapScreen : GamelabGameScreen
         return wide ? (pressed ? LongFloatBtnPrs : LongFloatBtn) : (pressed ? FloatBtnPrs : FloatBtn);
     }
 
-    private Rectangle UniformDest(Rectangle rect, Rectangle src)
-    {
-        float scale = rect.Width / (float)src.Width;
-        int h = (int)(src.Height * scale);
-        return new Rectangle(rect.X, rect.Center.Y - h / 2, rect.Width, h);
-    }
+    private ButtonResult Btn(BtnId id) => _btnResults[(int)id];
 
     private void DrawButton(Rectangle rect, string text, bool pressed = false, float progress = 0f)
     {
@@ -1587,26 +1577,6 @@ public class MapScreen : GamelabGameScreen
         _moveActive = false;
         cardManager._selectedTile = (-1, -1);
         cardManager._previewStructure = null;
-    }
-
-    private void DrawHammerButton()
-    {
-        // Background plate: pressed when held or active (selected = indented + grayed)
-        var src = (_hammerActive || _hammerBtnPressed) ? FloatBtnPrs : FloatBtn;
-        Rectangle hammerDest = UniformDest(_hammerBtn, src);
-        spriteBatch.Draw(InterfaceTexture, hammerDest, src, Color.White);
-
-        // Hammer overlay, centered with a small inset
-        {
-            int inset = Math.Max(6, _hammerBtn.Width / 8);
-            Rectangle overlay = new Rectangle(
-                _hammerBtn.X + inset,
-                _hammerBtn.Y + inset,
-                _hammerBtn.Width  - inset * 2,
-                _hammerBtn.Height - inset * 2);
-            Color tint = _hammerActive ? new Color(140, 140, 140) : Color.White;
-            spriteBatch.Draw(InterfaceTexture, overlay, Region("hammer"), tint);
-        }
     }
 
     private void ToggleActiveCard(CardManager cm, Card card)

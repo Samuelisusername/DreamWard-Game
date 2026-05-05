@@ -74,6 +74,42 @@ public abstract class GamelabGameScreen(GamelabGame game) : GameScreen(game)
         NumFramesDrawn++;
     }
 
+    protected enum ButtonResult { Normal, Hovered, Pressed, Clicked }
+
+    protected ButtonResult UpdateButton(Rectangle rect, MouseStateExtended mouse, Vector2 mousePos, ref bool clickStartedInside, bool active = true)
+    {
+        if (!active)
+        {
+            if (mouse.WasButtonPressed(MouseButton.Left) || mouse.WasButtonReleased(MouseButton.Left))
+                clickStartedInside = false;
+            return ButtonResult.Normal;
+        }
+        bool over = rect.Contains(mousePos);
+        bool held = mouse.IsButtonDown(MouseButton.Left);
+
+        if (mouse.WasButtonPressed(MouseButton.Left))
+            clickStartedInside = over;
+
+        bool externalHold    = held && !clickStartedInside;
+        bool visuallyPressed = clickStartedInside && held && over;
+        bool clicked         = mouse.WasButtonReleased(MouseButton.Left) && clickStartedInside && over;
+
+        if (mouse.WasButtonReleased(MouseButton.Left))
+            clickStartedInside = false;
+
+        if (over)
+        {
+            GamelabGame.IsHovering = true;
+            if (externalHold)
+                GamelabGame.SuppressClickCursor = true;
+        }
+
+        if (clicked)         return ButtonResult.Clicked;
+        if (visuallyPressed) return ButtonResult.Pressed;
+        if (over)            return ButtonResult.Hovered;
+        return ButtonResult.Normal;
+    }
+
     public class Factory
     {
         public string name;

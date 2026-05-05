@@ -52,6 +52,8 @@ public class StartScreen : GamelabGameScreen
     private MenuState _previousState;
 
     private Rectangle _backButton;
+    private readonly bool[]         _btnClickedInside = new bool[5];
+    private readonly ButtonResult[] _btnResults       = new ButtonResult[5];
 
     public StartScreen(GamelabGame game) : base(game) { }
 
@@ -125,42 +127,29 @@ public class StartScreen : GamelabGameScreen
         switch (_currentState)
         {
             case MenuState.MainMenu:
-                // Check hover and pressed states for all buttons
                 for (int i = 0; i < _buttons.Length; i++)
                 {
-                    Rectangle btnRect = _buttons[i];
                     string label = _buttonLabels[i];
                     bool disabled = label == "Continue" && !Game.IsGameInProgress;
+                    if (disabled) { _btnResults[i] = ButtonResult.Normal; continue; }
 
-                    if (btnRect.Contains(mousePos))
+                    _btnResults[i] = UpdateButton(_buttons[i], mouse, mousePos, ref _btnClickedInside[i]);
+                    if (_btnResults[i] == ButtonResult.Clicked)
                     {
-                        if (!disabled)
-                            GamelabGame.IsHovering = true;
-
-                        if (mouse.WasButtonReleased(MouseButton.Left) && !disabled)
-                        {
-                            HandleButtonClick(label);
-                            break; // exit loop after click
-                        }
-                    }
-                    if(keyboard.WasKeyReleased(Keys.F5))
-                    {
-                        GamelabGame.Instance.Balance =  GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
+                        HandleButtonClick(label);
+                        break;
                     }
                 }
+                if (keyboard.WasKeyReleased(Keys.F5))
+                    GamelabGame.Instance.Balance = GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
                 break;
 
             case MenuState.HowToPlay:
             case MenuState.Settings:
-                // Back button
-                if (_buttons[0].Contains(mousePos))
-                {
-                    GamelabGame.IsHovering = true;
-                    if (mouse.WasButtonReleased(MouseButton.Left))
-                        _currentState = MenuState.MainMenu;
-                }
+                _btnResults[0] = UpdateButton(_buttons[0], mouse, mousePos, ref _btnClickedInside[0]);
+                if (_btnResults[0] == ButtonResult.Clicked)
+                    _currentState = MenuState.MainMenu;
 
-                // Volume bar interaction in Settings
                 if (_currentState == MenuState.Settings && _volumeBar.Contains(mousePos))
                 {
                     GamelabGame.IsHovering = true;
@@ -232,19 +221,14 @@ public class StartScreen : GamelabGameScreen
     {
         DrawBackdrop();
 
-        Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
-
         foreach (var (btnRect, idx) in _buttons.WithIndex())
         {
             string label = _buttonLabels[idx];
-
             bool disabled = label == "Continue" && !Game.IsGameInProgress;
-            bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && btnRect.Contains(mousePos);
-
             if (disabled)
                 DrawButtonDisabled(btnRect, label);
             else
-                DrawButton(btnRect, label, pressed);
+                DrawButton(btnRect, label, _btnResults[idx] == ButtonResult.Pressed);
         }
     }
 
@@ -345,9 +329,7 @@ public class StartScreen : GamelabGameScreen
         Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
         DrawScaledParagraph(_howToPlayText, paragraphArea, TextColor);
 
-        Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
-        bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed, "float_button", "float_button_pressed");
+        DrawButton(_backButton, "Back", _btnResults[0] == ButtonResult.Pressed, "float_button", "float_button_pressed");
     }
 
     private void DrawSettings()
@@ -378,9 +360,7 @@ public class StartScreen : GamelabGameScreen
         Vector2 labelPos = new Vector2(_volumeBar.Center.X - labelSize.X / 2, _volumeBar.Y - labelSize.Y - 5);
         spriteBatch.DrawString(_font, volumeLabel, labelPos, TextColor);
 
-        Vector2 mousePos = viewportAdapter.PointToScreen(Mouse.GetState().Position).ToVector2();
-        bool pressed = Mouse.GetState().LeftButton == ButtonState.Pressed && _backButton.Contains(mousePos);
-        DrawButton(_backButton, "Back", pressed, "float_button", "float_button_pressed");
+        DrawButton(_backButton, "Back", _btnResults[0] == ButtonResult.Pressed, "float_button", "float_button_pressed");
     }
 
     private void DrawRoundedRectangle(Rectangle rect, int radius, Color fillColor, Color borderColor)
