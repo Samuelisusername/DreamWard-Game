@@ -1016,7 +1016,7 @@ public class MapScreen : GamelabGameScreen
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
         Structure._screenTransform = viewportAdapter.GetScaleMatrix();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _hoveredStructure?.DrawCard(spriteBatch);
+        _hoveredStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied

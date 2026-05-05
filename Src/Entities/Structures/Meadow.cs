@@ -177,8 +177,7 @@ public class Meadow : Structure
             SetAnimationTop("sheepSmall_idle");
         }
     }
-
-    public override void DrawCard(SpriteBatch spriteBatch)
+    public override void DrawCard(SpriteBatch spriteBatch, Rectangle screen)
     {
         if (!ShouldDrawCard) return;
 
@@ -253,6 +252,18 @@ public class Meadow : Structure
 
         // ── Layout anchors ─────────────────────────────────────────────────────
         Vector2 anchor = ToScreen(worldPos.X + 31.5f * mapManager.Scale.X, worldPos.Y);
+        if((int)(anchor.X - boxWidth / 2f) < screen.Left + (2*pad))
+        {
+            anchor.X = screen.Left + (2*pad) + (boxWidth / 2f);
+        }        
+        else if((int)(anchor.X - boxWidth / 2f) + boxWidth > screen.Right - (2*pad))
+        {
+            anchor.X  = screen.Right - boxWidth - (2*pad)  + (boxWidth / 2f);
+        }
+        if((int)(anchor.Y - MathF.Round(16 * mapManager.Scale.X * sy) - boxHeight) < screen.Top + (2*pad))
+        {
+            anchor.Y = screen.Top + (2*pad) + MathF.Round(16 * mapManager.Scale.X * sy) + boxHeight;
+        }
         int left = (int)(anchor.X - boxWidth / 2f);
         int top  = (int)(anchor.Y - MathF.Round(16 * mapManager.Scale.X * sy) - boxHeight);
 

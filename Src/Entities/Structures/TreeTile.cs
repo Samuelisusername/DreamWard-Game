@@ -122,7 +122,7 @@ public class TreeTile : Structure
         // _sprite.Rotation += 0.1f;
     }
 
-    public override void DrawCard(SpriteBatch spriteBatch)
+    public override void DrawCard(SpriteBatch spriteBatch, Rectangle screen)
     {
         return;
     }
