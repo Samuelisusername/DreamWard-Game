@@ -1005,6 +1005,49 @@ public class MapManager
                 return;
         }
         ShakeTree(pos);
+        TrySetTarget(pos);
+    }
+
+    private void TrySetTarget(Vector2 pos)
+    {
+        var tile = GetTileFromScreenPosition(pos);
+        var potentialGroups = GetMonsterGroupsInRange(tile, 1);
+        float minDist = float.MaxValue;
+        Monster currentMin = null;
+        foreach (var group in potentialGroups)
+        {
+            var worldPosition = group.GetInterpolatedWorldPosition(true);
+            //TODO: add the correct offsets
+            switch (group.MonsterType)
+            {
+                case MonsterType.Regular:
+                    worldPosition = worldPosition +  (new Vector2(45, 24) * Scale );
+                    break;
+                case MonsterType.Flying:
+                    worldPosition = worldPosition +  (new Vector2(21, 24) * Scale );
+                    break;
+                case MonsterType.Small:
+                    worldPosition = worldPosition +  (new Vector2(33, 31) * Scale );
+                    break;
+                case MonsterType.Big:
+                    worldPosition = worldPosition +  (new Vector2(33, 30) * Scale );
+                    break;
+            }
+            var dist = Vector2.Distance(pos,worldPosition);
+            if(dist < minDist)
+            {
+                minDist = dist;
+                currentMin = group.Monsters.MinBy(i => i.CurrentHealth);
+            }
+        }
+        if(currentMin == null) return;
+        foreach (var structure in Structures)
+        {
+            if(structure is SniperTower sniper)
+            {
+                sniper.SetTarget(currentMin);
+            }
+        }
     }
 
     /// <summary>
