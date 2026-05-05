@@ -1016,7 +1016,7 @@ public class MapManager
         Monster currentMin = null;
         foreach (var group in potentialGroups)
         {
-            var worldPosition = group.GetInterpolatedWorldPosition(true);
+            var worldPosition = group.GetInterpolatedWorldPosition(false);
             //TODO: add the correct offsets
             switch (group.MonsterType)
             {
