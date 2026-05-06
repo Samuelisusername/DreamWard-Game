@@ -4,6 +4,7 @@ using Gamelab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using DreamWardUtils.Graphics;
 
 /// <summary>
 /// A Meadow Tile Entity it can have a sheep on it or not
@@ -54,6 +55,8 @@ public class Meadow : Structure
     private bool resetSanity = true;
     private TimeSpan _cantAffordFlash = TimeSpan.Zero;
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
+    private Sprite _portrait ;
+
 
     private static string SpriteForGain(int sanityGain)
     {
@@ -68,6 +71,9 @@ public class Meadow : Structure
         : base(SpriteForGain(sanityGain), pos)
     {
         _baseSanityGain = sanityGain;
+        _portrait = GamelabGame.TextureAtlas["day_top"].CreateSprite("sheepBig0");
+        _portrait.Scale = Vector2.One * 2;
+        _portrait.Origin = new Vector2(49,112);
     }
 
     public void TickGrazingDay()
@@ -230,8 +236,8 @@ public class Meadow : Structure
         if(tutorialText != null)
         {
             boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
-            boxWidth = (int)boxDimensions.X + (pad * 2);
-            boxHeight = (int)boxDimensions.Y + (pad * 2);
+            boxWidth = (int)boxDimensions.X + (pad * 4) + (int)(_portrait.Scale.X * 23);
+            boxHeight = Math.Max((int)boxDimensions.Y + (pad * 2), (int)(_portrait.Scale.Y * 22) + (pad * 2));
         }
         else
         {
@@ -285,7 +291,8 @@ public class Meadow : Structure
 
         if(tutorialText != null)
         {
-            Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
+            Vector2 textStartPos = new Vector2(left + MathF.Round(((3 * pad) + (int)(_portrait.Scale.X * 23)) * sx), top + MathF.Round(pad * sy));
+            _portrait.Draw(spriteBatch, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(boxHeight/2 * sy)));
     
             // Pass false for isMeasuring, pass the actual SpriteBatch
             ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);

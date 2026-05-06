@@ -27,8 +27,8 @@ public abstract class Structure : Entity
     {
         _animNameBase = animName;
         _animNameTop = animName;
-        _spriteTop = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);
-        _spriteBase = GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName);
+        _spriteTop = GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName);
+        _spriteBase = GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName);
 
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
@@ -42,11 +42,11 @@ public abstract class Structure : Entity
         {
             _isDaySprite = !_isDaySprite;
             if (_spriteTop != null)
-                _spriteTop.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top"].GetAnimation(_animNameTop) :
-                GamelabGame.textureAtlas["night_top"].GetAnimation(_animNameTop);
+                _spriteTop.Animation = _isDaySprite ? GamelabGame.TextureAtlas["day_top"].GetAnimation(_animNameTop) :
+                GamelabGame.TextureAtlas["night_top"].GetAnimation(_animNameTop);
             if (_spriteBase != null)
-                _spriteBase.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top_base"].GetAnimation(_animNameBase) :
-                GamelabGame.textureAtlas["night_top_base"].GetAnimation(_animNameBase);
+                _spriteBase.Animation = _isDaySprite ? GamelabGame.TextureAtlas["day_top_base"].GetAnimation(_animNameBase) :
+                GamelabGame.TextureAtlas["night_top_base"].GetAnimation(_animNameBase);
         }
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
@@ -107,12 +107,12 @@ public abstract class Structure : Entity
         _animNameBase = animName;
         _animNameTop = animName;
         _spriteTop = gamePhaseManager.IsDay ? 
-        GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top"].CreateAnimatedSprite(animName);
         _spriteTop.Scale = mapManager.Scale;
         _spriteBase = gamePhaseManager.IsDay ? 
-        GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top_base"].CreateAnimatedSprite(animName);
         _spriteBase.Scale = mapManager.Scale;
     }
 
@@ -120,8 +120,8 @@ public abstract class Structure : Entity
     {
         _animNameTop = animName;
         _spriteTop = gamePhaseManager.IsDay ?
-        GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top"].CreateAnimatedSprite(animName);
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
     }
@@ -130,8 +130,8 @@ public abstract class Structure : Entity
     {
         _animNameBase = animName;
         _spriteBase = gamePhaseManager.IsDay ?
-        GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top_base"].CreateAnimatedSprite(animName);
         if (_spriteBase != null)
             _spriteBase.Scale = mapManager.Scale;
     }
@@ -176,7 +176,7 @@ public abstract class Structure : Entity
     internal static Matrix _screenTransform = Matrix.Identity;
 
     // Converts a virtual-space point to integer screen pixels.
-    private static Vector2 ToScreen(float x, float y)
+    protected static Vector2 ToScreen(float x, float y)
     {
         float sx = _screenTransform.M11, sy = _screenTransform.M22;
         float tx = _screenTransform.M41, ty = _screenTransform.M42;
@@ -286,7 +286,7 @@ public abstract class Structure : Entity
         float maxX = 0f;
         float spaceWidth = font.MeasureString(" ").X * scale.X;
         float lineHeight = font.LineSpacing * scale.Y;
-        TextureRegion sanityIcon = GamelabGame.textureAtlas["day_interface"].GetRegion("sanity_small0");
+        TextureRegion sanityIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("sanity_small0");
 
         foreach (string word in words)
         {

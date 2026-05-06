@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DreamWardUtils.Graphics;
 using Gamelab;
 using Microsoft.Xna.Framework;
 
@@ -17,7 +18,7 @@ public static class TutorialManager
 {
     private static MapManager mapManager => GamelabGame.MapManager;
     private static GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
-    public static bool IsTutorialActive => GamelabGame.GamePhaseManager.DayCount <= 4 && tutorialStep < tutorialTexts[gamePhaseManager.DayCount-1].Length;
+    public static bool IsTutorialActive => gamePhaseManager.IsDay &&  GamelabGame.GamePhaseManager.DayCount <= 4 && tutorialStep < tutorialTexts[gamePhaseManager.DayCount-1].Length;
 
     private static int tutorialSubStep = -1;
 
@@ -26,6 +27,7 @@ public static class TutorialManager
     public static Structure CurrentTutorialStructure;
 
     private static TimeSpan tutorialTimer = TimeSpan.FromSeconds(1);
+
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
         ([(TutorialAction.PlacedTower, 1),(TutorialAction.StartedNight,3)],[

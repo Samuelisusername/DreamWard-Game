@@ -49,7 +49,7 @@ public class MapScreen : GamelabGameScreen
     // Cards
     private SpriteFont _font;
     private Texture2D _dummy, _cardTexture;
-    private TextureAtlas InterfaceAtlas => GamelabGame.textureAtlas[gamePhaseManager.IsDay ? "day_interface" : "interface"];
+    private TextureAtlas InterfaceAtlas => GamelabGame.TextureAtlas[gamePhaseManager.IsDay ? "day_interface" : "interface"];
     private Rectangle Region(string name) => InterfaceAtlas.GetRegion(name + "0").SourceRectangle;
     private Dictionary<string, Rectangle> _cardRegions;
 
