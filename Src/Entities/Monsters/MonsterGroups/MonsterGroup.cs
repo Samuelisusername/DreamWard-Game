@@ -28,7 +28,7 @@ public abstract class MonsterGroup
     public bool shouldCheckMerge;
     public bool IsNew {get; set;}
     
-    private TimeSpan attackCooldown = TimeSpan.FromMilliseconds(125 * 7);
+    private TimeSpan attackCooldown => AnimFrameDelay * 7;
     private TimeSpan elapsedAttackCooldown;
 
     protected abstract int attackFrame{get;}
@@ -44,7 +44,7 @@ public abstract class MonsterGroup
         _elapsed = elapsed;
         _pathProgress = (float)(_elapsed/speed);
         IsNew = true;        
-        elapsedAttackCooldown = TimeSpan.FromMilliseconds(125 * (7-attackFrame));
+        elapsedAttackCooldown = AnimFrameDelay * (7-attackFrame);
     }  
 
     // Satisfies the Entity requirement. Container handles the actual visual offset!
@@ -190,7 +190,7 @@ public abstract class MonsterGroup
         
         _elapsed += gameTime.ElapsedGameTime;
         Monsters.ForEach(m => m.TickHitFlash(gameTime));
-        if(isMerging && (speed - _elapsed).TotalMilliseconds < 125)
+        if(isMerging && (speed - _elapsed) < AnimFrameDelay)
         {
             SetAnimation("rebuild");
             isMerging = false;
@@ -327,14 +327,14 @@ public abstract class MonsterGroup
                 anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "rebuildIdle" + direction + "_idle" + direction : "rebuildIdle" + direction + "_attack" + direction) : "rebuild" + direction + "_walk" + direction;
                 if(anim.Contains("attack"))
                 {
-                    elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame -1));
+                    elapsedAttackCooldown =  AnimFrameDelay * (7-attackFrame -1);
                 }
                 break;
             default:
                 anim = CommonNextTarget() == TilePosition ? (CommonAttackTarget() == null ? "idle" + direction :  "attack" + direction) : "walk" + direction;
                 if(anim.Contains("attack"))
                 {
-                    elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame));
+                    elapsedAttackCooldown =  AnimFrameDelay * (7-attackFrame);
                 }
             break;
         }
@@ -357,7 +357,7 @@ public abstract class MonsterGroup
     {
         if (!_goalReached || CommonAttackTarget() == null)
         {
-            elapsedAttackCooldown =  TimeSpan.FromMilliseconds(125 * (7-attackFrame));
+            elapsedAttackCooldown =  AnimFrameDelay * (7-attackFrame);
             return;
         }
         
