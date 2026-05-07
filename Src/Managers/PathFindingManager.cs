@@ -563,7 +563,11 @@ public class PathFindingManager
                 Entity structure = mapManager.GetStructure((col, row));
                 List<(int, int)> defendedTiles;
                 int strength = 0;
-                if (structure is Tower tower)
+                if (structure is Spike)
+                {
+                    continue;
+                }
+                else if (structure is Tower tower)
                 {
                     defendedTiles = tower.GetTilesInRange();
                     strength = config.NormalDefenceStrength;
