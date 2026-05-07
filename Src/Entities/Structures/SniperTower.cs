@@ -2,13 +2,15 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
+using Gamelab;
 using Gamelab.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 public class SniperTower : Tower
 {
-    private Monster target = null;
+    private CombatManager combatManager => GamelabGame.CombatManager;
+    private Monster _target = null;
     private MonsterGroup targetGroup = null;
     private Vector2 targetPos;
 
@@ -35,41 +37,46 @@ public class SniperTower : Tower
     {
         //TODO: potentially move this responsability to the monsters.
         // the monsters tell the tower if they get in/out of range
-        if(target != null && (!mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth).SelectMany(i => i.Monsters).Contains(target) ||  target.IsDestroyed))
+        if(_target != null && (!mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth).SelectMany(i => i.Monsters).Contains(_target) ||  _target.IsDestroyed))
         {
             //target is out of range
-            target = null;
+            _target = null;
         }
-        if(target == null)
+        if(_target == null || _target != combatManager.PriorityMonster)
         {
             //find new target
-            bool reset = true;
+            bool reset = _target == null;
             var groupsInRange = mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth);
             foreach (var group in groupsInRange)
             {
-                if(!group.IsEmpty)
+                if(group.Monsters.Contains(combatManager.PriorityMonster))
                 {
-                    target = group.Monsters[0];
+                    _target = combatManager.PriorityMonster;
                     reset = false;
                     break;
                 }
+                if(_target == null && !group.IsEmpty)
+                {
+                    _target = group.Monsters.MinBy(i => i.CurrentHealth);
+                    reset = false;
+                }
             }    
-            elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;    
+            elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;  
         }
-        if(target != null)
+        if(_target != null)
         {   
-            targetGroup = mapManager.GetMonsterContainer(target.TilePosition).GetMonsterGroup(target);
+            targetGroup = mapManager.GetMonsterContainer(_target.TilePosition).GetMonsterGroup(_target);
             elapsedAttackCooldown += gameTime.ElapsedGameTime;
             if(elapsedAttackCooldown >= attackCooldown)
             {
                 //tower should attack
                 elapsedAttackCooldown -= attackCooldown;
-                pendingHitTarget = target;
+                pendingHitTarget = _target;
                 pendingHitDamage = damagePerSecond;
                 pendingHitTimer = projectileTravelTime;
                 totalDamage += damagePerSecond;
                 targetPos = targetGroup.GetInterpolatedWorldPosition();
-                switch (target.Type)
+                switch (_target.Type)
                 {
                     case MonsterType.Regular:
                         targetPos = (targetPos +  (new Vector2(45, 11) * mapManager.Scale )- mapManager.Offset)/mapManager.Scale;
@@ -120,13 +127,21 @@ public class SniperTower : Tower
                 if (!pendingHitTarget.IsDestroyed)
                 {
                     pendingHitTarget.TakeDamage(pendingHitDamage);
-                    if (pendingHitTarget.IsDestroyed && target == pendingHitTarget)
+                    if (pendingHitTarget.IsDestroyed && _target == pendingHitTarget)
                     {
-                        target = null;
+                        _target = null;
                     }
                 }
                 pendingHitTarget = null;
             }
+        }
+    }
+
+    public void SetTarget(Monster target)
+    {
+        if(mapManager.GetMonsterGroupsInRange(TilePosition, rangeDepth).Any(i => i.Monsters.Contains(target)))
+        {
+            _target = target;
         }
     }
 

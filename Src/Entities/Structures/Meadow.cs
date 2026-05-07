@@ -51,7 +51,7 @@ public class Meadow : Structure
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
 
-    private bool resetSanity = true;
+    private bool resetMoveProgress = true;
     private TimeSpan _cantAffordFlash = TimeSpan.Zero;
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
@@ -114,11 +114,11 @@ public class Meadow : Structure
     public override void Update(GameTime gameTime)
     {
         base.Update(gameTime);
-        if (resetSanity)
+        if (resetMoveProgress)
         { 
             moveProgress = TimeSpan.Zero;
         }
-        resetSanity = true;
+        resetMoveProgress = true;
         if (_cantAffordFlash > TimeSpan.Zero)
             _cantAffordFlash -= gameTime.ElapsedGameTime;
     }
@@ -137,7 +137,7 @@ public class Meadow : Structure
     public bool AddProgress(TimeSpan delta)
     {
         if (HasSheep || mapManager.GetSheep() == null) return false;
-        resetSanity = false;
+        resetMoveProgress = false;
         moveProgress += delta;
         if (moveProgress > timeToMove)
         {
