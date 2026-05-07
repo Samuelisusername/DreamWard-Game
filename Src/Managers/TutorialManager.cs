@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DreamWardUtils.Graphics;
 using Gamelab;
 using Microsoft.Xna.Framework;
 
@@ -27,6 +26,10 @@ public static class TutorialManager
     public static Structure CurrentTutorialStructure;
 
     private static TimeSpan tutorialTimer = TimeSpan.FromSeconds(1);
+
+    private static int charIndex = 1;
+
+    private static TimeSpan timePerChar = TimeSpan.FromSeconds(0.03);
 
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
@@ -95,27 +98,44 @@ public static class TutorialManager
     ],
     ];
 
+    private static TimeSpan textTimer = TimeSpan.Zero;
     public static void Update(GameTime gameTime)
     {
+        textTimer += gameTime.ElapsedGameTime;
+        while(tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length && textTimer > timePerChar)
+        {
+            if(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.AsSpan(charIndex).StartsWith("[SANITY]"))
+            {
+                charIndex += 8;
+            }
+            charIndex++;
+            textTimer -= timePerChar;
+            CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Substring(0,charIndex);
+        }
         if(IsTutorialActive && tutorialTimer > TimeSpan.Zero)
         {
-            tutorialTimer -= gameTime.ElapsedGameTime;
-            if(tutorialTimer <= TimeSpan.Zero)
+            if(tutorialSubStep == -1 || (tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex >= tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length))
             {
-                //next step
-                tutorialTimer = TimeSpan.FromSeconds(10);
-                if(tutorialSubStep < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count - 1)
+                tutorialTimer -= gameTime.ElapsedGameTime;
+                if(tutorialTimer <= TimeSpan.Zero)
                 {
-                    tutorialSubStep++;
-                    if(CurrentTutorialStructure != null)
+                    //next step
+                    tutorialTimer = TimeSpan.FromSeconds(10);
+                    if(tutorialSubStep < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count - 1)
                     {
-                        CurrentTutorialStructure.ShouldDrawCard = false;
-                        CurrentTutorialStructure.tutorialText = null;
-                    }
-                    CurrentTutorialStructure = GetTutrialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
-                    CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2; 
-                    CurrentTutorialStructure.ShouldDrawCard = true; 
-                }              
+                        tutorialSubStep++;
+                        charIndex = 1;
+                        textTimer = TimeSpan.Zero;
+                        if(CurrentTutorialStructure != null)
+                        {
+                            CurrentTutorialStructure.ShouldDrawCard = false;
+                            CurrentTutorialStructure.tutorialText = null;
+                        }
+                        CurrentTutorialStructure = GetTutrialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
+                        // CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2; 
+                        CurrentTutorialStructure.ShouldDrawCard = true; 
+                    }              
+                }
             }
         }
         else
@@ -164,6 +184,14 @@ public static class TutorialManager
         if(!IsTutorialActive) return;
         if(action == TutorialAction.Click && tutorialSubStep < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count - 1)
         {
+            if(charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length)
+            {
+                charIndex = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length;
+                CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2;
+                return;
+            }
+            charIndex = 1;
+            textTimer = TimeSpan.Zero;
             tutorialTimer = TimeSpan.FromSeconds(5);
             tutorialSubStep++;
             if(CurrentTutorialStructure != null)
@@ -172,13 +200,15 @@ public static class TutorialManager
                 CurrentTutorialStructure.tutorialText = null;
             }
             CurrentTutorialStructure = GetTutrialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
-            CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2; 
+            // CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2;
             CurrentTutorialStructure.ShouldDrawCard = true;
         }
         else if(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item1.Select(i => i.Item1).Contains(action))
         {
             tutorialStep += tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item1.SingleOrDefault(i => i.Item1 == action).Item2;
             tutorialSubStep = 0;
+            charIndex = 1;
+            textTimer = TimeSpan.Zero;
             tutorialTimer = TimeSpan.FromSeconds(5);
             if(CurrentTutorialStructure != null)
             {
@@ -189,7 +219,7 @@ public static class TutorialManager
             if(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count > 0)
             {
                 CurrentTutorialStructure = GetTutrialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
-                CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2; 
+                // CurrentTutorialStructure.tutorialText = tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2; 
                 CurrentTutorialStructure.ShouldDrawCard = true;
             }
         }
@@ -206,6 +236,16 @@ public static class TutorialManager
             CurrentTutorialStructure.tutorialText = null;
             CurrentTutorialStructure = null;
         }            
+    }
+
+    public static void Reset()
+    {
+        tutorialSubStep = -1;
+        tutorialStep = 0;
+        CurrentTutorialStructure = null;
+        tutorialTimer = TimeSpan.FromSeconds(1);
+        charIndex = 1;
+        textTimer = TimeSpan.Zero;
     }
     private enum TutorialStructureType
     {

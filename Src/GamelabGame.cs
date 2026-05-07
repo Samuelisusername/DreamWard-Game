@@ -311,6 +311,7 @@ public class GamelabGame : Game
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
 
         PathFindingManager = new();
+        TutorialManager.Reset();
     }
 
     /// <summary>
