@@ -253,17 +253,17 @@ public abstract class MonsterGroup
 
     protected AnimatedSprite sprite;
 
-    protected float HitFlashAlpha
+    protected float HitFlashWhite
     {
         get
         {
-            if (Monsters.Count == 0) return 1f;
-            float min = 1f;
+            if (Monsters.Count == 0) return 0f;
+            float max = 0f;
             foreach (var m in Monsters)
             {
-                if (m.HitFlashAlpha < min) min = m.HitFlashAlpha;
+                if (m.HitFlashWhite > max) max = m.HitFlashWhite;
             }
-            return min;
+            return max;
         }
     }
 
@@ -276,7 +276,24 @@ public abstract class MonsterGroup
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
 
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
+        Vector2 spritePos = worldPos + (LocalOffset * mapManager.Scale);
+        float flash = HitFlashWhite;
+        if (flash > 0f)
+        {
+            spriteBatch.End();
+            GamelabGame.WhiteFlashShader.Parameters["FlashAmount"].SetValue(flash);
+            spriteBatch.Begin(effect: GamelabGame.WhiteFlashShader,
+                samplerState: GamelabGame.RenderSampler,
+                transformMatrix: GamelabGame.RenderTransform);
+            sprite.Draw(spriteBatch, spritePos, 1.0f);
+            spriteBatch.End();
+            spriteBatch.Begin(samplerState: GamelabGame.RenderSampler,
+                transformMatrix: GamelabGame.RenderTransform);
+        }
+        else
+        {
+            sprite.Draw(spriteBatch, spritePos, 1.0f);
+        }
         
         
         worldPos = GetInterpolatedWorldPosition(true);

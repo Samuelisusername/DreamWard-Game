@@ -23,6 +23,12 @@
 /processorParam:DebugMode=Auto
 /build:ColorOverlay.fx
 
+#begin WhiteFlash.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:WhiteFlash.fx
+
 #begin Data/Balance.json
 /copy:Data/Balance.json
 

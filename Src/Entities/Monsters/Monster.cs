@@ -36,15 +36,13 @@ public abstract class Monster : Entity
 
     private static readonly TimeSpan hitFlashDuration = TimeSpan.FromMilliseconds(300);
     private TimeSpan hitFlashRemaining = TimeSpan.Zero;
-    private const float hitFlashMinAlpha = 0.3f;
 
-    public float HitFlashAlpha
+    public float HitFlashWhite
     {
         get
         {
-            if (hitFlashRemaining <= TimeSpan.Zero) return 1f;
-            float t = (float)(hitFlashRemaining.TotalSeconds / hitFlashDuration.TotalSeconds);
-            return MathHelper.Lerp(1f, hitFlashMinAlpha, t);
+            if (hitFlashRemaining <= TimeSpan.Zero) return 0f;
+            return (float)(hitFlashRemaining.TotalSeconds / hitFlashDuration.TotalSeconds);
         }
     }
 
@@ -99,10 +97,7 @@ public abstract class Monster : Entity
             });
             damageAccumulator -= MathF.Floor(damageAccumulator);
         }
-        if (hitFlashRemaining <= TimeSpan.Zero)
-        {
-            hitFlashRemaining = hitFlashDuration;
-        }
+        hitFlashRemaining = hitFlashDuration;
     }
 
     public override bool IsBuildEntity => false;

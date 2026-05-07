@@ -864,6 +864,8 @@ public class MapScreen : GamelabGameScreen
 
         DrawNightBackgroundIfNight();
 
+        GamelabGame.RenderTransform = viewportAdapter.GetScaleMatrix();
+        GamelabGame.RenderSampler = sampler;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
@@ -884,6 +886,8 @@ public class MapScreen : GamelabGameScreen
 
         DrawNightBackgroundIfNight();
 
+        GamelabGame.RenderTransform = viewportAdapter.GetScaleMatrix();
+        GamelabGame.RenderSampler = sampler;
         spriteBatch.Begin(samplerState: sampler,
                         transformMatrix: viewportAdapter.GetScaleMatrix());
 

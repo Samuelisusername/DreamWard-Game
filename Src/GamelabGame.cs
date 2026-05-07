@@ -99,11 +99,15 @@ public class GamelabGame : Game
 
     public static Random Rng { get; private set; }
     public static int Seed { get; private set; }
+
+    public static Matrix RenderTransform { get; set; } = Matrix.Identity;
+    public static SamplerState RenderSampler { get; set; } = SamplerState.PointClamp;
     
     private int setSeed = 0; //1870306913; //1512335036;//1029531291; //1330672853; //1036804964; //set this to override seed
 
     public BalanceParams Balance;
     public Effect LoadingShader;
+    public static Effect WhiteFlashShader;
 
     public GamelabGame(RunMode runMode, int? seed = null)
     {
@@ -196,6 +200,7 @@ public class GamelabGame : Game
 
         Font = Content.Load<SpriteFont>("infoFont");
         LoadingShader = Content.Load<Effect>("ColorOverlay");
+        WhiteFlashShader = Content.Load<Effect>("WhiteFlash");
         
         var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
         dayTiles = new(dayTilesAtlas, "var", "idle");
