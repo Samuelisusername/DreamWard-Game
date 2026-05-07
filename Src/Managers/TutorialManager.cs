@@ -38,7 +38,7 @@ public static class TutorialManager
             (TutorialStructureType.Tent ,"What, who was that?"),
             (TutorialStructureType.Sheep ,"Over here, it's us your sheep. You need to protect us!"),
             (TutorialStructureType.Tent ,"WOW, you can talk!?"),
-            (TutorialStructureType.Sheep ,"Yes of course I can, but thats not important right now. You need to build up our defense."),
+            (TutorialStructureType.Sheep ,"Yes of course I can, but that's not important right now. You need to build up our defense."),
             (TutorialStructureType.Tent ,"Defense, what is it?"),
             (TutorialStructureType.Sheep ,"Similar to protection, but that's not important right now. Your nightmares almost stole all your sanity [SANITY]"),
             (TutorialStructureType.Tent ,"Oh that really doesn't sound good, but how should I defend us?"),
@@ -61,7 +61,7 @@ public static class TutorialManager
             (TutorialStructureType.Sheep, "Phew that was scary, and to think that nightmares are only gonna get stronger from now on..."),
             (TutorialStructureType.Tent ,"What!? they get even stronger?"),
             (TutorialStructureType.Sheep, "Oh yes, this was only the beginning, you need to stay here for 10 nights before you can leave."),
-            (TutorialStructureType.Tent ,"That sounds impossible! How should I build up a defense to defeat an army and stay sane with the puny amount of sanity [SANITY] I get from you?"),
+            (TutorialStructureType.Tent ,"That sounds impossible! How should I build up a defense and stay sane with the puny amount of sanity [SANITY] I get from you?"),
             (TutorialStructureType.Sheep, "WOW, rude! I can leave if you don't want my help."),
             (TutorialStructureType.Tent, "Don't! I'm sorry. Is there really no way to get more sanity [SANITY]?"),
             (TutorialStructureType.Sheep, "Hmmm, do you see the juicy looking flowers?"),
@@ -71,9 +71,9 @@ public static class TutorialManager
             (TutorialStructureType.Sheep, "Keep in mind though that you still have to defend us when you move us, else we can't produce sanity [SANITY] in the morning."),
             (TutorialStructureType.Sheep, "Try moving us to a meadow close by now, by clicking and holding it. It's gonna cost you sanity [SANITY] the further you move us, but it's gonna be worth it in the morning!"),]),
         ([(TutorialAction.Click,1),(TutorialAction.StartedNight,2)], [
-            (TutorialStructureType.Tent, "huh whats that thing laying on the grazing spot?"),
+            (TutorialStructureType.Tent, "Huh what's that thing laying on the grazing spot?"),
             (TutorialStructureType.Sheep, "Looks like something you can use to defend us, we will graze the flowers around it so you can use it, but it's gonna take until tomorrow morning."),
-            (TutorialStructureType.Tent, "I'm starting to like these grazing sports more and more."),
+            (TutorialStructureType.Tent, "I'm starting to like these grazing spots more and more."),
             (TutorialStructureType.Sheep, "You can hover over all the grazing spots to see how much sanity [SANITY] we generate each morning if we are there, how much it costs to move us there and what kind of useful item is laying there!"),
             (TutorialStructureType.Sheep, "Now get ready for the next night, there's gonna be more nightmares, and I'm gonna do the very important job of eating these juicy flowers!"),]),
         ([(TutorialAction.StartedNight,1)], []),
@@ -86,7 +86,7 @@ public static class TutorialManager
             (TutorialStructureType.Tent ,"What!? What is not good?"),
             (TutorialStructureType.Sheep, "I sense a new type of threat, a winged nightmare. They can fly over most of the structures you build."),
             (TutorialStructureType.Tent ,"They fly now?!"),
-            (TutorialStructureType.Sheep, "Hey don't blame me for whats happening it's your dreams attacking us, not mine."),]),
+            (TutorialStructureType.Sheep, "Hey don't blame me for what's happening it's your dreams attacking us, not mine."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
@@ -178,7 +178,7 @@ public static class TutorialManager
                     throw new Exception("Sheep not found for tutorial help");
                 }
             default:
-                throw new Exception("Tutorial type doesn't exists");
+                throw new Exception("Tutorial type doesn't exist");
         }
     }
 
