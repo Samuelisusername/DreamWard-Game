@@ -41,9 +41,6 @@ public class PathFindingManager
     // Cache paths
     private readonly Dictionary<Monster, Queue<(int col, int row)>> _cachedPaths;
 
-    // Small monster meeting point
-    private readonly (int col, int row)? _smallMonsterMeetingPoint = null;
-
     // Temporary profiling variables
     private static bool _profilingEnabled = false; // Set to true to enable profiling logs
     private static readonly System.Diagnostics.Stopwatch _stepTimer = new System.Diagnostics.Stopwatch();
@@ -333,7 +330,8 @@ public class PathFindingManager
             {
                 if (config.MeetingPoint.HasValue)
                 {
-                    CheckIfMeetingPointFull(monster);
+                    var realDestination = bestPrimary != null ? bestPrimary.Value.Tile : bestSecondary != null ? bestSecondary.Value.Tile : destination;
+                    AttackTogetherIfMeetingPointFull(currentTile, realDestination, previousTile, timeToReach, monster);
                 }
                 return currentTile;
             }
@@ -417,7 +415,8 @@ public class PathFindingManager
         }
     }
 
-    private void CheckIfMeetingPointFull(Monster monster)
+    private void AttackTogetherIfMeetingPointFull((int col, int row) currentTile, (int col, int row) realDestination,
+                                            (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster)
     {
         var config = GetConfig(monster);
         if (!config.MeetUpBeforeAttacking || !config.MeetingPoint.HasValue || config.MeetingPoint != monster.TilePosition)
@@ -426,7 +425,7 @@ public class PathFindingManager
         }
 
 
-        int monstersExpected = 0;
+        int MonstersExpectedCount = 0;
         for (int col = 0; col < mapManager.Columns; col++)
         {
             for (int row = 0; row < mapManager.Rows; row++)
@@ -435,26 +434,37 @@ public class PathFindingManager
                 {
                     if (entity is Monster m && m.Type == monster.Type)
                     {
-                        monstersExpected++;
+                        MonstersExpectedCount++;
                     }
                 }
             }
         }
 
-        int monstersArrived = 0;
+        int monstersArrivedCount = 0;
+        List<Monster> monstersArrived = new List<Monster>();
         (int col, int row) meetingPoint = config.MeetingPoint.Value;
         foreach (Entity entity in mapManager.GetAllEntities(meetingPoint))
         {
             if (entity is Monster m && m.Type == monster.Type)
             {
-                monstersArrived++;
+                monstersArrivedCount++;
+                monstersArrived.Add(m);
             }
         }
 
-        if (monstersArrived < monstersExpected) { return;  }
+        if (monstersArrivedCount < MonstersExpectedCount) { return; }
 
+        // Enough monsters have arrived -> attack together!
         config.MeetingPoint = null;
         _cachedPaths.Clear();
+
+        var pathToRealTarget = ReconstructPath(currentTile, realDestination, previousTile, timeToReach, monster);
+        foreach (Monster m in monstersArrived)
+        {
+            RegisterTarget(m, realDestination, timeToReach[realDestination.Item1, realDestination.Item2]);
+            CachePath(monster, pathToRealTarget);
+            var nextTile = pathToRealTarget[Math.Min(1, pathToRealTarget.Count - 1)];
+        }
     }
 
     private void LogProfilingMetrics()
