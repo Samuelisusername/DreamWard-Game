@@ -89,7 +89,7 @@ public class MonsterGroupContainer
         
         
         //if monster can attack structure on its way, do so
-        if(monsterGroup.Monsters.All(i => i.GoalReached))
+        if(monsterGroup.Monsters.All(i => i.TargetReached))
         {
             monsterGroup.Monsters.ForEach( i=>
             {
@@ -112,7 +112,7 @@ public class MonsterGroupContainer
         
         foreach (List<Monster> monsters in monsterLists)
         {
-            if(monsters[0].GoalReached)
+            if(monsters[0].TargetReached)
             {
                 //monster is idle add all monsters to the idle group if it exists
                 var matchingGroup = MonsterGroups.FirstOrDefault(g => g.MonsterType == monsters[0].Type && g.CommonNextTarget() == tilePosition);

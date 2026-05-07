@@ -21,10 +21,10 @@ public abstract class Monster : Entity
     public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType()];
 
     // The type of this monster (Regular or Flying)
-    public abstract MonsterType Type { get; } 
+    public abstract MonsterType Type { get; }
 
-    // Has the monster reached the end of its path
-    public bool GoalReached => pathFindingManager.PathLength(this) <= 1;
+    // Has the monster reached its target and shouldn't move while it attacks
+    public bool TargetReached => TilePosition == NextTarget;
 
     // Flag set by MonsterGroup when it's time to step forward
     public bool ShouldMove { get; set; }
@@ -144,7 +144,7 @@ public abstract class Monster : Entity
     /// </summary>
     public void Move(bool shouldRecalcPath)
     {
-        if (GoalReached || !ShouldMove) return;
+        if (TargetReached || !ShouldMove) return;
         TilePosition = NextTarget; 
         if(shouldRecalcPath)
         {            

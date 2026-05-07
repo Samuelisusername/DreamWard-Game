@@ -54,7 +54,7 @@ public abstract class MonsterGroup
     public float Health => Monsters.Sum(m => m.CurrentHealth);
     public float Damage => Monsters.Sum(m => m.DamagePerSecond); 
 
-    protected bool _goalReached => Monsters.All(i => i.GoalReached);
+    protected bool _goalReached => Monsters.All(i => i.TargetReached);
     protected bool _oldGoalReached = false;
     private bool isMerging;
 
@@ -210,7 +210,7 @@ public abstract class MonsterGroup
                     foreach (Monster monster in Monsters)
                     {
                         monster.NextTarget = pathFindingManager.GetNextPosition(monster);
-                        if(pathFindingManager.GetTarget(monster) is {} target)
+                        if(pathFindingManager.GetTarget(monster) is {} target && monster.NextTarget == target)
                         {
                             Entity destStructure = mapManager.GetStructure(target);
                             if(destStructure != null)
