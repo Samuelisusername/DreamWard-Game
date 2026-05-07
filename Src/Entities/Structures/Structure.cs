@@ -160,6 +160,7 @@ public abstract class Structure : Entity
 
     protected Texture2D _dummy = GamelabGame.DummyText;
     protected SpriteFont _font = GamelabGame.Font;
+    protected SpriteFont _hintFont = GamelabGame.HintFont;
     protected abstract (string label, string info)[] infos {get;}
 
     public string tutorialText;
@@ -174,6 +175,8 @@ public abstract class Structure : Entity
 
     // Set by MapScreen before calling DrawCard so positions are computed in screen pixels.
     internal static Matrix _screenTransform = Matrix.Identity;
+
+    protected string continueHint = "(Press Space to continue)";
 
     // Converts a virtual-space point to integer screen pixels.
     protected static Vector2 ToScreen(float x, float y)
@@ -206,12 +209,12 @@ public abstract class Structure : Entity
 
         int boxHeight;
         int boxWidth;
-        Vector2 boxDimensions = Vector2.Zero;
         if(tutorialText != null)
         {
-            boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
-            boxWidth = (int)boxDimensions.X + (pad * 2);
-            boxHeight = (int)boxDimensions.Y + (pad * 2);
+            Vector2 boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
+            Vector2 hintSize = _font.MeasureString(continueHint) * new Vector2(sx, sy);
+            boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X) + (pad * 2);
+            boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
         }
         else
         {
@@ -249,7 +252,13 @@ public abstract class Structure : Entity
             Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
     
             // Pass false for isMeasuring, pass the actual SpriteBatch
-            ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            var dialogBox = ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            Vector2 hintPos = new Vector2(
+                left + (boxWidth / 2) - ((_font.MeasureString(continueHint).X * sx) / 2), // Centered
+                top + dialogBox.Y  + (2 * pad)
+            );
+
+            spriteBatch.DrawString(_font, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
             //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
         else

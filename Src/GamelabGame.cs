@@ -38,6 +38,7 @@ public class GamelabGame : Game
     public static Texture2D DummyText;
     public static Texture2D NightBackground;
     public static SpriteFont Font;
+    public static SpriteFont HintFont;
 
     /// <summary>
     /// The directory where the compiled content files are available during runtime
@@ -197,6 +198,7 @@ public class GamelabGame : Game
         NightBackground = Content.Load<Texture2D>("Sprites/night_background");
 
         Font = Content.Load<SpriteFont>("infoFont");
+        HintFont = Content.Load<SpriteFont>("hintFont");
         LoadingShader = Content.Load<Effect>("ColorOverlay");
         
         var dayTilesAtlas = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
