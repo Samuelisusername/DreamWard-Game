@@ -15,6 +15,8 @@ public class PathFindingConfig
     public int BuffPenalty { get; set; } = 50; // higher number means monsters are more repelled by buffed tiles
     public int FencePenalty { get; set; } = 4; // higher number means monster are more likely to go around fences/walls
     public int RandomTileMaxDistanceFromCenter { get; set; } = 8; // if the monsters haven't found any targets, they will move towards a random tile at most RandomTileMaxDistanceFromCenter tiles from the center
+    public bool MeetUpBeforeAttacking { get; set; } = false; // if true, monsters of the same type will try to meet up at MeetingPoint before attacking targets
+    public (int col, int row)? MeetingPoint { get; set; } = null; // this is where the monsters of said type meet if set to a value
 }
 
 public class PathFindingManager
@@ -60,7 +62,8 @@ public class PathFindingManager
     {
         _configOverrides[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
         _configOverrides[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
-        _configOverrides[MonsterType.Small] = new PathFindingConfig { VisionRange = 4, AttackPhaseMinTileCost = 1, FencePenalty = 10 };
+        _configOverrides[MonsterType.Small] = new PathFindingConfig { VisionRange = 5, AttackPhaseMinTileCost = 1,
+                                                                        FencePenalty = 10, MeetUpBeforeAttacking = true };
 
         _discoveredTargets = new HashSet<(int col, int row)>();
         _targetToMonsters = new Dictionary<(int, int), HashSet<Monster>>();
@@ -207,7 +210,7 @@ public class PathFindingManager
 
         (int col, int row) currentTile = monster.TilePosition;
         UpdateDiscoveredTargets(monster);
-        
+
 
         var cachedPos = TryGetCachedNextPosition(monster);
         if (cachedPos.HasValue)
@@ -266,8 +269,9 @@ public class PathFindingManager
             _stepTimer.Restart();
         }
 
+        var config = GetConfig(monster);
         var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
-        if (bestPrimary != null)
+        if (bestPrimary != null && !config.MeetingPoint.HasValue)
         {
             var primaryPath = ReconstructPath(currentTile, bestPrimary.Value.Tile, previousTile, timeToReach, monster);
             if (primaryPath.Count > 0)
@@ -291,7 +295,7 @@ public class PathFindingManager
         }
 
         var bestSecondary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
-        if (bestSecondary != null)
+        if (bestSecondary != null && !config.MeetingPoint.HasValue)
         {
             var secondaryPath = ReconstructPath(currentTile, bestSecondary.Value.Tile, previousTile, timeToReach, monster);
             if (secondaryPath.Count > 0)
@@ -314,20 +318,29 @@ public class PathFindingManager
             _stepTimer.Restart();
         }
 
-        var config = GetConfig(monster);
+        
         for (int i = config.RandomTileMaxDistanceFromCenter; i >= 0; --i)
         {
-            var randomCenterTile = GetRandomTileNearCenter(i);
-            if (localPenalty[randomCenterTile.col, randomCenterTile.row] > 0)
+            var destination = config.MeetingPoint.HasValue ? config.MeetingPoint.Value : GetRandomTileNearCenter(i);
+            if (_visited[destination.col, destination.row] > 0 && !config.MeetingPoint.HasValue)
             {
                 continue;
             }
+            if (destination == currentTile)
+            {
+                if (config.MeetingPoint.HasValue)
+                {
+                    var realDestination = bestPrimary != null ? bestPrimary.Value.Tile : bestSecondary != null ? bestSecondary.Value.Tile : destination;
+                    AttackTogetherIfMeetingPointFull(currentTile, realDestination, previousTile, timeToReach, monster);
+                }
+                return currentTile;
+            }
             CalculateWeakestPaths(currentTile, monster, _simplePathDefenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
-            var centerPath = ReconstructPath(currentTile, randomCenterTile, previousTile, timeToReach, monster);
-            if (centerPath.Count > 1)
+            var centerPath = ReconstructPath(currentTile, destination, previousTile, timeToReach, monster);
+            if (centerPath.Count > 0)
             {
                 CachePath(monster, centerPath);
-                var nextTile = centerPath[1];
+                var nextTile = centerPath[Math.Min(1, centerPath.Count - 1)];
 
                 if (_profilingEnabled)
                 {
@@ -363,7 +376,94 @@ public class PathFindingManager
             {
                 // Clear all caches when a *new* target is registered, since it may affect pathfinding for all monsters
                 _cachedPaths.Clear();
+                UpdateMeetingPoint(monster, surroundingTile);
             }
+        }
+    }
+
+    private void UpdateMeetingPoint(Monster monster, (int, int) discoveredTarget)
+    {
+        var config = GetConfig(monster);
+        if (!config.MeetUpBeforeAttacking || config.MeetingPoint.HasValue) { return; }
+
+        // Update the defences and calculate the costs from the discovered target to all tiles
+        int[,] localPenalty = UpdateDefenceStrengths(monster);
+        int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
+        (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
+        int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
+        CalculateWeakestPaths(discoveredTarget, monster, _defenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
+        
+        // Choose a tile that is not defended and that has a weak path to the target
+        var minDefenceStrength = int.MaxValue;
+        int minCostToGetThere = int.MaxValue;
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                if (timeToReach[col, row] == int.MaxValue)
+                {
+                    continue;
+                }
+                if (_defenceStrength[col, row] < minDefenceStrength ||
+                    (_defenceStrength[col, row] == minDefenceStrength && costToGetThere[col, row] < minCostToGetThere))
+                {
+                    minDefenceStrength = _defenceStrength[col, row];
+                    minCostToGetThere = costToGetThere[col, row];
+                    config.MeetingPoint = (col, row);
+                }
+            }
+        }
+    }
+
+    private void AttackTogetherIfMeetingPointFull((int col, int row) currentTile, (int col, int row) realDestination,
+                                            (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster)
+    {
+        var config = GetConfig(monster);
+        if (!config.MeetUpBeforeAttacking || !config.MeetingPoint.HasValue || config.MeetingPoint != monster.TilePosition)
+        {
+            return;
+        }
+
+
+        int MonstersExpectedCount = 0;
+        for (int col = 0; col < mapManager.Columns; col++)
+        {
+            for (int row = 0; row < mapManager.Rows; row++)
+            {
+                foreach (Entity entity in mapManager.GetAllEntities((col, row)))
+                {
+                    if (entity is Monster m && m.Type == monster.Type)
+                    {
+                        MonstersExpectedCount++;
+                    }
+                }
+            }
+        }
+
+        int monstersArrivedCount = 0;
+        List<Monster> monstersArrived = new List<Monster>();
+        (int col, int row) meetingPoint = config.MeetingPoint.Value;
+        foreach (Entity entity in mapManager.GetAllEntities(meetingPoint))
+        {
+            if (entity is Monster m && m.Type == monster.Type)
+            {
+                monstersArrivedCount++;
+                monstersArrived.Add(m);
+            }
+        }
+
+        if (monstersArrivedCount < MonstersExpectedCount) { return; }
+
+        // Enough monsters have arrived -> attack together!
+        config.MeetingPoint = null;
+        _cachedPaths.Clear();
+
+        var pathToRealTarget = ReconstructPath(currentTile, realDestination, previousTile, timeToReach, monster);
+        foreach (Monster m in monstersArrived)
+        {
+            RegisterTarget(m, realDestination, timeToReach[realDestination.Item1, realDestination.Item2]);
+            CachePath(monster, pathToRealTarget);
+            var nextTile = pathToRealTarget[Math.Min(1, pathToRealTarget.Count - 1)];
         }
     }
 
@@ -507,7 +607,7 @@ public class PathFindingManager
         if (_monsterToRecentPath.TryGetValue(monster, out var recentQueue))
         {
             foreach (var (col, row) in recentQueue)
-                localPenalty[col, row] += config.GlobalVisitedPenalty;
+                localPenalty[col, row] += config.LocalRecentlyVisitedPenalty;
         }
         return localPenalty;
     }
