@@ -103,25 +103,22 @@ public class PathFindingManager
         return _monsterToTarget.TryGetValue(monster, out var target) ? target : null;
     }
 
-    public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) candidateTile)
+    public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) nextTile)
     {
         var config = GetConfig(monster);
-        var endStructure = mapManager.GetStructure(candidateTile);
-        var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == candidateTile;
-        if (endStructure != null && monster.CanTarget(endStructure))
+        var nextStructure = mapManager.GetStructure(nextTile);
+        var isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == nextTile;
+        if (nextStructure != null && monster.CanTarget(nextStructure)
+            && (!monster.CanStepOn(nextStructure) || IsPrimaryTarget(nextStructure) || isIntendedTarget))
         {
             _monsterToTargetDist[monster] = 1;
-            _monsterToTarget[monster] = candidateTile;
+            _monsterToTarget[monster] = nextTile;
             PushToRecentPath(monster, currentTile);
             return currentTile;
         }
-        else if (endStructure != null && monster is FlyingMonster && isIntendedTarget)
-        {
-            _monsterToTargetDist[monster] = 0;
-        }
-        _visited[candidateTile.Item1, candidateTile.Item2] += config.GlobalVisitedPenalty;
-        PushToRecentPath(monster, candidateTile);
-        return candidateTile;
+        _visited[nextTile.Item1, nextTile.Item2] += config.GlobalVisitedPenalty;
+        PushToRecentPath(monster, nextTile);
+        return nextTile;
     }
 
     private void PushToRecentPath(Monster monster, (int col, int row) tile)
