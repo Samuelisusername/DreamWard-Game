@@ -34,48 +34,39 @@ public static class TutorialManager
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
         ([(TutorialAction.PlacedTower, 1),(TutorialAction.StartedNight,3)],[
-            (TutorialStructureType.Sheep, "Hey Blank, over here!"),
-            (TutorialStructureType.Tent ,"What, who was that?"),
-            (TutorialStructureType.Sheep ,"Over here, it's us your sheep. You need to protect us!"),
-            (TutorialStructureType.Tent ,"WOW, you can talk!?"),
-            (TutorialStructureType.Sheep ,"Yes of course I can, but that's not important right now. You need to build up our defense."),
-            (TutorialStructureType.Tent ,"Defense, what is it?"),
-            (TutorialStructureType.Sheep ,"Similar to protection, but that's not important right now. Your nightmares almost stole all your sanity [SANITY]"),
-            (TutorialStructureType.Tent ,"Oh that really doesn't sound good, but how should I defend us?"),
-            (TutorialStructureType.Sheep ,"Finally, you're starting to think practical. Start by dragging a card from your hand next to the tent.")]),
+            (TutorialStructureType.Sheep, "Hey! Over here!"),
+            (TutorialStructureType.Tent ,"What... who's there?"),
+            (TutorialStructureType.Sheep ,"It's us, down here! Your nightmares nearly got us!"),
+            (TutorialStructureType.Tent ,"Wait, you can talk?!"),
+            (TutorialStructureType.Sheep ,"Focus! Your nightmares almost drained all your sanity [SANITY] last night."),
+            (TutorialStructureType.Tent ,"That would explain things. How do I stop them?"),
+            (TutorialStructureType.Sheep ,"Build defenses! Drag a card from your hand onto a tile next to the tent.")]),
         ([(TutorialAction.Click,1),(TutorialAction.StartedNight,2)], [
-            (TutorialStructureType.Sheep, "Oh wow, that cost you quite a bit of sanity [SANITY]"),
-            (TutorialStructureType.Tent, "What?! Building structures costs me sanity [SANITY]?"),
-            (TutorialStructureType.Sheep, "Seems to be the case, but at least you have a way to protect yourself."),
-            (TutorialStructureType.Sheep, "And if we survive the night we will replenish some of your sanity [SANITY], so make sure to also protect us and not just your tent."),
-            (TutorialStructureType.Tent, "So you're telling me I should spend my sanity [SANITY] to protect us? But what if I spend too much and nightmares take what's left?"),
-            (TutorialStructureType.Sheep, "Best not to think about that."),
-            (TutorialStructureType.Tent, "Alright, I think I get it. Place towers to defend my tent and sheep and try not to go insane."),
-            (TutorialStructureType.Sheep, "And now finish your preparation for the first night and start the night once you're ready by clicking the button in the bottom right or holding space."),]),
+            (TutorialStructureType.Sheep, "That used up some sanity [SANITY]."),
+            (TutorialStructureType.Tent, "Building costs sanity [SANITY]?!"),
+            (TutorialStructureType.Sheep, "Doesn't everything? But we can restore some if we survive the night."),
+            (TutorialStructureType.Tent, "Spend sanity [SANITY] to gain sanity [SANITY]. Got it."),
+            (TutorialStructureType.Sheep, "Start the night when you're ready."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
     ],
     [
         ([(TutorialAction.MovedSheep, 1),(TutorialAction.StartedNight,3)],[
-            (TutorialStructureType.Sheep, "Phew that was scary, and to think that nightmares are only gonna get stronger from now on..."),
-            (TutorialStructureType.Tent ,"What!? they get even stronger?"),
-            (TutorialStructureType.Sheep, "Oh yes, this was only the beginning, you need to stay here for 10 nights before you can leave."),
-            (TutorialStructureType.Tent ,"That sounds impossible! How should I build up a defense and stay sane with the puny amount of sanity [SANITY] I get from you?"),
-            (TutorialStructureType.Sheep, "WOW, rude! I can leave if you don't want my help."),
-            (TutorialStructureType.Tent, "Don't! I'm sorry. Is there really no way to get more sanity [SANITY]?"),
-            (TutorialStructureType.Sheep, "Hmmm, do you see the juicy looking flowers?"),
-            (TutorialStructureType.Tent, "Uhm, yes. Don't tell me you want me to eat them now!"),
-            (TutorialStructureType.Sheep, "No, of course not! But if you move us there we can produce more sanity [SANITY] in the morning."),
-            (TutorialStructureType.Tent, "Now we're talking. That sounds like it's gonna help!"),
-            (TutorialStructureType.Sheep, "Keep in mind though that you still have to defend us when you move us, else we can't produce sanity [SANITY] in the morning."),
-            (TutorialStructureType.Sheep, "Try moving us to a meadow close by now, by clicking and holding it. It's gonna cost you sanity [SANITY] the further you move us, but it's gonna be worth it in the morning!"),]),
+            (TutorialStructureType.Sheep, "Phew! And they're only going to get stronger..."),
+            (TutorialStructureType.Tent ,"Stronger?! How long does this go on?"),
+            (TutorialStructureType.Sheep, "10 nights. Then you can wake up."),
+            (TutorialStructureType.Tent ,"10 nights?! I'll run out of sanity [SANITY] way before that."),
+            (TutorialStructureType.Sheep, "Only without grazing. See those flowers?"),
+            (TutorialStructureType.Tent, "...You want me to eat flowers?"),
+            (TutorialStructureType.Sheep, "We want to eat flowers. Move us to a meadow and we'll generate extra sanity [SANITY] for three days."),
+            (TutorialStructureType.Tent, "That makes complete sense."),
+            (TutorialStructureType.Sheep, "Click and hold the nearest meadow. Not as much yield as others, but easier to defend."),]),
         ([(TutorialAction.Click,1),(TutorialAction.StartedNight,2)], [
-            (TutorialStructureType.Tent, "Huh what's that thing laying on the grazing spot?"),
-            (TutorialStructureType.Sheep, "Looks like something you can use to defend us, we will graze the flowers around it so you can use it, but it's gonna take until tomorrow morning."),
-            (TutorialStructureType.Tent, "I'm starting to like these grazing spots more and more."),
-            (TutorialStructureType.Sheep, "You can hover over all the grazing spots to see how much sanity [SANITY] we generate each morning if we are there, how much it costs to move us there and what kind of useful item is laying there!"),
-            (TutorialStructureType.Sheep, "Now get ready for the next night, there's gonna be more nightmares, and I'm gonna do the very important job of eating these juicy flowers!"),]),
+            (TutorialStructureType.Sheep, "I think we found something useful. We'll uncover it by morning."),
+            (TutorialStructureType.Tent, "These meadows keep getting better."),
+            (TutorialStructureType.Sheep, "Hover over any meadow to see its sanity [SANITY] yield, move cost, and hidden item."),
+            (TutorialStructureType.Sheep, "Now prep for night two. We'll be busy with these juicy flowers."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
@@ -83,10 +74,10 @@ public static class TutorialManager
     [
         ([(TutorialAction.Click, 1),(TutorialAction.StartedNight,2)],[
             (TutorialStructureType.Sheep, "Another night, another victo... Oh, that's not good."),
-            (TutorialStructureType.Tent ,"What!? What is not good?"),
-            (TutorialStructureType.Sheep, "I sense a new type of threat, a winged nightmare. They can fly over most of the structures you build."),
-            (TutorialStructureType.Tent ,"They fly now?!"),
-            (TutorialStructureType.Sheep, "Hey don't blame me for what's happening it's your dreams attacking us, not mine."),]),
+            (TutorialStructureType.Tent ,"What?!"),
+            (TutorialStructureType.Sheep, "Winged nightmares. They fly over most of your defenses."),
+            (TutorialStructureType.Tent ,"Of course they do."),
+            (TutorialStructureType.Sheep, "Hey, they're your dreams. We're just stuck in them."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
