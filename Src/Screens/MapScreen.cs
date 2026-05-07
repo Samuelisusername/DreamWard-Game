@@ -200,7 +200,6 @@ public class MapScreen : GamelabGameScreen
         bool[] btnActive   = {
             notTransition && isDay,             // Inventory
             !isDay || (notTransition && isDay), // TowerRange: night block OR day block
-            notTransition && isDay,             // Tutorial
             !isDay,                             // Speed (night only)
             notTransition && isDay,             // Move
             notTransition && isDay,             // Hammer
