@@ -214,7 +214,7 @@ public class PathFindingManager
             {
                 var nextTile = cachedPath.Dequeue();
 
-                //_monsterToTargetDist[monster] = cachedPath.Count + 1;
+                _monsterToTargetDist[monster] = cachedPath.Count + 1;
 
                 var actualNextTile = GetNextPositionIfSafe(monster, monster.TilePosition, nextTile);
 
@@ -238,35 +238,15 @@ public class PathFindingManager
     /// </summary>
     public (int, int) GetNextPosition(Monster monster)
     {
-        //Log($"GetNextPosition called");
-        // Each monster type has an important property, vision range, that defines how far it can see on the map. The monster will target a structure
-        // only if it can see the structure.
-
-        // --- TARGET FINDING  ---
-        // A new target is selected according to the following preferences:
-        // 1. A structure less than or equal to 'visionRange' tiles away (in simple airwise distance) that the monster can target
-        //    a. In case of a tie, the monster will prefer primary targets over secondary targets.
-        //    b. If there are multiple targets of the same type, the monster will pick the one with the lowest 'costToGetThere'.
-        // 2. One tile towards some randomly chosen tile near the center
-
-        // --- PATH FINDING ---
-        // The sum of defense strengths along the path is used as a measure of path cost, where defense strength is the sum of strengths of the
-        // towers defending the tile.
-
-        // ------------------------------------
-
-        // CACHED?
+        // 1. CACHED
         if (_profilingEnabled)
         {
             LogProfilingMetrics();
             _callCount++;
             _stepTimer.Restart();
         }
-
         (int col, int row) currentTile = monster.TilePosition;
         UpdateDiscoveredTargets(monster);
-
-
         var cachedPos = TryGetCachedNextPosition(monster);
         if (cachedPos.HasValue)
         {
@@ -276,20 +256,19 @@ public class PathFindingManager
                 _timeCache += _stepTimer.Elapsed.TotalMilliseconds;
                 _stepTimer.Restart();
             }
-            
             return cachedPos.Value;
         }
 
+        // Update defences and other penalties before calculating new paths
         UnregisterMonsterTarget(monster);
         var localPenalty = UpdateDefenceStrengths(monster);
-
         if (_profilingEnabled)
         {
             _timeUpdateDef += _stepTimer.Elapsed.TotalMilliseconds;
             _stepTimer.Restart();
         }
-        // Find out at what time can each tile, that is reachable without damage, be reached.
-        
+
+        // Precompute a path from the monster to all tiles on the map
         int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
         (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
         int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
@@ -300,33 +279,36 @@ public class PathFindingManager
             _stepTimer.Restart();
         }
 
-        var visibleTargets = new List<((int,int), Entity entity)>();
+        // Create a list of all possible targets
+        var allPossibleTargets = new List<((int,int), Entity entity)>();
         foreach (var target in _discoveredTargets)
         {
             Entity entity = mapManager.GetStructure(target);
-            visibleTargets.Add((target, entity));
+            allPossibleTargets.Add((target, entity));
         }
 
-        // if the monster can see a decoy, it will ignore all other targets
-        foreach (var target in visibleTargets)
+        // If a monster sees a decoy, it forgets all other targets
+        foreach (var target in allPossibleTargets)
         {
             var (location, entity) = target;
             if (entity is Decoy decoy)
             {
-                visibleTargets.Clear();
-                visibleTargets.Add(target);
+                allPossibleTargets.Clear();
+                allPossibleTargets.Add(target);
                 break;
             }
         }
-
         if (_profilingEnabled)
         {
             _timeTargetVis += _stepTimer.Elapsed.TotalMilliseconds;
             _stepTimer.Restart();
         }
 
+        // 2. MEETING POINT (code is down below since it requires path recomputation)
+
+        // 3. PRIMARY TARGETS
         var config = GetConfig(monster);
-        var bestPrimary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
+        var bestPrimary = SelectBestTarget(allPossibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
         if (bestPrimary != null && !config.MeetingPoint.HasValue)
         {
             var primaryPath = ReconstructPath(currentTile, bestPrimary.Value.Tile, previousTile, timeToReach, monster);
@@ -343,14 +325,14 @@ public class PathFindingManager
                 return GetNextPositionIfSafe(monster, currentTile, nextTile);
             }
         }
-
         if (_profilingEnabled)
         {
             _timePrimary += _stepTimer.Elapsed.TotalMilliseconds;
             _stepTimer.Restart();
         }
 
-        var bestSecondary = SelectBestTarget(visibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
+        // 4. SECONDARY TARGETS (all other entities that can be attacked)
+        var bestSecondary = SelectBestTarget(allPossibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
         if (bestSecondary != null && !config.MeetingPoint.HasValue)
         {
             var secondaryPath = ReconstructPath(currentTile, bestSecondary.Value.Tile, previousTile, timeToReach, monster);
@@ -367,7 +349,6 @@ public class PathFindingManager
                 return GetNextPositionIfSafe(monster, currentTile, nextTile);
             }
         }
-
         if (_profilingEnabled)
         {
             _timeSecondary += _stepTimer.Elapsed.TotalMilliseconds;
@@ -375,6 +356,7 @@ public class PathFindingManager
         }
 
         
+        // 2. MEETING POINT and 4. RANDOM TILE NEAR CENTER
         for (int i = config.RandomTileMaxDistanceFromCenter; i >= 0; --i)
         {
             var destination = config.MeetingPoint.HasValue ? config.MeetingPoint.Value : GetRandomTileNearCenter(i);
@@ -389,6 +371,10 @@ public class PathFindingManager
                     var realDestination = bestPrimary != null ? bestPrimary.Value.Tile : bestSecondary != null ? bestSecondary.Value.Tile : destination;
                     AttackTogetherIfMeetingPointFull(currentTile, realDestination, previousTile, timeToReach, monster);
                 }
+                if (_profilingEnabled)
+                {
+                    _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
+                }
                 return currentTile;
             }
             CalculateWeakestPaths(currentTile, monster, _simplePathDefenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
@@ -402,13 +388,12 @@ public class PathFindingManager
                 {
                     _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
                 }
-                //RegisterTarget(monster, destination, timeToReach[destination.col, destination.row]);
                 return GetNextPositionIfSafe(monster, currentTile, nextTile);
             }
         }
 
+        // 5. RANDOM NEIGHBOR
         var next = GetRandomNeighborAsLastResort(currentTile, monster);
-
         if (_profilingEnabled)
         {
             _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
@@ -576,9 +561,8 @@ public class PathFindingManager
     /// </summary>
     /// <param name="monster"></param>
     /// <returns></returns>
-    public int PathLength(Monster monster)
+    public int GetDistanceToTarget(Monster monster) // we're not calculating the distance to the nearest Target (the store) :)
     {
-        var currTarget = _monsterToTarget.TryGetValue(monster, out var target) ? target.ToString() : null;
         if (_monsterToTargetDist.TryGetValue(monster, out var dist))
         {
             if (_debugPrintsEnabled) Log($"PathLength returned {dist}", monster);
@@ -941,25 +925,25 @@ public class PathFindingManager
 
     private void UnregisterMonsterTarget(Monster monster)
     {
-        if (!_monsterToTarget.TryGetValue(monster, out var previousTile))
+        _monsterToTargetDist.Remove(monster);
+        if (!_monsterToTarget.TryGetValue(monster, out var target))
         {
             return;
         }
 
         _monsterToTarget.Remove(monster);
 
-        if (!_targetToMonsters.TryGetValue(previousTile, out var monsters))
+        if (!_targetToMonsters.TryGetValue(target, out var monsters))
         {
             return;
         }
 
         monsters.Remove(monster);
-        _monsterToTargetDist.Remove(monster);
-
-        if (monsters.Count == 0 || mapManager.GetStructure(previousTile) == null)
+        
+        if (monsters.Count == 0 || mapManager.GetStructure(target) == null)
         {
-            _targetToMonsters.Remove(previousTile);
-            _discoveredTargets.Remove(previousTile);
+            _targetToMonsters.Remove(target);
+            _discoveredTargets.Remove(target);
             return;
         }
     }
