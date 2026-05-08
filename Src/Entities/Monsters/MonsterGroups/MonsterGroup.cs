@@ -205,6 +205,17 @@ public abstract class MonsterGroup
             else 
             {         
                 shouldCheckMerge = true;
+                // BigMonsters can deadlock when two block each other: GetNextPositionIfSafe
+                // returns currentTile, making TargetReached=true so the group never retries.
+                // Trigger a recalc each speed interval so they detect when the blocker moves
+                // (or IsStationary forces one through on the second attempt).
+                if (!shouldRecalcPath 
+                    && MonsterType == MonsterType.Big
+                    && CommonAttackTarget() == null
+                    && Monsters.Any(m => pathFindingManager.GetTarget(m) != null))
+                {
+                    shouldRecalcPath = true;
+                }
                 if(shouldRecalcPath)
                 {
                     foreach (Monster monster in Monsters)
