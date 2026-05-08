@@ -868,7 +868,8 @@ public class MapScreen : GamelabGameScreen
     public void DrawMapOnly(GameTime gameTime)
     {
         if (spriteBatch == null) return; // not yet initialized (screen switch pending)
-        GraphicsDevice.Clear(gamePhaseManager.IsDay ? new Color(80, 137, 71) : new Color(20, 47, 44));
+        float fallProgress = (float)mapManager.TotalFallTime.TotalSeconds < 1.0f ? 0 : (float)mapManager.TotalFallTime.TotalSeconds / (float)mapManager.MaxTotalFallTime.TotalSeconds;
+        GraphicsDevice.Clear(Color.Lerp(Color.CornflowerBlue, Color.Black, fallProgress));
         // this still does not account for pixel tearing, but I think I prefer that over blurriness or choppy zoom
         float viewportScale = viewportAdapter.GetScaleMatrix().M11;
         SamplerState sampler = mapManager.Scale.X * viewportScale < 1f ? SamplerState.LinearClamp : SamplerState.PointClamp;
@@ -1185,7 +1186,7 @@ public class MapScreen : GamelabGameScreen
 
         int textX = (int)pos1.X + iconSize + iconGap;
         DrawValueBar(textX, (int)pos1.Y, sanityBarWidth, barHeight,
-            Math.Clamp(sanityManager.Sanity, 0, MaxSanity), MaxSanity, new Color(37, 150, 190));
+            Math.Clamp(sanityManager.Sanity, 0, MaxSanity), MaxSanity, gamePhaseManager.IsDay ? new Color(104, 201, 255) : new Color(138, 198, 204));
         DrawValueBar(textX, (int)pos2.Y, dayBarWidth, barHeight,
             Math.Clamp(gamePhaseManager.DayCount, 0, MaxDays), MaxDays, new Color(218, 165, 32));
     }
