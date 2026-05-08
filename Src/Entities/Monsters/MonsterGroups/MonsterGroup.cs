@@ -409,7 +409,7 @@ public abstract class MonsterGroup
                 return; 
             }
             Monsters.ForEach(i => i.Attack(gameTime, structure));
-            AudioManager.Play("grunt_03");// now the attack sound happens on a group levels
+            AudioManager.Play("grunt_03");// now the attack sound happens on a group level
         }     
     }
 
