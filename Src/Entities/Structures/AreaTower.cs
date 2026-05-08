@@ -83,7 +83,7 @@ public class AreaTower : Tower
         if (activeBeamTargets.Count == 0) return;
 
         Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        Vector2 startPos = worldPos + (_localOffset * _spriteTop.Scale + offset) + (new Vector2(64, 55) * _spriteTop.Scale);
+        Vector2 startPos = worldPos + (_localOffset * _spriteTop.Scale + offset) + (new Vector2(64, 75) * _spriteTop.Scale);
 
         foreach (var group in activeBeamTargets)
         {

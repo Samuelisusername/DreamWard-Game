@@ -44,12 +44,12 @@
     "SmallMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:01"
   },
   "StartingSanity": 30,
-  "MoveCostMultiplier": 1.5,
+  "MoveCostMultiplier": 1.3,
   "MaxGrazingDays": 3,
   "MeadowSanityGains": {
     "meadow_idle": 5,
     "meadow_red_idle": 7,
     "meadow_blue_idle": 9,
-    "meadow_orange_idle": 11
+    "meadow_orange_idle": 13
   }
 }
