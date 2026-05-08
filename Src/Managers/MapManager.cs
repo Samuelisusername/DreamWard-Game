@@ -493,7 +493,7 @@ public class MapManager
                 }
                 break;
             case 10:
-                if(roll < 10)
+                if(roll < 5)
                 {
                     newMonster = new BigMonster(pos); 
                 }
