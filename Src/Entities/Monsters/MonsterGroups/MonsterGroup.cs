@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework;
 using Gamelab;
 using DreamWardUtils.Graphics;
 using Microsoft.Xna.Framework.Graphics;
-using Gamelab.Managers;
-using System.Runtime.InteropServices;
 
 /// <summary>
 /// Represents a group of monsters with the same next target
@@ -15,6 +13,8 @@ public abstract class MonsterGroup
 {    
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
+
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
 
@@ -54,7 +54,7 @@ public abstract class MonsterGroup
     public float Health => Monsters.Sum(m => m.CurrentHealth);
     public float Damage => Monsters.Sum(m => m.DamagePerSecond); 
 
-    protected bool _goalReached => Monsters.All(i => i.GoalReached);
+    protected bool _goalReached => Monsters.All(i => i.TargetReached);
     protected bool _oldGoalReached = false;
     private bool isMerging;
 
@@ -210,7 +210,7 @@ public abstract class MonsterGroup
                     foreach (Monster monster in Monsters)
                     {
                         monster.NextTarget = pathFindingManager.GetNextPosition(monster);
-                        if(pathFindingManager.GetTarget(monster) is {} target)
+                        if(pathFindingManager.GetTarget(monster) is {} target && monster.NextTarget == target)
                         {
                             Entity destStructure = mapManager.GetStructure(target);
                             if(destStructure != null)
@@ -253,17 +253,17 @@ public abstract class MonsterGroup
 
     protected AnimatedSprite sprite;
 
-    protected float HitFlashAlpha
+    protected float HitFlashWhite
     {
         get
         {
-            if (Monsters.Count == 0) return 1f;
-            float min = 1f;
+            if (Monsters.Count == 0) return 0f;
+            float max = 0f;
             foreach (var m in Monsters)
             {
-                if (m.HitFlashAlpha < min) min = m.HitFlashAlpha;
+                if (m.HitFlashWhite > max) max = m.HitFlashWhite;
             }
-            return min;
+            return max;
         }
     }
 
@@ -275,11 +275,47 @@ public abstract class MonsterGroup
 
         // Use the container's rank logic to offset them so they don't overlap perfectly
         // Vector2 rankOffset = new Vector2(posOnTile.rank * 10 * mapManager.Scale.X, 0);
+        Vector2 spritePos = worldPos + (LocalOffset * mapManager.Scale);
+        float flash = HitFlashWhite;
+        if (flash > 0f)
+        {
+            spriteBatch.End();
+            GamelabGame.WhiteFlashShader.Parameters["FlashAmount"].SetValue(flash);
+            spriteBatch.Begin(effect: GamelabGame.WhiteFlashShader,
+                samplerState: GamelabGame.RenderSampler,
+                transformMatrix: GamelabGame.RenderTransform);
+            sprite.Draw(spriteBatch, spritePos, 1.0f);
+            spriteBatch.End();
+            spriteBatch.Begin(samplerState: GamelabGame.RenderSampler,
+                transformMatrix: GamelabGame.RenderTransform);
+        }
+        else
+        {
+            sprite.Draw(spriteBatch, spritePos, 1.0f);
+        }
+        if (Monsters.Contains(combatManager.PriorityMonster))
+        {
+            TextureRegion target = GamelabGame.textureAtlas["interface"].GetRegion("target0");
+            switch (MonsterType)
+            {
+                case MonsterType.Regular:
+                    worldPos = worldPos + (new Vector2(35, -25) * mapManager.Scale);
+                    break;
+                case MonsterType.Flying:
+                    worldPos = worldPos + (new Vector2(10, -35) * mapManager.Scale);
+                    break;
+                case MonsterType.Small:
+                    worldPos = worldPos + (new Vector2(23, -5) * mapManager.Scale);
+                    break;
+                case MonsterType.Big:
+                    worldPos = worldPos + (new Vector2(25, -45) * mapManager.Scale);
+                    break;
+            }
+            target.Draw(spriteBatch, worldPos, Color.White, 0, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 0);
+        }
 
-        sprite.Draw(spriteBatch, worldPos + (LocalOffset * mapManager.Scale), HitFlashAlpha);
         
-        
-        worldPos = GetInterpolatedWorldPosition(true);
+        //worldPos = GetInterpolatedWorldPosition(true);
         // switch (MonsterType)
         // {
         //     case MonsterType.Regular:

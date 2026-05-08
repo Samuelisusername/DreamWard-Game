@@ -21,6 +21,8 @@ public class CombatManager
     public List<(int,int)> PlayingField {get; private set;}
     private Logger logger = new Logger("Combat Manager");
 
+    public Monster PriorityMonster {get;set;}
+
     // HELPER: Scans the map grid to get a snapshot of all active containers!
     private List<MonsterGroupContainer> GetAllContainers()
     {

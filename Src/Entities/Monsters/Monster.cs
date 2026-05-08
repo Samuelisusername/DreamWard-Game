@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamelab;
 using Gamelab.Managers;
 using Gamelab.Utils.Logging;
@@ -13,6 +14,7 @@ public abstract class Monster : Entity
     protected MapManager mapManager => GamelabGame.MapManager;
     protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
+    private CombatManager combatManager => GamelabGame.CombatManager;
 
     Logger logger = new Logger("Monster");
     public (int col, int row) NextTarget{get; set;}
@@ -21,10 +23,10 @@ public abstract class Monster : Entity
     public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType()];
 
     // The type of this monster (Regular or Flying)
-    public abstract MonsterType Type { get; } 
+    public abstract MonsterType Type { get; }
 
-    // Has the monster reached the end of its path
-    public bool GoalReached => pathFindingManager.PathLength(this) <= 1;
+    // Has the monster reached its target and shouldn't move while it attacks
+    public bool TargetReached => TilePosition == NextTarget;
 
     // Flag set by MonsterGroup when it's time to step forward
     public bool ShouldMove { get; set; }
@@ -36,15 +38,13 @@ public abstract class Monster : Entity
 
     private static readonly TimeSpan hitFlashDuration = TimeSpan.FromMilliseconds(300);
     private TimeSpan hitFlashRemaining = TimeSpan.Zero;
-    private const float hitFlashMinAlpha = 0.3f;
 
-    public float HitFlashAlpha
+    public float HitFlashWhite
     {
         get
         {
-            if (hitFlashRemaining <= TimeSpan.Zero) return 1f;
-            float t = (float)(hitFlashRemaining.TotalSeconds / hitFlashDuration.TotalSeconds);
-            return MathHelper.Lerp(1f, hitFlashMinAlpha, t);
+            if (hitFlashRemaining <= TimeSpan.Zero) return 0f;
+            return (float)(hitFlashRemaining.TotalSeconds / hitFlashDuration.TotalSeconds);
         }
     }
 
@@ -99,9 +99,14 @@ public abstract class Monster : Entity
             });
             damageAccumulator -= MathF.Floor(damageAccumulator);
         }
-        if (hitFlashRemaining <= TimeSpan.Zero)
+        hitFlashRemaining = hitFlashDuration;
+        if(IsDestroyed && combatManager.PriorityMonster == this)
         {
-            hitFlashRemaining = hitFlashDuration;
+            var filteredList = mapManager.GetMonsterContainer(TilePosition).GetMonsterGroup(this).Monsters.Where(i => !i.IsDestroyed);
+            if(filteredList.Any())
+            {
+                combatManager.PriorityMonster = filteredList.MinBy(i => i.CurrentHealth);
+            }
         }
     }
 
@@ -144,7 +149,7 @@ public abstract class Monster : Entity
     /// </summary>
     public void Move(bool shouldRecalcPath)
     {
-        if (GoalReached || !ShouldMove) return;
+        if (TargetReached || !ShouldMove) return;
         TilePosition = NextTarget; 
         if(shouldRecalcPath)
         {            
