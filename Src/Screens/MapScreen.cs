@@ -447,7 +447,7 @@ public class MapScreen : GamelabGameScreen
                 if(!gamePhaseManager.IsInTransition && _hoveredStructure is Meadow cantAffordSpot && !cantAffordSpot.HasSheep)
                 {
                     int moveCost = (int)MathF.Round(MapUtils.CalculateTileDistance(mapManager.SheepPosition, cantAffordSpot.TilePosition) * MapManager.MoveCostMultiplier);
-                    if(GamelabGame.SanityManager.Sanity < moveCost)
+                    if(GamelabGame.SanityManager.Sanity <= moveCost)
                         cantAffordSpot.TriggerCantAffordFlash();
                 }
             }
@@ -521,7 +521,7 @@ public class MapScreen : GamelabGameScreen
                         int moveCost = (int)MathF.Round(
                             MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
                             * MapManager.MoveCostMultiplier);
-                        if (GamelabGame.SanityManager.Sanity >= moveCost
+                        if (GamelabGame.SanityManager.Sanity > moveCost
                             && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                         {
                             mapManager.TryMoveSheep(mousePos);

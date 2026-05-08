@@ -43,7 +43,7 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
     protected override (string label, string info)[] infos => !gamePhaseManager.IsInTransition && !IsGrazed && !HasSheep && mapManager.GetSheep() != null ?
-     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Floor(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
+     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
 
     protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
