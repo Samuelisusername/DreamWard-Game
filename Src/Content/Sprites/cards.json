@@ -19,24 +19,24 @@
    { "name": "idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
-   { "name": "buff", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 2048, "w": 92, "h": 128 } }] },
-   { "name": "decoy", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1920, "w": 92, "h": 128 } }] },
-   { "name": "spikes", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1792, "w": 92, "h": 128 } }] },
-   { "name": "void", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1664, "w": 92, "h": 128 } }] },
-   { "name": "aoe", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 128, "w": 92, "h": 128 } }] },
-   { "name": "sniper", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 0, "w": 92, "h": 128 } }] },
-   { "name": "dreamcatcher", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 256, "w": 92, "h": 128 } }] },
-   { "name": "fence", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 384, "w": 92, "h": 128 } }] },
-   { "name": "meadow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 512, "w": 92, "h": 128 } }] },
-   { "name": "shuffle", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 640, "w": 92, "h": 128 } }] },
-   { "name": "discount", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 768, "w": 92, "h": 128 } }] },
-   { "name": "top3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 896, "w": 92, "h": 128 } }] },
-   { "name": "discard", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1024, "w": 92, "h": 128 } }] },
-   { "name": "deck", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1152, "w": 128, "h": 128 } }] },
-   { "name": "polymorph", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1280, "w": 92, "h": 128 } }] },
-   { "name": "move", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1408, "w": 92, "h": 128 } }] },
+   { "name": "bomb", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 2176, "w": 92, "h": 128 } }] },
    { "name": "destroy", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1536, "w": 92, "h": 128 } }] },
-   { "name": "bomb", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 2176, "w": 92, "h": 128 } }] }
+   { "name": "move", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1408, "w": 92, "h": 128 } }] },
+   { "name": "polymorph", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1280, "w": 92, "h": 128 } }] },
+   { "name": "deck", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 1152, "w": 128, "h": 128 } }] },
+   { "name": "discard", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1024, "w": 92, "h": 128 } }] },
+   { "name": "top3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 896, "w": 92, "h": 128 } }] },
+   { "name": "discount", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 768, "w": 92, "h": 128 } }] },
+   { "name": "shuffle", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 640, "w": 92, "h": 128 } }] },
+   { "name": "meadow", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 512, "w": 92, "h": 128 } }] },
+   { "name": "fence", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 384, "w": 92, "h": 128 } }] },
+   { "name": "dreamcatcher", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 256, "w": 92, "h": 128 } }] },
+   { "name": "sniper", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 0, "w": 92, "h": 128 } }] },
+   { "name": "aoe", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 128, "w": 92, "h": 128 } }] },
+   { "name": "void", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1664, "w": 92, "h": 128 } }] },
+   { "name": "spikes", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1792, "w": 92, "h": 128 } }] },
+   { "name": "decoy", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 1920, "w": 92, "h": 128 } }] },
+   { "name": "buff", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 14, "y": 2048, "w": 92, "h": 128 } }] }
   ]
  }
 }

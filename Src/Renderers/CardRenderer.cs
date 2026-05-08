@@ -26,6 +26,7 @@ public class CardRenderer
         { "discount",     "Discounter of Burdens\nNext card purchased gets a discount.\n" },
         { "top3",         "Dreamer's Bounty\nFills all empty build slots with new cards.\n" },
         { "polymorph",    "Vermin of Shadows\nTurn sheep to rats. Ignored by nightmares.\n" },
+        { "bomb",         "Cradle of Oblivion\n Can deal heavy damage once.\n" },
     };
 
     // ── Tunable hand constants ────────────────────────────────────────────────

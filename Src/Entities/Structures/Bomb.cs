@@ -18,7 +18,7 @@ public class Bomb : Tower
 
     protected override (string label, string info)[] infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}")];
 
-    protected override string bottomText => !gamePhaseManager.IsDay? "Click and hold blow up" : "Cant blow up during the day";
+    protected override string bottomText => !gamePhaseManager.IsDay? "Click and hold blow up" : "Can't blow up during the day";
 
     public override void Update(GameTime gameTime)
     {
