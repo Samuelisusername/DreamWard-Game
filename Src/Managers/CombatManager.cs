@@ -183,8 +183,10 @@ public class CombatManager
         }
 
         SpawnableArea = res;
+#if DEBUG
         Console.WriteLine("getspawnableAre finished");
         Console.WriteLine($"Playing field count: {PlayingField.Count};        Spawnable area count: {res.Count}");
+#endif
         // foreach(var tiles in res)
         // {
         //     Console.WriteLine($"{mapManager.GetTileIndex(tiles)}");

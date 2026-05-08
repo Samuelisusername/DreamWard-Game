@@ -40,14 +40,18 @@ public class GamePhaseManager
     {
         if (combatManager.SpawnableArea.Count-2 == 0)
         {
+#if DEBUG
             Console.WriteLine("spawnableArea.count was 0");
+#endif
             GameOverScreen.DidWin = false; 
             GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
             return; 
         }
         else
         {
+#if DEBUG
             Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count}");
+#endif
         }
         mapManager.StartFalling();
         IsInTransition = true;
