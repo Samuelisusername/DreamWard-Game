@@ -302,13 +302,13 @@ public abstract class MonsterGroup
                     worldPos = worldPos + (new Vector2(35, -25) * mapManager.Scale);
                     break;
                 case MonsterType.Flying:
-                    worldPos = worldPos + (new Vector2(35, -25) * mapManager.Scale);
+                    worldPos = worldPos + (new Vector2(10, -35) * mapManager.Scale);
                     break;
                 case MonsterType.Small:
-                    worldPos = worldPos + (new Vector2(35, -25) * mapManager.Scale);
+                    worldPos = worldPos + (new Vector2(23, -5) * mapManager.Scale);
                     break;
                 case MonsterType.Big:
-                    worldPos = worldPos + (new Vector2(35, -25) * mapManager.Scale);
+                    worldPos = worldPos + (new Vector2(25, -45) * mapManager.Scale);
                     break;
             }
             target.Draw(spriteBatch, worldPos, Color.White, 0, Vector2.Zero, mapManager.Scale, SpriteEffects.None, 0);
