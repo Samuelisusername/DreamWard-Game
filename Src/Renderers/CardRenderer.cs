@@ -13,7 +13,7 @@ public class CardRenderer
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Piercer of Veils\nTargets one nightmare. Long range burst damage.\n" },
+        { "sniper",       "Piercer of Veils\nTargets one nightmare. Long range burst damage.\nClick nightmares to mark as target.\n" },
         { "aoe",          "Banisher of Horrors\nTargets all nightmares. Short range burn damage.\n" },
         { "dreamcatcher", "Catcher of Dreams\nBlock all nightmares. Including flying ones.\n" },
         { "fence",        "Warden of Thresholds\nBlock walking nightmares.\n" },
