@@ -17,6 +17,9 @@ public class CombatManager
 
     private float _sanityDamageAccumulator;
 
+    public TimeSpan NightTimer { get; private set; } = TimeSpan.Zero;
+    public TimeSpan MaxNightDuration { get; set; } = TimeSpan.FromSeconds(120); // Kill all monsters if the night lasts too long
+
     public List<(int,int)> SpawnableArea {get; private set;}
     public List<(int,int)> PlayingField {get; private set;}
     private Logger logger = new Logger("Combat Manager");
@@ -51,7 +54,9 @@ public class CombatManager
         // mapManager.AddNewMonster((6,16));
         int maxattempts = 5*count;
         int attempts = 0; 
-        
+
+        NightTimer = TimeSpan.Zero;
+
         for (int i = 0; i < count; i++)
         {
             attempts++;
@@ -196,6 +201,14 @@ public class CombatManager
 
     public void ManageMoveAndAttack(GameTime gameTime)
     {    
+        // 0. End the game if the night has lasted too long (to prevent the game getting stuck)
+        NightTimer += gameTime.ElapsedGameTime;
+        if (NightTimer > MaxNightDuration)
+        {
+            killAllMonsters();
+            NightTimer = TimeSpan.Zero;
+        }
+
         foreach (MonsterGroupContainer container in GetAllContainers()) 
         {
             container.Update(gameTime);
@@ -272,6 +285,20 @@ public class CombatManager
                 foreach (var monsterGroup in container.MonsterGroups)
                 {
                     monsterGroup.QueuePathRecalc();
+                }
+            }
+        }
+    }
+
+    private void killAllMonsters()
+    {
+        foreach (MonsterGroupContainer container in GetAllContainers())
+        {
+            foreach (var monsterGroup in container.MonsterGroups)
+            {
+                foreach (var monster in monsterGroup.Monsters)
+                {
+                    monster.TakeDamage(monster.CurrentHealth + 1000); // take this
                 }
             }
         }
