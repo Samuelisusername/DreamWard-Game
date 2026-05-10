@@ -42,6 +42,13 @@
 /processorParam:TextureFormat=Compressed
 /build:font.spritefont
 
+#begin hintFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:hintFont.spritefont
+
 #begin infoFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
@@ -331,6 +338,21 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/cards.png
 
+#begin Sprites/day_bakground.json
+/copy:Sprites/day_bakground.json
+
+#begin Sprites/day_bakground.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/day_bakground.png
+
 #begin Sprites/day_interface.json
 /copy:Sprites/day_interface.json
 
@@ -580,6 +602,17 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/nightpalette.png
 
+#begin Sprites/sanity_icon_particle.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/sanity_icon_particle.png
 
 #begin Sprites/shadowDummy.png
 /importer:TextureImporter
@@ -592,17 +625,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
-
-#begin Sprites/day_bakground.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/day_bakground.png
-
-#begin Sprites/day_bakground.json
-/copy:Sprites/day_bakground.json
-
-#begin Sprites/sanity_icon_particle.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/build:Sprites/sanity_icon_particle.png
 

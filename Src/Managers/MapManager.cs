@@ -711,6 +711,7 @@ public class MapManager
                 }
             }
             InitScreenShake(TimeSpan.FromSeconds(0.3), 5);
+            TutorialManager.HandleTutorialAction(TutorialAction.PlacedTower);
             return true;
         }
         return false;
@@ -823,12 +824,12 @@ public class MapManager
                     }
                     else if(noiseval < 0.7)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.30, 0.65), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickFlairAnim(0.30, 0.65, 0.10), (i-Columns, j-Rows));
                         ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                     else if(GamelabGame.Rng.NextDouble() < 0.25)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.01, 0.55), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickFlairAnim(0.01, 0.55, 0.44), (i-Columns, j-Rows));
                         ExteriorStructures[i,j] = ExteriorStructures[i,j] ?? tree;
                     }
                               
@@ -840,18 +841,17 @@ public class MapManager
                     noiseval /= relativeDist;
                     if(noiseval < 0.3)
                     {
-                        //check passed spawn tree replace with noise in the future
                         var tree = new TreeTile(PickTreeAnim(0.4, 0.4), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                     else if(noiseval < 0.5)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.1, 0.45), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickFlairAnim(0.10, 0.45, 0.55), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                     else if(GamelabGame.Rng.NextDouble() < 0.25 * relativeDist)
                     {
-                        var tree = new TreeTile(PickTreeAnim(0.0, 0.35), (i-Columns, j-Rows));
+                        var tree = new TreeTile(PickFlairAnim(0.0, 0.35, 0.75), (i-Columns, j-Rows));
                         Structures[i-Columns,j-Rows] = Structures[i-Columns,j-Rows] ?? tree;
                     }
                 }
@@ -998,7 +998,7 @@ public class MapManager
     public void HandleMapClick(Vector2 pos)
     {
         // At night only shake trees that are in the playing field (visible, not fallen)
-        if (!gamePhaseManager.IsDay)
+        if (gamePhaseManager.IsInTransition)
         {
             var tile = GetTileFromScreenPosition(pos);
             if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
@@ -1006,6 +1006,7 @@ public class MapManager
         }
         ShakeTree(pos);
         TrySetTarget(pos);
+        TutorialClick(pos);
     }
 
     private void TrySetTarget(Vector2 pos)
@@ -1084,6 +1085,7 @@ public class MapManager
                 SheepPosition = (tilePos.col, tilePos.row);
                 // Get New Stack Cards
                 GamelabGame.CardManager.GrantStackCard();
+                TutorialManager.HandleTutorialAction(TutorialAction.MovedSheep);
             }
         }
     }
@@ -1095,6 +1097,16 @@ public class MapManager
         if(entity is TreeTile tree)
         {
             tree.Shake();
+        }
+    }
+
+    private void TutorialClick(Vector2 pos)
+    {
+        (int col, int row) tilePos = GetTileFromScreenPosition(pos, true);
+        Entity entity = GetStructure(tilePos, true);
+        if(entity == TutorialManager.CurrentTutorialStructure)
+        {
+            TutorialManager.HandleTutorialAction(TutorialAction.Click);
         }
     }
 
@@ -1166,6 +1178,15 @@ public class MapManager
         if (r < bigChance) return "treeBig_idle";
         if (r < bigChance + midChance) return "treeMid_idle";
         return "treeSmall_idle";
+    }
+
+    private static string PickFlairAnim(double bigChance, double midChance, double smallChance)
+    {
+        double r = Random.Shared.NextDouble();
+        if (r < bigChance)                              return "treeBig_idle";
+        if (r < bigChance + midChance)                  return "treeMid_idle";
+        if (r < bigChance + midChance + smallChance)    return "treeSmall_idle";
+        return "hill_idle";
     }
 
     /// <summary>

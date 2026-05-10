@@ -21,7 +21,7 @@ public class GamelabGame : Game
         Debug,
     }
     
-    public static Dictionary<string, TextureAtlas> textureAtlas;
+    public static Dictionary<string, TextureAtlas> TextureAtlas;
 
     public static GamelabGame Instance { get; private set; }
 
@@ -38,6 +38,7 @@ public class GamelabGame : Game
     public static Texture2D DummyText;
     public static Texture2D NightBackground;
     public static SpriteFont Font;
+    public static SpriteFont HintFont;
 
     /// <summary>
     /// The directory where the compiled content files are available during runtime
@@ -181,17 +182,19 @@ public class GamelabGame : Game
     {
         base.LoadContent();
         
-        textureAtlas = new();
-        TextureAtlas monsters = TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
-        textureAtlas.Add("monsters", monsters);
-        TextureAtlas night_top = TextureAtlas.FromJsonFile(Content, "Sprites/night_top.json");
-        textureAtlas.Add("night_top", night_top);
-        TextureAtlas night_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/night_top_base.json");
-        textureAtlas.Add("night_top_base", night_top_base);
-        TextureAtlas day_top = TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
-        textureAtlas.Add("day_top", day_top);
-        TextureAtlas day_top_base = TextureAtlas.FromJsonFile(Content, "Sprites/day_top_base.json");
-        textureAtlas.Add("day_top_base", day_top_base);
+        TextureAtlas = new();
+        TextureAtlas monsters = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/monsters.json");
+        TextureAtlas.Add("monsters", monsters);
+        TextureAtlas night_top = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/night_top.json");
+        TextureAtlas.Add("night_top", night_top);
+        TextureAtlas night_top_base = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/night_top_base.json");
+        TextureAtlas.Add("night_top_base", night_top_base);
+        TextureAtlas day_top = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_top.json");
+        TextureAtlas.Add("day_top", day_top);
+        TextureAtlas day_top_base = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_top_base.json");
+        TextureAtlas.Add("day_top_base", day_top_base);
+        TextureAtlas day_player = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_player.json");
+        TextureAtlas.Add("day_player", day_player);
         
         DummyText = new Texture2D(GraphicsDevice, 1, 1);
         DummyText.SetData(new[] { Color.White });
@@ -199,20 +202,21 @@ public class GamelabGame : Game
         NightBackground = Content.Load<Texture2D>("Sprites/night_background");
 
         Font = Content.Load<SpriteFont>("infoFont");
+        HintFont = Content.Load<SpriteFont>("hintFont");
         LoadingShader = Content.Load<Effect>("ColorOverlay");
         WhiteFlashShader = Content.Load<Effect>("WhiteFlash");
         
-        var dayTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
+        var dayTilesAtlas = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_tiles.json");
         dayTiles = new(dayTilesAtlas, "var", "idle");
 
-        var nightTilesAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/night_tiles.json");
+        var nightTilesAtlas = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/night_tiles.json");
         nightTiles = new(nightTilesAtlas, "var", "idle");
 
 
-        TextureAtlas interfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
-        textureAtlas.Add("interface", interfaceAtlas);
-        TextureAtlas dayInterfaceAtlas = TextureAtlas.FromJsonFile(Content, "Sprites/day_interface.json");
-        textureAtlas.Add("day_interface", dayInterfaceAtlas);
+        TextureAtlas interfaceAtlas = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/interface.json");
+        TextureAtlas.Add("interface", interfaceAtlas);
+        TextureAtlas dayInterfaceAtlas = DreamWardUtils.Graphics.TextureAtlas.FromJsonFile(Content, "Sprites/day_interface.json");
+        TextureAtlas.Add("day_interface", dayInterfaceAtlas);
 
         var interfaceTexture = interfaceAtlas.Texture;
         cursorArrow = CursorFromRegion(interfaceTexture, interfaceAtlas.GetRegion("cursor_arrow0").SourceRectangle, 0, 0, 2);
@@ -314,6 +318,7 @@ public class GamelabGame : Game
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
 
         PathFindingManager = new();
+        TutorialManager.Reset();
     }
 
     /// <summary>

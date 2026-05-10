@@ -16,7 +16,7 @@ public class StartScreen : GamelabGameScreen
     private Texture2D _dayInterfaceTexture;
     private Texture2D InterfaceTexture => IsDay ? _dayInterfaceTexture : _interfaceTexture;
     private float SpriteScale => virtualScreenSize.X / 640f;
-    private TextureAtlas InterfaceAtlas => GamelabGame.textureAtlas[IsDay ? "day_interface" : "interface"];
+    private TextureAtlas InterfaceAtlas => GamelabGame.TextureAtlas[IsDay ? "day_interface" : "interface"];
     private Rectangle Region(string name) => InterfaceAtlas.GetRegion(name + "0").SourceRectangle;
     private Rectangle[] _buttons;
     private Rectangle _volumeBar;

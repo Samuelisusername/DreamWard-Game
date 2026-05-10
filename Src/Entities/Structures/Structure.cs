@@ -27,8 +27,8 @@ public abstract class Structure : Entity
     {
         _animNameBase = animName;
         _animNameTop = animName;
-        _spriteTop = GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName);
-        _spriteBase = GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName);
+        _spriteTop = GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName);
+        _spriteBase = GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName);
 
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
@@ -42,11 +42,11 @@ public abstract class Structure : Entity
         {
             _isDaySprite = !_isDaySprite;
             if (_spriteTop != null)
-                _spriteTop.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top"].GetAnimation(_animNameTop) :
-                GamelabGame.textureAtlas["night_top"].GetAnimation(_animNameTop);
+                _spriteTop.Animation = _isDaySprite ? GamelabGame.TextureAtlas["day_top"].GetAnimation(_animNameTop) :
+                GamelabGame.TextureAtlas["night_top"].GetAnimation(_animNameTop);
             if (_spriteBase != null)
-                _spriteBase.Animation = _isDaySprite ? GamelabGame.textureAtlas["day_top_base"].GetAnimation(_animNameBase) :
-                GamelabGame.textureAtlas["night_top_base"].GetAnimation(_animNameBase);
+                _spriteBase.Animation = _isDaySprite ? GamelabGame.TextureAtlas["day_top_base"].GetAnimation(_animNameBase) :
+                GamelabGame.TextureAtlas["night_top_base"].GetAnimation(_animNameBase);
         }
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
@@ -107,12 +107,12 @@ public abstract class Structure : Entity
         _animNameBase = animName;
         _animNameTop = animName;
         _spriteTop = gamePhaseManager.IsDay ? 
-        GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top"].CreateAnimatedSprite(animName);
         _spriteTop.Scale = mapManager.Scale;
         _spriteBase = gamePhaseManager.IsDay ? 
-        GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top_base"].CreateAnimatedSprite(animName);
         _spriteBase.Scale = mapManager.Scale;
     }
 
@@ -120,8 +120,8 @@ public abstract class Structure : Entity
     {
         _animNameTop = animName;
         _spriteTop = gamePhaseManager.IsDay ?
-        GamelabGame.textureAtlas["day_top"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top"].CreateAnimatedSprite(animName);
         if (_spriteTop != null)
             _spriteTop.Scale = mapManager.Scale;
     }
@@ -130,8 +130,8 @@ public abstract class Structure : Entity
     {
         _animNameBase = animName;
         _spriteBase = gamePhaseManager.IsDay ?
-        GamelabGame.textureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
-        GamelabGame.textureAtlas["night_top_base"].CreateAnimatedSprite(animName);
+        GamelabGame.TextureAtlas["day_top_base"].CreateAnimatedSprite(animName) :
+        GamelabGame.TextureAtlas["night_top_base"].CreateAnimatedSprite(animName);
         if (_spriteBase != null)
             _spriteBase.Scale = mapManager.Scale;
     }
@@ -160,7 +160,10 @@ public abstract class Structure : Entity
 
     protected Texture2D _dummy = GamelabGame.DummyText;
     protected SpriteFont _font = GamelabGame.Font;
+    protected SpriteFont _hintFont = GamelabGame.HintFont;
     protected abstract (string label, string info)[] infos {get;}
+
+    public string tutorialText;
 
     protected virtual string bottomText => null;
 
@@ -173,8 +176,10 @@ public abstract class Structure : Entity
     // Set by MapScreen before calling DrawCard so positions are computed in screen pixels.
     internal static Matrix _screenTransform = Matrix.Identity;
 
+    protected string continueHint = "(Press Space to continue)";
+
     // Converts a virtual-space point to integer screen pixels.
-    private static Vector2 ToScreen(float x, float y)
+    protected static Vector2 ToScreen(float x, float y)
     {
         float sx = _screenTransform.M11, sy = _screenTransform.M22;
         float tx = _screenTransform.M41, ty = _screenTransform.M42;
@@ -200,14 +205,29 @@ public abstract class Structure : Entity
         int pad = 10;
         int midPad = 50;
         int heightPad = 50;
+        int maxTutorialWidth = 300;
 
-        int boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
-        int boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
-        if(bottomText != null)
+        int boxHeight;
+        int boxWidth;
+        if(tutorialText != null)
         {
-            boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
-            boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
+            Vector2 boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
+            Vector2 hintSize = _font.MeasureString(continueHint) * new Vector2(sx, sy);
+            boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X) + (pad * 2);
+            boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
         }
+        else
+        {
+            boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
+            boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
+            if(bottomText != null)
+            {
+                boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
+                boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
+            }
+        }
+
+        
 
         Vector2 anchor = ToScreen(worldPos.X + 31.5f * mapManager.Scale.X, worldPos.Y);
         if((int)(anchor.X - boxWidth / 2f) < screen.Left + (2*pad))
@@ -227,22 +247,107 @@ public abstract class Structure : Entity
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
 
-        float yOff = MathF.Round(pad * sy);
-        for (int i = 0; i < infos.Length; i++)
+        if(tutorialText != null)
         {
-            var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
-            spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            float infoW = _font.MeasureString(infos[i].info).X * sx;
-            var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
-            spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
+            Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
+    
+            // Pass false for isMeasuring, pass the actual SpriteBatch
+            var dialogBox = ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            Vector2 hintPos = new Vector2(
+                left + (boxWidth / 2) - ((_font.MeasureString(continueHint).X * sx) / 2), // Centered
+                top + dialogBox.Y  + (2 * pad)
+            );
+
+            spriteBatch.DrawString(_font, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
+            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
-        if(bottomText != null)
+        else
         {
-            float textW = _font.MeasureString(bottomText).X * sx;
-            var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-            spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            float yOff = MathF.Round(pad * sy);
+            for (int i = 0; i < infos.Length; i++)
+            {
+                var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
+                spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                float infoW = _font.MeasureString(infos[i].info).X * sx;
+                var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
+                spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
+            }
+            if(bottomText != null)
+            {
+                float textW = _font.MeasureString(bottomText).X * sx;
+                var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+                spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            } 
         }
+    }
+
+    protected Vector2 ProcessTextWithIcons(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 startPosition, Color color, float maxLineWidth, Vector2 scale, bool isMeasuring) 
+    {
+        // Clean up the text and isolate our tag so it always splits neatly
+        text = text.Replace("\n", " ").Replace("[SANITY]", " [SANITY] ");
+        while (text.Contains("  ")) text = text.Replace("  ", " ");
+
+        string[] words = text.Split(' ');
+        
+        float currentX = 0f;
+        float currentY = 0f;
+        float maxX = 0f;
+        float spaceWidth = font.MeasureString(" ").X * scale.X;
+        float lineHeight = font.LineSpacing * scale.Y;
+        TextureRegion sanityIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("sanity_small0");
+
+        foreach (string word in words)
+        {
+            if (string.IsNullOrWhiteSpace(word)) continue;
+
+            float itemWidth;
+            float itemHeight;
+
+            bool isIcon = word == "[SANITY]";
+
+            if (isIcon)
+            {
+                // Adjust icon scale here if your texture is too big/small
+                itemWidth = sanityIcon.Width * scale.X * 1.3f; 
+                itemHeight = sanityIcon.Height * scale.Y * 1.3f;
+            }
+            else
+            {
+                Vector2 wordSize = font.MeasureString(word) * scale;
+                itemWidth = wordSize.X;
+                itemHeight = wordSize.Y;
+            }
+
+            // Wrap to next line if it exceeds max width
+            if (currentX + itemWidth > maxLineWidth && currentX > 0)
+            {
+                currentX = 0f;
+                currentY += lineHeight;
+            }
+
+            // Draw logic (skipped if we are just measuring)
+            if (!isMeasuring && spriteBatch != null)
+            {
+                if (isIcon)
+                {
+                    // Center the icon vertically relative to the text line
+                    float yOffset = (lineHeight - itemHeight) / 2f; 
+                    sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
+                    // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                }
+                else
+                {
+                    spriteBatch.DrawString(font, word, startPosition + new Vector2(currentX, currentY), color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                }
+            }
+
+            currentX += itemWidth + spaceWidth;
+            if (currentX > maxX) maxX = currentX;
+        }
+
+        // Return total dimensions used
+        return new Vector2(maxX - spaceWidth, currentY + lineHeight);
     }
 
     #endregion

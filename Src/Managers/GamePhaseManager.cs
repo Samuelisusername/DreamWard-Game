@@ -18,6 +18,7 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
+        TutorialManager.AdvanceDay();
         IsDay = true;
         IsInTransition = false;
         DayCount += 1;
@@ -53,6 +54,7 @@ public class GamePhaseManager
             Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count}");
 #endif
         }
+        TutorialManager.HandleTutorialAction(TutorialAction.StartedNight);
         mapManager.StartFalling();
         IsInTransition = true;
     }

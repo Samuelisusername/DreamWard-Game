@@ -4,6 +4,7 @@ using Gamelab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using DreamWardUtils.Graphics;
 
 /// <summary>
 /// A Meadow Tile Entity it can have a sheep on it or not
@@ -46,7 +47,7 @@ public class Meadow : Structure
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
 
-    protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Cant move sheep to grazed spot" : null;
+    protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Can't move sheep to grazed spot" : null;
 
     protected TimeSpan timeToMove = TimeSpan.FromSeconds(1.5f);
     protected TimeSpan moveProgress = TimeSpan.Zero;
@@ -54,6 +55,8 @@ public class Meadow : Structure
     private bool resetMoveProgress = true;
     private TimeSpan _cantAffordFlash = TimeSpan.Zero;
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
+    private Sprite _portrait ;
+
 
     private static string SpriteForGain(int sanityGain)
     {
@@ -68,6 +71,9 @@ public class Meadow : Structure
         : base(SpriteForGain(sanityGain), pos)
     {
         _baseSanityGain = sanityGain;
+        _portrait = GamelabGame.TextureAtlas["day_top"].CreateSprite("sheepBig0");
+        _portrait.Scale = Vector2.One * 2;
+        _portrait.Origin = new Vector2(49,112);
     }
 
     public void TickGrazingDay()
@@ -191,7 +197,8 @@ public class Meadow : Structure
         float sy = MathF.Max(1f, MathF.Floor(_screenTransform.M22));
 
         Vector2 worldPos  = mapManager.GetWorldPositionOfTile(TilePosition);
-        int pad = 10, midPad = 50, heightPad = 50;
+        int pad = 10, midPad = 50, heightPad = 50; 
+        int maxTutorialWidth = 300;
         int sepH = (int)MathF.Round(2 * sy);
 
         bool hasBonusSection = gamePhaseManager.IsDay && MeadowGrant != null;
@@ -222,32 +229,45 @@ public class Meadow : Structure
             MathF.Round(y * _screenTransform.M22 + _screenTransform.M42));
 
         // ── Box sizing ─────────────────────────────────────────────────────────
-        int boxWidth = (int)MathF.Round(
-            (infos.Cast<(string,string)>().Max(i => MeasW(i.Item1 + i.Item2)) + 2 * pad + midPad) * sx);
-        int boxHeight = (int)MathF.Round(
-            (infos.Cast<(string,string)>().Sum(i => MeasH(i.Item1)) + pad * (infos.Length + 1)) * sy);
-
-        if (bottomText != null)
+        
+        int boxHeight;
+        int boxWidth;
+        if(tutorialText != null)
         {
-            boxWidth   = Math.Max(boxWidth, ScW(bottomText));
-            boxHeight += (int)MathF.Round((MeasH(bottomText) + heightPad) * sy);
+            Vector2 boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
+            Vector2 hintSize = _hintFont.MeasureString(continueHint) * new Vector2(sx, sy);
+            boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X)  + (pad * 4) + (int)(_portrait.Scale.X * 23);
+            boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
         }
-
-        if (hasBonusSection)
+        else
         {
-            boxHeight += (int)MathF.Round(pad * sy) + sepH + (int)MathF.Round(pad * sy);
-            boxWidth   = Math.Max(boxWidth, ScW(sectionHeader));
-            boxHeight += ScH(sectionHeader);
+            boxWidth = (int)MathF.Round(
+                (infos.Cast<(string,string)>().Max(i => MeasW(i.Item1 + i.Item2)) + 2 * pad + midPad) * sx);
+            boxHeight = (int)MathF.Round(
+                (infos.Cast<(string,string)>().Sum(i => MeasH(i.Item1)) + pad * (infos.Length + 1)) * sy);
 
-            foreach (var (title, body) in cardBlocks)
+            if (bottomText != null)
             {
-                boxWidth   = Math.Max(boxWidth, ScW(title));
-                boxHeight += ScH(title);
-                foreach (var line in body) { boxWidth = Math.Max(boxWidth, ScW(line)); boxHeight += ScH(line); }
-                boxHeight += (int)MathF.Round(pad * sy);
+                boxWidth   = Math.Max(boxWidth, ScW(bottomText));
+                boxHeight += (int)MathF.Round((MeasH(bottomText) + heightPad) * sy);
             }
 
-            if (showBonusLabel) { boxWidth = Math.Max(boxWidth, ScW(BonusLabel)); boxHeight += ScH(BonusLabel); }
+            if (hasBonusSection)
+            {
+                boxHeight += (int)MathF.Round(pad * sy) + sepH + (int)MathF.Round(pad * sy);
+                boxWidth   = Math.Max(boxWidth, ScW(sectionHeader));
+                boxHeight += ScH(sectionHeader);
+
+                foreach (var (title, body) in cardBlocks)
+                {
+                    boxWidth   = Math.Max(boxWidth, ScW(title));
+                    boxHeight += ScH(title);
+                    foreach (var line in body) { boxWidth = Math.Max(boxWidth, ScW(line)); boxHeight += ScH(line); }
+                    boxHeight += (int)MathF.Round(pad * sy);
+                }
+
+                if (showBonusLabel) { boxWidth = Math.Max(boxWidth, ScW(BonusLabel)); boxHeight += ScH(BonusLabel); }
+            }  
         }
 
         // ── Layout anchors ─────────────────────────────────────────────────────
@@ -269,68 +289,88 @@ public class Meadow : Structure
 
         spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
 
-        // ── Draw helpers ───────────────────────────────────────────────────────
-        float yOff = MathF.Round(pad * sy);
-        void DrawCentred(string s, Color c) {
-            spriteBatch.DrawString(_font, s,
-                new Vector2((int)(anchor.X - MeasW(s) * sx / 2f), (int)(top + yOff)),
-                c, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(s) + pad) * sy);
-        }
-        void DrawSep() {
-            spriteBatch.Draw(_dummy,
-                new Rectangle(left + (int)MathF.Round(pad * sx), (int)(top + yOff),
-                            boxWidth - (int)MathF.Round(2 * pad * sx), sepH), dimColor);
-            yOff += sepH;
-        }
-
-        // ── Stat rows ──────────────────────────────────────────────────────────
-        for (int i = 0; i < infos.Length; i++)
+        if(tutorialText != null)
         {
-            spriteBatch.DrawString(_font, infos[i].label,
-                new Vector2(left + MathF.Round(pad * sx), top + yOff),
-                textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            float infoW = MeasW(infos[i].info) * sx;
-            spriteBatch.DrawString(_font, infos[i].info,
-                new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), top + yOff),
-                textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(infos[i].info) + pad) * sy);
-        }
+            Vector2 textStartPos = new Vector2(left + MathF.Round(((3 * pad) + (int)(_portrait.Scale.X * 23)) * sx), top + MathF.Round(pad * sy));
+            _portrait.Draw(spriteBatch, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(boxHeight/2 * sy)));
+    
+            // Pass false for isMeasuring, pass the actual SpriteBatch
+            var dialogBox = ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
+            
+            Vector2 hintPos = new Vector2(
+                left + (_portrait.Scale.X * 23) + (2 * pad) + ((boxWidth -(_portrait.Scale.X * 23) - (2*pad))  / 2) - ((_hintFont.MeasureString(continueHint).X * sx) / 2), // Centered
+                top + dialogBox.Y  + (2 * pad)
+            );
 
-        // ── Hold-to-move bar ───────────────────────────────────────────────────
-        if (bottomText != null)
-        {
-            float textW = MeasW(bottomText) * sx;
-            int   barH  = (int)MathF.Round(MeasH(bottomText) * sy);
-            var   pos   = new Vector2((int)(anchor.X - textW / 2f),
-                                    (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-            Color barColor = _cantAffordFlash > TimeSpan.Zero
-                ? Color.Red * ((float)(_cantAffordFlash / FlashDuration) * 0.6f)
-                : loadColor * 0.5f;
-            int fillW = _cantAffordFlash > TimeSpan.Zero
-                ? (int)textW
-                : (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
-            spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), barColor);
-            spriteBatch.DrawString(_font, bottomText, pos, textColor,
-                0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(bottomText) + heightPad) * sy);
+            spriteBatch.DrawString(_hintFont, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
+            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
         }
-
-        // ── Bonus section ──────────────────────────────────────────────────────
-        if (hasBonusSection)
+        else
         {
-            yOff += MathF.Round(pad * sy);
-            DrawSep();
-            yOff += MathF.Round(pad * sy);
-            DrawCentred(sectionHeader, dimColor);
-            foreach (var (title, body) in cardBlocks)
-            {
-                DrawCentred(title, goldColor);
-                foreach (var line in body) DrawCentred(line, textColor);
-                yOff += MathF.Round(pad * sy);
+            // ── Draw helpers ───────────────────────────────────────────────────────
+            float yOff = MathF.Round(pad * sy);
+            void DrawCentred(string s, Color c) {
+                spriteBatch.DrawString(_font, s,
+                    new Vector2((int)(anchor.X - MeasW(s) * sx / 2f), (int)(top + yOff)),
+                    c, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(s) + pad) * sy);
             }
-            if (showBonusLabel) DrawCentred(BonusLabel, goldColor);
+            void DrawSep() {
+                spriteBatch.Draw(_dummy,
+                    new Rectangle(left + (int)MathF.Round(pad * sx), (int)(top + yOff),
+                                boxWidth - (int)MathF.Round(2 * pad * sx), sepH), dimColor);
+                yOff += sepH;
+            }
+
+            // ── Stat rows ──────────────────────────────────────────────────────────
+            for (int i = 0; i < infos.Length; i++)
+            {
+                spriteBatch.DrawString(_font, infos[i].label,
+                    new Vector2(left + MathF.Round(pad * sx), top + yOff),
+                    textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                float infoW = MeasW(infos[i].info) * sx;
+                spriteBatch.DrawString(_font, infos[i].info,
+                    new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), top + yOff),
+                    textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(infos[i].info) + pad) * sy);
+            }
+
+            // ── Hold-to-move bar ───────────────────────────────────────────────────
+            if (bottomText != null)
+            {
+                float textW = MeasW(bottomText) * sx;
+                int   barH  = (int)MathF.Round(MeasH(bottomText) * sy);
+                var   pos   = new Vector2((int)(anchor.X - textW / 2f),
+                                        (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+                Color barColor = _cantAffordFlash > TimeSpan.Zero
+                    ? Color.Red * ((float)(_cantAffordFlash / FlashDuration) * 0.6f)
+                    : loadColor * 0.5f;
+                int fillW = _cantAffordFlash > TimeSpan.Zero
+                    ? (int)textW
+                    : (int)MathF.Round(textW * (float)(moveProgress / timeToMove));
+                spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), barColor);
+                spriteBatch.DrawString(_font, bottomText, pos, textColor,
+                    0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                yOff += MathF.Round((MeasH(bottomText) + heightPad) * sy);
+            }
+
+            // ── Bonus section ──────────────────────────────────────────────────────
+            if (hasBonusSection)
+            {
+                yOff += MathF.Round(pad * sy);
+                DrawSep();
+                yOff += MathF.Round(pad * sy);
+                DrawCentred(sectionHeader, dimColor);
+                foreach (var (title, body) in cardBlocks)
+                {
+                    DrawCentred(title, goldColor);
+                    foreach (var line in body) DrawCentred(line, textColor);
+                    yOff += MathF.Round(pad * sy);
+                }
+                if (showBonusLabel) DrawCentred(BonusLabel, goldColor);
+            }
         }
+        
     }
 
 }
