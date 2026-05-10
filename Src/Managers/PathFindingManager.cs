@@ -619,7 +619,7 @@ public class PathFindingManager
                 Entity structure = mapManager.GetStructure((col, row));
                 List<(int, int)> defendedTiles;
                 int strength = 0;
-                if (structure is Spike)
+                if (structure is Spike || structure is Bomb)
                 {
                     continue;
                 }
