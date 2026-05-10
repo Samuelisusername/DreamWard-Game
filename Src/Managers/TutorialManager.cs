@@ -55,8 +55,8 @@ public static class TutorialManager
         ([(TutorialAction.MovedSheep, 1),(TutorialAction.StartedNight,3)],[
             (TutorialStructureType.Sheep, "Phew! And they're only going to get stronger..."),
             (TutorialStructureType.Tent ,"Stronger?! How long does this go on?"),
-            (TutorialStructureType.Sheep, "10 nights. Then you can wake up."),
-            (TutorialStructureType.Tent ,"10 nights?! I'll run out of sanity [SANITY] way before that."),
+            (TutorialStructureType.Sheep, "10 days and nights [DAYICON]. Then you can wake up."),
+            (TutorialStructureType.Tent ,"10?! I'll run out of sanity [SANITY] way before that."),
             (TutorialStructureType.Sheep, "Only without grazing. See those flowers?"),
             (TutorialStructureType.Tent, "...You want me to eat flowers?"),
             (TutorialStructureType.Sheep, "We want to eat flowers. Move us to a meadow and we'll generate extra sanity [SANITY] for three days."),
@@ -82,7 +82,13 @@ public static class TutorialManager
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
     ],
-    [
+    [  
+        ([(TutorialAction.Click, 1),(TutorialAction.StartedNight,2)],[
+            (TutorialStructureType.Sheep, "What a stressfull night, i really could use some fresh flowers!"),
+            (TutorialStructureType.Tent ,"Theres still enough flowers here for at least one more night!"),
+            (TutorialStructureType.Sheep, "Okay, okay, you're right. But if you move us again, you can use the move button in the bottom left cornern."),
+            (TutorialStructureType.Tent ,"Let me guess, thats also gonna cost ssanity?"),
+            (TutorialStructureType.Sheep, "You're a fast learner, yes it does, but that still cheaper than building new structures."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])

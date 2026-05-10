@@ -561,238 +561,242 @@ public class MapScreen : GamelabGameScreen
             //handle click
             if (mouse.WasButtonReleased(MouseButton.Left) && _clickStarted)
             {
-                // ── Drop dragged card onto map ────────────────────────────────
-                if (_isDraggingCard && _dragCard != null)
+                if(!_isDrag)
                 {
-                    bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
-                        || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
-                    if (_hoverTile.col >= 0 && !overCardUI)
+                    // ── Drop dragged card onto map ────────────────────────────────
+                    if (_isDraggingCard && _dragCard != null)
                     {
-                        if (cardManager.HandleMapCardUse(mapManager, mousePos))
-                            cardRenderer.CollapseExpanded();
+                        bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
+                            || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
+                        if (_hoverTile.col >= 0 && !overCardUI)
+                        {
+                            if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                                cardRenderer.CollapseExpanded();
+                        }
+                        _isDraggingCard = false;
+                        _dragCard       = null;
+                        _clickStarted   = false;
+                        _isDrag         = false;
+                        return;
                     }
-                    _isDraggingCard = false;
                     _dragCard       = null;
-                    _clickStarted   = false;
-                    _isDrag         = false;
-                    return;
-                }
-                _dragCard       = null;
-                _isDraggingCard = false;
+                    _isDraggingCard = false;
 
-                if(!gamePhaseManager.IsDay) // Night specific clicks
-                {
-                    if (Btn(BtnId.Speed) == ButtonResult.Clicked)
+                    if(!gamePhaseManager.IsDay) // Night specific clicks
                     {
-                        GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
-                        AudioManager.Play("rustle01");
-                        return;
+                        if (Btn(BtnId.Speed) == ButtonResult.Clicked)
+                        {
+                            GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
+                            AudioManager.Play("rustle01");
+                            return;
+                        }
+                        if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
+                        {
+                            _showTowerRange = !_showTowerRange;
+                            _clickStarted = false;
+                            return;
+                        }
+                        mapManager.HandleMapClick(mousePos);
                     }
-                    if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
+                    if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
                     {
-                        _showTowerRange = !_showTowerRange;
-                        _clickStarted = false;
-                        return;
+                        bool overCardStrip = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
+                        //start night
+                        if (!overCardStrip && Btn(BtnId.StartNight) == ButtonResult.Clicked)
+                        {
+    #if DEBUG
+                            gamePhaseManager.SwitchToNight();
+    #else
+                            if (gamePhaseManager.IsDay){
+                                    mapManager.TriggerVoidEnclosureFall();
+                                    gamePhaseManager.SwitchToNight();
+                                }
+    #endif
+                            CancelMoveMode();
+                            _hammerActive = false;
+                            cardManager._selectedTile = (-1, -1);
+                            cardManager._previewStructure = null;
+                            cardManager._activeMapCard = null;  
+                            _clickStarted = false;
+                            return;
+                        }
+                        // ── Card strip clicks ─────────────────────────────────────
+                        if (_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
+                        {
+                            var (clickedCard, clickedSlot) = cardRenderer.HandleClick(mousePos, cardManager);
+    
+                            if (clickedCard == null)
+                                return;
+    
+                            bool isDouble = IsDoubleClick(mouse, gameTime);
+    
+                            // ── BUILD / MAP ACTION ─────────────────────────────
+                            if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
+                            {
+                                // ── POLYMORPH: double-click to auto-target sheep ──
+                                if (clickedCard.Effect == CardEffect.Polymorph)
+                                {
+                                    if (isDouble)
+                                    {
+                                        Meadow sheep = mapManager.GetSheep();
+                                        if (sheep != null && !sheep.IsPolymorphed)
+                                        {
+                                            if (!clickedSlot.Purchased)
+                                            {
+                                                if (!cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
+                                                {
+                                                    _clickStarted = false;
+                                                    return;
+                                                }
+                                                AudioManager.Play("coinsplash");
+                                            }
+                                            if (cardManager.UsePolymorphCard(clickedCard, mapManager))
+                                            {
+                                                AudioManager.Play("card-place");
+                                                cardRenderer.CollapseExpanded();
+                                            }
+                                        }
+                                    }
+                                    _clickStarted = false;
+                                    return;
+                                }
+
+                                if (clickedSlot != null && !clickedSlot.Purchased)
+                                {
+                                    if (isDouble)
+                                        if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
+                                        {
+                                            AudioManager.Play("coinsplash");
+                                            _hammerActive = false;
+                                            CancelMoveMode();
+                                        }
+                                    _clickStarted = false;
+                                    return;
+                                }
+    
+                                if (clickedSlot != null && clickedSlot.Purchased)
+                                {
+                                    ToggleActiveCard(cardManager, clickedCard);
+                                    _clickStarted = false;
+                                    return;
+                                }
+                            }
+    
+                            // ── STACK ACTION ───────────────────────────────────
+                            if (clickedCard.Type == CardType.StackAction)
+                            {
+                                if (clickedCard.Effect == CardEffect.Shuffle ||
+                                    clickedCard.Effect == CardEffect.Discount ||
+                                    clickedCard.Effect == CardEffect.Refill)
+                                {
+                                    if (isDouble)
+                                    {
+                                        cardManager.UseCard(clickedCard);
+                                        AudioManager.Play("card-place");
+                                    }
+                                }
+                                _clickStarted = false;
+                                return;
+                            }
+                        }
+
+                        if (Btn(BtnId.Inventory) == ButtonResult.Clicked)
+                        {
+                            _showInventory = !_showInventory;
+                            if (!_showInventory) cardRenderer.CollapseExpanded();
+                            _clickStarted = false;
+                            return;
+                        }
+                        if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
+                        {
+                            _showTowerRange = !_showTowerRange;
+                            _clickStarted = false;
+                            return;
+                        }
+                        if (Btn(BtnId.Move) == ButtonResult.Clicked)
+                        {
+                            if (_moveActive)
+                            {
+                                CancelMoveMode();
+                            }
+                            else
+                            {
+                                _hammerActive = false;
+                                if (GamelabGame.SanityManager.Sanity <= 2)
+                                {
+                                    _clickStarted = false;
+                                    return;
+                                }
+                                _moveActive = true;
+                                cardManager._activeMapCard = null;
+                                cardManager._previewStructure = null;
+                                cardManager._selectedTile = (-1, -1);
+                            }
+
+                            _clickStarted = false;
+                            return;
+                        }
+                        if (Btn(BtnId.Hammer) == ButtonResult.Clicked)
+                        {
+                            _hammerActive = !_hammerActive;
+                            if (_hammerActive)
+                            {
+                                CancelMoveMode();
+                                // Cancel any active map card so the two modes don't conflict
+                                cardManager._activeMapCard = null;
+                                cardManager._previewStructure = null;
+                                cardManager._selectedTile = (-1, -1);
+                            }
+                            _clickStarted = false;
+                            return;
+                        }
+
+                        if (!mouseOverUI)
+                        {
+                            if (_hammerActive)
+                            {
+                                (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
+                                if (tile.col >= 0 && IsHammerDestroyable(mapManager.GetStructure(tile)))
+                                {
+                                    mapManager.RemoveStructure(tile);
+                                }
+                                _clickStarted = false;
+                                _isDrag = false;
+                                return;
+                            }         
+                            if (_moveActive)
+                            {
+                                (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
+
+                                if (tile.col >= 0)
+                                {
+                                    cardManager.TryMoveStructure(mapManager, tile);
+                                }
+
+                                _clickStarted = false;
+                                _isDrag = false;
+                                return;
+                            }
+                            if (cardManager._activeMapCard != null)
+                            {
+                                bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
+                                    || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
+                                if (!overCardUI)
+                                {
+                                    if (cardManager.HandleMapCardUse(mapManager, mousePos))
+                                        cardRenderer.CollapseExpanded();
+                                }
+                                _clickStarted = false;
+                                _isDrag = false;
+                                return;
+                            }
+                        }
                     }
                     mapManager.HandleMapClick(mousePos);
                 }
-                if(!gamePhaseManager.IsInTransition && GraphicsDevice.PresentationParameters.Bounds.Contains(mouse.Position) && !_isDrag)
-                {
-                    bool overCardStrip = _showInventory && cardRenderer.CardStripBounds.Contains(mousePos);
-                    //start night
-                    if (!overCardStrip && Btn(BtnId.StartNight) == ButtonResult.Clicked)
-                    {
-#if DEBUG
-                        gamePhaseManager.SwitchToNight();
-#else
-                        if (gamePhaseManager.IsDay){
-                                mapManager.TriggerVoidEnclosureFall();
-                                gamePhaseManager.SwitchToNight();
-                            }
-#endif
-                        CancelMoveMode();
-                        _hammerActive = false;
-                        cardManager._selectedTile = (-1, -1);
-                        cardManager._previewStructure = null;
-                        cardManager._activeMapCard = null;  
-                        _clickStarted = false;
-                        return;
-                    }
-                    // ── Card strip clicks ─────────────────────────────────────
-                    if (_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
-                    {
-                        var (clickedCard, clickedSlot) = cardRenderer.HandleClick(mousePos, cardManager);
- 
-                        if (clickedCard == null)
-                            return;
- 
-                        bool isDouble = IsDoubleClick(mouse, gameTime);
- 
-                        // ── BUILD / MAP ACTION ─────────────────────────────
-                        if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
-                        {
-                            // ── POLYMORPH: double-click to auto-target sheep ──
-                            if (clickedCard.Effect == CardEffect.Polymorph)
-                            {
-                                if (isDouble)
-                                {
-                                    Meadow sheep = mapManager.GetSheep();
-                                    if (sheep != null && !sheep.IsPolymorphed)
-                                    {
-                                        if (!clickedSlot.Purchased)
-                                        {
-                                            if (!cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
-                                            {
-                                                _clickStarted = false;
-                                                return;
-                                            }
-                                            AudioManager.Play("coinsplash");
-                                        }
-                                        if (cardManager.UsePolymorphCard(clickedCard, mapManager))
-                                        {
-                                            AudioManager.Play("card-place");
-                                            cardRenderer.CollapseExpanded();
-                                        }
-                                    }
-                                }
-                                _clickStarted = false;
-                                return;
-                            }
 
-                            if (clickedSlot != null && !clickedSlot.Purchased)
-                            {
-                                if (isDouble)
-                                    if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
-                                    {
-                                        AudioManager.Play("coinsplash");
-                                        _hammerActive = false;
-                                        CancelMoveMode();
-                                    }
-                                _clickStarted = false;
-                                return;
-                            }
- 
-                            if (clickedSlot != null && clickedSlot.Purchased)
-                            {
-                                ToggleActiveCard(cardManager, clickedCard);
-                                _clickStarted = false;
-                                return;
-                            }
-                        }
- 
-                        // ── STACK ACTION ───────────────────────────────────
-                        if (clickedCard.Type == CardType.StackAction)
-                        {
-                            if (clickedCard.Effect == CardEffect.Shuffle ||
-                                clickedCard.Effect == CardEffect.Discount ||
-                                clickedCard.Effect == CardEffect.Refill)
-                            {
-                                if (isDouble)
-                                {
-                                    cardManager.UseCard(clickedCard);
-                                    AudioManager.Play("card-place");
-                                }
-                            }
-                            _clickStarted = false;
-                            return;
-                        }
-                    }
-
-                    if (Btn(BtnId.Inventory) == ButtonResult.Clicked)
-                    {
-                        _showInventory = !_showInventory;
-                        if (!_showInventory) cardRenderer.CollapseExpanded();
-                        _clickStarted = false;
-                        return;
-                    }
-                    if (Btn(BtnId.TowerRange) == ButtonResult.Clicked)
-                    {
-                        _showTowerRange = !_showTowerRange;
-                        _clickStarted = false;
-                        return;
-                    }
-                    if (Btn(BtnId.Move) == ButtonResult.Clicked)
-                    {
-                        if (_moveActive)
-                        {
-                            CancelMoveMode();
-                        }
-                        else
-                        {
-                            _hammerActive = false;
-                            if (GamelabGame.SanityManager.Sanity <= 2)
-                            {
-                                _clickStarted = false;
-                                return;
-                            }
-                            _moveActive = true;
-                            cardManager._activeMapCard = null;
-                            cardManager._previewStructure = null;
-                            cardManager._selectedTile = (-1, -1);
-                        }
-
-                        _clickStarted = false;
-                        return;
-                    }
-                    if (Btn(BtnId.Hammer) == ButtonResult.Clicked)
-                    {
-                        _hammerActive = !_hammerActive;
-                        if (_hammerActive)
-                        {
-                            CancelMoveMode();
-                            // Cancel any active map card so the two modes don't conflict
-                            cardManager._activeMapCard = null;
-                            cardManager._previewStructure = null;
-                            cardManager._selectedTile = (-1, -1);
-                        }
-                        _clickStarted = false;
-                        return;
-                    }
-
-                    if (!mouseOverUI)
-                    {
-                        if (_hammerActive)
-                        {
-                            (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
-                            if (tile.col >= 0 && IsHammerDestroyable(mapManager.GetStructure(tile)))
-                            {
-                                mapManager.RemoveStructure(tile);
-                            }
-                            _clickStarted = false;
-                            _isDrag = false;
-                            return;
-                        }         
-                        if (_moveActive)
-                        {
-                            (int col, int row) tile = mapManager.GetTileFromScreenPosition(mousePos);
-
-                            if (tile.col >= 0)
-                            {
-                                cardManager.TryMoveStructure(mapManager, tile);
-                            }
-
-                            _clickStarted = false;
-                            _isDrag = false;
-                            return;
-                        }
-                        if (cardManager._activeMapCard != null)
-                        {
-                            bool overCardUI = cardRenderer.CardStripBounds.Contains(mousePos)
-                                || cardRenderer.ExpandedPanelBounds.Contains(mousePos);
-                            if (!overCardUI)
-                            {
-                                if (cardManager.HandleMapCardUse(mapManager, mousePos))
-                                    cardRenderer.CollapseExpanded();
-                            }
-                            _clickStarted = false;
-                            _isDrag = false;
-                            return;
-                        }
-                    }
-                }
                 _clickStarted = false;
                 _isDrag = false;
-                mapManager.HandleMapClick(mousePos);
             }
         }        
     }

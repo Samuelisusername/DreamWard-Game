@@ -44,7 +44,7 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
     protected override (string label, string info)[] infos => !gamePhaseManager.IsInTransition && !IsGrazed && !HasSheep && mapManager.GetSheep() != null ?
-     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}")] :
+     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}"), ("Days left to graze", $"{MaxGrazingDays - DaysGrazed}")] :
      [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
 
     protected override string bottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Can't move sheep to grazed spot" : null;
@@ -183,6 +183,8 @@ public class Meadow : Structure
             SetAnimationTop("sheepSmall_idle");
         }
     }
+
+    private List<string> badString = ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend."];
     public override void DrawCard(SpriteBatch spriteBatch, Rectangle screen)
     {
         if (!ShouldDrawCard) return;
@@ -235,7 +237,7 @@ public class Meadow : Structure
         if(tutorialText != null)
         {
             Vector2 boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
-            Vector2 hintSize = _hintFont.MeasureString(continueHint) * new Vector2(sx, sy);
+            Vector2 hintSize = badString.Contains(tutorialText) ? Vector2.Zero: _hintFont.MeasureString(continueHint) * new Vector2(sx, sy);
             boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X)  + (pad * 4) + (int)(_portrait.Scale.X * 23);
             boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
         }
@@ -297,13 +299,16 @@ public class Meadow : Structure
             // Pass false for isMeasuring, pass the actual SpriteBatch
             var dialogBox = ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
             
-            Vector2 hintPos = new Vector2(
-                left + (_portrait.Scale.X * 23) + (2 * pad) + ((boxWidth -(_portrait.Scale.X * 23) - (2*pad))  / 2) - ((_hintFont.MeasureString(continueHint).X * sx) / 2), // Centered
-                top + dialogBox.Y  + (2 * pad)
-            );
+            if(!badString.Contains(tutorialText))
+            {
+                Vector2 hintPos = new Vector2(
+                    left + (_portrait.Scale.X * 23) + (2 * pad) + ((boxWidth -(_portrait.Scale.X * 23) - (2*pad))  / 2) - ((_hintFont.MeasureString(continueHint).X * sx) / 2), // Centered
+                    top + dialogBox.Y  + (2 * pad)
+                );
 
-            spriteBatch.DrawString(_hintFont, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
-            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_hintFont, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
+                //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+            }
         }
         else
         {

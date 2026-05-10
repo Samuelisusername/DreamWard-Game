@@ -64,39 +64,42 @@ public abstract class Monster : Entity
         if(damageAccumulator >= 1)
         {
             var group = mapManager.GetMonsterContainer(TilePosition).GetMonsterGroup(this);
-            Vector2 worldPos = group.GetInterpolatedWorldPosition();
-            switch (Type)
+            if(group != null)
             {
-                case MonsterType.Regular:
-                    worldPos = worldPos +  (new Vector2(45, 5) * mapManager.Scale);
-                    break;
-                case MonsterType.Flying:
-                    worldPos = worldPos +  (new Vector2(20, 5) * mapManager.Scale);
-                    break;
-                case MonsterType.Small:
-                    worldPos = worldPos +  (new Vector2(32, 25) * mapManager.Scale);
-                    break;
-                case MonsterType.Big:
-                    worldPos = worldPos +  (new Vector2(28, -5) * mapManager.Scale);
-                    break;
-            }
-            ParticleManager.AddParticle(new Particle
-            {
-                WorldPosition = (worldPos -(Vector2.UnitX * ((float)Random.Shared.NextDouble() -0.5f) * 15 * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
-                Velocity = new Vector2(((float)Random.Shared.NextDouble() -0.5f) * 6, -22f),
-                Color = Color.Red,
-                LifeSpan = TimeSpan.FromSeconds(1.0),
-                Text = $"-{(int)damageAccumulator}",
-                Font = GamelabGame.Font,
-                Scale = 0.3f,
-                Updater = (particle, gameTime) =>
+                Vector2 worldPos = group.GetInterpolatedWorldPosition();
+                switch (Type)
                 {
-                    float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    particle.Color  = Color.Lerp(particle.Color, Color.FromNonPremultiplied(particle.Color.R,particle.Color.G,particle.Color.B,(byte)0) , 1.0f * dt);
-                    particle.Scale += 0.3f * dt;
-                    particle.Velocity += new Vector2(5,7.5f) * dt;
+                    case MonsterType.Regular:
+                        worldPos = worldPos +  (new Vector2(45, 5) * mapManager.Scale);
+                        break;
+                    case MonsterType.Flying:
+                        worldPos = worldPos +  (new Vector2(20, 5) * mapManager.Scale);
+                        break;
+                    case MonsterType.Small:
+                        worldPos = worldPos +  (new Vector2(32, 25) * mapManager.Scale);
+                        break;
+                    case MonsterType.Big:
+                        worldPos = worldPos +  (new Vector2(28, -5) * mapManager.Scale);
+                        break;
                 }
-            });
+                ParticleManager.AddParticle(new Particle
+                {
+                    WorldPosition = (worldPos -(Vector2.UnitX * ((float)Random.Shared.NextDouble() -0.5f) * 15 * mapManager.Scale) - mapManager.Offset)/mapManager.Scale,
+                    Velocity = new Vector2(((float)Random.Shared.NextDouble() -0.5f) * 6, -22f),
+                    Color = Color.Red,
+                    LifeSpan = TimeSpan.FromSeconds(1.0),
+                    Text = $"-{(int)damageAccumulator}",
+                    Font = GamelabGame.Font,
+                    Scale = 0.3f,
+                    Updater = (particle, gameTime) =>
+                    {
+                        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        particle.Color  = Color.Lerp(particle.Color, Color.FromNonPremultiplied(particle.Color.R,particle.Color.G,particle.Color.B,(byte)0) , 1.0f * dt);
+                        particle.Scale += 0.3f * dt;
+                        particle.Velocity += new Vector2(5,7.5f) * dt;
+                    }
+                });
+            }            
             damageAccumulator -= MathF.Floor(damageAccumulator);
         }
         hitFlashRemaining = hitFlashDuration;

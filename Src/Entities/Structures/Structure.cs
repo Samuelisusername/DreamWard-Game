@@ -285,7 +285,7 @@ public abstract class Structure : Entity
     protected Vector2 ProcessTextWithIcons(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 startPosition, Color color, float maxLineWidth, Vector2 scale, bool isMeasuring) 
     {
         // Clean up the text and isolate our tag so it always splits neatly
-        text = text.Replace("\n", " ").Replace("[SANITY]", " [SANITY] ");
+        text = text.Replace("\n", " ").Replace("[SANITY]", " [SANITY] ").Replace("[DAYICON]", " [DAYICON] ");
         while (text.Contains("  ")) text = text.Replace("  ", " ");
 
         string[] words = text.Split(' ');
@@ -296,6 +296,7 @@ public abstract class Structure : Entity
         float spaceWidth = font.MeasureString(" ").X * scale.X;
         float lineHeight = font.LineSpacing * scale.Y;
         TextureRegion sanityIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("sanity_small0");
+        TextureRegion dayIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("time_small0");
 
         foreach (string word in words)
         {
@@ -304,13 +305,19 @@ public abstract class Structure : Entity
             float itemWidth;
             float itemHeight;
 
-            bool isIcon = word == "[SANITY]";
+            bool isSanityIcon = word == "[SANITY]";
+            bool IsDayIcon = word == "[DAYICON]";
 
-            if (isIcon)
+            if (isSanityIcon)
             {
                 // Adjust icon scale here if your texture is too big/small
                 itemWidth = sanityIcon.Width * scale.X * 1.3f; 
                 itemHeight = sanityIcon.Height * scale.Y * 1.3f;
+            }
+            else if(IsDayIcon)
+            {
+                itemWidth = dayIcon.Width * scale.X * 1.3f; 
+                itemHeight = dayIcon.Height * scale.Y * 1.3f;
             }
             else
             {
@@ -329,11 +336,18 @@ public abstract class Structure : Entity
             // Draw logic (skipped if we are just measuring)
             if (!isMeasuring && spriteBatch != null)
             {
-                if (isIcon)
+                if (isSanityIcon)
                 {
                     // Center the icon vertically relative to the text line
                     float yOffset = (lineHeight - itemHeight) / 2f; 
                     sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
+                    // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                }
+                else if(IsDayIcon)
+                {
+                    // Center the icon vertically relative to the text line
+                    float yOffset = (lineHeight - itemHeight) / 2f; 
+                    dayIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
                     // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
                 }
                 else
