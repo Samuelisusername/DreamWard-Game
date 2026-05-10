@@ -35,25 +35,17 @@ public class StartScreen : GamelabGameScreen
         ? new(0x29, 0x24, 0x10)           // dark text (day)
         : new Color(0xd6, 0xd6, 0xd6);       // light text (night)
 
-    private string[] _buttonLabels = { "New Game", "Continue", "How to Play", "Settings", "Quit Game" };
-    private string _howToPlayText =
-    @" Welcome to DreamWard!
-    - Protect yourself and your sheep.
-    - Let your sheep graze on meadows to increase your sanity.
-    - Use sanity to buy and play build cards.
-    - Build towers and fences to defend your territory.
-    - Use action cards strategically to gain advantages.
-    - During the night, watch how your defenses protect you from monsters.";
+    private string[] _buttonLabels = { "New Game", "Continue", "Settings", "Quit Game" };
 
     private float _volume = AudioManager.SavedVolume;
 
-    private enum MenuState { MainMenu, HowToPlay, Settings }
+    private enum MenuState { MainMenu, Settings }
     private MenuState _currentState = MenuState.MainMenu;
     private MenuState _previousState;
 
     private Rectangle _backButton;
-    private readonly bool[]         _btnClickedInside = new bool[5];
-    private readonly ButtonResult[] _btnResults       = new ButtonResult[5];
+    private readonly bool[]         _btnClickedInside = new bool[4];
+    private readonly ButtonResult[] _btnResults       = new ButtonResult[4];
 
     public StartScreen(GamelabGame game) : base(game) { }
 
@@ -85,20 +77,17 @@ public class StartScreen : GamelabGameScreen
             int btnWidth  = (int)(btnSrc.Width  * SpriteScale);
             int btnHeight = (int)(btnSrc.Height * SpriteScale);
             int spacingX  = (int)(10 * SpriteScale);
-            int spacingY  = (int)(8  * SpriteScale);
+            int spacingY  = (int)(30 * SpriteScale);
             int startX = (w - (btnWidth * 2 + spacingX)) / 2;
-            int startY = h / 2 - 2 * btnHeight / 2 - spacingY;
+            int startY = h / 2  - 1 * spacingY;
 
             // Top row: Start, Continue
             _buttons[0] = new Rectangle(startX, startY, btnWidth, btnHeight);                 // Start
             _buttons[1] = new Rectangle(startX + btnWidth + spacingX, startY, btnWidth, btnHeight); // Continue
 
-            // Middle row: How to Play (centered)
-            _buttons[2] = new Rectangle((w - btnWidth) / 2, startY + btnHeight + spacingY, btnWidth, btnHeight); // How to Play
-
             // Bottom row: Settings, Quit
-            _buttons[3] = new Rectangle(startX, startY + 2 * (btnHeight + spacingY), btnWidth, btnHeight); // Settings
-            _buttons[4] = new Rectangle(startX + btnWidth + spacingX, startY + 2 * (btnHeight + spacingY), btnWidth, btnHeight); // Quit
+            _buttons[2] = new Rectangle(startX, startY + btnHeight + spacingY, btnWidth, btnHeight); // Settings
+            _buttons[3] = new Rectangle(startX + btnWidth + spacingX, startY + btnHeight + spacingY, btnWidth, btnHeight); // Quit
         }
         else
         {
@@ -144,7 +133,6 @@ public class StartScreen : GamelabGameScreen
                     GamelabGame.Instance.Balance = GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
                 break;
 
-            case MenuState.HowToPlay:
             case MenuState.Settings:
                 _btnResults[0] = UpdateButton(_buttons[0], mouse, mousePos, ref _btnClickedInside[0]);
                 if (_btnResults[0] == ButtonResult.Clicked)
@@ -178,9 +166,6 @@ public class StartScreen : GamelabGameScreen
                 Game.IsGameInProgress = true;
                 Game.SwitchToScreen(Game.MapScreenInstance);
                 break;
-            case "How to Play":
-                _currentState = MenuState.HowToPlay;
-                break;
             case "Settings":
                 _currentState = MenuState.Settings;
                 break;
@@ -205,9 +190,6 @@ public class StartScreen : GamelabGameScreen
         {
             case MenuState.MainMenu:
                 DrawMainMenu();
-                break;
-            case MenuState.HowToPlay:
-                DrawHowToPlay();
                 break;
             case MenuState.Settings:
                 DrawSettings();
@@ -314,22 +296,6 @@ public class StartScreen : GamelabGameScreen
         Rectangle destRect = new Rectangle((int)pos.X, (int)pos.Y, (int)size.X, (int)size.Y);
 
         spriteBatch.Draw(InterfaceTexture, destRect, sourceRect, Color.White);
-    }
-
-    private void DrawHowToPlay()
-    {
-        int w = virtualScreenSize.X;
-        int h = virtualScreenSize.Y;
-        
-        Rectangle panel = new Rectangle(w / 10, h / 6, w * 8 / 10, h * 4 / 6);
-        DrawTransparentPanel(panel);
-        
-        DrawScaledText("How to Play", TextColor, w / 2, 50, 2f);
-
-        Rectangle paragraphArea = new Rectangle(w / 10, h / 5, w * 8 / 10, h * 3 / 5 - 60);
-        DrawScaledParagraph(_howToPlayText, paragraphArea, TextColor);
-
-        DrawButton(_backButton, "Back", _btnResults[0] == ButtonResult.Pressed, "float_button", "float_button_pressed");
     }
 
     private void DrawSettings()
