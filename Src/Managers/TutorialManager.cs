@@ -90,8 +90,20 @@ public static class TutorialManager
     ];
 
     private static TimeSpan textTimer = TimeSpan.Zero;
+    private static bool SheepDead() => mapManager.GetSheep() == null;
+
     public static void Update(GameTime gameTime)
     {
+        if (SheepDead())
+        {
+            if (CurrentTutorialStructure != null)
+            {
+                CurrentTutorialStructure.ShouldDrawCard = false;
+                CurrentTutorialStructure.tutorialText = null;
+                CurrentTutorialStructure = null;
+            }
+            return;
+        }
         textTimer += gameTime.ElapsedGameTime;
         while(tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length && textTimer > timePerChar)
         {
@@ -159,15 +171,7 @@ public static class TutorialManager
                     throw new Exception("Tent not found for tutorial help");
                 }
             case TutorialStructureType.Sheep:
-                var sheep = mapManager.GetSheep();
-                if(sheep is not null)
-                {
-                    return sheep;
-                }
-                else
-                {
-                    throw new Exception("Sheep not found for tutorial help");
-                }
+                return mapManager.GetSheep();
             default:
                 throw new Exception("Tutorial type doesn't exist");
         }
@@ -176,6 +180,7 @@ public static class TutorialManager
     public static void HandleTutorialAction(TutorialAction action)
     {
         if(!IsTutorialActive) return;
+        if(SheepDead()) return;
         if(action == TutorialAction.Click)
         {
             if(tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length)
