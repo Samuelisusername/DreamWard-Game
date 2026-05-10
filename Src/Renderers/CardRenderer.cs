@@ -390,7 +390,13 @@ public class CardRenderer
                 ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
                 : "Purchased";
             Measure(costStr, textSc);
-            if (isLocked) Measure("Drag to buy & place instantly", textSc);
+            if (isLocked)
+            {
+                string hint = ExpandedCard.Effect == CardEffect.Polymorph
+                    ? "Double Click to apply"
+                    : "Drag to buy & place instantly";
+                Measure(hint, textSc);
+            }
 
             if (IsBarrierCard(ExpandedCard) && !isLocked)
             {
@@ -476,7 +482,10 @@ public class CardRenderer
 
             if (isLocked)
             {
-                spriteBatch.DrawString(font, "Drag to buy & place instantly", new Vector2(textX, textY), infoColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                string hint = ExpandedCard.Effect == CardEffect.Polymorph
+                    ? "Double Click to apply"
+                    : "Drag to buy & place instantly";
+                spriteBatch.DrawString(font, hint, new Vector2(textX, textY), infoColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
                 textY += lineH;
             }
 

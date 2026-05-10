@@ -256,6 +256,17 @@ public class CardManager
         }
     }
 
+    public bool UsePolymorphCard(Card card, MapManager mapManager)
+    {
+        Meadow meadow = mapManager.GetSheep();
+        if (meadow == null || meadow.IsPolymorphed) return false;
+        meadow.PolymorphSheep();
+        RemoveFromSlots(card);
+        _activeMapCard    = null;
+        _previewStructure = null;
+        return true;
+    }
+
     /// <summary>
     /// Fills any empty (unpurchased, unfilled) build slots with a new random card.
     /// </summary>

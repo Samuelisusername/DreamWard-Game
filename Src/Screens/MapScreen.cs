@@ -419,7 +419,8 @@ public class MapScreen : GamelabGameScreen
                 if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay && _showInventory)
                 {
                     var (dragCandidate, _) = cardRenderer.HandleClick(pos, cardManager);
-                    if (dragCandidate?.Type == CardType.Build || dragCandidate?.Type == CardType.MapAction)
+                    if ((dragCandidate?.Type == CardType.Build || dragCandidate?.Type == CardType.MapAction)
+                        && dragCandidate?.Effect != CardEffect.Polymorph)
                     {
                         _dragCard     = dragCandidate;
                         _dragStartPos = pos;
@@ -630,6 +631,34 @@ public class MapScreen : GamelabGameScreen
                         // ── BUILD / MAP ACTION ─────────────────────────────
                         if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
                         {
+                            // ── POLYMORPH: double-click to auto-target sheep ──
+                            if (clickedCard.Effect == CardEffect.Polymorph)
+                            {
+                                if (isDouble)
+                                {
+                                    Meadow sheep = mapManager.GetSheep();
+                                    if (sheep != null && !sheep.IsPolymorphed)
+                                    {
+                                        if (!clickedSlot.Purchased)
+                                        {
+                                            if (!cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
+                                            {
+                                                _clickStarted = false;
+                                                return;
+                                            }
+                                            AudioManager.Play("coinsplash");
+                                        }
+                                        if (cardManager.UsePolymorphCard(clickedCard, mapManager))
+                                        {
+                                            AudioManager.Play("card-place");
+                                            cardRenderer.CollapseExpanded();
+                                        }
+                                    }
+                                }
+                                _clickStarted = false;
+                                return;
+                            }
+
                             if (clickedSlot != null && !clickedSlot.Purchased)
                             {
                                 if (isDouble)
