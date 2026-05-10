@@ -43,6 +43,22 @@
     "RegularMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:02",
     "SmallMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:01"
   },
+  "CardCosts": {
+    "sniper":       7,
+    "aoe":          9,
+    "bomb":         5,
+    "fence":        2,
+    "dreamcatcher": 3,
+    "void":         3,
+    "spikes":       3,
+    "meadow":       5,
+    "buff":         4,
+    "decoy":        3,
+    "polymorph":    2,
+    "discount":     0,
+    "shuffle":      0,
+    "top3":         0
+  },
   "StartingSanity": 30,
   "MoveCostMultiplier": 1.3,
   "MaxGrazingDays": 3,

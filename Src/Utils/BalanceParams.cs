@@ -12,4 +12,5 @@ public class BalanceParams
     public float MoveCostMultiplier;
     public int MaxGrazingDays;
     public Dictionary<string,int> MeadowSanityGains;
+    public Dictionary<string,int> CardCosts;
 }

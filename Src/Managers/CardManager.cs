@@ -424,6 +424,14 @@ public class CardManager
         return null;
     }
 
+    private static Card WithBalanceCost(Card card)
+    {
+        var costs = GamelabGame.Instance.Balance.CardCosts;
+        if (costs != null && costs.TryGetValue(card.SpriteName, out int cost))
+            card.Cost = cost;
+        return card;
+    }
+
     private Card GetWeightedRandom(List<Card> pool)
     {
         int total = pool.Sum(c => c.Weight);
@@ -455,7 +463,7 @@ public class CardManager
     {
         var all = TowerTemplates.Concat(BarrierTemplates).Concat(SupportTemplates).Concat(StackACTemplates);
         var found = all.FirstOrDefault(c => c.SpriteName == spriteName);
-        return found == null ? null : found with {};
+        return found == null ? null : WithBalanceCost(found with {});
     }
 
     public void ForceSpawnInto(string spriteName, List<CardSlot> slots)
@@ -500,7 +508,7 @@ public class CardManager
         }
         while (!isDifferent(newCard) && filteredPool.Count > 1); // 🔥 prevent infinite loop
 
-        return newCard;
+        return WithBalanceCost(newCard);
     }
 
     /// <summary>
