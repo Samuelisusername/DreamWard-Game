@@ -46,10 +46,10 @@
   "CardCosts": {
     "sniper":       7,
     "aoe":          9,
-    "bomb":         5,
+    "bomb":         4,
     "fence":        2,
-    "dreamcatcher": 3,
-    "void":         3,
+    "dreamcatcher": 2,
+    "void":         2,
     "spikes":       3,
     "meadow":       5,
     "buff":         4,
@@ -64,8 +64,8 @@
   "MaxGrazingDays": 3,
   "MeadowSanityGains": {
     "meadow_idle": 5,
-    "meadow_red_idle": 7,
-    "meadow_blue_idle": 9,
-    "meadow_orange_idle": 13
+    "meadow_red_idle": 8,
+    "meadow_blue_idle": 11,
+    "meadow_orange_idle": 14
   }
 }
