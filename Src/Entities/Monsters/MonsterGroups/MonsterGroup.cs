@@ -307,7 +307,7 @@ public abstract class MonsterGroup
         }
         if (Monsters.Contains(combatManager.PriorityMonster))
         {
-            TextureRegion target = GamelabGame.textureAtlas["interface"].GetRegion("target0");
+            TextureRegion target = GamelabGame.TextureAtlas["interface"].GetRegion("target0");
             switch (MonsterType)
             {
                 case MonsterType.Regular:
