@@ -159,6 +159,7 @@ public class GamelabGame : Game
             graphics.PreferredBackBufferWidth = displayMode.Width;
             graphics.PreferredBackBufferHeight = displayMode.Height;
             graphics.IsFullScreen = true;
+            graphics.HardwareModeSwitch = false; // borderless windowed fullscreen — prevents tabbing out on screenshots
         }
         graphics.ApplyChanges();
 
