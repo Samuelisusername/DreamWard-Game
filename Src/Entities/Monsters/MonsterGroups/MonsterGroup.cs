@@ -251,7 +251,14 @@ public abstract class MonsterGroup
     public bool Move()
     {
         if(_goalReached || !Monsters.All(i => i.ShouldMove))
-        {
+        {           
+            if(_goalReached)
+            {
+                foreach (Monster monster in Monsters)
+                {
+                    monster.NextTarget = pathFindingManager.GetNextPosition(monster);
+                }  
+            } 
             return false;
         }
         mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath, _elapsed);

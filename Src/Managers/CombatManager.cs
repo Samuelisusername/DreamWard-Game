@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Gamelab.Utils.Logging;
 using Gamelab.Screens;
+using System.IO;
 
 public class CombatManager
 {
@@ -198,9 +199,15 @@ public class CombatManager
         // }
     }
     
-
+    private TimeSpan pathTimer = TimeSpan.FromSeconds(1);
     public void ManageMoveAndAttack(GameTime gameTime)
     {    
+        pathTimer -= gameTime.ElapsedGameTime;
+        if(pathTimer <= TimeSpan.Zero)
+        {
+            pathTimer = TimeSpan.FromSeconds(1);
+            pathFindingManager.NotifyStructuresChanged();
+        }
         // 0. End the game if the night has lasted too long (to prevent the game getting stuck)
         NightTimer += gameTime.ElapsedGameTime;
         if (NightTimer > MaxNightDuration)
