@@ -60,13 +60,13 @@ public class SanityManager
         sanity_ = Sanity;
         var sheepMeadow = mapManager.GetSheep();
         int sheepGain = sheepMeadow?.SanityGain ?? 0;
-        sheepMeadow?.TickGrazingDay();
         Sanity += sheepGain;
         List<PlacableMeadow> meadows = mapManager.GetAllMeadows();
         foreach (var meadow in meadows)
         {
             Sanity += meadow.SanityGain;
         }
+        sheepMeadow?.TickGrazingDay();
         Sanity = Math.Min(100, Sanity);
         return Sanity-sanity_;
     }
