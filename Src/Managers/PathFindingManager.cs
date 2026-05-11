@@ -494,7 +494,7 @@ public class PathFindingManager
             }
         }
 
-        if (monstersArrivedCount < MonstersExpectedCount) { return; }
+        if (monstersArrivedCount*2+1 < MonstersExpectedCount) { return; }
 
         // Enough monsters have arrived -> attack together!
         config.MeetingPoint = null;
