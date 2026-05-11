@@ -390,7 +390,7 @@ public class CardManager
                         {
                             foreach (var position in MapUtils.GetSurroundingTiles((col, row)))
                             {
-                                if (mapManager.GetStructure(position) is Meadow nearbyMeadow && nearbyMeadow.HasSheep)
+                                if (mapManager.GetStructure(position) is Meadow nearbyMeadow && nearbyMeadow.HasSheep && !nearbyMeadow.IsDepleted)
                                 {
                                     placableMeadow.ActivateMeadow(nearbyMeadow.SanityGain);
                                     break;
@@ -580,7 +580,7 @@ public class CardManager
             {
                 foreach (var position in MapUtils.GetSurroundingTiles(tile))
                 {
-                    if (mapManager.GetStructure(position) is Meadow meadow && meadow.HasSheep)
+                    if (mapManager.GetStructure(position) is Meadow meadow && meadow.HasSheep && !meadow.IsDepleted)
                     {
                         placableMeadow.ActivateMeadow(meadow.SanityGain);
                         break;

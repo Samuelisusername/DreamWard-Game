@@ -95,6 +95,9 @@ public class Meadow : Structure
             IsGrazed = true;
             SetAnimationBase("meadowGrazed_idle");
             SetAnimationTop("sheepSmall_idle");
+            foreach (var pos in MapUtils.GetSurroundingTiles(TilePosition))
+                if (mapManager.Structures[pos.Item1, pos.Item2] is PlacableMeadow pm)
+                    pm.DeactivateMeadow();
         }
     }
 

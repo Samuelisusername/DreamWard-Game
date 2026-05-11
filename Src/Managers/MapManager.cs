@@ -704,7 +704,7 @@ public class MapManager
             {
                 foreach (var position in MapUtils.GetSurroundingTiles(pos))
                 {
-                    if(Structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep)
+                    if(Structures[position.Item1,position.Item2] is Meadow meadow && meadow.HasSheep && !meadow.IsDepleted)
                     {
                         placableMeadow.ActivateMeadow(meadow.SanityGain);
                     }
