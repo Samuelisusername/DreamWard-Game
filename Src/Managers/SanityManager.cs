@@ -22,10 +22,10 @@ public class SanityManager
     /// </summary>
     /// <param name="amount">the amount of sanity to remove</param>
     public void AddSanity(int amount)
-{
-    if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
-    Sanity += amount;
-}
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
+        Sanity = Math.Min(100, Sanity + amount);
+    }
     public void DeductSanity(int amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
@@ -67,6 +67,7 @@ public class SanityManager
         {
             Sanity += meadow.SanityGain;
         }
+        Sanity = Math.Min(100, Sanity);
         return Sanity-sanity_;
     }
 }

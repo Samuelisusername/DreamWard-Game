@@ -371,6 +371,8 @@ public class CardManager
             {
                 if (target is Structure toMove && toMove.CanMove)
                 {
+                    if (toMove is PlacableMeadow pm)
+                        pm.DeactivateMeadow();
                     mapManager.RemoveStructure((col, row));
                     _selectedTile     = (col, row);
                     _previewStructure = toMove;
@@ -384,6 +386,17 @@ public class CardManager
                         bool isSameTile = _selectedTile.Item1 == col && _selectedTile.Item2 == row;
                         moving.TilePosition = (col, row);
                         mapManager.PlaceEntity(moving, (col, row));
+                        if (moving is PlacableMeadow placableMeadow)
+                        {
+                            foreach (var position in MapUtils.GetSurroundingTiles((col, row)))
+                            {
+                                if (mapManager.GetStructure(position) is Meadow nearbyMeadow && nearbyMeadow.HasSheep)
+                                {
+                                    placableMeadow.ActivateMeadow(nearbyMeadow.SanityGain);
+                                    break;
+                                }
+                            }
+                        }
                         _selectedTile     = (-1, -1);
                         _previewStructure = null;
                         if (!isSameTile)
@@ -546,6 +559,8 @@ public class CardManager
         {
             if (target is Structure toMove && toMove.CanMove)
             {
+                if (toMove is PlacableMeadow pm)
+                    pm.DeactivateMeadow();
                 mapManager.RemoveStructure(tile);
                 _selectedTile = tile;
                 _previewStructure = toMove;
@@ -561,6 +576,17 @@ public class CardManager
 
             moving.TilePosition = tile;
             mapManager.PlaceEntity(moving, tile);
+            if (moving is PlacableMeadow placableMeadow)
+            {
+                foreach (var position in MapUtils.GetSurroundingTiles(tile))
+                {
+                    if (mapManager.GetStructure(position) is Meadow meadow && meadow.HasSheep)
+                    {
+                        placableMeadow.ActivateMeadow(meadow.SanityGain);
+                        break;
+                    }
+                }
+            }
 
             bool isSameTile = _selectedTile == tile;
 
