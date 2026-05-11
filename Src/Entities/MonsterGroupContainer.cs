@@ -119,6 +119,7 @@ public class MonsterGroupContainer
 
                 if (matchingGroup != null)
                 {
+                    matchingGroup.SetLastDirection(oldDir);
                     matchingGroup.AddMonsters(monsters);
                 }
                 else
@@ -141,6 +142,7 @@ public class MonsterGroupContainer
                         default:
                             throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                     }
+                    newGroup.SetLastDirection(oldDir);
                     newGroup.AddMonsters(monsters);
                     MonsterGroups.Add(newGroup);
                     newGroup.shouldCheckMerge = true;

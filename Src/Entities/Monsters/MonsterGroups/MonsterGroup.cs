@@ -28,6 +28,7 @@ public abstract class MonsterGroup
     private bool shouldRecalcPath;
     public bool shouldCheckMerge;
     public bool IsNew {get; set;}
+    private string _lastWalkDirection = "S";
     
     private TimeSpan attackCooldown => AnimFrameDelay * 7;
     private TimeSpan elapsedAttackCooldown;
@@ -66,6 +67,11 @@ public abstract class MonsterGroup
     {
         shouldRecalcPath = false;
         TilePosition = pos;
+    }
+
+    public void SetLastDirection(string dir)
+    {
+        if (dir != "") _lastWalkDirection = dir;
     }
 
     public virtual Vector2 GetInterpolatedWorldPosition(bool basePoint = false)
@@ -257,8 +263,12 @@ public abstract class MonsterGroup
                 foreach (Monster monster in Monsters)
                 {
                     monster.NextTarget = pathFindingManager.GetNextPosition(monster);
-                }  
-            } 
+                }
+                if (!_goalReached)
+                {
+                    _elapsed = TimeSpan.Zero;
+                }
+            }
             return false;
         }
         mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath, _elapsed);
@@ -371,8 +381,17 @@ public abstract class MonsterGroup
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
         string isAmalgam = Count >2 ? "_amalgam_" : "_";
         
-        string direction = MapUtils.GetDirection(TilePosition, CommonAttackTarget() ?? CommonNextTarget());
-        direction = direction == "" ? "S" : direction;
+        (int, int) dirTarget = CommonAttackTarget() ?? CommonNextTarget();
+        string direction;
+        if (dirTarget != TilePosition)
+        {
+            direction = MapUtils.GetDirection(TilePosition, dirTarget);
+            _lastWalkDirection = direction;
+        }
+        else
+        {
+            direction = _lastWalkDirection;
+        }
         switch (anim)
         {
             case "merge":
