@@ -64,8 +64,9 @@ public class SniperTower : Tower
             elapsedAttackCooldown = reset ?  TimeSpan.Zero : elapsedAttackCooldown;  
         }
         if(_target != null)
-        {   
+        {
             targetGroup = mapManager.GetMonsterContainer(_target.TilePosition).GetMonsterGroup(_target);
+            if (targetGroup == null) { _target = null; return; }
             elapsedAttackCooldown += gameTime.ElapsedGameTime;
             if(elapsedAttackCooldown >= attackCooldown)
             {
