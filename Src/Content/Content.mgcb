@@ -185,6 +185,12 @@
 /processorParam:Quality=Best
 /build:Sounds/random_sounds/universfield-game-over-deep-male-voice-clip-352695.mp3
 
+#begin Sounds/buildings/universfield-funny-boing-flexatone-wobble-352710.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/buildings/universfield-funny-boing-flexatone-wobble-352710.mp3
+
 #begin Sounds/rustle/rustle01.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -625,4 +631,9 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/shadowDummy.png
+
+#begin Sounds/buildings/universfield-funny-boing-flexatone-wobble-352710.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/build:Sounds/buildings/universfield-funny-boing-flexatone-wobble-352710.mp3
 

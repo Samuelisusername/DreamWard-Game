@@ -297,27 +297,31 @@ public class CardManager
                 {
                     AudioManager.Play("slam_02");
                 }
+                if(_activeMapCard.SpriteName == "void")
+                {
+                    AudioManager.Play("universfield-funny-boing-flexatone-wobble-352710"); //not sure if this works couldnt test it in the game yet.. but should i think, inform sammy if it doesnt
+                }
 
-                       if (_activeMapCard.SpriteName == "void" && IsTentEnclosed())
-        {
-            if (_voidWarningTile == (col, row))
-            {
-                // Warned already, placed again → game over
-                GameOverScreen.DidWin = false;
-                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
-                return true;
-            }
-            else
-            {
-                // First time: undo, refund, show sheep warning
-                _voidWarningTile = (col, row);
-                mapManager.RemoveStructure((col, row));
-                sanityManager.AddSanity(_activeMapCard.Cost);
-                GamelabGame.Instance.MapScreenInstance?.ShowVoidWarning(
-                    "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?");
-                return false;
-            }
-        }
+                if (_activeMapCard.SpriteName == "void" && IsTentEnclosed())
+                {
+                    if (_voidWarningTile == (col, row))
+                    {
+                        // Warned already, placed again → game over
+                        GameOverScreen.DidWin = false;
+                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                        return true;
+                    }
+                    else
+                    {
+                        // First time: undo, refund, show sheep warning
+                        _voidWarningTile = (col, row);
+                        mapManager.RemoveStructure((col, row));
+                        sanityManager.AddSanity(_activeMapCard.Cost);
+                        GamelabGame.Instance.MapScreenInstance?.ShowVoidWarning(
+                            "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?");
+                        return false;
+                    }
+                }
 
         _voidWarningTile = null;
                 _activeMapCard.StackCount--;
@@ -332,6 +336,7 @@ public class CardManager
                     _previewStructure = null;
                 }
             }
+
             return success;
         }
 
