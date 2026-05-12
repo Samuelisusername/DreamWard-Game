@@ -293,6 +293,10 @@ public class CardManager
             bool success = mapManager.PlaceEntity(_activeMapCard, (col, row));
             if (success)
             {
+                if(_activeMapCard.SpriteName != "void")
+                {
+                    AudioManager.Play("slam_02");
+                }
 
                        if (_activeMapCard.SpriteName == "void" && IsTentEnclosed())
         {
