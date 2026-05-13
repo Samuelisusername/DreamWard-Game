@@ -7,7 +7,7 @@ public class FlyingMonsterGroup : MonsterGroup
 {
     private Texture2D shadow;
     public override bool isGrounded => false;
-    public FlyingMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
+    public FlyingMonsterGroup((int, int) tilePos) : base(tilePos)
     {
         shadow = GamelabGame.Instance.Content.Load<Texture2D>("Sprites/shadowDummy");
     }
@@ -35,7 +35,7 @@ public class FlyingMonsterGroup : MonsterGroup
         Vector2 goalPos = mapManager.GetWorldPositionOfTile(goal);
         //the monster always flies
         goalPos -= Vector2.UnitY * 30 * mapManager.Scale;
-        return origin + (goalPos - origin) * _pathProgress;
+        return origin + (goalPos - origin) * combatManager.PathProgress[MonsterType];
     }
 
     public void DrawShadow(SpriteBatch spriteBatch/*, (int totalGroups, int rank) posOnTile*/)

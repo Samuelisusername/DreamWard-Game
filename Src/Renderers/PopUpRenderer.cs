@@ -60,7 +60,7 @@ public static class PopUpRenderer
             //figure out the priority of tutoial vs popup
             DrawInfo(spriteBatch, TutorialManager.CurrentInfoStructure, screen);
         }
-        else if(TutorialManager.CurrentTutorialStructure != null)
+        else if(TutorialManager.CurrentTutorialStructure != null && gamePhaseManager.IsDay)
         {
             DrawDialog(spriteBatch, TutorialManager.CurrentTutorialStructure, TutorialManager.TutorialText, screen);
         }
@@ -140,8 +140,7 @@ public static class PopUpRenderer
         float sy = MathF.Max(1f, MathF.Floor(ScreenTransform.M22));
 
         Vector2 worldPos  = mapManager.GetWorldPositionOfTile(structure.TilePosition);
-        int pad = 10, midPad = 50, heightPad = 50; 
-        int maxTutorialWidth = 300;
+        int pad = 10, midPad = 50, heightPad = 50;
         int sepH = (int)MathF.Round(2 * sy);
 
         bool hasBonusSection = gamePhaseManager.IsDay && structure is Meadow meadow && meadow.MeadowGrant != null;

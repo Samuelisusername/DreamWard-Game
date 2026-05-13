@@ -58,7 +58,7 @@ public class CombatManager
 
         NightTimer = TimeSpan.Zero;
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < 1; i++)
         {
             attempts++;
             if(SpawnableArea.Count == 0)
@@ -84,7 +84,14 @@ public class CombatManager
         // 2. Update all the Mergeanims
         foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
         {
-            container.InitMerge();
+            foreach (MonsterGroup group in container.MonsterGroups)
+            {
+                group.SetAnimation();
+            }
+            foreach (MonsterType type in Enum.GetValues(typeof(MonsterType)))
+            {
+                container.InitMerge(type);
+            }
         }
     }
 
@@ -199,15 +206,32 @@ public class CombatManager
         // }
     }
     
-    private TimeSpan pathTimer = TimeSpan.FromSeconds(1);
+    public Dictionary<MonsterType, TimeSpan> ElapsedTimers = new Dictionary<MonsterType, TimeSpan>
+    {
+        { MonsterType.Regular, TimeSpan.FromSeconds(0) },
+        { MonsterType.Flying, TimeSpan.FromSeconds(0) },
+        { MonsterType.Small, TimeSpan.FromSeconds(0) },
+        { MonsterType.Big, TimeSpan.FromSeconds(0) }
+    };
+
+    public Dictionary<MonsterType, TimeSpan> MonsterSpeeds = new Dictionary<MonsterType, TimeSpan>
+    {
+        { MonsterType.Regular, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
+        { MonsterType.Flying, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
+        { MonsterType.Small, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
+        { MonsterType.Big, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] }
+    };
+
+    public Dictionary<MonsterType, float> PathProgress = new Dictionary<MonsterType, float>
+    {
+        { MonsterType.Regular, 0f },
+        { MonsterType.Flying, 0f },
+        { MonsterType.Small, 0f },
+        { MonsterType.Big, 0f }
+    };
+
     public void ManageMoveAndAttack(GameTime gameTime)
-    {    
-        pathTimer -= gameTime.ElapsedGameTime;
-        if(pathTimer <= TimeSpan.Zero)
-        {
-            pathTimer = TimeSpan.FromSeconds(1);
-            pathFindingManager.NotifyStructuresChanged();
-        }
+    {
         // 0. End the game if the night has lasted too long (to prevent the game getting stuck)
         NightTimer += gameTime.ElapsedGameTime;
         if (NightTimer > MaxNightDuration)
@@ -216,28 +240,78 @@ public class CombatManager
             NightTimer = TimeSpan.Zero;
         }
 
+        //UPDATE
+
         foreach (MonsterGroupContainer container in GetAllContainers()) 
         {
             container.Update(gameTime);
         }
 
-        // 1. Move everything using our snapshot
-        foreach (MonsterGroupContainer container in GetAllContainers()) 
+        foreach (var item in ElapsedTimers)
         {
-            container.Move();
+            MonsterType currentType = item.Key;
+            ElapsedTimers[currentType] += gameTime.ElapsedGameTime;
+            if(ElapsedTimers[currentType] >= MonsterSpeeds[currentType])
+            {
+                //this monstertype should move
+                
+                // 1. Move everything using our snapshot
+                foreach (MonsterGroupContainer container in GetAllContainers()) 
+                {
+                    foreach (MonsterGroup group in container.MonsterGroups.Where(i => i.MonsterType == currentType).ToList())
+                    {
+                        if(group.Monsters.All(i => i.TargetReached))
+                        {
+                            //all monsters reached their goal dont move just recalc position
+                            foreach (Monster monster in group.Monsters)
+                            {
+                                monster.Move();
+                            }
+                        }
+                        else if(group.Monsters.All(i => !i.TargetReached))
+                        {
+                            //no monster reached the goal just move normally
+                            if(group.Move())
+                            {
+                                container.MonsterGroups.Remove(group);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("this is fucked there shouldn be a group with monsters that have different goals");
+                        }
+                    }
+                }
+
+                // 2. Move everything using our snapshot
+                foreach (MonsterGroupContainer container in GetAllContainers()) 
+                {
+                    container.CleanUpGroups(currentType);
+                }
+
+                // 3. Update all the Mergeanims
+                foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+                {
+                    container.InitMerge(currentType);
+                }
+
+                foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+                {
+                    foreach (MonsterGroup group in container.MonsterGroups.Where(i => i.MonsterType == currentType))
+                    {
+                        foreach (Monster monster in group.Monsters)
+                        {
+                            monster.AttackTarget = pathFindingManager.GetTarget(monster);
+                        }
+                        group.SetAnimation();
+                    }
+                    container.InitMerge(currentType);
+                }
+                ElapsedTimers[currentType] -= MonsterSpeeds[currentType];
+            }            
+            PathProgress[currentType] = (float)(ElapsedTimers[currentType] / MonsterSpeeds[currentType]);
         }
 
-        // 1. Move everything using our snapshot
-        foreach (MonsterGroupContainer container in GetAllContainers()) 
-        {
-            container.CleanUpGroups();
-        }
-
-        // 2. Update all the Mergeanims
-        foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
-        {
-            container.InitMerge();
-        }
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -287,13 +361,7 @@ public class CombatManager
 
         if (anyStructureDestroyed)
         {
-            foreach (MonsterGroupContainer container in GetAllContainers())
-            {
-                foreach (var monsterGroup in container.MonsterGroups)
-                {
-                    monsterGroup.QueuePathRecalc();
-                }
-            }
+            pathFindingManager.NotifyStructuresChanged();
         }
     }
 

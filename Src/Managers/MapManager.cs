@@ -528,9 +528,9 @@ public class MapManager
         return true;     
     }
 
-    public void AddExistingMonsterGroup(MonsterGroup monsterGroup,  (int col, int row) pos, bool shouldRecalcPath, TimeSpan elapsed)
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup,  (int col, int row) pos)
     {
-        MonsterContainers[pos.col, pos.row].AddExistingMonsterGroup(monsterGroup, shouldRecalcPath, elapsed);
+        MonsterContainers[pos.col, pos.row].AddExistingMonsterGroup(monsterGroup);
     }
     
     /// <summary>

@@ -14,28 +14,22 @@ public abstract class MonsterGroup
 {    
     // The shortcut to find your MapManager
     protected MapManager mapManager => GamelabGame.MapManager;
-    private CombatManager combatManager => GamelabGame.CombatManager;
+    protected CombatManager combatManager => GamelabGame.CombatManager;
 
-    protected PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
-    private SanityManager sanityManager => GamelabGame.SanityManager;
-
-    public List<Monster> Monsters { get; private set; } 
-    protected virtual TimeSpan speed => GamelabGame.Instance.Balance.MonsterSpeed[this.GetType()];
-    protected TimeSpan _elapsed = TimeSpan.Zero;
-    protected float _pathProgress;
+    public List<Monster> Monsters { get; private set; }
     public (int,int) TilePosition {get; set;}
     public abstract MonsterType MonsterType {get;}
-    private bool shouldRecalcPath;
-    public bool shouldCheckMerge;
     public bool IsNew {get; set;}
     private string _lastWalkDirection = "S";
+
+    private string _lastAnim = "";
     
     private TimeSpan attackCooldown => AnimFrameDelay * 7;
     private TimeSpan elapsedAttackCooldown;
 
     protected abstract int attackFrame{get;}
 
-    public MonsterGroup((int, int) tilePos, TimeSpan elapsed)
+    public MonsterGroup((int, int) tilePos)
     {
         Monsters = new List<Monster>();
         TilePosition = tilePos;
@@ -43,8 +37,6 @@ public abstract class MonsterGroup
         sprite = GamelabGame.TextureAtlas["monsters"].CreateAnimatedSprite(type+"_idleS");
         sprite.Animation.Delay = AnimFrameDelay;
         sprite.Scale = mapManager.Scale;
-        _elapsed = elapsed;
-        _pathProgress = (float)(_elapsed/speed);
         IsNew = true;        
         elapsedAttackCooldown = AnimFrameDelay * (7-attackFrame);
     }  
@@ -65,7 +57,6 @@ public abstract class MonsterGroup
 
     public void ResetGroup((int,int) pos)
     {
-        shouldRecalcPath = false;
         TilePosition = pos;
     }
 
@@ -81,7 +72,7 @@ public abstract class MonsterGroup
         
         var goal = Monsters[0].GetCurrentGoal();
         Vector2 goalPos = mapManager.GetWorldPositionOfTile(goal);
-        return origin + (goalPos - origin) * _pathProgress;
+        return origin + (goalPos - origin) * combatManager.PathProgress[MonsterType];
     }
 
     public void RemoveDead() 
@@ -104,10 +95,6 @@ public abstract class MonsterGroup
                 break;
         }
         Monsters.RemoveAll(m => m.IsDestroyed);
-        if(Count <= 2 && oldCount > 2)
-        {
-            SetAnimation();
-        }
         if(oldCount != Count)
         {
             for(int i = 0; i < 40; i++)
@@ -145,20 +132,6 @@ public abstract class MonsterGroup
         RemoveDead();
     }
 
-    public void TakeDamageSingleTarget(float damage)
-    {
-        if (IsEmpty) return;
-        Monsters[0].TakeDamage(damage);
-        RemoveDead();
-    }
-
-    public void DealDamage(Entity target, float deltaTime)
-    {
-        if (IsEmpty || target == null || target.IsDestroyed) return;
-        float totalDamage = this.Damage * deltaTime;
-        target.TakeDamage(totalDamage);
-    }
-
 
     public void AddMonster(Monster monster)
     {
@@ -166,10 +139,6 @@ public abstract class MonsterGroup
         {
             int oldCount = Count;
             Monsters.Add(monster);
-            if(oldCount == 0 ||oldCount <= 2 && Count > 2)
-            {
-                SetAnimation();
-            }
         }
     }
 
@@ -179,76 +148,17 @@ public abstract class MonsterGroup
         {
             int oldCount = Count;
             Monsters.AddRange(monsters);
-            if(oldCount == 0 ||oldCount <= 2 && Count > 2)
-            {
-                SetAnimation();
-            }
         }
     }
 
     public void Update(GameTime gameTime)
-    {
-        shouldCheckMerge = false;
-
-        if (_goalReached != _oldGoalReached && !isMerging)
-        {
-            SetAnimation();
-        }
-        
-        _elapsed += gameTime.ElapsedGameTime;
+    {        
         Monsters.ForEach(m => m.TickHitFlash(gameTime));
-        if(isMerging && (speed - _elapsed) < AnimFrameDelay)
+        if(isMerging && (combatManager.MonsterSpeeds[MonsterType] - combatManager.ElapsedTimers[MonsterType]) < AnimFrameDelay)
         {
             SetAnimation("rebuild");
             isMerging = false;
         }
-        if (_elapsed >= speed)
-        {
-            _elapsed -= speed;
-            if(!_goalReached)
-            {
-                Monsters.ForEach(i => i.ShouldMove = true);
-            }
-            else 
-            {         
-                shouldCheckMerge = true;
-                // BigMonsters can deadlock when two block each other: GetNextPositionIfSafe
-                // returns currentTile, making TargetReached=true so the group never retries.
-                // Trigger a recalc each speed interval so they detect when the blocker moves
-                // (or IsStationary forces one through on the second attempt).
-                if (!shouldRecalcPath 
-                    && MonsterType == MonsterType.Big
-                    && CommonAttackTarget() == null
-                    && Monsters.Any(m => pathFindingManager.GetTarget(m) != null))
-                {
-                    shouldRecalcPath = true;
-                }
-                if(shouldRecalcPath)
-                {
-                    foreach (Monster monster in Monsters)
-                    {
-                        monster.NextTarget = pathFindingManager.GetNextPosition(monster);
-                        if(pathFindingManager.GetTarget(monster) is {} target && monster.NextTarget == target)
-                        {
-                            Entity destStructure = mapManager.GetStructure(target);
-                            if(destStructure != null)
-                            {
-                                if(monster.CanTarget(destStructure) && MapUtils.CalculateTileDistance(target, monster.TilePosition) <= 1)
-                                {
-                                    monster.AttackTarget = target; // Target the wall to attack
-                                    continue;
-                                }
-                            }
-                        }
-                        monster.AttackTarget = null;
-                    }
-                    SetAnimation();
-                    IsNew = true;
-                }  
-            }
-        }
-        _pathProgress = (float)(_elapsed / speed);
-
         _oldGoalReached = _goalReached;
         sprite.Update(gameTime);
     }
@@ -256,28 +166,12 @@ public abstract class MonsterGroup
     // Tells the individual monsters to actually step forward
     public bool Move()
     {
-        if(_goalReached || !Monsters.All(i => i.ShouldMove))
-        {           
-            if(_goalReached)
-            {
-                foreach (Monster monster in Monsters)
-                {
-                    monster.NextTarget = pathFindingManager.GetNextPosition(monster);
-                }
-                if (!_goalReached)
-                {
-                    _elapsed = TimeSpan.Zero;
-                }
-            }
+        if(_goalReached)
+        {
             return false;
         }
-        mapManager.AddExistingMonsterGroup(this, CommonNextTarget(), shouldRecalcPath, _elapsed);
+        mapManager.AddExistingMonsterGroup(this, CommonNextTarget());
         return true;
-    } 
-    
-    public void QueuePathRecalc()
-    {
-        shouldRecalcPath = true;
     }
 
     protected AnimatedSprite sprite;
@@ -376,10 +270,10 @@ public abstract class MonsterGroup
         sprite.Scale = scale;
     }
 
-    private void SetAnimation(string anim = null)
+    public void SetAnimation(string anim = null)
     {
         string type = MonsterUtils.GetMonsterTypeName(MonsterType);
-        string isAmalgam = Count >2 ? "_amalgam_" : "_";
+        string isAmalgam = Count > 2 ? "_amalgam_" : "_";
         
         (int, int) dirTarget = CommonAttackTarget() ?? CommonNextTarget();
         string direction;
@@ -413,6 +307,11 @@ public abstract class MonsterGroup
             break;
         }
         //Turn into Amalgam
+        if(type+ isAmalgam + anim == _lastAnim)
+        {
+            return;
+        }
+        _lastAnim = type+ isAmalgam + anim;
         sprite.Animation = GamelabGame.TextureAtlas["monsters"].GetAnimation(type+ isAmalgam + anim );
         sprite.Animation.Delay = AnimFrameDelay;
         if(direction.Contains("E")) sprite.SpriteEffects = SpriteEffects.FlipHorizontally;
