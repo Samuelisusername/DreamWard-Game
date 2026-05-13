@@ -142,7 +142,7 @@ public class Meadow : Structure
 
     public bool AddProgress(TimeSpan delta)
     {
-        if (HasSheep || mapManager.GetSheep() == null) return false;
+        if (HasSheep || mapManager.GetSheep() == null || TutorialManager.CurrentInfoStructure != this) return false;
         resetMoveProgress = false;
         BarProgress += delta;
         if (BarProgress > BarComplete)

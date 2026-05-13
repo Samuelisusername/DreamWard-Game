@@ -93,13 +93,16 @@ public class MapScreen : GamelabGameScreen
     private Point screenSize => viewportAdapter.PointToScreen(new Point(GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferWidth, GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferHeight));
 
 
-    public MapScreen(GamelabGame game) : base(game)
+    public MapScreen(GamelabGame game, bool init = false) : base(game)
     {
         // Map setup
         mapRenderer = new MapRenderer();
         entityRenderer = new EntityRenderer();
         cardRenderer = new CardRenderer(); 
-        mapManager.fillMap();
+        if(init)
+        {
+            mapManager.FillMap();
+        }
     }
     public override void LoadContent()
     {
@@ -137,12 +140,6 @@ public class MapScreen : GamelabGameScreen
         }
     }
 
-    public void StartNewDay(int day)
-    {
-        cardManager.GenerateDailyCards(day);
-        cardRenderer.CollapseExpanded();
-    }
-
     public void ShowDayPopup(int day)
     {
         _dayPopupText = $"Day {day}";
@@ -160,10 +157,6 @@ public class MapScreen : GamelabGameScreen
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
-        if(TutorialManager.CurrentInfoStructure != null && !viewportAdapter.BoundingRectangle.Contains(mapManager.GetWorldPositionOfTile(TutorialManager.CurrentInfoStructure.TilePosition)))
-        {
-            TutorialManager.CurrentInfoStructure = null;
-        }
         if(_resetStartNightTimer)
         {
             _elapsedStartNightTime = TimeSpan.Zero;
@@ -176,7 +169,7 @@ public class MapScreen : GamelabGameScreen
         Vector2 mousePosForCursor = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
         GamelabGame.UseHammerCursor = _hammerActive && !_hammerBtn.Contains(mousePosForCursor);
         Vector2 mousePos = mousePosForCursor;
-        TutorialManager.Update(gameTime);
+        TutorialManager.Update(gameTime, viewportAdapter.BoundingRectangle);
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
         bool isDay         = gamePhaseManager.IsDay;
@@ -232,7 +225,6 @@ public class MapScreen : GamelabGameScreen
                 }
             }
             
-            // Spawn monster at edge heading toward tent
 
             if (keyboard.WasKeyPressed(Keys.P))
             {
@@ -488,8 +480,7 @@ public class MapScreen : GamelabGameScreen
                         int moveCost = (int)MathF.Round(
                             MapUtils.CalculateTileDistance(mapManager.SheepPosition, grazingSpot.TilePosition)
                             * MapManager.MoveCostMultiplier);
-                        if (GamelabGame.SanityManager.Sanity > moveCost
-                            && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
+                        if (GamelabGame.SanityManager.Sanity > moveCost && grazingSpot.AddProgress(gameTime.ElapsedGameTime))
                         {
                             mapManager.TryMoveSheep(mousePos);
                         }
@@ -519,19 +510,10 @@ public class MapScreen : GamelabGameScreen
             // BLOCK HOVER IF ON UI
             if (!mouseOverUI && _hoverTile.col >= 0)
             {
-                if (_hoveredStructure != null && _hoveredStructure != TutorialManager.CurrentTutorialStructure)
-                    _hoveredStructure.ShouldDrawCard = false;
-
                 _hoveredStructure = mapManager.GetStructure(_hoverTile);
-
-                if (_hoveredStructure != null && _hoveredStructure is not VoidTile)
-                    _hoveredStructure.ShouldDrawCard = true;
             }
             else
             {
-                if (_hoveredStructure != null && _hoveredStructure != TutorialManager.CurrentTutorialStructure)
-                    _hoveredStructure.ShouldDrawCard = false;
-
                 _hoveredStructure = null;
             }
 

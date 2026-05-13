@@ -60,7 +60,7 @@ public class Tent : CardEntity
                     Color = Color.LightGray,
                     LifeSpan = TimeSpan.FromSeconds(1.0),
                     Text = $"z",
-                    Font = _font,
+                    Font = GamelabGame.Font,
                     Scale = 0.3f,
                     Updater = (particle, gameTime) =>
                     {            

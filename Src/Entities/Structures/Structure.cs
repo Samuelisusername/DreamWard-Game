@@ -165,32 +165,9 @@ public abstract class Structure : Entity
     public static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
 
 
-    protected Texture2D _dummy = GamelabGame.DummyText;
-    protected SpriteFont _font = GamelabGame.Font;
-    protected SpriteFont _hintFont = GamelabGame.HintFont;
     public abstract (string label, string info)[] Infos {get;}
 
-    public string tutorialText;
-
     public virtual string BottomText => null;
-
-    public bool ShouldDrawCard {get; set;}
     
-    protected readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
-    protected readonly Color COLOR_G = new Color(0x7d, 0x64, 0x48);
-    protected readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
-
-    // Set by MapScreen before calling DrawCard so positions are computed in screen pixels.
-    internal static Matrix _screenTransform = Matrix.Identity;
-
-    protected string continueHint = "(Press Space to continue)";
-
-    // Converts a virtual-space point to integer screen pixels.
-    protected static Vector2 ToScreen(float x, float y)
-    {
-        float sx = _screenTransform.M11, sy = _screenTransform.M22;
-        float tx = _screenTransform.M41, ty = _screenTransform.M42;
-        return new Vector2(MathF.Round(x * sx + tx), MathF.Round(y * sy + ty));
-    }
 #endregion
 }

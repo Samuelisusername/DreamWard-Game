@@ -763,7 +763,7 @@ public class MapManager
         }
     }
 
-    public void fillMap()
+    public void FillMap()
     {
         int centerX = Columns / 2;
         int centerY = Rows / 2;
@@ -1004,8 +1004,16 @@ public class MapManager
             if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
                 return;
         }
-        if(TrySetTarget(pos)) return;
-        if(ShakeTree(pos)) return;
+        if(TrySetTarget(pos))
+        {
+            TutorialManager.CurrentInfoStructure = null;
+            return;
+        }
+        if(ShakeTree(pos))
+        {
+            TutorialManager.CurrentInfoStructure = null;
+            return;  
+        }
         if(SetPopUpStructure(pos)) return;
         TutorialClick(pos);
     }
