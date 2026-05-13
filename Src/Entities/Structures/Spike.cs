@@ -11,7 +11,7 @@ public class Spike : Tower
     // protected override float damagePerSecond => 2f;
 
     // protected override int rangeDepth => 0;
-    protected override (string, string)[] infos => [("Health:", $"Yes"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
+    public override (string, string)[] Infos => [("Health:", $"Yes"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
 
     public override void Attack(GameTime gameTime)
     {

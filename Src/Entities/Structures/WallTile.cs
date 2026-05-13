@@ -10,5 +10,5 @@ public class WallTile : Structure
     }
 
     
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}")];
 }

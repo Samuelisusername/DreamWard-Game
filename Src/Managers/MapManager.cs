@@ -1004,12 +1004,25 @@ public class MapManager
             if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
                 return;
         }
-        ShakeTree(pos);
-        TrySetTarget(pos);
+        if(TrySetTarget(pos)) return;
+        if(ShakeTree(pos)) return;
+        if(SetPopUpStructure(pos)) return;
         TutorialClick(pos);
     }
 
-    private void TrySetTarget(Vector2 pos)
+    private bool SetPopUpStructure(Vector2 pos)
+    {
+        (int col, int row) tilePos = GetTileFromScreenPosition(pos, true);
+        Structure entity = GetStructure(tilePos, true);
+        if(entity is not TreeTile)
+        {
+            TutorialManager.CurrentInfoStructure = entity;
+            return true;
+        }
+        return false;
+    }
+
+    private bool TrySetTarget(Vector2 pos)
     {
         var tile = GetTileFromScreenPosition(pos);
         var potentialGroups = GetMonsterGroupsInRange(tile, 1);
@@ -1041,8 +1054,9 @@ public class MapManager
                 currentMin = group;
             }
         }
-        if(currentMin == null) return;
+        if(currentMin == null) return false;
         combatManager.PriorityMonster = currentMin.Monsters.MinBy(i => i.CurrentHealth);
+        return true;
     }
 
     /// <summary>
@@ -1090,14 +1104,16 @@ public class MapManager
         }
     }
 
-    public void ShakeTree(Vector2 pos)
+    public bool ShakeTree(Vector2 pos)
     {
         (int col, int row) tilePos = GetTileFromScreenPosition(pos, true);
         Entity entity = GetStructure(tilePos, true);
         if(entity is TreeTile tree)
         {
             tree.Shake();
+            return true;
         }
+        return false;
     }
 
     private void TutorialClick(Vector2 pos)

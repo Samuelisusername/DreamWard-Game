@@ -157,15 +157,22 @@ public abstract class Structure : Entity
     }
 
     #region statcard
+    
+    public TimeSpan BarComplete {get; protected set;} = TimeSpan.FromSeconds(1.5f);
+    public TimeSpan BarProgress {get; protected set;} = TimeSpan.Zero;
+    
+    public TimeSpan CantAffordFlash {get; protected set;} = TimeSpan.Zero;
+    public static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(0.5);
+
 
     protected Texture2D _dummy = GamelabGame.DummyText;
     protected SpriteFont _font = GamelabGame.Font;
     protected SpriteFont _hintFont = GamelabGame.HintFont;
-    protected abstract (string label, string info)[] infos {get;}
+    public abstract (string label, string info)[] Infos {get;}
 
     public string tutorialText;
 
-    protected virtual string bottomText => null;
+    public virtual string BottomText => null;
 
     public bool ShouldDrawCard {get; set;}
     
@@ -185,184 +192,5 @@ public abstract class Structure : Entity
         float tx = _screenTransform.M41, ty = _screenTransform.M42;
         return new Vector2(MathF.Round(x * sx + tx), MathF.Round(y * sy + ty));
     }
-
-    public virtual void DrawCard(SpriteBatch spriteBatch, Rectangle screen)
-    {
-        if(!ShouldDrawCard) return;
-        
-        Color rectColor = gamePhaseManager.IsDay
-            ? COLOR_L
-            : new Color(33, 28, 11);      // #211c0b
-
-        Color textColor = gamePhaseManager.IsDay
-            ? COLOR_D
-            : new Color(214, 214, 214); 
-
-        // Floor to integer scale so every font stroke occupies whole screen pixels without growing larger than intended.
-        float sx = MathF.Max(1f, MathF.Floor(_screenTransform.M11));
-        float sy = MathF.Max(1f, MathF.Floor(_screenTransform.M22));
-        Vector2 worldPos = mapManager.GetWorldPositionOfTile(TilePosition);
-        int pad = 10;
-        int midPad = 50;
-        int heightPad = 50;
-        int maxTutorialWidth = 300;
-
-        int boxHeight;
-        int boxWidth;
-        if(tutorialText != null)
-        {
-            Vector2 boxDimensions = ProcessTextWithIcons(null, _font, tutorialText, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
-            Vector2 hintSize = _font.MeasureString(continueHint) * new Vector2(sx, sy);
-            boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X) + (pad * 2);
-            boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
-        }
-        else
-        {
-            boxWidth  = (int)MathF.Round((infos.Cast<(string, string)>().Max(i => _font.MeasureString(i.Item1 + i.Item2).X) + 2 * pad + midPad) * sx);
-            boxHeight = (int)MathF.Round((infos.Cast<(string, string)>().Sum(i => _font.MeasureString(i.Item1).Y) + pad * (infos.Length + 1)) * sy);
-            if(bottomText != null)
-            {
-                boxWidth  = Math.Max(boxWidth,  (int)MathF.Round((_font.MeasureString(bottomText).X + 2 * pad) * sx));
-                boxHeight += (int)MathF.Round((_font.MeasureString(bottomText).Y + heightPad) * sy);
-            }
-        }
-
-        
-
-        Vector2 anchor = ToScreen(worldPos.X + 31.5f * mapManager.Scale.X, worldPos.Y);
-        if((int)(anchor.X - boxWidth / 2f) < screen.Left + (2*pad))
-        {
-            anchor.X = screen.Left + (2*pad) + (boxWidth / 2f);
-        }        
-        else if((int)(anchor.X - boxWidth / 2f) + boxWidth > screen.Right - (2*pad))
-        {
-            anchor.X  = screen.Right - boxWidth - (2*pad)  + (boxWidth / 2f);
-        }
-        if((int)(anchor.Y - MathF.Round(16 * mapManager.Scale.X * sy) - boxHeight) < screen.Top + (2*pad))
-        {
-            anchor.Y = screen.Top + (2*pad) + MathF.Round(16 * mapManager.Scale.X * sy) + boxHeight;
-        }
-        int left = (int)(anchor.X - boxWidth / 2f);
-        int top  = (int)(anchor.Y - MathF.Round(16 * mapManager.Scale.X * sy) - boxHeight);
-
-        spriteBatch.Draw(_dummy, new Rectangle(left, top, boxWidth, boxHeight), rectColor * 0.5f);
-
-        if(tutorialText != null)
-        {
-            Vector2 textStartPos = new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy));
-    
-            // Pass false for isMeasuring, pass the actual SpriteBatch
-            var dialogBox = ProcessTextWithIcons(spriteBatch, _font, tutorialText, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
-            Vector2 hintPos = new Vector2(
-                left + (boxWidth / 2) - ((_font.MeasureString(continueHint).X * sx) / 2), // Centered
-                top + dialogBox.Y  + (2 * pad)
-            );
-
-            spriteBatch.DrawString(_font, continueHint, hintPos, textColor * 0.7f, 0, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0);
-            //spriteBatch.DrawString(_font, displayText, new Vector2(left + MathF.Round(pad * sx), top + MathF.Round(pad * sy)) , textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-        }
-        else
-        {
-            float yOff = MathF.Round(pad * sy);
-            for (int i = 0; i < infos.Length; i++)
-            {
-                var posLabel = new Vector2(left + MathF.Round(pad * sx), top + yOff);
-                spriteBatch.DrawString(_font, infos[i].label, posLabel, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-                float infoW = _font.MeasureString(infos[i].info).X * sx;
-                var posInfo = new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), posLabel.Y);
-                spriteBatch.DrawString(_font, infos[i].info, posInfo, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-                yOff += MathF.Round((_font.MeasureString(infos[i].info).Y + pad) * sy);
-            }
-            if(bottomText != null)
-            {
-                float textW = _font.MeasureString(bottomText).X * sx;
-                var pos = new Vector2((int)(anchor.X - textW / 2f), (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
-                spriteBatch.DrawString(_font, bottomText, pos, textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            } 
-        }
-    }
-
-    protected Vector2 ProcessTextWithIcons(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 startPosition, Color color, float maxLineWidth, Vector2 scale, bool isMeasuring) 
-    {
-        // Clean up the text and isolate our tag so it always splits neatly
-        text = text.Replace("\n", " ").Replace("[SANITY]", " [SANITY] ").Replace("[DAYICON]", " [DAYICON] ");
-        while (text.Contains("  ")) text = text.Replace("  ", " ");
-
-        string[] words = text.Split(' ');
-        
-        float currentX = 0f;
-        float currentY = 0f;
-        float maxX = 0f;
-        float spaceWidth = font.MeasureString(" ").X * scale.X;
-        float lineHeight = font.LineSpacing * scale.Y;
-        TextureRegion sanityIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("sanity_small0");
-        TextureRegion dayIcon = GamelabGame.TextureAtlas["day_interface"].GetRegion("time_small0");
-
-        foreach (string word in words)
-        {
-            if (string.IsNullOrWhiteSpace(word)) continue;
-
-            float itemWidth;
-            float itemHeight;
-
-            bool isSanityIcon = word == "[SANITY]";
-            bool IsDayIcon = word == "[DAYICON]";
-
-            if (isSanityIcon)
-            {
-                // Adjust icon scale here if your texture is too big/small
-                itemWidth = sanityIcon.Width * scale.X * 1.3f; 
-                itemHeight = sanityIcon.Height * scale.Y * 1.3f;
-            }
-            else if(IsDayIcon)
-            {
-                itemWidth = dayIcon.Width * scale.X * 1.3f; 
-                itemHeight = dayIcon.Height * scale.Y * 1.3f;
-            }
-            else
-            {
-                Vector2 wordSize = font.MeasureString(word) * scale;
-                itemWidth = wordSize.X;
-                itemHeight = wordSize.Y;
-            }
-
-            // Wrap to next line if it exceeds max width
-            if (currentX + itemWidth > maxLineWidth && currentX > 0)
-            {
-                currentX = 0f;
-                currentY += lineHeight;
-            }
-
-            // Draw logic (skipped if we are just measuring)
-            if (!isMeasuring && spriteBatch != null)
-            {
-                if (isSanityIcon)
-                {
-                    // Center the icon vertically relative to the text line
-                    float yOffset = (lineHeight - itemHeight) / 2f; 
-                    sanityIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
-                    // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-                }
-                else if(IsDayIcon)
-                {
-                    // Center the icon vertically relative to the text line
-                    float yOffset = (lineHeight - itemHeight) / 2f; 
-                    dayIcon.Draw(spriteBatch, startPosition + new Vector2(currentX-7.5f, currentY + yOffset - 7.5f), Color.White, 0f, Vector2.Zero, Vector2.One * 3f, SpriteEffects.None, 0f);
-                    // spriteBatch.Draw(sanityIcon, startPosition + new Vector2(currentX, currentY + yOffset), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-                }
-                else
-                {
-                    spriteBatch.DrawString(font, word, startPosition + new Vector2(currentX, currentY), color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-                }
-            }
-
-            currentX += itemWidth + spaceWidth;
-            if (currentX > maxX) maxX = currentX;
-        }
-
-        // Return total dimensions used
-        return new Vector2(maxX - spaceWidth, currentY + lineHeight);
-    }
-
-    #endregion
+#endregion
 }

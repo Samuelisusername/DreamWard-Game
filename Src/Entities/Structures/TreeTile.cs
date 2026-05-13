@@ -21,7 +21,7 @@ public class TreeTile : Structure
             ? new Vector2(31, 16)
             : new Vector2(32, 16);
 
-    protected override (string, string)[] infos => [("I am tree:", "If you see this something went wrong")];
+    public override (string, string)[] Infos => [("I am tree:", "If you see this something went wrong")];
 
     //  new Vector2(32, 16);
     // new Vector2(-32, -96);
@@ -121,10 +121,5 @@ public class TreeTile : Structure
             }
         }
         // _sprite.Rotation += 0.1f;
-    }
-
-    public override void DrawCard(SpriteBatch spriteBatch, Rectangle screen)
-    {
-        return;
     }
 }

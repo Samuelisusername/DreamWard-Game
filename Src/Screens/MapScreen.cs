@@ -12,7 +12,8 @@ namespace Gamelab.Screens;
 
 public class MapScreen : GamelabGameScreen
 {
-    
+#region Managers and Renderers
+
     private MapManager mapManager => GamelabGame.MapManager;
     private SanityManager sanityManager => GamelabGame.SanityManager;
     private CardManager cardManager => GamelabGame.CardManager;
@@ -20,20 +21,14 @@ public class MapScreen : GamelabGameScreen
     private readonly MapRenderer mapRenderer;
     private readonly EntityRenderer entityRenderer;
     private readonly CardRenderer cardRenderer;
-    private Texture2D _dayTopTexture;
-    private Texture2D _dayPlayerTexture;
+
+#endregion
+    
     private RenderTarget2D _nightBackgroundCache;
     private Point _nightBackgroundCacheSize;
-    private string _voidWarningText = "";
-    private float _voidWarningTimer = 0f;
-    private const float VoidWarningDuration = 4f;
-    private const float VoidWarningFadeStart = 2.5f;
     
     private enum BtnId { Inventory, TowerRange, Speed, Move, Hammer, StartNight, Count }
 
-    // The exact coordinates from your JSON files
-    private readonly Rectangle _sheepPortraitRect = new Rectangle(0, 1408, 128, 128); 
-    private readonly Rectangle _humanPortraitRect = new Rectangle(0, 0, 16, 32);
     private Rectangle _speedBtn;
 
     // Cards
@@ -106,11 +101,6 @@ public class MapScreen : GamelabGameScreen
         cardRenderer = new CardRenderer(); 
         mapManager.fillMap();
     }
-    public void ShowVoidWarning(string text)
-{
-    _voidWarningText = text;
-    _voidWarningTimer = 0f;
-}
     public override void LoadContent()
     {
         base.LoadContent();
@@ -130,9 +120,6 @@ public class MapScreen : GamelabGameScreen
         _font = Content.Load<SpriteFont>("font");
         _dummy = new Texture2D(GraphicsDevice, 1, 1);
         _dummy.SetData(new[] { Color.White });
-        // texture for tutorial 
-        _dayTopTexture = Content.Load<Texture2D>("Sprites/day_top");
-        _dayPlayerTexture = Content.Load<Texture2D>("Sprites/day_player");
 
         // 1x1 white texture used by EntityRenderer to draw HP bars
         entityRenderer.SetHealthBarTexture(_dummy);
@@ -169,9 +156,14 @@ public class MapScreen : GamelabGameScreen
         _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
         cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn, ref _hammerBtn, ref _moveBtn);
     }
+
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
         Dictionary<int, GamePadState> gamePads, MouseStateExtended mouse)
     {
+        if(TutorialManager.CurrentInfoStructure != null && !viewportAdapter.BoundingRectangle.Contains(mapManager.GetWorldPositionOfTile(TutorialManager.CurrentInfoStructure.TilePosition)))
+        {
+            TutorialManager.CurrentInfoStructure = null;
+        }
         if(_resetStartNightTimer)
         {
             _elapsedStartNightTime = TimeSpan.Zero;
@@ -184,13 +176,6 @@ public class MapScreen : GamelabGameScreen
         Vector2 mousePosForCursor = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
         GamelabGame.UseHammerCursor = _hammerActive && !_hammerBtn.Contains(mousePosForCursor);
         Vector2 mousePos = mousePosForCursor;
-        // ParticleManager.AddParticle(new Particle
-        // {
-        //     WorldPosition = (mousePos - mapManager.Offset)/mapManager.Scale,
-        //     Velocity = new Vector2((float)(Random.Shared.NextDouble() -0.5f) * 200, (float)(Random.Shared.NextDouble() -0.5f) * 200),
-        //     LifeSpan = TimeSpan.FromSeconds(3),
-        //     Color = Color.Orange
-        // });
         TutorialManager.Update(gameTime);
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
@@ -293,8 +278,6 @@ public class MapScreen : GamelabGameScreen
 
         if (!string.IsNullOrEmpty(_dayPopupText) && _popupTimer < DayPopupDuration)
             _popupTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (!string.IsNullOrEmpty(_voidWarningText) && _voidWarningTimer < VoidWarningDuration)
-            _voidWarningTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         // Map update
         TimeSpan scaledElapsed = TimeSpan.FromTicks((long)(gameTime.ElapsedGameTime.Ticks * GamelabGame.GameSpeed));
@@ -996,13 +979,10 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.End();
 
         // Info card: no transform so all positions are in screen pixels, eliminating sub-pixel glyph shifts.
-        Structure._screenTransform = viewportAdapter.GetScaleMatrix();
+        // Structure._screenTransform = viewportAdapter.GetScaleMatrix();
+        PopUpRenderer.ScreenTransform = viewportAdapter.GetScaleMatrix();
         spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        TutorialManager.CurrentTutorialStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
-        if(TutorialManager.CurrentTutorialStructure != _hoveredStructure)
-        {
-            _hoveredStructure?.DrawCard(spriteBatch, viewportAdapter.BoundingRectangle);
-        }
+        PopUpRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
 
         // UI always uses point clamp — cards are pixel art at fixed size, no zoom applied
@@ -1033,43 +1013,8 @@ public class MapScreen : GamelabGameScreen
             }
         }
         DrawDayPopup(vw, vh);
-        DrawVoidWarning(vw, vh);
         ParticleManager.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
         spriteBatch.End();
-    }
-    private void DrawVoidWarning(int vw, int vh)
-    {
-        if (string.IsNullOrEmpty(_voidWarningText) || _voidWarningTimer >= VoidWarningDuration) return;
-
-        float fade = _voidWarningTimer < VoidWarningFadeStart
-            ? 1f
-            : 1f - (_voidWarningTimer - VoidWarningFadeStart) / (VoidWarningDuration - VoidWarningFadeStart);
-
-        // Dialog box (same style as tutorial)
-        int dialogHeight = 140;
-        Rectangle dialogRect = new Rectangle(50, vh - dialogHeight - 30, vw - 100, dialogHeight);
-        spriteBatch.Draw(_dummy, dialogRect, COLOR_L);
-        spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 2, dialogRect.Y + 2, dialogRect.Width - 4, dialogRect.Height - 4), COLOR_D);
-        spriteBatch.Draw(_dummy, new Rectangle(dialogRect.X + 4, dialogRect.Y + 4, dialogRect.Width - 8, dialogRect.Height - 8), COLOR_L);
-
-        // Sheep portrait (same as tutorial)
-        float portraitScale = 4f;
-        float scaledWidth  = _sheepPortraitRect.Width  * portraitScale;
-        float scaledHeight = _sheepPortraitRect.Height * portraitScale;
-        int portraitX = dialogRect.Right - (int)scaledWidth + 201;
-        int portraitY = dialogRect.Bottom - (int)scaledHeight;
-        if (_dayTopTexture != null)
-            spriteBatch.Draw(_dayTopTexture, new Vector2(portraitX, portraitY),
-                _sheepPortraitRect, Color.White * fade, 0f, Vector2.Zero, portraitScale, SpriteEffects.None, 0f);
-
-        // Text
-        float textScale = 0.5f;
-        float maxTextWidth = portraitX - (dialogRect.X + 20) - 20;
-        string wrapped = WrapText(_font, _voidWarningText, maxTextWidth, textScale);
-        spriteBatch.DrawString(_font, "Sheep:", new Vector2(dialogRect.X + 20, dialogRect.Y + 15),
-            Color.DarkRed * fade, 0f, Vector2.Zero, textScale * 1.2f, SpriteEffects.None, 0f);
-        spriteBatch.DrawString(_font, wrapped, new Vector2(dialogRect.X + 20, dialogRect.Y + 45),
-            COLOR_D * fade, 0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
     }
     private string WrapText(SpriteFont font, string text, float maxLineWidth, float scale)
     {

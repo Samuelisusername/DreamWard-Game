@@ -24,7 +24,7 @@ public class SniperTower : Tower
 
     // protected override int rangeDepth => 2;
 
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
+    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
 
     private TimeSpan attackCD = TimeSpan.Zero;
 

@@ -15,22 +15,49 @@ public enum TutorialAction
 
 public static class TutorialManager
 {
+#region Managers
     private static MapManager mapManager => GamelabGame.MapManager;
     private static GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
+#endregion
+    
+#region tutorial state
+    public static Structure CurrentTutorialStructure {get; private set;}
+
+    public static bool IsTutorialPrioritized => false;
+
     public static bool IsTutorialActive => gamePhaseManager.IsDay &&  GamelabGame.GamePhaseManager.DayCount <= 4 && tutorialStep < tutorialTexts[gamePhaseManager.DayCount-1].Length;
 
     private static int tutorialSubStep = -1;
 
     private static int tutorialStep = 0;
 
-    public static Structure CurrentTutorialStructure;
-
     private static TimeSpan tutorialTimer = TimeSpan.FromSeconds(1);
 
     private static int charIndex = 1;
 
-    private static TimeSpan timePerChar = TimeSpan.FromSeconds(0.03);
+    private static TimeSpan timePerChar = TimeSpan.FromSeconds(0.03);    
 
+    private static TimeSpan textTimer = TimeSpan.Zero;
+
+    private static bool SheepDead => mapManager.GetSheep() == null;
+#endregion
+
+#region info state
+
+public static Structure CurrentInfoStructure {get; set;}
+
+public static Structure CurrentWarningStructure {get; set;}
+
+public static string WarningText {get; private set;}
+
+public static string TutorialText => IsTutorialActive && tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count ?  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2[..charIndex] : null;
+
+private static TimeSpan warningTimer = TimeSpan.Zero;
+
+#endregion
+
+#region tutorial dialog
+    public static List<string> BadString => ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend.", "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?"];
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
         ([(TutorialAction.PlacedTower, 1),(TutorialAction.StartedNight,3)],[
@@ -95,12 +122,24 @@ public static class TutorialManager
     ],
     ];
 
-    private static TimeSpan textTimer = TimeSpan.Zero;
-    private static bool SheepDead() => mapManager.GetSheep() == null;
+#endregion
 
     public static void Update(GameTime gameTime)
-    {
-        if (SheepDead())
+    {   
+        ///WARNING
+        if(warningTimer > TimeSpan.Zero && WarningText != null)
+        {
+            warningTimer -= gameTime.ElapsedGameTime;
+            if(warningTimer <= TimeSpan.Zero)
+            {
+                WarningText = null;
+                CurrentWarningStructure = null;
+            }
+        }
+
+
+        ///TUTORIAL
+        if (SheepDead)
         {
             if (CurrentTutorialStructure != null)
             {
@@ -161,6 +200,8 @@ public static class TutorialManager
         }
     }
 
+#region tutrial logic
+
     private static Structure GetTutorialStructure(TutorialStructureType type)
     {
         switch (type)
@@ -186,7 +227,7 @@ public static class TutorialManager
     public static void HandleTutorialAction(TutorialAction action)
     {
         if(!IsTutorialActive) return;
-        if(SheepDead()) return;
+        if(SheepDead) return;
         if(action == TutorialAction.Click)
         {
             if(tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length)
@@ -276,6 +317,19 @@ public static class TutorialManager
         charIndex = 1;
         textTimer = TimeSpan.Zero;
     }
+
+#endregion
+
+#region popup Logic
+
+    public static void SetWarning(string warning, TimeSpan warningTime)
+    {
+        WarningText = warning;
+        CurrentWarningStructure = GetTutorialStructure(TutorialStructureType.Sheep);
+        warningTimer = warningTime;
+    }
+
+#endregion
     private enum TutorialStructureType
     {
         Tent,

@@ -320,6 +320,7 @@ public class GamelabGame : Game
 
         PathFindingManager = new();
         TutorialManager.Reset();
+        PopUpRenderer.Reset();
     }
 
     /// <summary>
