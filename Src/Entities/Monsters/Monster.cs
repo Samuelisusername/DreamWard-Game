@@ -146,7 +146,10 @@ public abstract class Monster : Entity
     {
         if (TargetReached)
         {
-            NextTarget = pathFindingManager.GetNextPosition(this);
+            if(AttackTarget == null)
+            {
+                NextTarget = pathFindingManager.GetNextPosition(this);
+            }
             return;
         }
         TilePosition = NextTarget;
