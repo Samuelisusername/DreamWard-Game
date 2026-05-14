@@ -154,6 +154,8 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
         {
             return;
         }
+        if (!IsTutorialActive)
+            return;
         textTimer += gameTime.ElapsedGameTime;
         while(tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count && charIndex < tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2.Length && textTimer > timePerChar)
         {
@@ -255,6 +257,8 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
     {
         tutorialSubStep = 0;
         tutorialStep = 0;            
+        if (!IsTutorialActive)
+            return;
         CurrentTutorialStructure = GetTutorialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
     }
 
