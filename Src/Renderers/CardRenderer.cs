@@ -63,8 +63,9 @@ public class CardRenderer
     }
     private readonly List<CardTransform> _transforms = new();
 
-    public Rectangle CardStripBounds     { get; private set; }
-    public Rectangle ExpandedPanelBounds { get; private set; }
+    public Rectangle CardStripBounds          { get; private set; }
+    public Rectangle ExpandedPanelBounds      { get; private set; }
+    public Vector2   RightmostCardRightCenter { get; private set; }
     public int TransformCount => _transforms.Count;
     public CardTransform GetTransform(int i) => _transforms[i];
     public Card     ExpandedCard  { get; private set; }
@@ -246,6 +247,8 @@ public class CardRenderer
 
         int minX = int.MaxValue, minY = int.MaxValue;
         int maxX = int.MinValue, maxY = int.MinValue;
+        Rectangle lastFilledAabb    = Rectangle.Empty;
+        Vector2   lastFilledArcCenter = Vector2.Zero;
 
         int arcIdx = 0;   // index into arcPositions
 
@@ -299,6 +302,8 @@ public class CardRenderer
                 aabbW, aabbH);
 
             cardManager.CardRects.Add((aabb, slot.Card));
+            lastFilledAabb     = aabb;
+            lastFilledArcCenter = arcCenter;
 
             minX = Math.Min(minX, aabb.X);
             minY = Math.Min(minY, aabb.Y);
@@ -321,10 +326,16 @@ public class CardRenderer
 
         // ── Overall strip bounds ──────────────────────────────────────────────
         if (filledCount > 0)
+        {
             CardStripBounds = new Rectangle(minX - 8, minY - 8,
                 maxX - minX + 16, maxY - minY + 16);
+            RightmostCardRightCenter = new Vector2(lastFilledAabb.Right, lastFilledArcCenter.Y + CARD_H / 3f);
+        }
         else
+        {
             CardStripBounds = Rectangle.Empty;
+            RightmostCardRightCenter = Vector2.Zero;
+        }
     }
 
     // ── Draw a solid rotated rectangle with the dummy 1×1 texture ────────────

@@ -19,6 +19,8 @@
    { "name": "idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
+   { "name": "arrow_button_clicked", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 112, "y": 208, "w": 32, "h": 32 } }] },
+   { "name": "arrow_button", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 112, "y": 176, "w": 32, "h": 32 } }] },
    { "name": "hint_space", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 80, "y": 208, "w": 32, "h": 16 } }] },
    { "name": "hint_s", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 80, "y": 192, "w": 32, "h": 16 } }] },
    { "name": "hint_c", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 80, "y": 176, "w": 32, "h": 16 } }] },

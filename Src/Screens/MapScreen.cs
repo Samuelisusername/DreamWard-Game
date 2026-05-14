@@ -89,6 +89,8 @@ public class MapScreen : GamelabGameScreen
     private static readonly Rectangle FloatBtnPrs     = new(0, 208, 80,  32);
     private static readonly Rectangle LongFloatBtn    = new(0, 240, 105, 32);
     private static readonly Rectangle LongFloatBtnPrs = new(0, 272, 105, 32);
+    private static readonly Rectangle ArrowBtn        = new(112, 176, 32, 32);
+    private static readonly Rectangle ArrowBtnPrs     = new(112, 208, 32, 32);
     private static readonly Rectangle HintC     = new(80, 176, 32, 16);
     private static readonly Rectangle HintS     = new(80, 192, 32, 16);
     private static readonly Rectangle HintSpace = new(80, 208, 32, 16);
@@ -194,6 +196,14 @@ public class MapScreen : GamelabGameScreen
         TutorialManager.Update(gameTime);
         cardRenderer.SetMousePos(mousePos);
         RebuildButtonLayout();
+        var rc = cardRenderer.RightmostCardRightCenter;
+        if (rc != Vector2.Zero)
+        {
+            float sc = SpriteScale;
+            int bW = (int)(ArrowBtn.Width  * sc);
+            int bH = (int)(ArrowBtn.Height * sc);
+            _inventoryBtn = new Rectangle((int)rc.X, (int)(rc.Y - bH / 2f), bW, bH);
+        }
         bool isDay         = gamePhaseManager.IsDay;
         bool notTransition = !gamePhaseManager.IsInTransition;
         Rectangle[] btns   = { _inventoryBtn, _towerRangeBtn, _speedBtn, _moveBtn, _hammerBtn, _startNightBtn };
@@ -1021,7 +1031,12 @@ public class MapScreen : GamelabGameScreen
 
         if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
         {
-            DrawButton(_inventoryBtn,  _showInventory  ? "Hide Cards"    : "Show Cards",   Btn(BtnId.Inventory)  == ButtonResult.Pressed, keyHint: HintC);
+            bool invPrs = Btn(BtnId.Inventory) == ButtonResult.Pressed;
+            Rectangle arrowSrc = invPrs ? ArrowBtnPrs : ArrowBtn;
+            float arrowSc = SpriteScale;
+            int arrowW = (int)(arrowSrc.Width  * arrowSc);
+            int arrowH = (int)(arrowSrc.Height * arrowSc);
+            spriteBatch.Draw(InterfaceTexture, new Rectangle(_inventoryBtn.X, _inventoryBtn.Y, arrowW, arrowH), arrowSrc, Color.White);
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed);
             DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
             DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
