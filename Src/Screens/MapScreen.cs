@@ -300,10 +300,13 @@ public class MapScreen : GamelabGameScreen
             }
             cardManager._previewStructure?.Update(gameTime);
             //Speedup
-            if (keyboard.IsKeyDown(Keys.S))
-                _btnResults[(int)BtnId.Speed] = ButtonResult.Pressed;
-            if (keyboard.WasKeyReleased(Keys.S))
-                GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
+            if (!gamePhaseManager.IsDay)
+            {
+                if (keyboard.IsKeyDown(Keys.S))
+                    _btnResults[(int)BtnId.Speed] = ButtonResult.Pressed;
+                if (keyboard.WasKeyReleased(Keys.S))
+                    GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 3f : 1f;
+            }
             //Slowdown
 #if DEBUG
             if(keyboard.WasKeyReleased(Keys.D))
