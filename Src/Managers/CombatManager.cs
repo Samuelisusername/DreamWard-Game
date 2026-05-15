@@ -53,12 +53,12 @@ public class CombatManager
         // }
         // mapManager.AddNewMonster((6,15));
         // mapManager.AddNewMonster((6,16));
-        int maxattempts = 5*count;
+        int maxattempts = 5*20;
         int attempts = 0; 
 
         NightTimer = TimeSpan.Zero;
 
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 20; i++)
         {
             attempts++;
             if(SpawnableArea.Count == 0)
@@ -267,6 +267,7 @@ public class CombatManager
                             {
                                 monster.Move();
                             }
+                            container.SplitExistingMonsterGroup(group);
                         }
                         else if(group.Monsters.All(i => !i.TargetReached))
                         {
@@ -289,22 +290,16 @@ public class CombatManager
                     container.CleanUpGroups(currentType);
                 }
 
-                // 3. Update all the Mergeanims
-                foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
-                {
-                    container.InitMerge(currentType);
-                }
-
                 foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
                 {
                     foreach (MonsterGroup group in container.MonsterGroups.Where(i => i.MonsterType == currentType))
                     {
-                        foreach (Monster monster in group.Monsters)
-                        {
-                            monster.AttackTarget = pathFindingManager.GetTarget(monster);
-                        }
                         group.SetAnimation();
                     }
+                }
+
+                foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+                {
                     container.InitMerge(currentType);
                 }
                 ElapsedTimers[currentType] -= MonsterSpeeds[currentType];
@@ -356,6 +351,21 @@ public class CombatManager
                 }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);
+            }
+        }
+
+        // 6. clear AttackTargets
+        foreach (MonsterGroupContainer container in mapManager.MonsterContainers) 
+        {
+            foreach (MonsterGroup group in container.MonsterGroups)
+            {
+                foreach (Monster monster in group.Monsters)
+                {
+                    if(monster.AttackTarget is {} target && mapManager.GetStructure(target) == null)
+                    {
+                        monster.AttackTarget = null; // probably set this to null so it gets set in sync, but maybe not
+                    }
+                }
             }
         }
 

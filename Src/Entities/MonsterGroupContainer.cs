@@ -89,37 +89,27 @@ public class MonsterGroupContainer
             if(monsters[0].TargetReached)
             {
                 //monster is idle add all monsters to the idle group if it exists
-                var matchingGroup = MonsterGroups.FirstOrDefault(g => g.MonsterType == monsters[0].Type && g.CommonNextTarget() == tilePosition);
-
-                if (matchingGroup != null)
+                MonsterGroup newGroup;
+                switch (monsters[0].Type)
                 {
-                    matchingGroup.SetLastDirection(oldDir);
-                    matchingGroup.AddMonsters(monsters);
+                    case MonsterType.Regular:
+                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Flying:
+                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Small:
+                        newGroup = new SmallMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Big:
+                        newGroup = new BigMonsterGroup(tilePosition);
+                        break;
+                    default:
+                        throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                 }
-                else
-                {
-                    MonsterGroup newGroup;
-                    switch (monsters[0].Type)
-                    {
-                        case MonsterType.Regular:
-                            newGroup =  new RegularMonsterGroup(tilePosition);
-                            break;
-                        case MonsterType.Flying:
-                            newGroup = new FlyingMonsterGroup(tilePosition);
-                            break;
-                        case MonsterType.Small:
-                            newGroup = new SmallMonsterGroup(tilePosition);
-                            break;
-                        case MonsterType.Big:
-                            newGroup = new BigMonsterGroup(tilePosition);
-                            break;
-                        default:
-                            throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
-                    }
-                    newGroup.SetLastDirection(oldDir);
-                    newGroup.AddMonsters(monsters);
-                    MonsterGroups.Add(newGroup);
-                }
+                newGroup.SetLastDirection(oldDir);
+                newGroup.AddMonsters(monsters);
+                MonsterGroups.Add(newGroup);
             }
             else if(oldDir == MapUtils.GetDirection(oldGoal, monsters[0].GetCurrentGoal()))
             {
@@ -154,6 +144,50 @@ public class MonsterGroupContainer
         }
 
         monsterGroup.Monsters.RemoveAll(i => oldDir != MapUtils.GetDirection(oldGoal, i.GetCurrentGoal()));
+    }
+
+    public void SplitExistingMonsterGroup(MonsterGroup monsterGroup)
+    {
+        if(!MonsterGroups.Contains(monsterGroup))
+        {
+            throw new Exception("cant split aa group that doesnt exist in this conatiner");
+        }
+
+        List<List<Monster>> monsterLists = monsterGroup.Monsters.GroupBy(i => i.GetCurrentGoal()).Select(i => i.ToList()).ToList();
+        
+        foreach (List<Monster> monsters in monsterLists)
+        {
+            if(monsters[0].TargetReached)
+            {
+                //monster is still idle, we dont need to anything
+            }
+            else
+            {
+                // monsters changed direction and isn't idle anymore
+                MonsterGroup newGroup;
+                switch (monsters[0].Type)
+                {
+                    case MonsterType.Regular:
+                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Flying:
+                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Small:
+                        newGroup = new SmallMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Big:
+                        newGroup = new BigMonsterGroup(tilePosition);
+                        break;
+                    default:
+                        throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
+                }
+                newGroup.AddMonsters(monsters);
+                MonsterGroups.Add(newGroup);
+            }
+        }
+        monsterGroup.Monsters.RemoveAll(i => !i.TargetReached);
+
     }
 
     public void CleanUpGroups(MonsterType type)
@@ -271,7 +305,6 @@ public class MonsterGroupContainer
         });
     }
 
-    //TODO make this dependent on monstertype
     public void InitMerge(MonsterType type)
     {
         List<(int,int)> neighbor = MapUtils.GetSurroundingTiles(tilePosition);
