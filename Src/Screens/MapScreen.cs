@@ -316,7 +316,7 @@ public class MapScreen : GamelabGameScreen
                 {
                     foreach (var (rect, card) in cardManager.CardRects)
                     {
-                        if (card != null && rect.Contains(mousePos))
+                        if (card != null && rect.Contains(mousePos) && !cardRenderer.IsCardUnaffordable(card, cardManager))
                         {
                             GamelabGame.IsHovering = true;
                             break;

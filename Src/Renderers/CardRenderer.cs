@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gamelab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -93,6 +94,17 @@ public class CardRenderer
             && local.Y >= -(t.HalfH + t.HoverExtension)
             && local.Y <= t.HalfH + t.HoverExtension;
     }
+
+    private static bool IsUnaffordable(CardSlot slot, CardManager cardManager)
+    {
+        if (slot == null || slot.Card == null || slot.Purchased) return false;
+        if (slot.Card.Type != CardType.Build && slot.Card.Type != CardType.MapAction) return false;
+        int cost = cardManager.DiscountActive ? Math.Max(slot.Card.Cost - 2, 0) : slot.Card.Cost;
+        return GamelabGame.SanityManager.Sanity <= cost;
+    }
+
+    public bool IsCardUnaffordable(Card card, CardManager cardManager)
+        => IsUnaffordable(cardManager.GetSlotForCard(card), cardManager);
 
     public void HandleHover(Vector2 mousePos, CardManager cardManager)
     {
@@ -266,9 +278,10 @@ public class CardRenderer
 
             var (arcCenter, angleDeg) = arcPositions[arcIdx++];
 
-            bool isHovered  = ExpandedCard != null && ReferenceEquals(slot.Card, ExpandedCard);
-            bool isActive   = ReferenceEquals(slot.Card, cardManager._activeMapCard);
-            bool isLocked   = (slot.Card.Type == CardType.Build || slot.Card.Type == CardType.MapAction) && !slot.Purchased;
+            bool isLocked       = (slot.Card.Type == CardType.Build || slot.Card.Type == CardType.MapAction) && !slot.Purchased;
+            bool isUnaffordable = IsUnaffordable(slot, cardManager);
+            bool isHovered      = ExpandedCard != null && ReferenceEquals(slot.Card, ExpandedCard);
+            bool isActive       = ReferenceEquals(slot.Card, cardManager._activeMapCard);
 
             float lift = isHovered ? CARD_HOVER_LIFT : 0f;
 
@@ -320,8 +333,9 @@ public class CardRenderer
             Vector2 texScale  = new(CARD_W / (float)region.Width, CARD_H / (float)region.Height);
 
             // ── Draw card art ─────────────────────────────────────────────────
+            Color cardTint = isUnaffordable ? new Color(90, 90, 90) : Color.White;
             spriteBatch.Draw(cardTexture, drawCenter, region,
-                Color.White, rad, texOrigin, texScale, SpriteEffects.None, 0f);
+                cardTint, rad, texOrigin, texScale, SpriteEffects.None, 0f);
         }
 
         // ── Overall strip bounds ──────────────────────────────────────────────
