@@ -256,9 +256,12 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
     public static void AdvanceDay()
     {
         tutorialSubStep = 0;
-        tutorialStep = 0;            
+        tutorialStep = 0;
         if (!IsTutorialActive)
+        {
+            CurrentTutorialStructure = null;
             return;
+        }
         CurrentTutorialStructure = GetTutorialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);
     }
 

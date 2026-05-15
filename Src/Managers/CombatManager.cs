@@ -352,6 +352,14 @@ public class CombatManager
                         if (mapManager.Structures[pos.Item1, pos.Item2] is PlacableMeadow pm)
                             pm.DeactivateMeadow();
                     }
+                    if (destroyedMeadow.HasSheep)
+                    {
+                        destroyedMeadow.RemoveSheep();
+                        destroyedMeadow.Heal(destroyedMeadow.MaxHealth);
+                        mapManager.NotifySheepDied();
+                        anyStructureDestroyed = true;
+                        continue;
+                    }
                 }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);
@@ -365,9 +373,11 @@ public class CombatManager
             {
                 foreach (Monster monster in group.Monsters)
                 {
-                    if(monster.AttackTarget is {} target && mapManager.GetStructure(target) == null)
+                    if (monster.AttackTarget is {} target)
                     {
-                        monster.AttackTarget = null; // probably set this to null so it gets set in sync, but maybe not
+                        var s = mapManager.GetStructure(target);
+                        if (s == null || (s is Meadow tm && (!tm.HasSheep || tm.IsPolymorphed)))
+                            monster.AttackTarget = null; // probably set this to null so it gets set in sync, but maybe not
                     }
                 }
             }

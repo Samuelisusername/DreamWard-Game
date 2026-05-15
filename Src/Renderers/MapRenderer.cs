@@ -10,15 +10,19 @@ public class MapRenderer
     private CombatManager combatManager => GamelabGame.CombatManager;
     private GamePhaseManager gamePhaseManager => GamelabGame.GamePhaseManager;
     private bool _draw_tile_coordinates = false; // setting to true will draw the (column, row) of each tile
-    
+    private Sprite         _deadSheepDay;
+    private AnimatedSprite _deadSheepNight;
+    private static readonly Vector2 StructureLocalOffset = new Vector2(-32, -96);
+
 
     /// <summary>
     /// draws anything stationary, mainly all tiles
     /// (e.g. meadows, void tiles, fences, etc, and any static defence tiles).
     /// To get the tiles and entites to draw it calles the MapManager.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Rectangle screen, (int col, int row)? skipTile = null, bool drawRange = false, CardRenderer cardRenderer = null)
+    public void Draw(SpriteBatch spriteBatch, Rectangle screen, GameTime gameTime, (int col, int row)? skipTile = null, bool drawRange = false, CardRenderer cardRenderer = null)
     {
+        _deadSheepNight?.Update(gameTime);
         int oX = 128 * (int)mapManager.Scale.X;
         int oY = 128 * (int)mapManager.Scale.Y;
         screen = new Rectangle(screen.X - oX , screen.Y - oY, screen.Width + 2*oX, screen.Height + 2*oY);
@@ -80,7 +84,14 @@ public class MapRenderer
                     //TOPDRAWING
                     s?.Draw(spriteBatch, offset, offsetProgressInv);
 
-                }            
+                    if (mapManager.SheepDied && localTilePos == mapManager.SheepPosition)
+                    {
+                        _deadSheepDay ??= GamelabGame.TextureAtlas["day_top"].CreateSprite("dead_sheep0");
+                        _deadSheepDay.Scale = mapManager.Scale;
+                        _deadSheepDay.Draw(spriteBatch, worldPos + StructureLocalOffset * mapManager.Scale, offsetProgressInv);
+                    }
+
+                }
             }
         }
         else
@@ -147,6 +158,24 @@ public class MapRenderer
                     //TOPDRAWING
                     Structure s = mapManager.GetStructure(globalTilePos, true);
                     s?.Draw(spriteBatch);
+
+                    if (mapManager.SheepDied && localTilePos == mapManager.SheepPosition)
+                    {
+                        Vector2 wp = mapManager.GetWorldPositionOfTile(localTilePos);
+                        Vector2 drawPos = wp + StructureLocalOffset * mapManager.Scale;
+                        if (gamePhaseManager.IsDay)
+                        {
+                            _deadSheepDay ??= GamelabGame.TextureAtlas["day_top"].CreateSprite("dead_sheep0");
+                            _deadSheepDay.Scale = mapManager.Scale;
+                            _deadSheepDay.Draw(spriteBatch, drawPos);
+                        }
+                        else
+                        {
+                            _deadSheepNight ??= GamelabGame.TextureAtlas["night_top"].CreateAnimatedSprite("dead_sheep_idle");
+                            _deadSheepNight.Scale = mapManager.Scale;
+                            _deadSheepNight.Draw(spriteBatch, drawPos);
+                        }
+                    }
 
                     //FLYINGMONSTERDRWAING
                     //mapManager.GetMonsterContainer(localTilePos)?.DrawAir(spriteBatch);

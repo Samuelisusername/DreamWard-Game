@@ -833,7 +833,7 @@ public class MapScreen : GamelabGameScreen
         GamelabGame.RenderTransform = viewportAdapter.GetScaleMatrix();
         GamelabGame.RenderSampler = sampler;
         spriteBatch.Begin(samplerState: sampler, transformMatrix: viewportAdapter.GetScaleMatrix());
-        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle);
+        mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, gameTime);
         spriteBatch.End();
         SamplerState hpSampler = mapManager.Scale.X < 2f ? SamplerState.PointClamp : SamplerState.PointClamp;
         spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
@@ -864,11 +864,11 @@ public class MapScreen : GamelabGameScreen
              cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, _hoverTile, _showTowerRange, cardRenderer);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, gameTime, _hoverTile, _showTowerRange, cardRenderer);
         }
         else
         {
-            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, drawRange: _showTowerRange, cardRenderer: cardRenderer);
+            mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, gameTime, drawRange: _showTowerRange, cardRenderer: cardRenderer);
         }
         if(!gamePhaseManager.IsInTransition)
         {
