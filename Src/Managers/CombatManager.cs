@@ -352,6 +352,14 @@ public class CombatManager
                         if (mapManager.Structures[pos.Item1, pos.Item2] is PlacableMeadow pm)
                             pm.DeactivateMeadow();
                     }
+                    if (destroyedMeadow.HasSheep)
+                    {
+                        destroyedMeadow.RemoveSheep();
+                        destroyedMeadow.Heal(destroyedMeadow.MaxHealth);
+                        mapManager.NotifySheepDied();
+                        anyStructureDestroyed = true;
+                        continue;
+                    }
                 }
                 anyStructureDestroyed = true;
                 mapManager.RemoveStructure(entity.TilePosition);

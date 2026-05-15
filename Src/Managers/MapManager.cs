@@ -631,6 +631,9 @@ public class MapManager
     /// <summary>
     /// removes the structure at the given position
     /// </summary>
+    public bool SheepDied { get; private set; }
+    public void NotifySheepDied() => SheepDied = true;
+
     public void RemoveStructure((int col, int row) pos)
     {
         Structures[pos.col, pos.row] = null;
@@ -1139,7 +1142,8 @@ public class MapManager
     /// </summary>
     public Meadow GetSheep()
     {
-        return Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+        var m = Structures[SheepPosition.Item1, SheepPosition.Item2] as Meadow;
+        return m?.HasSheep == true ? m : null;
     }
 
     /// <summary>
