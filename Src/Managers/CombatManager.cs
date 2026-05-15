@@ -373,9 +373,11 @@ public class CombatManager
             {
                 foreach (Monster monster in group.Monsters)
                 {
-                    if(monster.AttackTarget is {} target && mapManager.GetStructure(target) == null)
+                    if (monster.AttackTarget is {} target)
                     {
-                        monster.AttackTarget = null; // probably set this to null so it gets set in sync, but maybe not
+                        var s = mapManager.GetStructure(target);
+                        if (s == null || (s is Meadow tm && (!tm.HasSheep || tm.IsPolymorphed)))
+                            monster.AttackTarget = null; // probably set this to null so it gets set in sync, but maybe not
                     }
                 }
             }
