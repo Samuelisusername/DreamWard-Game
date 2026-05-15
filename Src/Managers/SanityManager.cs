@@ -14,7 +14,7 @@ public class SanityManager
 
     public SanityManager()
     {
-        Sanity = 20000;
+        Sanity = 30;
     }
 
     /// <summary>

@@ -53,12 +53,12 @@ public class CombatManager
         // }
         // mapManager.AddNewMonster((6,15));
         // mapManager.AddNewMonster((6,16));
-        int maxattempts = 5*20;
+        int maxattempts = 5*count;
         int attempts = 0; 
 
         NightTimer = TimeSpan.Zero;
 
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < count; i++)
         {
             attempts++;
             if(SpawnableArea.Count == 0)
