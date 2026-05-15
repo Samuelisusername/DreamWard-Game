@@ -262,12 +262,16 @@ public class CombatManager
                     {
                         if(group.Monsters.All(i => i.TargetReached))
                         {
-                            //all monsters reached their goal dont move just recalc position
-                            foreach (Monster monster in group.Monsters)
+                            if(!group.Moved)
                             {
-                                monster.Move();
+                                //all monsters reached their goal dont move just recalc position
+                                foreach (Monster monster in group.Monsters)
+                                {
+                                    monster.Move();
+                                }
+                                container.SplitExistingMonsterGroup(group);
+                                group.Moved = true;
                             }
-                            container.SplitExistingMonsterGroup(group);
                         }
                         else if(group.Monsters.All(i => !i.TargetReached))
                         {

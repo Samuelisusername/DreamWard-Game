@@ -148,8 +148,8 @@ public abstract class Monster : Entity
         {
             if(AttackTarget == null)
             {
-                AttackTarget = pathFindingManager.GetTarget(this);
                 NextTarget = pathFindingManager.GetNextPosition(this);
+                AttackTarget = pathFindingManager.GetTarget(this);
             }
             return;
         }

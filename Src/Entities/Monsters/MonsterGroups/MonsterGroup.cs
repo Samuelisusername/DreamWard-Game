@@ -58,6 +58,7 @@ public abstract class MonsterGroup
     public void ResetGroup((int,int) pos)
     {
         TilePosition = pos;
+        Moved = true;
     }
 
     public void SetLastDirection(string dir)
@@ -152,7 +153,8 @@ public abstract class MonsterGroup
     }
 
     public void Update(GameTime gameTime)
-    {        
+    {
+        Moved = false;
         Monsters.ForEach(m => m.TickHitFlash(gameTime));
         if(isMerging && (combatManager.MonsterSpeeds[MonsterType] - combatManager.ElapsedTimers[MonsterType]) < AnimFrameDelay)
         {
@@ -162,11 +164,13 @@ public abstract class MonsterGroup
         _oldGoalReached = _goalReached;
         sprite.Update(gameTime);
     }
+
+    public bool Moved = true;
     
     // Tells the individual monsters to actually step forward
     public bool Move()
     {
-        if(_goalReached)
+        if(_goalReached || Moved)
         {
             return false;
         }
