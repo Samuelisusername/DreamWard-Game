@@ -238,7 +238,7 @@ public class GamelabGame : Game
         PathFindingManager = new();
 
         // Pre-create the map so it can be drawn behind the start screen
-        MapScreenInstance = new MapScreen(this);
+        MapScreenInstance = new MapScreen(this, true);
         MapScreenInstance.Initialize();
         MapScreenInstance.LoadContent();
     }
@@ -317,9 +317,12 @@ public class GamelabGame : Game
 
         // Recreate MapManager with fresh tile data
         MapManager = new MapManager(dayTiles, nightTiles, mapSize.x, mapSize.y);
+        
+        MapManager.FillMap();
 
         PathFindingManager = new();
         TutorialManager.Reset();
+        PopUpRenderer.Reset();
     }
 
     /// <summary>

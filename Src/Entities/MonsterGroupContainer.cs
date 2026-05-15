@@ -9,11 +9,8 @@ using Microsoft.Xna.Framework.Graphics;
 public class MonsterGroupContainer 
 {   
     private MapManager mapManager => GamelabGame.MapManager;
-    private PathFindingManager pathFindingManager => GamelabGame.PathFindingManager;
     private (int, int) tilePosition;
     public List<MonsterGroup> MonsterGroups;
-
-    private bool cleanUpGroups;
     
     public MonsterGroupContainer((int, int) tilePosition)
     {
@@ -56,56 +53,33 @@ public class MonsterGroupContainer
             switch (monster.Type)
             {
                 case MonsterType.Regular:
-                    newGroup =  new RegularMonsterGroup(tilePosition, TimeSpan.Zero);
+                    newGroup =  new RegularMonsterGroup(tilePosition);
                     break;
                 case MonsterType.Flying:
-                    newGroup = new FlyingMonsterGroup(tilePosition, TimeSpan.Zero);
+                    newGroup = new FlyingMonsterGroup(tilePosition);
                     break;
                 case MonsterType.Small:
-                    newGroup = new SmallMonsterGroup(tilePosition, TimeSpan.Zero);
+                    newGroup = new SmallMonsterGroup(tilePosition);
                     break;
                 case MonsterType.Big:
-                    newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
+                    newGroup = new BigMonsterGroup(tilePosition);
                     break;
                 default:
                     throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
             }
             newGroup.AddMonster(monster);
-            newGroup.shouldCheckMerge = true;
             MonsterGroups.Add(newGroup);
         }
     }
 
-    public void AddExistingMonsterGroup(MonsterGroup monsterGroup, bool shouldRecalcPath, TimeSpan elapsed)
+    public void AddExistingMonsterGroup(MonsterGroup monsterGroup)
     {
-        cleanUpGroups = true;
         (int col, int row) oldStart = monsterGroup.TilePosition;
         (int col, int row) oldGoal = monsterGroup.CommonNextTarget();
 
         string oldDir = MapUtils.GetDirection(oldStart, oldGoal);
 
-        monsterGroup.Monsters.ForEach(i => i.Move(shouldRecalcPath));
-
-        
-        
-        //if monster can attack structure on its way, do so
-        if(monsterGroup.Monsters.All(i => i.TargetReached))
-        {
-            monsterGroup.Monsters.ForEach( i=>
-            {
-                if(pathFindingManager.GetTarget(i) is {} target)
-                {
-                    Entity destStructure = mapManager.GetStructure(target);
-                    if(destStructure != null)
-                    {
-                        if(i.CanTarget(destStructure) && MapUtils.CalculateTileDistance(target, i.TilePosition) <= 1)
-                        {
-                            i.AttackTarget = pathFindingManager.GetTarget(i); // Target the wall to attack
-                        } 
-                    }
-                }
-            });
-        }
+        monsterGroup.Monsters.ForEach(i => i.Move());
 
 
         List<List<Monster>> monsterLists = monsterGroup.Monsters.GroupBy(i => i.GetCurrentGoal()).Select(i => i.ToList()).ToList();
@@ -115,45 +89,33 @@ public class MonsterGroupContainer
             if(monsters[0].TargetReached)
             {
                 //monster is idle add all monsters to the idle group if it exists
-                var matchingGroup = MonsterGroups.FirstOrDefault(g => g.MonsterType == monsters[0].Type && g.CommonNextTarget() == tilePosition);
-
-                if (matchingGroup != null)
+                MonsterGroup newGroup;
+                switch (monsters[0].Type)
                 {
-                    matchingGroup.SetLastDirection(oldDir);
-                    matchingGroup.AddMonsters(monsters);
+                    case MonsterType.Regular:
+                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Flying:
+                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Small:
+                        newGroup = new SmallMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Big:
+                        newGroup = new BigMonsterGroup(tilePosition);
+                        break;
+                    default:
+                        throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                 }
-                else
-                {
-                    MonsterGroup newGroup;
-                    switch (monsters[0].Type)
-                    {
-                        case MonsterType.Regular:
-                            newGroup =  new RegularMonsterGroup(tilePosition, elapsed);
-                            break;
-                        case MonsterType.Flying:
-                            newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
-                            break;
-                        case MonsterType.Small:
-                            newGroup = new SmallMonsterGroup(tilePosition, elapsed);
-                            break;
-                        case MonsterType.Big:
-                            newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
-                            break;
-                        default:
-                            throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
-                    }
-                    newGroup.SetLastDirection(oldDir);
-                    newGroup.AddMonsters(monsters);
-                    MonsterGroups.Add(newGroup);
-                    newGroup.shouldCheckMerge = true;
-                }
+                newGroup.SetLastDirection(oldDir);
+                newGroup.AddMonsters(monsters);
+                MonsterGroups.Add(newGroup);
             }
             else if(oldDir == MapUtils.GetDirection(oldGoal, monsters[0].GetCurrentGoal()))
             {
                 //monsters move in the same direction keep them in the monstergroup
                 monsterGroup.ResetGroup(tilePosition);
                 MonsterGroups.Add(monsterGroup);
-                monsterGroup.shouldCheckMerge = true;
             }
             else
             {
@@ -162,34 +124,75 @@ public class MonsterGroupContainer
                 switch (monsters[0].Type)
                 {
                     case MonsterType.Regular:
-                        newGroup =  new RegularMonsterGroup(tilePosition, elapsed);
+                        newGroup =  new RegularMonsterGroup(tilePosition);
                         break;
                     case MonsterType.Flying:
-                        newGroup = new FlyingMonsterGroup(tilePosition, elapsed);
+                        newGroup = new FlyingMonsterGroup(tilePosition);
                         break;
                     case MonsterType.Small:
-                        newGroup = new SmallMonsterGroup(tilePosition, elapsed);
+                        newGroup = new SmallMonsterGroup(tilePosition);
                         break;
                     case MonsterType.Big:
-                        newGroup = new BigMonsterGroup(tilePosition, TimeSpan.Zero);
+                        newGroup = new BigMonsterGroup(tilePosition);
                         break;
                     default:
                         throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
                 }
                 newGroup.AddMonsters(monsters);
                 MonsterGroups.Add(newGroup);
-                newGroup.shouldCheckMerge = true;
             }
         }
 
         monsterGroup.Monsters.RemoveAll(i => oldDir != MapUtils.GetDirection(oldGoal, i.GetCurrentGoal()));
     }
 
-    public void CleanUpGroups()
+    public void SplitExistingMonsterGroup(MonsterGroup monsterGroup)
     {
-        if(!cleanUpGroups) return;
-        cleanUpGroups = false;
-        List<List<MonsterGroup>> monsterGroupLists = MonsterGroups.GroupBy(i => (i.CommonNextTarget(),i.MonsterType)).Select(i => i.ToList()).ToList();
+        if(!MonsterGroups.Contains(monsterGroup))
+        {
+            throw new Exception("cant split aa group that doesnt exist in this conatiner");
+        }
+
+        List<List<Monster>> monsterLists = monsterGroup.Monsters.GroupBy(i => i.GetCurrentGoal()).Select(i => i.ToList()).ToList();
+        
+        foreach (List<Monster> monsters in monsterLists)
+        {
+            if(monsters[0].TargetReached)
+            {
+                //monster is still idle, we dont need to anything
+            }
+            else
+            {
+                // monsters changed direction and isn't idle anymore
+                MonsterGroup newGroup;
+                switch (monsters[0].Type)
+                {
+                    case MonsterType.Regular:
+                        newGroup =  new RegularMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Flying:
+                        newGroup = new FlyingMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Small:
+                        newGroup = new SmallMonsterGroup(tilePosition);
+                        break;
+                    case MonsterType.Big:
+                        newGroup = new BigMonsterGroup(tilePosition);
+                        break;
+                    default:
+                        throw new Exception("Add the new MonsterGroup Type to MonsterGroupContainer.cs in AddExistingMonster()");
+                }
+                newGroup.AddMonsters(monsters);
+                MonsterGroups.Add(newGroup);
+            }
+        }
+        monsterGroup.Monsters.RemoveAll(i => !i.TargetReached);
+
+    }
+
+    public void CleanUpGroups(MonsterType type)
+    {
+        List<List<MonsterGroup>> monsterGroupLists = MonsterGroups.Where(i => i.MonsterType == type).GroupBy(i => i.CommonNextTarget()).Select(i => i.ToList()).ToList();
 
         foreach (var mgs in monsterGroupLists)
         {
@@ -220,53 +223,6 @@ public class MonsterGroupContainer
         {
             var group = MonsterGroups[i];
             group.Update(gameTime);
-        }
-    }
-
-    public void Move()
-    {
-        for (int i = MonsterGroups.Count - 1; i >= 0; i--)
-        {
-            if (MonsterGroups[i].Move())
-            {
-                MonsterGroups.Remove(MonsterGroups[i]);
-            }
-        }
-    }
-
-    // Add "bool isAOE" to the arguments
-    public void TakeDamage(float damage, bool isAOE, bool isSpike)
-    {
-        if (IsEmpty) return;
-
-        if (isAOE)
-        {
-            // AOE: Loop through every single group on this tile
-            foreach (var group in MonsterGroups)
-            {
-                // Note: You will need to make sure MonsterGroupNew_Unfinished 
-                // has a method called 'take_damage_aoe' that damages all monsters inside it!
-                group.TakeDamageAOE(damage); 
-            }
-        }
-        else if(isSpike)
-        {
-            //spike all non flyiers take damage
-            foreach (var group in MonsterGroups)
-            {
-                // Note: You will need to make sure MonsterGroupNew_Unfinished 
-                // has a method called 'take_damage_aoe' that damages all monsters inside it!
-                if(group.MonsterType != MonsterType.Flying)
-                {
-                    group.TakeDamageAOE(damage);   
-                }
-            }
-        }
-        else 
-        {
-            // Single Target: Just hit the first group in the container
-            // TODO: single should be more consisten than this
-            MonsterGroups[0].TakeDamageSingleTarget(damage);
         }
     }
 
@@ -349,32 +305,31 @@ public class MonsterGroupContainer
         });
     }
 
-    public void InitMerge()
+    public void InitMerge(MonsterType type)
     {
         List<(int,int)> neighbor = MapUtils.GetSurroundingTiles(tilePosition);
         neighbor.Add(tilePosition);
-        Dictionary<MonsterType, int> counts = new Dictionary<MonsterType, int>();
+        int count = 0;
         foreach ((int col, int row) pos in neighbor)
         {
-            foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).MonsterGroups)
+            foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).MonsterGroups.Where(i => i.MonsterType == type))
             {
-                if(group.shouldCheckMerge && group.CommonNextTarget() == tilePosition )
+                if(group.CommonNextTarget() == tilePosition)
                 {
-                    if (!counts.TryGetValue(group.MonsterType, out _))
-                    {
-                        counts.Add(group.MonsterType, 0); 
-                    }
-                    counts[group.MonsterType] += 1;
+                    count++;
                 }
             }
         }
-        foreach ((int col, int row) pos in neighbor)
+        if(count > 1)
         {
-            foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).MonsterGroups)
+            foreach ((int col, int row) pos in neighbor)
             {
-                if(counts.TryGetValue(group.MonsterType, out int value) && value > 1 && group.CommonNextTarget() == tilePosition)
+                foreach (MonsterGroup group in mapManager.GetMonsterContainer(pos).MonsterGroups.Where(i => i.MonsterType == type))
                 {
-                    group.StartMerge();
+                    if(group.CommonNextTarget() == tilePosition)
+                    {
+                        group.StartMerge();
+                    }
                 }
             }
         }

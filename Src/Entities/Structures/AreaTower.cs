@@ -32,7 +32,7 @@ public class AreaTower : Tower
     {
     }
 
-    protected override (string,string)[] infos { get => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];}
+    public override (string,string)[] Infos { get => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];}
 
     public override void Attack(GameTime gameTime)
     {

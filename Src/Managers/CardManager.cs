@@ -317,8 +317,7 @@ public class CardManager
                         _voidWarningTile = (col, row);
                         mapManager.RemoveStructure((col, row));
                         sanityManager.AddSanity(_activeMapCard.Cost);
-                        GamelabGame.Instance.MapScreenInstance?.ShowVoidWarning(
-                            "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?");
+                        TutorialManager.SetWarning("Careful! Placing a void here will cut off our tent from the outside world. Are you sure?", TimeSpan.FromSeconds(5));
                         return false;
                     }
                 }

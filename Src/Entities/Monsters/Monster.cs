@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Gamelab;
 using Gamelab.Managers;
 using Gamelab.Utils.Logging;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using MonoGame.Extended.ECS;
 
 
 public abstract class Monster : Entity
@@ -28,13 +25,8 @@ public abstract class Monster : Entity
     // Has the monster reached its target and shouldn't move while it attacks
     public bool TargetReached => TilePosition == NextTarget;
 
-    // Flag set by MonsterGroup when it's time to step forward
-    public bool ShouldMove { get; set; }
-
     // The tile this monster is trying to attack (set when blocked or when reaching goal)
     public (int,int)? AttackTarget { get; set; }
-
-    public string Facing {get; private set;}
 
     private static readonly TimeSpan hitFlashDuration = TimeSpan.FromMilliseconds(300);
     private TimeSpan hitFlashRemaining = TimeSpan.Zero;
@@ -150,19 +142,20 @@ public abstract class Monster : Entity
     /// Steps the monster forward on its path by one tile.
     /// Called by MonsterGroup when movement timing triggers.
     /// </summary>
-    public void Move(bool shouldRecalcPath)
+    public void Move()
     {
-        if (TargetReached || !ShouldMove) return;
-        TilePosition = NextTarget; 
-        if(shouldRecalcPath)
-        {            
-            // AttackTarget = null;
-            // var newPath = pathFindingManager.CalculatePath(this);
-            //     if (newPath != null && newPath.Count > 0)
-            //         Path = newPath;  
+        if (TargetReached)
+        {
+            if(AttackTarget == null)
+            {
+                NextTarget = pathFindingManager.GetNextPosition(this);
+                AttackTarget = pathFindingManager.GetTarget(this);
+            }
+            return;
         }
+        TilePosition = NextTarget;        
         NextTarget = pathFindingManager.GetNextPosition(this);
-        ShouldMove = false;
+        AttackTarget = pathFindingManager.GetTarget(this);
     }
 
     /// <summary>

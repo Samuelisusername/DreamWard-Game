@@ -16,7 +16,7 @@ public class Fence : CardEntity
     {
     }
 
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}")];
 }
 
 public class Wall : CardEntity
@@ -26,6 +26,6 @@ public class Wall : CardEntity
     {
     }
 
-    protected override (string, string)[] infos => [("Health:", $"{CurrentHealth}")];
+    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}")];
 }
 

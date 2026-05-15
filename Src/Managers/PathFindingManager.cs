@@ -107,7 +107,7 @@ public class PathFindingManager
     {
         (int, int)? targetTile = _monsterToTarget.TryGetValue(monster, out var target) ? target : null;
         if (_debugPrintsEnabled) Log($"GetTarget returned {targetTile}, monster");
-        return targetTile;
+        return MapUtils.CalculateTileDistance(target, monster.TilePosition) > 1 ? null : targetTile;
     }
 
     public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) nextTile)

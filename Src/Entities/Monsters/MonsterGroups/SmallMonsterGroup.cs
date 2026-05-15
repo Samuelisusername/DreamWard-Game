@@ -11,7 +11,7 @@ public class SmallMonsterGroup : MonsterGroup
     //protected override TimeSpan speed => TimeSpan.FromSeconds(1);
     public override Vector2 LocalOffset => new Vector2(-32, -85);
 
-    public SmallMonsterGroup((int, int) tilePos, TimeSpan elapsed) : base(tilePos, elapsed)
+    public SmallMonsterGroup((int, int) tilePos) : base(tilePos)
     {
     }
 }
