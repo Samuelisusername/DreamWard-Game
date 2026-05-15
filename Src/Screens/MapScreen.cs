@@ -89,6 +89,7 @@ public class MapScreen : GamelabGameScreen
     private static readonly Rectangle HintC     = new(80, 176, 32, 16);
     private static readonly Rectangle HintS     = new(80, 192, 32, 16);
     private static readonly Rectangle HintSpace = new(80, 208, 32, 16);
+    private static readonly Rectangle HintR     = new(80, 224, 32, 16);
     private readonly Color COLOR_D = new(0x29, 0x24, 0x10);    
     private readonly Color COLOR_L = new Color(0xc7, 0xb8, 0x9c);
 
@@ -265,7 +266,7 @@ public class MapScreen : GamelabGameScreen
             if (keyboard.WasKeyReleased(Keys.Q))  cardManager.ForceSpawnInto("void",         cardManager.BuildSlots);
             if (keyboard.WasKeyReleased(Keys.W))  cardManager.ForceSpawnInto("spikes",       cardManager.BuildSlots);
             if (keyboard.WasKeyReleased(Keys.E))  cardManager.ForceSpawnInto("decoy",        cardManager.BuildSlots);
-            if (keyboard.WasKeyReleased(Keys.R))  cardManager.ForceSpawnInto("buff",         cardManager.BuildSlots);
+            if (keyboard.WasKeyReleased(Keys.B))  cardManager.ForceSpawnInto("buff",         cardManager.BuildSlots);
             if (keyboard.WasKeyReleased(Keys.D6)) cardManager.ForceSpawnInto("polymorph",    cardManager.BuildSlots);
             if (keyboard.WasKeyReleased(Keys.D7)) cardManager.ForceSpawnInto("shuffle",      cardManager.StackSlots);
             if (keyboard.WasKeyReleased(Keys.D8)) cardManager.ForceSpawnInto("discount",     cardManager.StackSlots);
@@ -310,6 +311,10 @@ public class MapScreen : GamelabGameScreen
                 GamelabGame.GameSpeed = GamelabGame.GameSpeed == 1f ? 0.25f : 1f;
             }
 #endif
+            if (keyboard.IsKeyDown(Keys.R))
+                _btnResults[(int)BtnId.TowerRange] = ButtonResult.Pressed;
+            if (keyboard.WasKeyReleased(Keys.R))
+                _showTowerRange = !_showTowerRange;
             //set cursor state
             if(!gamePhaseManager.IsInTransition){
                 if (_showInventory)
@@ -332,6 +337,7 @@ public class MapScreen : GamelabGameScreen
                 {
                     _showInventory = !_showInventory;
                     if (!_showInventory) cardRenderer.CollapseExpanded();
+                    if (_hoveredStructure is Meadow) GamelabGame.IsHovering = true;
                     return;
                 }
             }
@@ -984,7 +990,7 @@ public class MapScreen : GamelabGameScreen
         {
             string speedLabel = GamelabGame.GameSpeed > 1f ? "Speed: 3x" : "Speed: 1x";
             DrawButton(_speedBtn,      speedLabel,                                                Btn(BtnId.Speed)      == ButtonResult.Pressed, keyHint: HintS);
-            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range",           Btn(BtnId.TowerRange) == ButtonResult.Pressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range" : "Tower Range",           Btn(BtnId.TowerRange) == ButtonResult.Pressed, keyHint: HintR);
         }
         int vw = (int)viewportAdapter.VirtualWidth;
         int vh = (int)viewportAdapter.VirtualHeight;
@@ -999,7 +1005,7 @@ public class MapScreen : GamelabGameScreen
             int arrowW = (int)(arrowSrc.Width  * arrowSc);
             int arrowH = (int)(arrowSrc.Height * arrowSc);
             spriteBatch.Draw(InterfaceTexture, new Rectangle(_inventoryBtn.X, _inventoryBtn.Y, arrowW, arrowH), arrowSrc, Color.White);
-            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed);
+            DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed, keyHint: HintR);
             DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
             DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
             DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
