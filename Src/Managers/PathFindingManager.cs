@@ -2,548 +2,130 @@ using System;
 using System.Collections.Generic;
 using Gamelab;
 
-// Default configuration values for pathfinding behavior. These can be overriden for specific monster types in the PathFindingManager constructor.
-public class PathFindingConfig
-{
-    public int VisionRange { get; set; } = 5; // how far away targets can the monster see (note that target information is shared between monsters)
-    public int DiscoveryPhaseMinTileCost { get; set; } = 20; // higher number encourages taking a shorter route when discovering targets
-    public int AttackPhaseMinTileCost { get; set; } = 2; // higher number encourages taking a shorter route when going to a target
-    public int GlobalVisitedPenalty { get; set; } = 10; // higher number encourages the monsters as a whole to spread out and explore
-    public int LocalVisitedStartPenalty { get; set; } = 10; // see below
-    public int LocalVisitedGrowthFactor { get; set; } = 2; // if a monster has visited a tile N times recently, the penalty for that tile is LocalVisitedStartPenalty * (LocalVisitedGrowthFactor ^ N)
-    public int RecentPathLength { get; set; } = 10; // how many previous tiles to keep track of for the local visited penalty
-    public int NormalDefenceStrength { get; set; } = 10; // the defence strength of all towers is estimated as this number (TODO: consider DamagePerSecond)
-    public int BuffPenalty { get; set; } = 50; // higher number means monsters are more repelled by buffed tiles
-    public int FencePenalty { get; set; } = 4; // higher number means monster are more likely to go around fences/walls
-    public int RandomTileMaxDistanceFromCenter { get; set; } = 8; // if the monsters haven't found any targets, they will move towards a random tile at most RandomTileMaxDistanceFromCenter tiles from the center
-    public bool MeetUpBeforeAttacking { get; set; } = false; // if true, monsters of the same type will try to meet up at MeetingPoint before attacking targets
-    public (int col, int row)? MeetingPoint { get; set; } = null; // this is where the monsters of said type meet if set to a value
-}
-
 public class PathFindingManager
 {
-    private MapManager mapManager => GamelabGame.MapManager;
+    // Default configuration values for pathfinding behavior. These can be overridden per monster type in the constructor.
+    private class PathFindingConfig
+    {
+        public int VisionRange { get; set; } = 5;
+        public int DiscoveryPhaseMinTileCost { get; set; } = 20;
+        public int AttackPhaseMinTileCost { get; set; } = 2;
+        public int NormalDefenceStrength { get; set; } = 10;
+        public int BuffPenalty { get; set; } = 50;
+        public int FencePenalty { get; set; } = 4;
+        public int RandomTileMaxDistanceFromCenter { get; set; } = 8;
+        public bool MeetUpBeforeAttacking { get; set; } = false;
+        public (int col, int row)? MeetingPoint { get; set; } = null;
+    }
+
+    // Per-type computed path state, rebuilt whenever structures change or new targets are discovered.
+    private class TypePathData
+    {
+        public (int col, int row)?[,] NextTile;
+        public (int col, int row)?[,] NextTarget;    // immediate next structure to attack on path
+        public int[,] TileCostAttackPhase;
+        public int[,] TileCostDiscoveryPhase;
+        public bool DefenceDirty = true;
+        public bool PathDirty = true;
+        public List<(int col, int row)> DiscoverySupersource = new();
+
+        public TypePathData(int columns, int rows)
+        {
+            NextTile = new (int col, int row)?[columns, rows];
+            NextTarget = new (int col, int row)?[columns, rows];
+            TileCostAttackPhase = new int[columns, rows];
+            TileCostDiscoveryPhase = new int[columns, rows];
+        }
+    }
+
+    private const int StationaryCheckLength = 5;
+
+    private MapManager MapManager => GamelabGame.MapManager;
 
     private readonly Dictionary<MonsterType, PathFindingConfig> _configOverrides = new();
-
-    // Keep track of all tiles that are going to be attacked and by who
+    private readonly Dictionary<MonsterType, TypePathData> _typeData = new();
     private readonly HashSet<(int col, int row)> _discoveredTargets;
-    private readonly Dictionary<(int col, int row), HashSet<Monster>> _targetToMonsters;
-    private readonly Dictionary<Monster, (int col, int row)> _monsterToTarget;
-    private readonly Dictionary<Monster, int> _monsterToTargetDist;
     private readonly Dictionary<Monster, Queue<(int col, int row)>> _monsterToRecentPath;
 
-    // Defences and costs for pathfinding
-    private readonly int[,] _defenceStrength;
-    private readonly int[,] _simplePathDefenceStrength;
-    private readonly Dictionary<(int col, int row), List<Entity>> _defenders;
-    private readonly int[,] _visited;
-
-    // Cache paths
-    private readonly Dictionary<Monster, Queue<(int col, int row)>> _cachedPaths;
-
-    // Temporary profiling variables
-    private static bool _profilingEnabled = false; // Set to true to enable profiling logs
+    // Profiling
+    private static bool _profilingEnabled = false;
     private static bool _debugPrintsEnabled = false;
-    private static readonly System.Diagnostics.Stopwatch _stepTimer = new System.Diagnostics.Stopwatch();
     private static readonly System.Diagnostics.Stopwatch _logTimer = System.Diagnostics.Stopwatch.StartNew();
-    private static double _timeUpdateDef = 0;
-    private static double _timeCalcPaths1 = 0;
-    private static double _timeTargetVis = 0;
-    private static double _timePrimary = 0;
-    private static double _timeSecondary = 0;
-    private static double _timeFallback = 0;
-    private static double _timeCache = 0;
+    private static readonly double _swFreqMs = System.Diagnostics.Stopwatch.Frequency / 1000.0;
+    private static double _timeComputeDefence = 0;
+    private static double _timeComputePaths = 0;
+    private static double _timeGetNext = 0;
     private static int _callCount = 0;
-    private static int _cacheHitCount = 0;
 
-    /// <summary>
-    /// Initializes a pathfinding manager bound to a map.
-    /// </summary>
     public PathFindingManager()
     {
         _configOverrides[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
         _configOverrides[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
         _configOverrides[MonsterType.Small] = new PathFindingConfig { VisionRange = 5, AttackPhaseMinTileCost = 1,
                                                                         FencePenalty = 10, MeetUpBeforeAttacking = true };
-
         _discoveredTargets = new HashSet<(int col, int row)>();
-        _targetToMonsters = new Dictionary<(int, int), HashSet<Monster>>();
-        _monsterToTarget = new Dictionary<Monster, (int, int)>();
-        _monsterToTargetDist = new Dictionary<Monster, int>();
         _monsterToRecentPath = new Dictionary<Monster, Queue<(int col, int row)>>();
-        _defenceStrength = new int[mapManager.Columns, mapManager.Rows];
-        _simplePathDefenceStrength = new int[mapManager.Columns, mapManager.Rows];
-        _defenders = new Dictionary<(int, int), List<Entity>>();
-        _visited = new int[mapManager.Columns, mapManager.Rows];
-        _cachedPaths = new Dictionary<Monster, Queue<(int col, int row)>>();
     }
 
-    /// <summary>
-    /// Notifies the PathFindingManager that the Structures on the map have changed (e.g. new structures added), so it can clear cached paths that may be invalid.
-    /// </summary>
-    public void NotifyStructuresChanged()
+    private TypePathData GetOrCreateTypeData(MonsterType type)
     {
-        _cachedPaths.Clear();
-        _targetToMonsters.Clear();
-        _monsterToTarget.Clear();
-        _monsterToTargetDist.Clear();
+        if (!_typeData.TryGetValue(type, out var data))
+        {
+            data = new TypePathData(MapManager.Columns, MapManager.Rows);
+            _typeData[type] = data;
+        }
+        return data;
     }
 
-    private PathFindingConfig GetConfig(Monster monster)
+    private PathFindingConfig GetConfig(MonsterType type)
     {
-        if (!_configOverrides.TryGetValue(monster.Type, out var config))
+        if (!_configOverrides.TryGetValue(type, out var config))
         {
             config = new PathFindingConfig();
-            _configOverrides[monster.Type] = config;
+            _configOverrides[type] = config;
         }
         return config;
     }
 
+    private PathFindingConfig GetConfig(Monster monster) => GetConfig(monster.Type);
+
+    // -------------------------------------------------------------------------
+    // Public lifecycle
+    // -------------------------------------------------------------------------
+
     /// <summary>
-    /// Gives the monster's actual target.
+    /// Call when structures are built or destroyed. Marks defence and path data dirty so they get recomputed.
     /// </summary>
-    public (int, int)? GetTarget(Monster monster)
+    public void NotifyStructuresChanged()
     {
-        (int, int)? targetTile = _monsterToTarget.TryGetValue(monster, out var target) ? target : null;
-        if (_debugPrintsEnabled) Log($"GetTarget returned {targetTile}, monster");
-        return MapUtils.CalculateTileDistance(target, monster.TilePosition) > 1 ? null : targetTile;
-    }
-
-    public (int, int) GetNextPositionIfSafe(Monster monster, (int, int) currentTile, (int, int) nextTile)
-    {
-        var config = GetConfig(monster);
-        var nextStructure = mapManager.GetStructure(nextTile);
-        bool isIntendedTarget = _monsterToTarget.TryGetValue(monster, out var target) && target == nextTile;
-        if (nextStructure != null && monster.CanTarget(nextStructure))
-         {
-            bool canStepOn = monster.CanStepOn(nextStructure);
-            bool isPrimaryTarget = IsPrimaryTarget(nextStructure);
-            bool isFlyingAndIntended = monster is FlyingMonster && isIntendedTarget;
-            if (!canStepOn || isPrimaryTarget || isFlyingAndIntended)
-            {
-                _monsterToTargetDist[monster] = 1;
-                _monsterToTarget[monster] = nextTile;
-                PushToRecentPath(monster, currentTile);
-                // print canStepOn, isPrimaryTarget, isFlyingAndIntended for debugging
-                if (_debugPrintsEnabled) Log($"GetNextPositionIfSafe returned the current tile {currentTile} because of structure {nextStructure.GetType()} on the way (canStepOn: {canStepOn}, isPrimaryTarget: {isPrimaryTarget}, isFlyingAndIntended: {isFlyingAndIntended})", monster);
-                return currentTile;
-            }
-            
-        }
-        bool nextTileHasMonster = false;
-        bool nextTileHasBigMonster = false;
-        foreach (Entity e in mapManager.GetAllEntities(nextTile))
+        _discoveredTargets.RemoveWhere(tile =>
         {
-            if (e is Monster m)
-            {
-                nextTileHasMonster = true;
-                if (m is BigMonster)
-                {
-                    nextTileHasBigMonster = true;
-                    break;
-                }
-            }
-        }
-        if (nextTileHasBigMonster || (monster is BigMonster && nextTileHasMonster))
+            var s = MapManager.GetStructure(tile);
+            return s == null || s.IsDestroyed;
+        });
+
+        foreach (var data in _typeData.Values)
         {
-            
-            if (IsStationary(monster))
-            {
-                PushToRecentPath(monster, nextTile);
-                if (_debugPrintsEnabled) Log($"GetNextPositionIfSafe returned the next tile {nextTile} because the monster has been stationary because of another monster", monster);
-                return nextTile;
-            }
-            PushToRecentPath(monster, currentTile);
-            if (_debugPrintsEnabled) Log($"GetNextPositionIfSafe returned the current tile {currentTile} because of another monster on the way", monster);
-            return currentTile;
+            data.DefenceDirty = true;
+            data.PathDirty = true;
         }
-        
-        _visited[nextTile.Item1, nextTile.Item2] += config.GlobalVisitedPenalty;
-        PushToRecentPath(monster, nextTile);
-        if (_debugPrintsEnabled) Log($"GetNextPositionIfSafe returned the next tile {nextTile}", monster);
-        return nextTile;
-    }
-
-    private void PushToRecentPath(Monster monster, (int col, int row) tile)
-    {
-        var config = GetConfig(monster);
-        if (!_monsterToRecentPath.TryGetValue(monster, out var queue))
-        {
-            queue = new Queue<(int col, int row)>();
-            _monsterToRecentPath[monster] = queue;
-        }
-        queue.Enqueue(tile);
-        if (queue.Count > config.RecentPathLength)
-            queue.Dequeue();
-    }
-
-    private bool IsStationary(Monster monster)
-    {
-        if (_monsterToRecentPath.TryGetValue(monster, out var queue) && queue.Count > 0)
-        {
-            (int col, int row) firstTile = queue.Peek();
-            foreach ((int col, int row) tile in queue)
-            {
-                if (tile != firstTile)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private void CachePath(Monster monster, List<(int, int)> path)
-    {
-        var queue = new Queue<(int, int)>();
-        // index 0 is Current tile, index 1 is Immediate return, cache index 2 and onward
-        for (int i = 2; i < path.Count; i++)
-        {
-            queue.Enqueue(path[i]);
-        }
-        _cachedPaths[monster] = queue;
-    }
-
-    private (int, int)? TryGetCachedNextPosition(Monster monster)
-    {
-        if (_cachedPaths.TryGetValue(monster, out var cachedPath))
-        {
-            if (cachedPath.Count > 0)
-            {
-                var nextTile = cachedPath.Dequeue();
-
-                _monsterToTargetDist[monster] = cachedPath.Count + 1;
-
-                var actualNextTile = GetNextPositionIfSafe(monster, monster.TilePosition, nextTile);
-
-                // If blocked by another un-walkable entity, OR the path just ended, drop the cache!
-                if (actualNextTile != nextTile || cachedPath.Count == 0)
-                {
-                    _cachedPaths.Remove(monster);
-                }
-
-                return actualNextTile;
-            }
-
-            _cachedPaths.Remove(monster);
-        }
-
-        return null;
     }
 
     /// <summary>
-    /// Gives the monster's next move.
+    /// Resets all pathfinding state between nights: discovered targets, recent paths, supersources, and meeting points.
     /// </summary>
-    public (int, int) GetNextPosition(Monster monster)
+    public void ClearEverythingWhenNightEnds()
     {
-        // 1. CACHED
-        if (_profilingEnabled)
+        _discoveredTargets.Clear();
+        _monsterToRecentPath.Clear();
+        foreach (var data in _typeData.Values)
         {
-            LogProfilingMetrics();
-            _callCount++;
-            _stepTimer.Restart();
+            data.DefenceDirty = true;
+            data.PathDirty = true;
+            data.DiscoverySupersource.Clear();
         }
-        (int col, int row) currentTile = monster.TilePosition;
-        UpdateDiscoveredTargets(monster);
-        var cachedPos = TryGetCachedNextPosition(monster);
-        if (cachedPos.HasValue)
-        {
-            if (_profilingEnabled)
-            {
-                _cacheHitCount++;
-                _timeCache += _stepTimer.Elapsed.TotalMilliseconds;
-                _stepTimer.Restart();
-            }
-            return cachedPos.Value;
-        }
-
-        // Update defences and other penalties before calculating new paths
-        UnregisterMonsterTarget(monster);
-        var localPenalty = UpdateDefenceStrengths(monster);
-        if (_profilingEnabled)
-        {
-            _timeUpdateDef += _stepTimer.Elapsed.TotalMilliseconds;
-            _stepTimer.Restart();
-        }
-
-        // Precompute a path from the monster to all tiles on the map
-        int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
-        (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
-        int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
-        CalculateWeakestPaths(currentTile, monster, _defenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
-        if (_profilingEnabled)
-        {
-            _timeCalcPaths1 += _stepTimer.Elapsed.TotalMilliseconds;
-            _stepTimer.Restart();
-        }
-
-        // Create a list of all possible targets
-        var allPossibleTargets = new List<((int,int), Entity entity)>();
-        foreach (var target in _discoveredTargets)
-        {
-            Entity entity = mapManager.GetStructure(target);
-            allPossibleTargets.Add((target, entity));
-        }
-
-        // If a monster sees a decoy, it forgets all other targets
-        foreach (var target in allPossibleTargets)
-        {
-            var (location, entity) = target;
-            if (entity is Decoy decoy)
-            {
-                allPossibleTargets.Clear();
-                allPossibleTargets.Add(target);
-                break;
-            }
-        }
-        if (_profilingEnabled)
-        {
-            _timeTargetVis += _stepTimer.Elapsed.TotalMilliseconds;
-            _stepTimer.Restart();
-        }
-
-        // 2. MEETING POINT (code is down below since it requires path recomputation)
-
-        // 3. PRIMARY TARGETS
-        var config = GetConfig(monster);
-        var bestPrimary = SelectBestTarget(allPossibleTargets, costToGetThere, timeToReach, IsPrimaryTarget, requireZeroDamage: false);
-        if (bestPrimary != null && !config.MeetingPoint.HasValue)
-        {
-            var primaryPath = ReconstructPath(currentTile, bestPrimary.Value.Tile, previousTile, timeToReach, monster);
-            if (primaryPath.Count > 0)
-            {
-                RegisterTarget(monster, bestPrimary.Value.Tile, timeToReach[bestPrimary.Value.Tile.Item1, bestPrimary.Value.Tile.Item2]);
-                CachePath(monster, primaryPath);
-                var nextTile = primaryPath[Math.Min(1, primaryPath.Count - 1)];
-
-                if (_profilingEnabled)
-                {
-                    _timePrimary += _stepTimer.Elapsed.TotalMilliseconds;
-                }
-                return GetNextPositionIfSafe(monster, currentTile, nextTile);
-            }
-        }
-        if (_profilingEnabled)
-        {
-            _timePrimary += _stepTimer.Elapsed.TotalMilliseconds;
-            _stepTimer.Restart();
-        }
-
-        // 4. SECONDARY TARGETS (all other entities that can be attacked)
-        var bestSecondary = SelectBestTarget(allPossibleTargets, costToGetThere, timeToReach, t => IsSecondaryTarget(monster, t), requireZeroDamage: false);
-        if (bestSecondary != null && !config.MeetingPoint.HasValue)
-        {
-            var secondaryPath = ReconstructPath(currentTile, bestSecondary.Value.Tile, previousTile, timeToReach, monster);
-            if (secondaryPath.Count > 0)
-            {
-                RegisterTarget(monster, bestSecondary.Value.Tile, timeToReach[bestSecondary.Value.Tile.Item1, bestSecondary.Value.Tile.Item2]);
-                CachePath(monster, secondaryPath);
-                var nextTile = secondaryPath[Math.Min(1, secondaryPath.Count - 1)];
-
-                if (_profilingEnabled)
-                {
-                    _timeSecondary += _stepTimer.Elapsed.TotalMilliseconds;
-                }
-                return GetNextPositionIfSafe(monster, currentTile, nextTile);
-            }
-        }
-        if (_profilingEnabled)
-        {
-            _timeSecondary += _stepTimer.Elapsed.TotalMilliseconds;
-            _stepTimer.Restart();
-        }
-
-        
-        // 2. MEETING POINT and 4. RANDOM TILE NEAR CENTER
-        for (int i = config.RandomTileMaxDistanceFromCenter; i >= 0; --i)
-        {
-            var destination = config.MeetingPoint.HasValue ? config.MeetingPoint.Value : GetRandomTileNearCenter(i);
-            if (_visited[destination.col, destination.row] > 0 && !config.MeetingPoint.HasValue)
-            {
-                continue;
-            }
-            if (destination == currentTile)
-            {
-                if (config.MeetingPoint.HasValue)
-                {
-                    var realDestination = bestPrimary != null ? bestPrimary.Value.Tile : bestSecondary != null ? bestSecondary.Value.Tile : destination;
-                    AttackTogetherIfMeetingPointFull(currentTile, realDestination, previousTile, timeToReach, monster);
-                }
-                if (_profilingEnabled)
-                {
-                    _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
-                }
-                return currentTile;
-            }
-            CalculateWeakestPaths(currentTile, monster, _simplePathDefenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: false);
-            var centerPath = ReconstructPath(currentTile, destination, previousTile, timeToReach, monster);
-            if (centerPath.Count > 0)
-            {
-                CachePath(monster, centerPath);
-                var nextTile = centerPath[Math.Min(1, centerPath.Count - 1)];
-
-                if (_profilingEnabled)
-                {
-                    _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
-                }
-                return GetNextPositionIfSafe(monster, currentTile, nextTile);
-            }
-        }
-
-        // 5. RANDOM NEIGHBOR
-        var next = GetRandomNeighborAsLastResort(currentTile, monster);
-        if (_profilingEnabled)
-        {
-            _timeFallback += _stepTimer.Elapsed.TotalMilliseconds;
-        }
-        return GetNextPositionIfSafe(monster, currentTile, next);
-    }
-
-    private void UpdateDiscoveredTargets(Monster monster)
-    {
-        (int, int) currentTile = monster.TilePosition;
-        int visionRange = GetConfig(monster).VisionRange;
-        List<(int,int)> surroundingTiles = MapUtils.GetSurroundingCircle(currentTile, 0, visionRange);
-        foreach (var surroundingTile in surroundingTiles)
-        {
-            Entity structure = mapManager.GetStructure(surroundingTile);
-            // For now assume, the monster can only discover targets that it can also target itself...
-            if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
-            {
-                continue;
-            }
-            if (_discoveredTargets.Add(surroundingTile))
-            {
-                // Clear all caches when a *new* target is registered, since it may affect pathfinding for all monsters
-                _cachedPaths.Clear();
-                UpdateMeetingPoint(monster, surroundingTile);
-            }
-        }
-    }
-
-    private void UpdateMeetingPoint(Monster monster, (int, int) discoveredTarget)
-    {
-        var config = GetConfig(monster);
-        if (!config.MeetUpBeforeAttacking || config.MeetingPoint.HasValue) { return; }
-
-        // Update the defences and calculate the costs from the discovered target to all tiles
-        int[,] localPenalty = UpdateDefenceStrengths(monster);
-        int[,] costToGetThere = new int[mapManager.Columns, mapManager.Rows];
-        (int col, int row)?[,] previousTile = new (int col, int row)?[mapManager.Columns, mapManager.Rows]; // For path reconstruction.
-        int[,] timeToReach = new int[mapManager.Columns, mapManager.Rows];
-        CalculateWeakestPaths(discoveredTarget, monster, _defenceStrength, localPenalty, costToGetThere, previousTile, timeToReach, allowThroughBreakableStructures: true);
-        
-        // Choose a tile that is not defended and that has a weak path to the target
-        var minDefenceStrength = int.MaxValue;
-        int minCostToGetThere = int.MaxValue;
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                if (timeToReach[col, row] == int.MaxValue)
-                {
-                    continue;
-                }
-                if (_defenceStrength[col, row] < minDefenceStrength ||
-                    (_defenceStrength[col, row] == minDefenceStrength && costToGetThere[col, row] < minCostToGetThere))
-                {
-                    minDefenceStrength = _defenceStrength[col, row];
-                    minCostToGetThere = costToGetThere[col, row];
-                    config.MeetingPoint = (col, row);
-                }
-            }
-        }
-    }
-
-    private void AttackTogetherIfMeetingPointFull((int col, int row) currentTile, (int col, int row) realDestination,
-                                            (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster)
-    {
-        var config = GetConfig(monster);
-        if (!config.MeetUpBeforeAttacking || !config.MeetingPoint.HasValue || config.MeetingPoint != monster.TilePosition)
-        {
-            return;
-        }
-
-
-        int MonstersExpectedCount = 0;
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                foreach (Entity entity in mapManager.GetAllEntities((col, row)))
-                {
-                    if (entity is Monster m && m.Type == monster.Type)
-                    {
-                        MonstersExpectedCount++;
-                    }
-                }
-            }
-        }
-
-        int monstersArrivedCount = 0;
-        List<Monster> monstersArrived = new List<Monster>();
-        (int col, int row) meetingPoint = config.MeetingPoint.Value;
-        foreach (Entity entity in mapManager.GetAllEntities(meetingPoint))
-        {
-            if (entity is Monster m && m.Type == monster.Type)
-            {
-                monstersArrivedCount++;
-                monstersArrived.Add(m);
-            }
-        }
-
-        if (monstersArrivedCount*2+1 < MonstersExpectedCount) { return; }
-
-        // Enough monsters have arrived -> attack together!
-        config.MeetingPoint = null;
-        _cachedPaths.Clear();
-
-        var pathToRealTarget = ReconstructPath(currentTile, realDestination, previousTile, timeToReach, monster);
-        foreach (Monster m in monstersArrived)
-        {
-            RegisterTarget(m, realDestination, timeToReach[realDestination.Item1, realDestination.Item2]);
-            CachePath(monster, pathToRealTarget);
-            var nextTile = pathToRealTarget[Math.Min(1, pathToRealTarget.Count - 1)];
-        }
-    }
-
-    private void LogProfilingMetrics()
-    {
-        // Log every 10 seconds
-        if (_logTimer.ElapsedMilliseconds > 10000)
-        {
-            double total = _timeCache + _timeUpdateDef + _timeCalcPaths1 + _timeTargetVis + _timePrimary + _timeSecondary + _timeFallback;
-            double elapsedRealTime = _logTimer.ElapsedMilliseconds;
-            Log($"\n--- PathFinding Profiling ({_callCount} calls over {elapsedRealTime / 1000.0:F1}s) ---");
-            Log($"Total Time:      {total:F2} ms ({(total / elapsedRealTime * 100):F2}% of elapsed time)");
-            Log($"Cache Hit Rate:  {(_callCount > 0 ? (double)_cacheHitCount / _callCount * 100 : 0):F1}% ({_cacheHitCount}/{_callCount})");
-            Log($"Cached Path:     {_timeCache:F2} ms ({(total > 0 ? _timeCache / total * 100 : 0):F1}%)");
-            Log($"UpdateDefences:  {_timeUpdateDef:F2} ms ({(total > 0 ? _timeUpdateDef / total * 100 : 0):F1}%)");
-            Log($"CalcPaths 1:     {_timeCalcPaths1:F2} ms ({(total > 0 ? _timeCalcPaths1 / total * 100 : 0):F1}%)");
-            Log($"Find Targets:    {_timeTargetVis:F2} ms ({(total > 0 ? _timeTargetVis / total * 100 : 0):F1}%)");
-            Log($"Best Primary:    {_timePrimary:F2} ms ({(total > 0 ? _timePrimary / total * 100 : 0):F1}%)");
-            Log($"Best Secondary:  {_timeSecondary:F2} ms ({(total > 0 ? _timeSecondary / total * 100 : 0):F1}%)");
-            Log($"Fallback Center: {_timeFallback:F2} ms ({(total > 0 ? _timeFallback / total * 100 : 0):F1}%)");
-
-            // Reset counters
-            _timeUpdateDef = 0; _timeCalcPaths1 = 0; _timeTargetVis = 0;
-            _timePrimary = 0; _timeSecondary = 0; _timeFallback = 0; _timeCache = 0; _callCount = 0; _cacheHitCount = 0;
-            _logTimer.Restart();
-        }
-    }
-
-    private void Log(string message, Monster monster = null)
-    {
-        if (monster == null)
-        {
-            System.Console.WriteLine($"[{DateTime.Now:HH:mm:ss::ff}] {message}");
-            return;
-        }
-        var targetStr = _monsterToTarget.TryGetValue(monster, out var target) ? target.ToString() : "null";
-        var distStr = _monsterToTargetDist.TryGetValue(monster, out var dist) ? dist.ToString() : "null";
-        System.Console.WriteLine($"[{DateTime.Now:HH:mm:ss::ff}] {message} -- Global variables: target {targetStr}, dist {distStr}");
+        foreach (var config in _configOverrides.Values)
+            config.MeetingPoint = null;
     }
 
     /// <summary>
@@ -551,152 +133,286 @@ public class PathFindingManager
     /// </summary>
     public void DeleteMonster(Monster monster)
     {
-        UnregisterMonsterTarget(monster);
         _monsterToRecentPath.Remove(monster);
-        _cachedPaths.Remove(monster);
     }
 
-    /// <summary>
-    /// returns the length of the monsters path to their next target
-    /// </summary>
-    /// <param name="monster"></param>
-    /// <returns></returns>
-    public int GetDistanceToTarget(Monster monster) // we're not calculating the distance to the nearest Target (the store) :)
-    {
-        if (_monsterToTargetDist.TryGetValue(monster, out var dist))
-        {
-            if (_debugPrintsEnabled) Log($"PathLength returned {dist}", monster);
-            return dist;
-        }
-        if (_debugPrintsEnabled) Log($"PathLength returned 100", monster);
-        return 100;
-    }
+    // -------------------------------------------------------------------------
+    // Public per-tick queries
+    // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Clears all target-intent tracking state, e.g. when a night ends.
+    /// Gives the monster's next move. Should only be called when the monster is ready to move to the next tile, not every tick.
     /// </summary>
-    public void ClearEverythingWhenNightEnds()
+    public (int, int) GetNextPosition(Monster monster)
     {
-        _discoveredTargets.Clear();
-        _targetToMonsters.Clear();
-        _monsterToTarget.Clear();
-        _monsterToTargetDist.Clear();
-        _defenders.Clear();
-        _monsterToRecentPath.Clear();
-        _cachedPaths.Clear();
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                _visited[col, row] = 0;
-            }
-        }
+        long t0 = _profilingEnabled ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        if (_profilingEnabled) { LogProfilingMetrics(); _callCount++; }
 
-    }
+        (int col, int row) currentTile = monster.TilePosition;
+        UpdateDiscoveredTargets(monster);
 
-    /// <summary>
-    /// Recomputes how many defenders cover each map tile.
-    /// </summary>
-    private int[,] UpdateDefenceStrengths(Monster monster)
-    {
+        var data = GetOrCreateTypeData(monster.Type);
         var config = GetConfig(monster);
-        // reset data structures
-        _defenders.Clear();
-        for (int col = 0; col < mapManager.Columns; col++)
+
+        // If the monster just arrived at the meeting point, check whether to begin attacking
+        if (config.MeetUpBeforeAttacking && config.MeetingPoint.HasValue && currentTile == config.MeetingPoint.Value)
+            AttackTogetherIfMeetingPointFull(monster);
+
+        if (data.PathDirty)
         {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                _defenceStrength[col, row] = config.AttackPhaseMinTileCost;
-                _simplePathDefenceStrength[col, row] = config.DiscoveryPhaseMinTileCost + _visited[col, row];
-            }
+            long tc = System.Diagnostics.Stopwatch.GetTimestamp();
+            ComputeTypePaths(monster, data);
+            if (_profilingEnabled) _timeComputePaths += ElapsedMs(tc);
         }
 
-        // update based on current structures
-        for (int col = 0; col < mapManager.Columns; col++)
+        bool isDiscoveryPhase = _discoveredTargets.Count == 0;
+        var nextTileNullable = data.NextTile[currentTile.col, currentTile.row];
+
+        if (nextTileNullable == null)
         {
-            for (int row = 0; row < mapManager.Rows; row++)
+            // Monster is at a supersource (target or discovery tile) or map is disconnected
+            if (isDiscoveryPhase && data.DiscoverySupersource.Contains(currentTile))
+                data.PathDirty = true;
+            if (_profilingEnabled) _timeGetNext += ElapsedMs(t0);
+            return currentTile;
+        }
+
+        (int, int) nextTile = nextTileNullable.Value;
+
+        // 30% chance to take a random neighbor in discovery phase for natural spread
+        if (isDiscoveryPhase && GamelabGame.Rng.NextDouble() < 0.3)
+            nextTile = GetRandomNeighbor(currentTile, monster);
+
+        if (_profilingEnabled) _timeGetNext += ElapsedMs(t0);
+        return GetNextPositionIfPossible(monster, currentTile, nextTile);
+    }
+
+    /// <summary>
+    /// Gives the monster's actual target (the adjacent structure it should be attacking right now).
+    /// </summary>
+    public (int, int)? GetTarget(Monster monster)
+    {
+        var data = GetOrCreateTypeData(monster.Type);
+        var (col, row) = monster.TilePosition;
+        var target = data.NextTarget[col, row];
+        if (target == null) return null;
+        if (_debugPrintsEnabled) Log($"GetTarget returned {target}", monster);
+        return MapUtils.CalculateTileDistance(target.Value, monster.TilePosition) > 1 ? null : target;
+    }
+
+    // -------------------------------------------------------------------------
+    // Path computation
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Determines the supersource for the current phase and runs multi-source Dijkstra to fill NextTile and NextTarget.
+    /// </summary>
+    private void ComputeTypePaths(Monster sampleMonster, TypePathData data)
+    {
+        MonsterType type = sampleMonster.Type;
+        var config = GetConfig(type);
+
+        if (data.DefenceDirty)
+        {
+            long td = System.Diagnostics.Stopwatch.GetTimestamp();
+            ComputeTileCosts(type, data);
+            if (_profilingEnabled) _timeComputeDefence += ElapsedMs(td);
+        }
+
+        bool isDiscoveryPhase = _discoveredTargets.Count == 0;
+        List<(int, int)> supersource;
+        int[,] tileCost;
+        bool allowThrough;
+
+        // Determine supersource tiles (i.e. targets to head towards) and which tile costs to use
+        if (isDiscoveryPhase)
+        {
+            supersource = SelectDiscoverySupersource(config);
+            data.DiscoverySupersource = supersource;
+            tileCost = data.TileCostDiscoveryPhase;
+            allowThrough = false;
+        }
+        else if (config.MeetingPoint.HasValue)
+        {
+            supersource = new List<(int, int)> { config.MeetingPoint.Value };
+            tileCost = data.TileCostDiscoveryPhase;
+            allowThrough = false;
+        }
+        else
+        {
+            var primaryTargets = new List<(int, int)>();
+            var decoyTargets = new List<(int, int)>();
+
+            foreach (var tile in _discoveredTargets)
             {
-                Entity structure = mapManager.GetStructure((col, row));
+                var entity = MapManager.GetStructure(tile);
+                if (entity == null) continue;
+                if (entity is Decoy)
+                    decoyTargets.Add(tile);
+                else if (IsPrimaryTarget(entity))
+                    primaryTargets.Add(tile);
+            }
+
+            if (decoyTargets.Count > 0)
+                supersource = decoyTargets;
+            else if (primaryTargets.Count > 0)
+                supersource = primaryTargets;
+            else
+                supersource = new List<(int, int)>(_discoveredTargets);
+
+            tileCost = data.TileCostAttackPhase;
+            allowThrough = true;
+        }
+
+        if (supersource.Count == 0)
+        {
+            data.PathDirty = false;
+            return;
+        }
+
+        int cols = MapManager.Columns, rows = MapManager.Rows;
+        for (int col = 0; col < cols; col++)
+            for (int row = 0; row < rows; row++)
+            {
+                data.NextTile[col, row] = null;
+                data.NextTarget[col, row] = null;
+            }
+
+        var costTemp = new int[cols, rows];
+        CalculateWeakestPaths(supersource, tileCost, sampleMonster, costTemp, data.NextTile, data.NextTarget, allowThrough);
+
+        data.PathDirty = false;
+    }
+
+    /// <summary>
+    /// Computes tile cost arrays for attack and discovery phases for the given monster type.
+    /// </summary>
+    private void ComputeTileCosts(MonsterType type, TypePathData data)
+    {
+        var config = GetConfig(type);
+        int cols = MapManager.Columns, rows = MapManager.Rows;
+
+        for (int col = 0; col < cols; col++)
+            for (int row = 0; row < rows; row++)
+            {
+                data.TileCostAttackPhase[col, row] = config.AttackPhaseMinTileCost;
+                data.TileCostDiscoveryPhase[col, row] = config.DiscoveryPhaseMinTileCost;
+            }
+
+        for (int col = 0; col < cols; col++)
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                Entity structure = MapManager.GetStructure((col, row));
+                if (structure == null) continue;
+
                 List<(int, int)> defendedTiles;
-                int strength = 0;
+                int cost;
+
                 if (structure is Spike || structure is Bomb)
-                {
                     continue;
-                }
                 else if (structure is Tower tower)
                 {
                     defendedTiles = tower.GetTilesInRange();
-                    strength = config.NormalDefenceStrength;
+                    cost = config.NormalDefenceStrength;
                 }
                 else if (structure is Buff buff)
                 {
                     defendedTiles = MapUtils.GetSurroundingTiles(buff.TilePosition);
-                    strength = config.BuffPenalty; // make buffed tiles more powerful
+                    cost = config.BuffPenalty;
                 }
-                else if (monster is not FlyingMonster && (structure is Fence fence || structure is WallTile || structure is Wall))
+                else if (type != MonsterType.Flying && (structure is Fence || structure is WallTile || structure is Wall))
                 {
                     defendedTiles = new List<(int, int)> { (col, row) };
-                    strength = config.FencePenalty;
+                    cost = config.FencePenalty;
                 }
-                else if (monster is FlyingMonster && structure is Wall)
+                else if (type == MonsterType.Flying && structure is Wall)
                 {
                     defendedTiles = new List<(int, int)> { (col, row) };
-                    strength = config.FencePenalty;
+                    cost = config.FencePenalty;
                 }
                 else
-                {
                     continue;
-                }
-                foreach (var defendedTile in defendedTiles)
+
+                foreach (var (tc, tr) in defendedTiles)
                 {
-                    _defenceStrength[defendedTile.Item1, defendedTile.Item2] += strength;
-                    _simplePathDefenceStrength[defendedTile.Item1, defendedTile.Item2] += strength;
-                    if (!_defenders.TryGetValue(defendedTile, out var defenders))
-                    {
-                        defenders = new List<Entity>();
-                        _defenders[defendedTile] = defenders;
-                    }
-
-                    defenders.Add(structure);
+                    data.TileCostAttackPhase[tc, tr] += cost;
+                    data.TileCostDiscoveryPhase[tc, tr] += cost;
                 }
-
             }
         }
 
-        var localPenalty = new int[mapManager.Columns, mapManager.Rows];
-        if (_monsterToRecentPath.TryGetValue(monster, out var recentQueue))
-        {
-            foreach (var (col, row) in recentQueue)
+        data.DefenceDirty = false;
+    }
+
+    // Returns 3 random tiles near the map center as Dijkstra supersources, so monsters spread organically during discovery rather than converging on one point.
+    private List<(int col, int row)> SelectDiscoverySupersource(PathFindingConfig config)
+    {
+        var center = (col: MapManager.Columns / 2, row: MapManager.Rows / 2);
+        var candidates = new List<(int col, int row)>();
+        int maxDist = config.RandomTileMaxDistanceFromCenter;
+
+        for (int col = 0; col < MapManager.Columns; col++)
+            for (int row = 0; row < MapManager.Rows; row++)
             {
-                localPenalty[col, row] = Math.Max(localPenalty[col, row], config.LocalVisitedStartPenalty);
-                localPenalty[col, row] *= config.LocalVisitedGrowthFactor;
+                int d = MapUtils.CalculateTileDistance(center, (col, row));
+                if (d > 1 && d <= maxDist)
+                    candidates.Add((col, row));
             }
+
+        if (candidates.Count == 0)
+            return new List<(int, int)> { center };
+
+        const int count = 3;
+        var result = new List<(int col, int row)>(count);
+        var used = new HashSet<int>();
+        int tries = 0;
+        while (result.Count < count && tries < 200)
+        {
+            int idx = GamelabGame.Rng.Next(candidates.Count);
+            if (used.Add(idx)) result.Add(candidates[idx]);
+            tries++;
         }
-        return localPenalty;
+        return result;
     }
 
     /// <summary>
-    /// Computes weakest paths from the start tile by minimizing maximum defense encountered.
-    /// Also tracks predecessor and arrival time for each tile.
+    /// Multi-source Dijkstra minimising cumulative defence cost, computing NextTile and NextTarget for all tiles.
+    /// NextTarget[T] is the immediate next structure to attack on the optimal path from T to the supersource.
     /// </summary>
-    private void CalculateWeakestPaths((int col, int row) startTile, Monster monster, int[,] defenseStrength, int[,] localPenalty, int[,] costToGetThere, (int col, int row)?[,] previousTile, int[,] timeToReach, bool allowThroughBreakableStructures)
+    private void CalculateWeakestPaths(
+        List<(int col, int row)> sources,
+        int[,] tileCosts,
+        Monster sampleMonster,
+        int[,] costToGetThere,
+        (int col, int row)?[,] nextTile,
+        (int col, int row)?[,] nextTarget,
+        bool allowThroughBreakableStructures)
     {
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
+        int cols = MapManager.Columns, rows = MapManager.Rows;
+        var timeToReach = new int[cols, rows];
+
+        for (int col = 0; col < cols; col++)
+            for (int row = 0; row < rows; row++)
             {
                 costToGetThere[col, row] = int.MaxValue;
-                previousTile[col, row] = null;
                 timeToReach[col, row] = int.MaxValue;
             }
-        }
-
-        int startDefence = defenseStrength[startTile.col, startTile.row] + localPenalty[startTile.col, startTile.row];
-        costToGetThere[startTile.col, startTile.row] = startDefence * startDefence;
-        timeToReach[startTile.col, startTile.row] = 0;
 
         var queue = new PriorityQueue<(int col, int row), (int damage, int time)>();
-        queue.Enqueue(startTile, (costToGetThere[startTile.col, startTile.row], 0));
+
+        foreach (var s in sources)
+        {
+            int cost = tileCosts[s.col, s.row];
+            costToGetThere[s.col, s.row] = cost * cost;
+            timeToReach[s.col, s.row] = 0;
+            nextTile[s.col, s.row] = null;
+            // Only mark the supersource as an attack target if it actually has an attackable structure.
+            // Grass tiles (discovery) and meeting points (meetup) should not appear as targets.
+            Entity sourceStructure = MapManager.GetStructure(s);
+            nextTarget[s.col, s.row] = (sourceStructure != null && !sourceStructure.IsDestroyed && sampleMonster.CanTarget(sourceStructure)) ? s : null;
+            queue.Enqueue(s, (costToGetThere[s.col, s.row], 0));
+        }
 
         while (queue.Count > 0)
         {
@@ -704,33 +420,34 @@ public class PathFindingManager
             int currentDamage = costToGetThere[current.col, current.row];
             int currentTime = timeToReach[current.col, current.row];
 
+            // Determine nextTarget propagation value for neighbors:
+            // if 'current' has a secondary-target structure (can't step on, can attack),
+            // neighbors must attack 'current' before passing through — so their nextTarget = current.
+            // Otherwise they inherit current's nextTarget (path carries the target up the chain).
+            Entity structureOnCurrent = MapManager.GetStructure(current);
+            bool currentIsSecondary = structureOnCurrent != null && !structureOnCurrent.IsDestroyed
+                && !sampleMonster.CanStepOn(structureOnCurrent) && sampleMonster.CanTarget(structureOnCurrent);
+            var propagatedNextTarget = currentIsSecondary ? current : nextTarget[current.col, current.row];
+
             foreach (var neighbor in MapUtils.GetSurroundingTiles(current))
             {
-                if (!MapUtils.IsInBounds(neighbor))
-                {
-                    continue;
-                }
-                int tileIndex = mapManager.GetTileIndex(neighbor);
-                
-                // If the ground is gone and the monster is not a flyer, skip this neighbor
-                if (!monster.CanStepOnTile(tileIndex))
-                {
-                    continue; 
-    }
+                if (!MapUtils.IsInBounds(neighbor)) continue;
 
-                Entity structureOnNeighbor = mapManager.GetStructure(neighbor);
-                if (structureOnNeighbor != null && !monster.CanStepOn(structureOnNeighbor))
+                int tileIndex = MapManager.GetTileIndex(neighbor);
+                if (!sampleMonster.CanStepOnTile(tileIndex)) continue;
+
+                Entity structureOnNeighbor = MapManager.GetStructure(neighbor);
+                if (structureOnNeighbor != null && !sampleMonster.CanStepOn(structureOnNeighbor))
                 {
-                    bool isTarget = IsPrimaryTarget(structureOnNeighbor) || IsSecondaryTarget(monster, structureOnNeighbor);
-                    bool isBreakableStructure = structureOnNeighbor is WallTile || structureOnNeighbor is Fence || structureOnNeighbor is Tower || structureOnNeighbor is Meadow || structureOnNeighbor is Decoy || structureOnNeighbor is Tent;
-                    if (!isTarget && (!allowThroughBreakableStructures || !isBreakableStructure))
-                    {
-                        continue;
-                    }
+                    bool isTarget = IsPrimaryTarget(structureOnNeighbor) || IsSecondaryTarget(sampleMonster, structureOnNeighbor);
+                    bool isBreakable = structureOnNeighbor is WallTile || structureOnNeighbor is Fence
+                        || structureOnNeighbor is Tower || structureOnNeighbor is Meadow
+                        || structureOnNeighbor is Decoy || structureOnNeighbor is Tent;
+                    if (!isTarget && (!allowThroughBreakableStructures || !isBreakable)) continue;
                 }
 
-                int neighborDefence = defenseStrength[neighbor.Item1, neighbor.Item2] + localPenalty[neighbor.Item1, neighbor.Item2];
-                int nextDamage = currentDamage + neighborDefence;
+                int neighborCost = tileCosts[neighbor.Item1, neighbor.Item2];
+                int nextDamage = currentDamage + neighborCost;
                 int nextTime = currentTime + 1;
 
                 if (nextDamage < costToGetThere[neighbor.Item1, neighbor.Item2] ||
@@ -739,254 +456,225 @@ public class PathFindingManager
                 {
                     costToGetThere[neighbor.Item1, neighbor.Item2] = nextDamage;
                     timeToReach[neighbor.Item1, neighbor.Item2] = nextTime;
-                    previousTile[neighbor.Item1, neighbor.Item2] = current;
+                    nextTile[neighbor.Item1, neighbor.Item2] = current;
+                    nextTarget[neighbor.Item1, neighbor.Item2] = propagatedNextTarget;
                     queue.Enqueue(neighbor, (nextDamage, nextTime));
                 }
             }
         }
     }
 
-    /// <summary>
-    /// Returns whether a target is primary (reduces sanity when destroyed).
-    /// </summary>
+    // -------------------------------------------------------------------------
+    // Target discovery and meetup
+    // -------------------------------------------------------------------------
+
+    private void UpdateDiscoveredTargets(Monster monster)
+    {
+        (int, int) currentTile = monster.TilePosition;
+        int visionRange = GetConfig(monster).VisionRange;
+        foreach (var tile in MapUtils.GetSurroundingCircle(currentTile, 0, visionRange))
+        {
+            Entity structure = MapManager.GetStructure(tile);
+            if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
+                continue;
+            if (_discoveredTargets.Add(tile))
+            {
+                // New target discovered — paths are stale for all types
+                foreach (var d in _typeData.Values)
+                    d.PathDirty = true;
+                UpdateMeetingPoint(monster, tile);
+            }
+        }
+    }
+
+    // Picks the least-defended tile on the path to the newly discovered target as the meeting point for this monster type.
+    private void UpdateMeetingPoint(Monster monster, (int, int) discoveredTarget)
+    {
+        var config = GetConfig(monster);
+        if (!config.MeetUpBeforeAttacking || config.MeetingPoint.HasValue) return;
+
+        var data = GetOrCreateTypeData(monster.Type);
+        if (data.DefenceDirty) ComputeTileCosts(monster.Type, data);
+
+        int cols = MapManager.Columns, rows = MapManager.Rows;
+        var costToGetThere = new int[cols, rows];
+        var nextTileBuf = new (int col, int row)?[cols, rows];
+        var nextTargetBuf = new (int col, int row)?[cols, rows];
+
+        CalculateWeakestPaths(
+            new List<(int, int)> { discoveredTarget },
+            data.TileCostAttackPhase, monster,
+            costToGetThere, nextTileBuf, nextTargetBuf,
+            allowThroughBreakableStructures: true);
+
+        int minDef = int.MaxValue;
+        int minCost = int.MaxValue;
+        for (int col = 0; col < cols; col++)
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                if (costToGetThere[col, row] == int.MaxValue) continue;
+                int def = data.TileCostAttackPhase[col, row];
+                if (def < minDef || (def == minDef && costToGetThere[col, row] < minCost))
+                {
+                    minDef = def;
+                    minCost = costToGetThere[col, row];
+                    config.MeetingPoint = (col, row);
+                }
+            }
+        }
+        data.PathDirty = true;
+    }
+
+    // Clears the meeting point and triggers path recomputation once a majority (>50%) of monsters of this type have arrived, releasing them to attack together.
+    private void AttackTogetherIfMeetingPointFull(Monster monster)
+    {
+        var config = GetConfig(monster);
+        if (!config.MeetUpBeforeAttacking || !config.MeetingPoint.HasValue || config.MeetingPoint != monster.TilePosition)
+            return;
+
+        int totalMonsters = 0;
+        for (int col = 0; col < MapManager.Columns; col++)
+            for (int row = 0; row < MapManager.Rows; row++)
+                foreach (Entity e in MapManager.GetAllEntities((col, row)))
+                    if (e is Monster m && m.Type == monster.Type)
+                        totalMonsters++;
+
+        int arrivedCount = 0;
+        (int col, int row) meetingPoint = config.MeetingPoint.Value;
+        foreach (Entity e in MapManager.GetAllEntities(meetingPoint))
+            if (e is Monster m && m.Type == monster.Type)
+                arrivedCount++;
+
+        if (arrivedCount * 2 + 1 < totalMonsters) return; // majority not yet arrived
+
+        config.MeetingPoint = null;
+        GetOrCreateTypeData(monster.Type).PathDirty = true;
+    }
+
+    // -------------------------------------------------------------------------
+    // Movement safety
+    // -------------------------------------------------------------------------
+
+    // Makes sure the monster stops to attack from the neighboring tile and avoids stepping onto big monsters
+    private (int, int) GetNextPositionIfPossible(Monster monster, (int, int) currentTile, (int, int) nextTile)
+    {
+        (int, int)? intendedTarget = GetTarget(monster);
+        bool isIntendedTarget = intendedTarget.HasValue && intendedTarget.Value == nextTile;
+        if (isIntendedTarget)
+        {
+            PushToRecentPath(monster, currentTile);
+            if (_debugPrintsEnabled) Log($"GetNextPositionIfPossible returned {currentTile} (intended target)", monster);
+            return currentTile;
+        }
+
+        bool nextTileHasMonster = false;
+        bool nextTileHasBigMonster = false;
+        foreach (Entity e in MapManager.GetAllEntities(nextTile))
+        {
+            if (e is Monster m)
+            {
+                nextTileHasMonster = true;
+                if (m is BigMonster) { nextTileHasBigMonster = true; break; }
+            }
+        }
+        if (nextTileHasBigMonster || (monster is BigMonster && nextTileHasMonster))
+        {
+            if (IsStationary(monster))
+            {
+                PushToRecentPath(monster, nextTile);
+                if (_debugPrintsEnabled) Log($"GetNextPositionIfPossible pushed through to {nextTile} (stationary)", monster);
+                return nextTile;
+            }
+            PushToRecentPath(monster, currentTile);
+            if (_debugPrintsEnabled) Log($"GetNextPositionIfPossible returned {currentTile} (big monster block)", monster);
+            return currentTile;
+        }
+
+        PushToRecentPath(monster, nextTile);
+        if (_debugPrintsEnabled) Log($"GetNextPositionIfPossible returned {nextTile}", monster);
+        return nextTile;
+    }
+
+    // Returns a random neighboring tile, that the monster can move to, for discovery-phase wandering.
+    private (int col, int row) GetRandomNeighbor((int col, int row) startTile, Monster monster)
+    {
+        var candidates = new List<(int col, int row)>();
+        foreach (var neighbor in MapUtils.GetSurroundingTiles(startTile))
+        {
+            Entity structure = MapManager.GetStructure(neighbor);
+            if (monster.CanStepOn(structure) )
+                candidates.Add(neighbor);
+        }
+        return candidates.Count == 0 ? startTile : candidates[GamelabGame.Rng.Next(candidates.Count)];
+    }
+
+    private void PushToRecentPath(Monster monster, (int col, int row) tile)
+    {
+        if (!_monsterToRecentPath.TryGetValue(monster, out var queue))
+        {
+            queue = new Queue<(int col, int row)>();
+            _monsterToRecentPath[monster] = queue;
+        }
+        queue.Enqueue(tile);
+        if (queue.Count > StationaryCheckLength)
+            queue.Dequeue();
+    }
+
+    private bool IsStationary(Monster monster)
+    {
+        if (_monsterToRecentPath.TryGetValue(monster, out var queue) && queue.Count > 0)
+        {
+            var first = queue.Peek();
+            foreach (var tile in queue)
+                if (tile != first) return false;
+            return true;
+        }
+        return false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Static predicates
+    // -------------------------------------------------------------------------
+
     private static bool IsPrimaryTarget(Entity target)
     {
         return target is Tent || (target is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed);
     }
 
-    /// <summary>
-    /// Returns whether a target is secondary for a given monster.
-    /// </summary>
     private static bool IsSecondaryTarget(Monster monster, Entity target)
     {
         return monster.CanTarget(target) && !IsPrimaryTarget(target);
     }
 
-    private bool CanSeeStructureAndSurroundings((int col, int row) monsterTile, (int col, int row) structureTile, int visionRange)
+    // -------------------------------------------------------------------------
+    // Diagnostics
+    // -------------------------------------------------------------------------
+
+    private void LogProfilingMetrics()
     {
-        for (int col = 0; col < mapManager.Columns; col++)
+        if (_logTimer.ElapsedMilliseconds > 1000)
         {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                if (MapUtils.CalculateTileDistance(structureTile, (col, row)) > 2)
-                {
-                    continue;
-                }
-
-                if (MapUtils.CalculateTileDistance(monsterTile, (col, row)) > visionRange)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private (int col, int row) GetRandomTileNearCenter(int maxDistanceFromCenter)
-    {
-        var centerTile = (col: mapManager.Columns / 2, row: mapManager.Rows / 2);
-        var candidateTiles = new List<(int col, int row)>();
-
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                var dist = MapUtils.CalculateTileDistance(centerTile, (col, row));
-                if (dist <= 1) continue;
-                if (dist > maxDistanceFromCenter) continue;
-                candidateTiles.Add((col, row));
-            }
-        }
-
-        if (candidateTiles.Count == 0)
-        {
-            return centerTile;
-        }
-
-        return candidateTiles[GamelabGame.Rng.Next(candidateTiles.Count)];
-    }
-
-    private (int col, int row) GetRandomNeighborAsLastResort((int col, int row) startTile, Monster monster)
-    {
-        var candidates = new List<(int col, int row)>();
-        foreach (var neighbor in MapUtils.GetSurroundingTiles(startTile))
-        {
-            if (!MapUtils.IsInBounds(neighbor))
-            {
-                continue;
-            }
-
-            Entity structure = mapManager.GetStructure(neighbor);
-            if (structure == null || monster.CanStepOn(structure) || structure is WallTile || structure is Fence || structure is Tower)
-            {
-                candidates.Add(neighbor);
-            }
-        }
-
-        if (candidates.Count == 0)
-        {
-            return startTile;
-        }
-
-        return candidates[GamelabGame.Rng.Next(candidates.Count)];
-    }
-
-    /// <summary>
-    /// Collects all structures on the map that can be targeted by the given monster.
-    /// </summary>
-    private List<((int, int) Tile, Entity Target)> GetAllTargetStructures(Monster monster)
-    {
-        var targets = new List<((int, int), Entity)>();
-        for (int col = 0; col < mapManager.Columns; col++)
-        {
-            for (int row = 0; row < mapManager.Rows; row++)
-            {
-                Entity structure = mapManager.GetStructure((col, row));
-                if (structure == null || structure.IsDestroyed || !monster.CanTarget(structure))
-                {
-                    continue;
-                }
-
-                targets.Add(((col, row), structure));
-            }
-        }
-
-        return targets;
-    }
-
-    /// <summary>
-    /// Selects the best target candidate according to predicate, damage, and arrival time.
-    /// </summary>
-    private ((int, int) Tile, Entity Target)? SelectBestTarget(
-        List<((int, int) Tile, Entity Target)> allTargets,
-        int[,] costToGetThere,
-        int[,] timeToReach,
-        Func<Entity, bool> selector,
-        bool requireZeroDamage)
-    {
-        ((int, int) Tile, Entity Target)? best = null;
-        foreach (var candidate in allTargets)
-        {
-            if (!selector(candidate.Target))
-            {
-                continue;
-            }
-
-            int col = candidate.Tile.Item1;
-            int row = candidate.Tile.Item2;
-            int damage = costToGetThere[col, row];
-            int time = timeToReach[col, row];
-            if (damage == int.MaxValue || time == int.MaxValue)
-            {
-                continue;
-            }
-
-            if (requireZeroDamage && damage != 0)
-            {
-                continue;
-            }
-
-            if (best == null)
-            {
-                best = candidate;
-                continue;
-            }
-
-            int bestDamage = costToGetThere[best.Value.Tile.Item1, best.Value.Tile.Item2];
-            int bestTime = timeToReach[best.Value.Tile.Item1, best.Value.Tile.Item2];
-
-            if (damage < bestDamage || (damage == bestDamage && time < bestTime))
-            {
-                best = candidate;
-            }
-        }
-
-        return best;
-    }
-
-    /// <summary>
-    /// Registers monster intent to attack a target tile and updates tracking collections.
-    /// </summary>
-    private void RegisterTarget(Monster monster, (int col, int row) targetTile, int timeToBeAttacked)
-    {
-        UnregisterMonsterTarget(monster);
-
-        if (!_targetToMonsters.TryGetValue(targetTile, out var monsters))
-        {
-            monsters = new HashSet<Monster>();
-            _targetToMonsters[targetTile] = monsters;
-        }
-
-        monsters.Add(monster);
-        _monsterToTarget[monster] = targetTile;
-        _monsterToTargetDist[monster] = timeToBeAttacked;
-    }
-
-    private void UnregisterMonsterTarget(Monster monster)
-    {
-        _monsterToTargetDist.Remove(monster);
-        if (!_monsterToTarget.TryGetValue(monster, out var target))
-        {
-            return;
-        }
-
-        _monsterToTarget.Remove(monster);
-
-        if (!_targetToMonsters.TryGetValue(target, out var monsters))
-        {
-            return;
-        }
-
-        monsters.Remove(monster);
-        
-        if (monsters.Count == 0 || mapManager.GetStructure(target) == null)
-        {
-            _targetToMonsters.Remove(target);
-            _discoveredTargets.Remove(target);
-            return;
+            double total = _timeComputeDefence + _timeComputePaths + _timeGetNext;
+            double elapsed = _logTimer.ElapsedMilliseconds;
+            Log($"\n--- PathFinding Profiling ({_callCount} calls over {elapsed / 1000.0:F1}s) ---");
+            Log($"Total Time:      {total:F2} ms ({total / elapsed * 100:F2}% of elapsed)");
+            Log($"ComputeDefence:  {_timeComputeDefence:F2} ms ({(total > 0 ? _timeComputeDefence / total * 100 : 0):F1}%)");
+            Log($"ComputePaths:    {_timeComputePaths:F2} ms ({(total > 0 ? _timeComputePaths / total * 100 : 0):F1}%)");
+            Log($"GetNext:         {_timeGetNext:F2} ms ({(total > 0 ? _timeGetNext / total * 100 : 0):F1}%)");
+            _timeComputeDefence = 0; _timeComputePaths = 0; _timeGetNext = 0; _callCount = 0;
+            _logTimer.Restart();
         }
     }
 
-    /// <summary>
-    /// Reconstructs a path from start to end using predecessor data.
-    /// </summary>
-    private List<(int, int)> ReconstructPath((int col, int row) startTile, (int col, int row) endTile,
-                                            (int col, int row)?[,] previousTile, int[,] timeToReach, Monster monster)
+    private static double ElapsedMs(long start) =>
+        (System.Diagnostics.Stopwatch.GetTimestamp() - start) / _swFreqMs;
+
+    private void Log(string message, Monster monster = null)
     {
-        if (!MapUtils.IsInBounds(endTile) || timeToReach[endTile.col, endTile.row] == int.MaxValue)
-        {
-            return new List<(int, int)>();
-        }
-
-        var path = new List<(int, int)>();
-        var current = endTile;
-        //var endStructure = mapManager.GetStructure(endTile);
-        //if (!monster.CanStepOn(endStructure))
-        //{
-        //    current = previousTile[current.col, current.row] ?? current;
-        //}
-        int maxSteps = mapManager.Columns * mapManager.Rows;
-
-        for (int steps = 0; steps <= maxSteps; steps++)
-        {
-            path.Add(current);
-            if (current == startTile)
-            {
-                path.Reverse();
-                return path;
-            }
-
-            var previous = previousTile[current.col, current.row];
-            if (previous == null)
-            {
-                return new List<(int, int)>();
-            }
-
-            current = previous.Value;
-        }
-
-        return new List<(int, int)>();
+        if (monster == null)
+            System.Console.WriteLine($"[{DateTime.Now:HH:mm:ss::ff}] {message}");
+        else
+            System.Console.WriteLine($"[{DateTime.Now:HH:mm:ss::ff}] [{monster.Type}] {message}");
     }
 }
-
