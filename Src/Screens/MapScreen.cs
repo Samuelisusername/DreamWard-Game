@@ -231,6 +231,8 @@ public class MapScreen : GamelabGameScreen
                     _isDraggingCard = false;
                     _dragCard = null;
                     _hammerActive = false;
+                    _clickStarted = false;
+                    _isDrag = false;
                 }
                 else
                 {
