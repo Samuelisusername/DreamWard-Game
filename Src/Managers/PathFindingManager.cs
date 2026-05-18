@@ -4,7 +4,8 @@ using Gamelab;
 
 public class PathFindingManager
 {
-    // Default configuration values for pathfinding behavior. These can be overridden per monster type in the constructor.
+    // Default configuration values for pathfinding behavior.
+    // These can be overridden per monster type in the constructor.
     private class PathFindingConfig
     {
         public int VisionRange { get; set; } = 5;
@@ -18,37 +19,36 @@ public class PathFindingManager
         public (int col, int row)? MeetingPoint { get; set; } = null;
     }
 
-    // Per-type computed path state, rebuilt whenever structures change or new targets are discovered.
-    private class TypePathData
+    // Per-MonsterType computed path state, rebuilt whenever structures change or new targets are discovered.
+    private class PathFindingState
     {
         public (int col, int row)?[,] NextTile;
         public (int col, int row)?[,] NextTarget;    // immediate next structure to attack on path
-        public int[,] TileCostAttackPhase;
-        public int[,] TileCostDiscoveryPhase;
+        public int[,] TileCostsAttackPhase;
+        public int[,] TileCostsDiscoveryPhase;
         public bool DefenceDirty = true;
         public bool PathDirty = true;
         public List<(int col, int row)> DiscoverySupersource = new();
 
-        public TypePathData(int columns, int rows)
+        public PathFindingState(int columns, int rows)
         {
             NextTile = new (int col, int row)?[columns, rows];
             NextTarget = new (int col, int row)?[columns, rows];
-            TileCostAttackPhase = new int[columns, rows];
-            TileCostDiscoveryPhase = new int[columns, rows];
+            TileCostsAttackPhase = new int[columns, rows];
+            TileCostsDiscoveryPhase = new int[columns, rows];
         }
     }
 
     private const int StationaryCheckLength = 5;
 
-    private MapManager MapManager => GamelabGame.MapManager;
-
-    private readonly Dictionary<MonsterType, PathFindingConfig> _configOverrides = new();
-    private readonly Dictionary<MonsterType, TypePathData> _typeData = new();
+    private readonly Dictionary<MonsterType, PathFindingConfig> _pathFindingConfigs = new();
+    private readonly Dictionary<MonsterType, PathFindingState> _pathFindingStates = new();
     private readonly HashSet<(int col, int row)> _discoveredTargets;
     private readonly Dictionary<Monster, Queue<(int col, int row)>> _monsterToRecentPath;
+    private static MapManager MapManager => GamelabGame.MapManager;
 
     // Profiling
-    private static bool _profilingEnabled = false;
+    private static bool _profilingEnabled = true;
     private static bool _debugPrintsEnabled = false;
     private static readonly System.Diagnostics.Stopwatch _logTimer = System.Diagnostics.Stopwatch.StartNew();
     private static readonly double _swFreqMs = System.Diagnostics.Stopwatch.Frequency / 1000.0;
@@ -56,33 +56,34 @@ public class PathFindingManager
     private static double _timeComputePaths = 0;
     private static double _timeGetNext = 0;
     private static int _callCount = 0;
+    private static double _maxPercent = 0;
 
     public PathFindingManager()
     {
-        _configOverrides[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
-        _configOverrides[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
-        _configOverrides[MonsterType.Small] = new PathFindingConfig { VisionRange = 5, AttackPhaseMinTileCost = 1,
+        _pathFindingConfigs[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
+        _pathFindingConfigs[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
+        _pathFindingConfigs[MonsterType.Small] = new PathFindingConfig { VisionRange = 5, AttackPhaseMinTileCost = 1,
                                                                         FencePenalty = 10, MeetUpBeforeAttacking = true };
         _discoveredTargets = new HashSet<(int col, int row)>();
         _monsterToRecentPath = new Dictionary<Monster, Queue<(int col, int row)>>();
     }
 
-    private TypePathData GetOrCreateTypeData(MonsterType type)
+    private PathFindingState GetOrCreateTypeData(MonsterType type)
     {
-        if (!_typeData.TryGetValue(type, out var data))
+        if (!_pathFindingStates.TryGetValue(type, out var data))
         {
-            data = new TypePathData(MapManager.Columns, MapManager.Rows);
-            _typeData[type] = data;
+            data = new PathFindingState(MapManager.Columns, MapManager.Rows);
+            _pathFindingStates[type] = data;
         }
         return data;
     }
 
     private PathFindingConfig GetConfig(MonsterType type)
     {
-        if (!_configOverrides.TryGetValue(type, out var config))
+        if (!_pathFindingConfigs.TryGetValue(type, out var config))
         {
             config = new PathFindingConfig();
-            _configOverrides[type] = config;
+            _pathFindingConfigs[type] = config;
         }
         return config;
     }
@@ -94,7 +95,7 @@ public class PathFindingManager
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Call when structures are built or destroyed. Marks defence and path data dirty so they get recomputed.
+    /// Call when structures change in a way that matters for pathfinding (get destroyed or sheep die). Marks defence and path data dirty so they get recomputed.
     /// </summary>
     public void NotifyStructuresChanged()
     {
@@ -104,7 +105,7 @@ public class PathFindingManager
             return s == null || s.IsDestroyed;
         });
 
-        foreach (var data in _typeData.Values)
+        foreach (var data in _pathFindingStates.Values)
         {
             data.DefenceDirty = true;
             data.PathDirty = true;
@@ -118,13 +119,13 @@ public class PathFindingManager
     {
         _discoveredTargets.Clear();
         _monsterToRecentPath.Clear();
-        foreach (var data in _typeData.Values)
+        foreach (var data in _pathFindingStates.Values)
         {
             data.DefenceDirty = true;
             data.PathDirty = true;
             data.DiscoverySupersource.Clear();
         }
-        foreach (var config in _configOverrides.Values)
+        foreach (var config in _pathFindingConfigs.Values)
             config.MeetingPoint = null;
     }
 
@@ -137,11 +138,23 @@ public class PathFindingManager
     }
 
     // -------------------------------------------------------------------------
-    // Public per-tick queries
+    // Public per-move queries
     // -------------------------------------------------------------------------
 
     /// <summary>
-    /// Gives the monster's next move. Should only be called when the monster is ready to move to the next tile, not every tick.
+    /// Returns the next tile this monster should move to.
+    ///
+    /// Call contract:
+    ///   - Call once per move step, after the monster has physically arrived at its current TilePosition.
+    ///   - Do NOT call while the monster has an active AttackTarget. Doing so can cause the monster to
+    ///     abandon the current attack and walk away (the path is recomputed from the attack tile and may
+    ///     point elsewhere).
+    ///   - The monster must actually move to the returned tile before the next call; there is no check
+    ///     that the path was followed, so calling from a stale TilePosition produces unpredictable results.
+    ///   - If structures changed since the last call (NotifyStructuresChanged was called), paths are
+    ///     recomputed and the result may differ even for the same TilePosition.
+    ///   - GetNextPosition may recompute paths and change what GetTarget returns. If you need the old value
+    ///     from GetTarget, call GetTarget first.
     /// </summary>
     public (int, int) GetNextPosition(Monster monster)
     {
@@ -188,7 +201,10 @@ public class PathFindingManager
     }
 
     /// <summary>
-    /// Gives the monster's actual target (the adjacent structure it should be attacking right now).
+    /// Returns the structure tile this monster should attack right now, or null if there is no
+    /// immediately attackable target. Only returns non-null when the target is adjacent (distance ≤ 1)
+    /// — the monster is always expected to attack from a neighbouring tile, never from on top of the target.
+    /// Does not modify pathfinding state; safe to call at any time, including while attacking.
     /// </summary>
     public (int, int)? GetTarget(Monster monster)
     {
@@ -207,7 +223,7 @@ public class PathFindingManager
     /// <summary>
     /// Determines the supersource for the current phase and runs multi-source Dijkstra to fill NextTile and NextTarget.
     /// </summary>
-    private void ComputeTypePaths(Monster sampleMonster, TypePathData data)
+    private void ComputeTypePaths(Monster sampleMonster, PathFindingState data)
     {
         MonsterType type = sampleMonster.Type;
         var config = GetConfig(type);
@@ -221,7 +237,7 @@ public class PathFindingManager
 
         bool isDiscoveryPhase = _discoveredTargets.Count == 0;
         List<(int, int)> supersource;
-        int[,] tileCost;
+        int[,] tileCosts;
         bool allowThrough;
 
         // Determine supersource tiles (i.e. targets to head towards) and which tile costs to use
@@ -229,13 +245,13 @@ public class PathFindingManager
         {
             supersource = SelectDiscoverySupersource(config);
             data.DiscoverySupersource = supersource;
-            tileCost = data.TileCostDiscoveryPhase;
+            tileCosts = data.TileCostsDiscoveryPhase;
             allowThrough = false;
         }
         else if (config.MeetingPoint.HasValue)
         {
             supersource = new List<(int, int)> { config.MeetingPoint.Value };
-            tileCost = data.TileCostDiscoveryPhase;
+            tileCosts= data.TileCostsDiscoveryPhase;
             allowThrough = false;
         }
         else
@@ -260,7 +276,7 @@ public class PathFindingManager
             else
                 supersource = new List<(int, int)>(_discoveredTargets);
 
-            tileCost = data.TileCostAttackPhase;
+            tileCosts= data.TileCostsAttackPhase;
             allowThrough = true;
         }
 
@@ -279,7 +295,7 @@ public class PathFindingManager
             }
 
         var costTemp = new int[cols, rows];
-        CalculateWeakestPaths(supersource, tileCost, sampleMonster, costTemp, data.NextTile, data.NextTarget, allowThrough);
+        CalculateWeakestPaths(supersource, tileCosts, sampleMonster, costTemp, data.NextTile, data.NextTarget, allowThrough);
 
         data.PathDirty = false;
     }
@@ -287,7 +303,7 @@ public class PathFindingManager
     /// <summary>
     /// Computes tile cost arrays for attack and discovery phases for the given monster type.
     /// </summary>
-    private void ComputeTileCosts(MonsterType type, TypePathData data)
+    private void ComputeTileCosts(MonsterType type, PathFindingState data)
     {
         var config = GetConfig(type);
         int cols = MapManager.Columns, rows = MapManager.Rows;
@@ -295,8 +311,8 @@ public class PathFindingManager
         for (int col = 0; col < cols; col++)
             for (int row = 0; row < rows; row++)
             {
-                data.TileCostAttackPhase[col, row] = config.AttackPhaseMinTileCost;
-                data.TileCostDiscoveryPhase[col, row] = config.DiscoveryPhaseMinTileCost;
+                data.TileCostsAttackPhase[col, row] = config.AttackPhaseMinTileCost;
+                data.TileCostsDiscoveryPhase[col, row] = config.DiscoveryPhaseMinTileCost;
             }
 
         for (int col = 0; col < cols; col++)
@@ -336,8 +352,8 @@ public class PathFindingManager
 
                 foreach (var (tc, tr) in defendedTiles)
                 {
-                    data.TileCostAttackPhase[tc, tr] += cost;
-                    data.TileCostDiscoveryPhase[tc, tr] += cost;
+                    data.TileCostsAttackPhase[tc, tr] += cost;
+                    data.TileCostsDiscoveryPhase[tc, tr] += cost;
                 }
             }
         }
@@ -480,7 +496,7 @@ public class PathFindingManager
             if (_discoveredTargets.Add(tile))
             {
                 // New target discovered — paths are stale for all types
-                foreach (var d in _typeData.Values)
+                foreach (var d in _pathFindingStates.Values)
                     d.PathDirty = true;
                 UpdateMeetingPoint(monster, tile);
             }
@@ -503,7 +519,7 @@ public class PathFindingManager
 
         CalculateWeakestPaths(
             new List<(int, int)> { discoveredTarget },
-            data.TileCostAttackPhase, monster,
+            data.TileCostsAttackPhase, monster,
             costToGetThere, nextTileBuf, nextTargetBuf,
             allowThroughBreakableStructures: true);
 
@@ -514,7 +530,7 @@ public class PathFindingManager
             for (int row = 0; row < rows; row++)
             {
                 if (costToGetThere[col, row] == int.MaxValue) continue;
-                int def = data.TileCostAttackPhase[col, row];
+                int def = data.TileCostsAttackPhase[col, row];
                 if (def < minDef || (def == minDef && costToGetThere[col, row] < minCost))
                 {
                     minDef = def;
@@ -657,11 +673,14 @@ public class PathFindingManager
         {
             double total = _timeComputeDefence + _timeComputePaths + _timeGetNext;
             double elapsed = _logTimer.ElapsedMilliseconds;
+            double percent = total / elapsed * 100;
+            _maxPercent = Math.Max(_maxPercent, percent);
             Log($"\n--- PathFinding Profiling ({_callCount} calls over {elapsed / 1000.0:F1}s) ---");
-            Log($"Total Time:      {total:F2} ms ({total / elapsed * 100:F2}% of elapsed)");
+            Log($"Total Time:      {total:F2} ms ({percent:F2}% of elapsed)");
             Log($"ComputeDefence:  {_timeComputeDefence:F2} ms ({(total > 0 ? _timeComputeDefence / total * 100 : 0):F1}%)");
             Log($"ComputePaths:    {_timeComputePaths:F2} ms ({(total > 0 ? _timeComputePaths / total * 100 : 0):F1}%)");
             Log($"GetNext:         {_timeGetNext:F2} ms ({(total > 0 ? _timeGetNext / total * 100 : 0):F1}%)");
+            Log($"-- Max Percent so far:     {_maxPercent:F2}% --");
             _timeComputeDefence = 0; _timeComputePaths = 0; _timeGetNext = 0; _callCount = 0;
             _logTimer.Restart();
         }
