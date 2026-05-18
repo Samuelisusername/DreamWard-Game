@@ -96,6 +96,8 @@ public class MapScreen : GamelabGameScreen
     private Point screenSize => viewportAdapter.PointToScreen(new Point(GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferWidth, GamelabGame.Instance.GraphicsDevice.PresentationParameters.BackBufferHeight));
 
 
+    public MapScreen(GamelabGame game) : this(game, false) { }
+
     public MapScreen(GamelabGame game, bool init = false) : base(game)
     {
         // Map setup
