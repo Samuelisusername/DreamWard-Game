@@ -10,7 +10,6 @@ public class FlyingMonster : Monster
         if (entity is VoidTile) return false;
         if (entity is TreeTile) return false;
         if (entity is Meadow meadow && (!meadow.HasSheep || meadow.IsPolymorphed)) return false;
-        if (entity is PlacableMeadow) return false; //TODO: when can they attack meadows
         if (entity is WallTile) return false;
         if (entity is Spike) return false;
         return true;
@@ -25,7 +24,7 @@ public class FlyingMonster : Monster
     {
         if (entity is TreeTile) return false;
         if (entity is Wall) return false;
-        return true;
+return true;
     }
     
     public FlyingMonster((int, int) startTile) : base(startTile)

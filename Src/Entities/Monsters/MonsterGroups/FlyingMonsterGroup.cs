@@ -9,7 +9,7 @@ public class FlyingMonsterGroup : MonsterGroup
     public override bool isGrounded => false;
     public FlyingMonsterGroup((int, int) tilePos) : base(tilePos)
     {
-        shadow = GamelabGame.Instance.Content.Load<Texture2D>("Sprites/shadowDummy");
+        shadow = GamelabGame.Instance?.Content?.Load<Texture2D>("Sprites/shadowDummy");
     }
 
     public override MonsterType MonsterType => MonsterType.Flying;

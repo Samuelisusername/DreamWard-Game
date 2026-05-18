@@ -62,7 +62,7 @@ public class PathFindingManager
     {
         _pathFindingConfigs[MonsterType.Flying] = new PathFindingConfig { VisionRange = 6 };
         _pathFindingConfigs[MonsterType.Big] = new PathFindingConfig { AttackPhaseMinTileCost = 30, FencePenalty = 0 };
-        _pathFindingConfigs[MonsterType.Small] = new PathFindingConfig { VisionRange = 5, AttackPhaseMinTileCost = 1,
+        _pathFindingConfigs[MonsterType.Small] = new PathFindingConfig { VisionRange = 4, AttackPhaseMinTileCost = 1,
                                                                         FencePenalty = 10, MeetUpBeforeAttacking = true };
         _discoveredTargets = new HashSet<(int col, int row)>();
         _monsterToRecentPath = new Dictionary<Monster, Queue<(int col, int row)>>();
@@ -243,7 +243,7 @@ public class PathFindingManager
         // Determine supersource tiles (i.e. targets to head towards) and which tile costs to use
         if (isDiscoveryPhase)
         {
-            supersource = SelectDiscoverySupersource(config);
+            supersource = SelectDiscoverySupersource(config, sampleMonster);
             data.DiscoverySupersource = supersource;
             tileCosts = data.TileCostsDiscoveryPhase;
             allowThrough = false;
@@ -362,7 +362,7 @@ public class PathFindingManager
     }
 
     // Returns 3 random tiles near the map center as Dijkstra supersources, so monsters spread organically during discovery rather than converging on one point.
-    private List<(int col, int row)> SelectDiscoverySupersource(PathFindingConfig config)
+    private List<(int col, int row)> SelectDiscoverySupersource(PathFindingConfig config, Monster sampleMonster)
     {
         var center = (col: MapManager.Columns / 2, row: MapManager.Rows / 2);
         var candidates = new List<(int col, int row)>();
@@ -373,7 +373,11 @@ public class PathFindingManager
             {
                 int d = MapUtils.CalculateTileDistance(center, (col, row));
                 if (d > 1 && d <= maxDist)
+                {
+                    var s = MapManager.GetStructure((col, row));
+                    if (s != null && !sampleMonster.CanStepOn(s)) continue;
                     candidates.Add((col, row));
+                }
             }
 
         if (candidates.Count == 0)
