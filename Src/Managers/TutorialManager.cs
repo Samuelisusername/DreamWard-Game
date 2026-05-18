@@ -257,6 +257,8 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
     {
         tutorialSubStep = 0;
         tutorialStep = 0;
+        charIndex = 1;
+        textTimer = TimeSpan.Zero;
         if (!IsTutorialActive)
         {
             CurrentTutorialStructure = null;

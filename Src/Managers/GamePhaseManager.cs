@@ -18,10 +18,10 @@ public class GamePhaseManager
     /// </summary>
     public void SwitchToDay()
     {
-        TutorialManager.AdvanceDay();
         IsDay = true;
         IsInTransition = false;
         DayCount += 1;
+        TutorialManager.AdvanceDay();
         mapManager.GetSheep()?.TryUnpolymorphSheep();
         // call the SanityManager, MapManager and CardManager to set up the new day
         int gained = sanityManager.AddSanityGainedFromNewDay();
