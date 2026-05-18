@@ -44,6 +44,7 @@ public class NightFuzzer : NightScenarioTestBase
             [typeof(Meadow)]      = new(0, 10),
             [typeof(VoidTile)]    = new(0, 40),
             [typeof(TreeTile)]    = new(0, 60),
+            [typeof(Spike)]    = new(0, 60),
         };
     }
 
@@ -317,6 +318,7 @@ public class NightFuzzer : NightScenarioTestBase
         else if (type == typeof(WallTile))    st = new WallTile("wallTile_idle", tile);
         else if (type == typeof(VoidTile))    st = new VoidTile(tile);
         else if (type == typeof(TreeTile))    st = new TreeTile(treeAnims[rng.Next(treeAnims.Length)], tile);
+        else if (type == typeof(Spike))       st = new Spike(tile);
         else throw new ArgumentException($"Unrecognized structure type {type.Name}");
         s.MapManager.PlaceEntity(st, tile);
     }
@@ -370,6 +372,7 @@ public class NightFuzzer : NightScenarioTestBase
                 Meadow         => 'M',
                 PlacableMeadow => 'm',
                 VoidTile       => 'V',
+                Spike          => 'X',
                 _              => '?',
             };
         }
@@ -414,6 +417,7 @@ public class NightFuzzer : NightScenarioTestBase
             ['D'] = "Decoy",
             ['M'] = "Meadow",     ['m'] = "PlacableMeadow",
             ['V'] = "VoidTile",
+            ['X'] = "Spike",
             ['?'] = "Unknown",
         };
         var legend = "Legend:\n" + string.Join("\n", freq
