@@ -113,6 +113,8 @@ public class CardManager
         );
     }
 
+    public bool HasAnyCards => BuildSlots.Any(s => s.IsFilled) || StackSlots.Any(s => s.IsFilled);
+
     // Powers
     public bool DiscountActive { get; private set; }
     public Card      _activeMapCard    = null;

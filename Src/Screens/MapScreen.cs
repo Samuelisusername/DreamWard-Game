@@ -189,7 +189,7 @@ public class MapScreen : GamelabGameScreen
         bool notTransition = !gamePhaseManager.IsInTransition;
         Rectangle[] btns   = { _inventoryBtn, _towerRangeBtn, _speedBtn, _moveBtn, _hammerBtn, _startNightBtn };
         bool[] btnActive   = {
-            notTransition && isDay,             // Inventory
+            notTransition && isDay && cardManager.HasAnyCards, // Inventory
             !isDay || (notTransition && isDay), // TowerRange: night block OR day block
             !isDay,                             // Speed (night only)
             notTransition && isDay,             // Move
@@ -334,7 +334,7 @@ public class MapScreen : GamelabGameScreen
                     }
                 }
             }
-            if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
+            if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay && cardManager.HasAnyCards)
             {
                 if (keyboard.IsKeyDown(Keys.C))
                     _btnResults[(int)BtnId.Inventory] = ButtonResult.Pressed;
@@ -520,7 +520,7 @@ public class MapScreen : GamelabGameScreen
             bool mouseOverUI = (!gamePhaseManager.IsInTransition &&
                 ((_showInventory && cardRenderer.CardStripBounds.Contains(mousePos))
                  || (_showInventory && cardRenderer.ExpandedPanelBounds != Rectangle.Empty && cardRenderer.ExpandedPanelBounds.Contains(mousePos))
-                 || _inventoryBtn.Contains(mousePos)
+                 || (cardManager.HasAnyCards && _inventoryBtn.Contains(mousePos))
                  || _towerRangeBtn.Contains(mousePos)
                  || _startNightBtn.Contains(mousePos)
                  || _moveBtn.Contains(mousePos)
@@ -1004,16 +1004,19 @@ public class MapScreen : GamelabGameScreen
 
         if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay)
         {
-            bool invPrs = Btn(BtnId.Inventory) == ButtonResult.Pressed;
-            Rectangle arrowSrc = invPrs ? ArrowBtnPrs : ArrowBtn;
-            float arrowSc = SpriteScale;
-            int arrowW = (int)(arrowSrc.Width  * arrowSc);
-            int arrowH = (int)(arrowSrc.Height * arrowSc);
-            spriteBatch.Draw(InterfaceTexture, new Rectangle(_inventoryBtn.X, _inventoryBtn.Y, arrowW, arrowH), arrowSrc, Color.White);
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed, keyHint: HintR);
             DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
             DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
             DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
+            if (cardManager.HasAnyCards)
+            {
+                bool invPrs = Btn(BtnId.Inventory) == ButtonResult.Pressed;
+                Rectangle arrowSrc = invPrs ? ArrowBtnPrs : ArrowBtn;
+                float arrowSc = SpriteScale;
+                int arrowW = (int)(arrowSrc.Width  * arrowSc);
+                int arrowH = (int)(arrowSrc.Height * arrowSc);
+                spriteBatch.Draw(InterfaceTexture, new Rectangle(_inventoryBtn.X, _inventoryBtn.Y, arrowW, arrowH), arrowSrc, Color.White);
+            }
             if (_showInventory)
             {
                 cardRenderer.DrawCardStrip(spriteBatch, _dummy, _cardTexture, _cardRegions, _font,cardManager, vw, vh);

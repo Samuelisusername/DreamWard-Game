@@ -69,3 +69,4 @@ Tests/Output/
 
 !Src/PipelineReferences/*
 *.pyc
+*.lscache
