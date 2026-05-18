@@ -292,6 +292,13 @@ public class CardManager
 
         if (_activeMapCard.Type == CardType.Build)
         {
+            CardSlot slot = GetSlotForCard(_activeMapCard);
+            if (slot != null && !slot.Purchased)
+            {
+                if (!TryPurchaseBuildCard(slot, sanityManager)) return false;
+                AudioManager.Play("coinsplash");
+            }
+
             bool success = mapManager.PlaceEntity(_activeMapCard, (col, row));
             if (success)
             {
@@ -343,6 +350,13 @@ public class CardManager
 
         if (_activeMapCard.Type == CardType.MapAction)
         {
+            CardSlot slot = GetSlotForCard(_activeMapCard);
+            if (slot != null && !slot.Purchased)
+            {
+                if (!TryPurchaseBuildCard(slot, sanityManager)) return false;
+                AudioManager.Play("coinsplash");
+            }
+
             bool success = ApplyMapAction(mapManager, _activeMapCard, pos);
             if (success && _selectedTile == (-1, -1))
             {

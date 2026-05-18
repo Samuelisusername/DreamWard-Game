@@ -386,22 +386,6 @@ public class MapScreen : GamelabGameScreen
                 SpawnSanityGainOverSheep(20);
             }
 #endif
-            // Right-click to purchase a hovered build card
-            if (mouse.WasButtonReleased(MouseButton.Right) && !gamePhaseManager.IsInTransition
-                && gamePhaseManager.IsDay && _showInventory)
-            {
-                var (hoveredCard, hoveredSlot) = cardRenderer.HandleClick(mousePos, cardManager);
-                if (hoveredCard != null && hoveredSlot != null && !hoveredSlot.Purchased
-                    && (hoveredCard.Type == CardType.Build || hoveredCard.Type == CardType.MapAction))
-                {
-                    if (cardManager.TryPurchaseBuildCard(hoveredSlot, sanityManager))
-                    {
-                        AudioManager.Play("coinsplash");
-                        _hammerActive = false;
-                        CancelMoveMode();
-                    }
-                }
-            }
 
             // Drag
             if (mouse.WasButtonPressed(MouseButton.Left))
@@ -443,37 +427,12 @@ public class MapScreen : GamelabGameScreen
                     Vector2 dragDelta = viewportAdapter.PointToScreen(mouse.Position).ToVector2() - _dragStartPos;
                     if (dragDelta.Length() > DRAG_THRESHOLD)
                     {
-                        CardSlot slot = cardManager.GetSlotForCard(_dragCard);
-                        if (slot != null)
-                        {
-                            if (!slot.Purchased)
-                            {
-                                // Try to purchase on drag-start
-                                if (cardManager.TryPurchaseBuildCard(slot, sanityManager))
-                                {
-                                    AudioManager.Play("coinsplash");
-                                    _hammerActive = false;
-                                    CancelMoveMode();
-                                    _isDraggingCard = true;
-                                    cardManager._activeMapCard    = _dragCard;
-                                    cardManager._selectedTile     = (-1, -1);
-                                    cardManager._previewStructure = null;
-                                }
-                                else
-                                {
-                                    // Can't afford — abort drag
-                                    _dragCard = null;
-                                }
-                            }
-                            else
-                            {
-                                // Already purchased — drag directly into placement
-                                _isDraggingCard = true;
-                                cardManager._activeMapCard    = _dragCard;
-                                cardManager._selectedTile     = (-1, -1);
-                                cardManager._previewStructure = null;
-                            }
-                        }
+                        _hammerActive = false;
+                        CancelMoveMode();
+                        _isDraggingCard = true;
+                        cardManager._activeMapCard    = _dragCard;
+                        cardManager._selectedTile     = (-1, -1);
+                        cardManager._previewStructure = null;
                     }
                 }
 
@@ -649,20 +608,7 @@ public class MapScreen : GamelabGameScreen
                                     return;
                                 }
 
-                                if (clickedSlot != null && !clickedSlot.Purchased)
-                                {
-                                    if (isDouble)
-                                        if (cardManager.TryPurchaseBuildCard(clickedSlot, sanityManager))
-                                        {
-                                            AudioManager.Play("coinsplash");
-                                            _hammerActive = false;
-                                            CancelMoveMode();
-                                        }
-                                    _clickStarted = false;
-                                    return;
-                                }
-    
-                                if (clickedSlot != null && clickedSlot.Purchased)
+                                if (clickedSlot != null)
                                 {
                                     ToggleActiveCard(cardManager, clickedCard);
                                     _clickStarted = false;

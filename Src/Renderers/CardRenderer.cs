@@ -411,24 +411,25 @@ public class CardRenderer
         if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
         {
             int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
-            string costStr  = isLocked
-                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
-                : "Purchased";
-            Measure(costStr, textSc);
             if (isLocked)
             {
+                string costStr = cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity";
+                Measure(costStr, textSc);
                 string hint = ExpandedCard.Effect == CardEffect.Polymorph
                     ? "Double Click to apply"
-                    : "Drag to buy & place instantly";
+                    : "Drag or click to place";
                 Measure(hint, textSc);
             }
-
-            if (IsBarrierCard(ExpandedCard) && !isLocked)
+            else
             {
-                int maxStack    = GetMaxStack(ExpandedCard);
-                string stackTxt = $"{ExpandedCard.StackCount}/{maxStack} remaining";
-                contentH += 14 + 10; // bar height + gap
-                Measure(stackTxt, textSc);
+                Measure("Purchased", textSc);
+                if (IsBarrierCard(ExpandedCard))
+                {
+                    int maxStack    = GetMaxStack(ExpandedCard);
+                    string stackTxt = $"{ExpandedCard.StackCount}/{maxStack} remaining";
+                    contentH += 14 + 10;
+                    Measure(stackTxt, textSc);
+                }
             }
         }
 
@@ -497,20 +498,20 @@ public class CardRenderer
         if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
         {
             int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
-            string costStr  = isLocked
-                ? (cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity")
-                : "Purchased";
-            Color costColor = isLocked ? new Color(0xc0, 0x50, 0x30) : new Color(0x20, 0x80, 0x30);
-
-            spriteBatch.DrawString(font, costStr, new Vector2(textX, textY), costColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
-            textY += lineH;
-
             if (isLocked)
             {
+                string costStr = cardManager.DiscountActive ? $"Cost: {displayCost} sanity (discounted)" : $"Cost: {displayCost} sanity";
+                spriteBatch.DrawString(font, costStr, new Vector2(textX, textY), new Color(0xc0, 0x50, 0x30), 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                textY += lineH;
                 string hint = ExpandedCard.Effect == CardEffect.Polymorph
                     ? "Double Click to apply"
-                    : "Drag to buy & place instantly";
+                    : "Drag or click to place";
                 spriteBatch.DrawString(font, hint, new Vector2(textX, textY), infoColor, 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
+                textY += lineH;
+            }
+            else
+            {
+                spriteBatch.DrawString(font, "Purchased", new Vector2(textX, textY), new Color(0x20, 0x80, 0x30), 0f, Vector2.Zero, textSc, SpriteEffects.None, 0f);
                 textY += lineH;
             }
 
