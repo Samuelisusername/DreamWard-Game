@@ -105,50 +105,53 @@ public class StartScreen : GamelabGameScreen
     {
         AudioManager.PlayMusic("start_music");
 
-        if (keyboard.WasKeyReleased(Keys.Escape) && Game.IsGameInProgress)
-            Game.SwitchToScreen(Game.MapScreenInstance);
-
-        UpdateLayout();
-        Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
-
-        GamelabGame.IsHovering = false; // reset hover flag
-
-        switch (_currentState)
+        if(Game.IsActive)
         {
-            case MenuState.MainMenu:
-                for (int i = 0; i < _buttons.Length; i++)
-                {
-                    string label = _buttonLabels[i];
-                    bool disabled = label == "Continue" && !Game.IsGameInProgress;
-                    if (disabled) { _btnResults[i] = ButtonResult.Normal; continue; }
+            if (keyboard.WasKeyReleased(Keys.Escape) && Game.IsGameInProgress)
+                Game.SwitchToScreen(Game.MapScreenInstance);
 
-                    _btnResults[i] = UpdateButton(_buttons[i], mouse, mousePos, ref _btnClickedInside[i]);
-                    if (_btnResults[i] == ButtonResult.Clicked)
+            UpdateLayout();
+            Vector2 mousePos = viewportAdapter.PointToScreen(mouse.Position).ToVector2();
+
+            GamelabGame.IsHovering = false; // reset hover flag
+
+            switch (_currentState)
+            {
+                case MenuState.MainMenu:
+                    for (int i = 0; i < _buttons.Length; i++)
                     {
-                        HandleButtonClick(label);
-                        break;
+                        string label = _buttonLabels[i];
+                        bool disabled = label == "Continue" && !Game.IsGameInProgress;
+                        if (disabled) { _btnResults[i] = ButtonResult.Normal; continue; }
+
+                        _btnResults[i] = UpdateButton(_buttons[i], mouse, mousePos, ref _btnClickedInside[i]);
+                        if (_btnResults[i] == ButtonResult.Clicked)
+                        {
+                            HandleButtonClick(label);
+                            break;
+                        }
                     }
-                }
-                if (keyboard.WasKeyReleased(Keys.F5))
-                    GamelabGame.Instance.Balance = GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
-                break;
+                    if (keyboard.WasKeyReleased(Keys.F5))
+                        GamelabGame.Instance.Balance = GamelabGame.Instance.jsonLoader.LoadJson<BalanceParams>("Balance.json");
+                    break;
 
-            case MenuState.Settings:
-                _btnResults[0] = UpdateButton(_buttons[0], mouse, mousePos, ref _btnClickedInside[0]);
-                if (_btnResults[0] == ButtonResult.Clicked)
-                    _currentState = MenuState.MainMenu;
+                case MenuState.Settings:
+                    _btnResults[0] = UpdateButton(_buttons[0], mouse, mousePos, ref _btnClickedInside[0]);
+                    if (_btnResults[0] == ButtonResult.Clicked)
+                        _currentState = MenuState.MainMenu;
 
-                if (_currentState == MenuState.Settings && _volumeBar.Contains(mousePos))
-                {
-                    GamelabGame.IsHovering = true;
-                    if (mouse.LeftButton == ButtonState.Pressed)
+                    if (_currentState == MenuState.Settings && _volumeBar.Contains(mousePos))
                     {
-                        _volume = (mousePos.X - _volumeBar.X) / (float)_volumeBar.Width;
-                        _volume = MathHelper.Clamp(_volume, 0f, 1f);
-                        AudioManager.UpdateMusicVolume(_volume);
+                        GamelabGame.IsHovering = true;
+                        if (mouse.LeftButton == ButtonState.Pressed)
+                        {
+                            _volume = (mousePos.X - _volumeBar.X) / (float)_volumeBar.Width;
+                            _volume = MathHelper.Clamp(_volume, 0f, 1f);
+                            AudioManager.UpdateMusicVolume(_volume);
+                        }
                     }
-                }
-                break;
+                    break;
+            } 
         }
     }
 
