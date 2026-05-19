@@ -74,7 +74,14 @@ public class GamePhaseManager
         {
             Console.WriteLine($"spawanablearea count was this: {combatManager.SpawnableArea.Count-2}");
         }
-        combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
+        if(DayCount - 1 < monsterCount.Length)
+        {
+            combatManager.SpawnMonsters(monsterCount[DayCount -1], DayCount);
+        }
+        else
+        {
+            combatManager.SpawnMonsters((100* ((DayCount -1)/10)) + (((DayCount -1) % 10) *((DayCount -1) % 10)), DayCount);
+        }
         IsDay = false;
         AudioManager.PlayMusic("night_music");
 
@@ -86,10 +93,10 @@ public class GamePhaseManager
         {
             EndGame(false); // lose
         }
-        else if (DayCount > 10)
-        {
-            EndGame(true); // win
-        }
+        // else if (DayCount > 10)
+        // {
+        //     EndGame(true); // win
+        // }
     }
 
     private void EndGame(bool won)

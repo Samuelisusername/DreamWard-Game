@@ -217,9 +217,9 @@ public class CombatManager
     public Dictionary<MonsterType, TimeSpan> MonsterSpeeds = new Dictionary<MonsterType, TimeSpan>
     {
         { MonsterType.Regular, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
-        { MonsterType.Flying, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
-        { MonsterType.Small, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] },
-        { MonsterType.Big, GamelabGame.Instance.Balance.MonsterSpeed[typeof(RegularMonsterGroup)] }
+        { MonsterType.Flying, GamelabGame.Instance.Balance.MonsterSpeed[typeof(FlyingMonsterGroup)] },
+        { MonsterType.Small, GamelabGame.Instance.Balance.MonsterSpeed[typeof(SmallMonsterGroup)] },
+        { MonsterType.Big, GamelabGame.Instance.Balance.MonsterSpeed[typeof(BigMonsterGroup)] }
     };
 
     public Dictionary<MonsterType, float> PathProgress = new Dictionary<MonsterType, float>

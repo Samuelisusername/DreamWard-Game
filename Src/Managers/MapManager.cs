@@ -511,7 +511,174 @@ public class MapManager
                 }
                 break;
             default:
-                newMonster = new BigMonster(pos); 
+                var loopLevel = level % 10;
+                switch (loopLevel)
+                {
+                    case 1:
+                        if(roll < 5)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 40)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 70)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 2:
+                        if(roll < 5)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 30)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 60)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 3:
+                        if(roll < 5)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 60)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 80)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 4:
+                        if(roll < 5)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 50)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 5:
+                        if(roll < 6)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 80)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 6:
+                        if(roll < 7)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 40)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        break;
+                    case 7:
+                        if(roll < 8)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 50)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 75)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 8:
+                        if(roll < 9)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 50)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 60)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 9:
+                        if(roll < 10)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 65)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else if(roll < 80)
+                        {
+                            newMonster = new RegularMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                    case 0:
+                        if(roll < 15)
+                        {
+                            newMonster = new BigMonster(pos); 
+                        }
+                        else if(roll < 50)
+                        {
+                            newMonster = new SmallMonster(pos);
+                        }
+                        else
+                        {
+                            newMonster = new FlyingMonster(pos);
+                        }
+                        break;
+                }
                 break;
         }
         int tileIndex = _tiles[pos.col, pos.row];
