@@ -174,6 +174,7 @@ public abstract class Monster : Entity
             if(sanityManager != null && structure is Tent)
             {                           
                 sanityManager.DeductSanity((int)DamagePerSecond);
+                GamelabGame.GameSpeed = 1.0f;
                 //AudioManager.Play("grunt_03"); 
                 //TODO: grunt sound?
             }
