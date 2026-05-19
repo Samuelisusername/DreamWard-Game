@@ -26,7 +26,7 @@ public class SanityManager
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
         Sanity = Math.Min(100, Sanity + amount);
     }
-    public void DeductSanity(int amount)
+    public void DeductSanity(int amount, GameOverType type)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException("amount", "Amount cannot be negative");
         Sanity -= amount;
@@ -34,9 +34,9 @@ public class SanityManager
         {
             Sanity = 0;
             if (gamePhaseManager != null)
-                gamePhaseManager.checkGameOver();
+                gamePhaseManager.checkGameOver(type);
             else
-                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, type));
         }
     }
 

@@ -299,7 +299,6 @@ public class MapScreen : GamelabGameScreen
             if (mapManager.TentDestroyed)
             {
                 GamelabGame.GameSpeed = 1f;
-                Game.SwitchToScreen(new GameOverScreen(Game));
                 return;
             }
             cardManager._previewStructure?.Update(gameTime);
@@ -552,6 +551,7 @@ public class MapScreen : GamelabGameScreen
                         if (!overCardStrip && Btn(BtnId.StartNight) == ButtonResult.Clicked)
                         {
     #if DEBUG
+                            mapManager.TriggerVoidEnclosureFall();
                             gamePhaseManager.SwitchToNight();
     #else
                             if (gamePhaseManager.IsDay){

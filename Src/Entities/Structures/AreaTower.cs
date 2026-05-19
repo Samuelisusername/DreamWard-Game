@@ -32,7 +32,7 @@ public class AreaTower : Tower
     {
     }
 
-    public override (string,string)[] Infos { get => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];}
+    public override (string,string)[] Infos { get => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)TotalDamage}")];}
 
     public override void Attack(GameTime gameTime)
     {
@@ -46,7 +46,7 @@ public class AreaTower : Tower
         foreach (MonsterGroup group in groupsInRage)
         {
             group.TakeDamageAOE(damagePerSecond * dt);
-            totalDamage += (damagePerSecond * dt) * group.Count;
+            TotalDamage += (damagePerSecond * dt) * group.Count;
             dealtDamageThisFrame = true;
             if (!group.IsEmpty)
             {

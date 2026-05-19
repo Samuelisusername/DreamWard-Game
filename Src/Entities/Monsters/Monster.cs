@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Gamelab;
 using Gamelab.Managers;
+using Gamelab.Screens;
 using Gamelab.Utils.Logging;
 using Microsoft.Xna.Framework;
 
@@ -173,7 +174,23 @@ public abstract class Monster : Entity
         
             if(sanityManager != null && structure is Tent)
             {                           
-                sanityManager.DeductSanity((int)DamagePerSecond);
+                GameOverType got = GameOverType.RegularMonster;
+                switch (Type)
+                {
+                    case MonsterType.Regular:
+                    got = GameOverType.RegularMonster;
+                        break;
+                    case MonsterType.Flying:
+                    got = GameOverType.FlyingMonster;
+                        break;
+                    case MonsterType.Small:
+                    got = GameOverType.SmallMonster;
+                        break;
+                    case MonsterType.Big:
+                    got = GameOverType.BigMonster;
+                        break;
+                }
+                sanityManager.DeductSanity((int)DamagePerSecond, got);
                 GamelabGame.GameSpeed = 1.0f;
                 //AudioManager.Play("grunt_03"); 
                 //TODO: grunt sound?

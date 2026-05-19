@@ -29,7 +29,7 @@ public class GamePhaseManager
         GamelabGame.Instance.MapScreenInstance?.SpawnSanityGainOverSheep(gained);
         GamelabGame.Instance.MapScreenInstance?.ShowDayPopup(DayCount);
         AudioManager.PlayMusic("day_music");
-        checkGameOver();
+        checkGameOver(GameOverType.Win);
         mapManager.ResetFall();
         GamelabGame.GameSpeed = 1.0f;
     }
@@ -45,7 +45,7 @@ public class GamePhaseManager
             Console.WriteLine("spawnableArea.count was 0");
 #endif
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
             return; 
         }
         else
@@ -67,7 +67,7 @@ public class GamePhaseManager
         {
             // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
             return; 
         }
         else
@@ -87,22 +87,22 @@ public class GamePhaseManager
 
     }
 
-    public void checkGameOver()
+    public void checkGameOver(GameOverType type)
     {
         if (sanityManager.Sanity <= 0)
         {
-            EndGame(false); // lose
+            EndGame(false, type); // lose
         }
-        // else if (DayCount > 10)
-        // {
-        //     EndGame(true); // win
-        // }
+        else if (DayCount == 11)
+        {
+            EndGame(true, GameOverType.Win); // win
+        }
     }
 
-    private void EndGame(bool won)
+    private void EndGame(bool won, GameOverType type)
     {
         GamelabGame.GameSpeed = 1.0f;
         GameOverScreen.DidWin = won; 
-        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, type));
     }
 }
