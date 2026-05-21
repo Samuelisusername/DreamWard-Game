@@ -1,6 +1,7 @@
 using Gamelab;
 using Gamelab.Screens;
 using Gamelab.Managers;
+using Microsoft.Xna.Framework;
 using System;
 
 public class GamePhaseManager
@@ -12,6 +13,22 @@ public class GamePhaseManager
     public bool IsDay { get; private set; } = true;
     public bool IsInTransition { get; private set; } = false;
     public int DayCount { get; private set; } = 1;
+    private bool _pendingWin = false;
+    private float _winTimer = 0f;
+
+    public void Update(GameTime gameTime)
+    {
+        if (_pendingWin)
+        {
+            _winTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_winTimer <= 0f)
+            {
+                _pendingWin = false;
+                EndGame(true, GameOverType.Win);
+            }
+        }
+    }
 
     /// <summary>
     /// Switches the game to day and set up the day cycle
@@ -95,7 +112,8 @@ public class GamePhaseManager
         }
         else if (DayCount == 11)
         {
-            EndGame(true, GameOverType.Win); // win
+            _pendingWin = true; //win
+            _winTimer = 2.0f; // wait 2 second
         }
     }
 
