@@ -55,7 +55,7 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
 #endregion
 
 #region tutorial dialog
-    public static List<string> BadString => ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend.", "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?"];
+    public static List<string> BadString => ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend.", "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?","HERE THEY COME!!"];
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
         ([(TutorialAction.PlacedTower, 1),(TutorialAction.StartedNight,3)],[
@@ -69,7 +69,7 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
         ([(TutorialAction.Click,1),(TutorialAction.StartedNight,2)], [
             (TutorialStructureType.Sheep, "That used up some sanity [SANITY]."),
             (TutorialStructureType.Tent, "Building costs sanity [SANITY]?!"),
-            (TutorialStructureType.Sheep, "Doesn't everything? But we can restore some if we survive the night."),
+            (TutorialStructureType.Sheep, "Doesn't everything? But we can restore some for you if we survive the night."),
             (TutorialStructureType.Tent, "Spend sanity [SANITY] to gain sanity [SANITY]. Got it."),
             (TutorialStructureType.Sheep, "Start the night when you're ready."),]),
         ([(TutorialAction.StartedNight,1)], []),
@@ -86,11 +86,11 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
             (TutorialStructureType.Tent, "...You want me to eat flowers?"),
             (TutorialStructureType.Sheep, "We want to eat flowers. Move us to a meadow and we'll generate extra sanity [SANITY] for three days."),
             (TutorialStructureType.Tent, "That makes complete sense."),
-            (TutorialStructureType.Sheep, "Click and hold the nearest meadow. Not as much yield as others, but easier to defend."),]),
+            (TutorialStructureType.Sheep, "CLick on the nearest meadow and then click and hold to move us. Not as much yield as others, but easier to defend."),]),
         ([(TutorialAction.Click,1),(TutorialAction.StartedNight,2)], [
             (TutorialStructureType.Sheep, "I think we found something useful. We'll uncover it by morning."),
             (TutorialStructureType.Tent, "These meadows keep getting better."),
-            (TutorialStructureType.Sheep, "Hover over any meadow to see its sanity [SANITY] yield, move cost, and hidden item."),
+            (TutorialStructureType.Sheep, "Click on any meadow to see its sanity [SANITY] yield, move cost, and hidden item."),
             (TutorialStructureType.Sheep, "Now prep for night two. We'll be busy with these juicy flowers."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
@@ -114,6 +114,42 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
             (TutorialStructureType.Sheep, "Okay, okay, you're right. But if you move us again, you can use the move button in the bottom left corner."),
             (TutorialStructureType.Tent ,"Let me guess, thats also gonna cost sanity?"),
             (TutorialStructureType.Sheep, "You're a fast learner, yes it does, but that still cheaper than building new structures."),]),
+        ([(TutorialAction.StartedNight,1)], []),
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [
+        ([(TutorialAction.Click, 1),(TutorialAction.StartedNight,2)],[
+            (TutorialStructureType.Sheep, "Hey Blank, I have good and bad news for you."),
+            (TutorialStructureType.Tent ,"Give me the bad ones first."),
+            (TutorialStructureType.Sheep, "I can sense a new type of monster, they are faste, come in larger numbers than before and like to group up into amalgams before attacking."),
+            (TutorialStructureType.Tent ,"Oh come on, even more monsters? And the good news?"),
+            (TutorialStructureType.Sheep, "They are smaller and weaker than the normal monsters if you can attack them individually."),]),
+        ([(TutorialAction.StartedNight,1)], []),
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [
+        ([(TutorialAction.None,0)], [
+            (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
+    ],
+    [([(TutorialAction.Click, 1),(TutorialAction.StartedNight,2)],[
+            (TutorialStructureType.Sheep, "Alright, this is our last day, time for the final preparations!"),
+            (TutorialStructureType.Tent ,"Oh come on, im a pro at this by now, how much worse can it get?"),
+            (TutorialStructureType.Sheep, "You just wait and see, theres some huge nightmares coming tonight."),
+            (TutorialStructureType.Sheep ,"So you better upgrade you defenses one last time!"),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])
