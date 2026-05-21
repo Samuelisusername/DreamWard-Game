@@ -249,6 +249,7 @@ public class GamelabGame : Game
     protected override void Update(GameTime gameTime)
     {
         GameTime time = new GameTime(gameTime.TotalGameTime, gameTime.ElapsedGameTime * GameSpeed);
+        GamePhaseManager.Update(time);
         if (nextScreen != null)
         {
             SwitchToScreenImmediately(nextScreen);
