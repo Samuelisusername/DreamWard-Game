@@ -401,7 +401,7 @@ public class MapScreen : GamelabGameScreen
                 if (!gamePhaseManager.IsInTransition && gamePhaseManager.IsDay && _showInventory)
                 {
                     var (dragCandidate, _) = cardRenderer.HandleClick(pos, cardManager);
-                    if ((dragCandidate?.Type == CardType.Build || dragCandidate?.Type == CardType.MapAction)
+                    if ((dragCandidate?.Type == CardType.Build)
                         && dragCandidate?.Effect != CardEffect.Polymorph)
                     {
                         _dragCard     = dragCandidate;
@@ -578,7 +578,7 @@ public class MapScreen : GamelabGameScreen
                             bool isDouble = IsDoubleClick(mouse, gameTime);
     
                             // ── BUILD / MAP ACTION ─────────────────────────────
-                            if (clickedCard.Type == CardType.Build || clickedCard.Type == CardType.MapAction)
+                            if (clickedCard.Type == CardType.Build)
                             {
                                 // ── POLYMORPH: double-click to auto-target sheep ──
                                 if (clickedCard.Effect == CardEffect.Polymorph)
@@ -818,9 +818,7 @@ public class MapScreen : GamelabGameScreen
 
         // ✅ Map        
         if (cardManager._activeMapCard != null &&
-            (cardManager._activeMapCard.Effect == CardEffect.Move     ||
-             cardManager._activeMapCard.Effect == CardEffect.Destroy  ||
-             cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
+            (cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
             _hoverTile.col >= 0)
         {
             mapRenderer.Draw(spriteBatch, viewportAdapter.BoundingRectangle, gameTime, _hoverTile, _showTowerRange, cardRenderer);
@@ -920,9 +918,7 @@ public class MapScreen : GamelabGameScreen
         spriteBatch.Begin(samplerState: hpSampler, transformMatrix: viewportAdapter.GetScaleMatrix());
         (int col, int row) skipOrHover = (
             (cardManager._activeMapCard != null &&
-             (cardManager._activeMapCard.Effect == CardEffect.Move ||
-              cardManager._activeMapCard.Effect == CardEffect.Destroy ||
-              cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
+             (cardManager._activeMapCard.Effect == CardEffect.Polymorph) &&
              _hoverTile.col >= 0)
             || (_moveActive && cardManager._selectedTile != (-1, -1) && _hoverTile.col >= 0)
             ) ? _hoverTile : (-1, -1);
