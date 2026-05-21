@@ -317,7 +317,7 @@ public class CardManager
                     {
                         // Warned already, placed again → game over
                         GameOverScreen.DidWin = false;
-                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
+                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
                         return true;
                     }
                     else
@@ -525,7 +525,7 @@ public class CardManager
             _previewStructure = null;
 
             if (!isSameTile)
-                GamelabGame.SanityManager.DeductSanity(2, GameOverType.SmallMonster);
+                GamelabGame.SanityManager.DeductSanity(2);
 
             return true;
         }
