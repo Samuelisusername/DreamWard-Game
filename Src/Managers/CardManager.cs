@@ -6,8 +6,8 @@ using Microsoft.Xna.Framework;
 using Gamelab.Managers;
 using Gamelab.Screens;
 
-public enum CardType { MapAction, StackAction, Build }
-public enum CardEffect { None, Shuffle, Discount, Polymorph, Move, Destroy, Refill }
+public enum CardType { StackAction, Build }
+public enum CardEffect { None, Shuffle, Discount, Polymorph, Refill }
 
 public record Card
 {
@@ -150,7 +150,7 @@ public class CardManager
         new Card { Name = "meadow", Type = CardType.Build, Cost = 5, SpriteName = "meadow", Weight = 1 },
         new Card { Name = "buff",   Type = CardType.Build, Cost = 3, SpriteName = "buff",   Weight = 2 },
         new Card { Name = "decoy",  Type = CardType.Build, Cost = 3, SpriteName = "decoy",  Weight = 2 },
-        new Card { Name = "Polymorph", Type = CardType.MapAction, Cost = 2, SpriteName = "polymorph", Weight = 1, Effect = CardEffect.Polymorph },
+        new Card { Name = "Polymorph", Type = CardType.Build, Cost = 2, SpriteName = "polymorph", Weight = 1, Effect = CardEffect.Polymorph },
     };
 
     private static readonly List<Card> StackACTemplates = new()
@@ -317,7 +317,7 @@ public class CardManager
                     {
                         // Warned already, placed again → game over
                         GameOverScreen.DidWin = false;
-                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
                         return true;
                     }
                     else
@@ -331,7 +331,7 @@ public class CardManager
                     }
                 }
 
-        _voidWarningTile = null;
+                _voidWarningTile = null;
                 _activeMapCard.StackCount--;
                 if (_activeMapCard.StackCount <= 0)
                 {
@@ -347,100 +347,7 @@ public class CardManager
 
             return success;
         }
-
-        if (_activeMapCard.Type == CardType.MapAction)
-        {
-            CardSlot slot = GetSlotForCard(_activeMapCard);
-            if (slot != null && !slot.Purchased)
-            {
-                if (!TryPurchaseBuildCard(slot, sanityManager)) return false;
-                AudioManager.Play("coinsplash");
-            }
-
-            bool success = ApplyMapAction(mapManager, _activeMapCard, pos);
-            if (success && _selectedTile == (-1, -1))
-            {
-                RemoveFromSlots(_activeMapCard);
-                _activeMapCard    = null;
-                _previewStructure = null;
-            }
-            return success;
-        }
-
         return false;
-    }
-
-    private bool ApplyMapAction(MapManager mapManager, Card card, Vector2 mousePos)
-    {
-        (int col, int row) = mapManager.GetTileFromScreenPosition(mousePos);
-        if (col < 0) return false;
-
-        Entity target = mapManager.GetStructure((col, row));
-
-        switch (card.Effect)
-        {
-           case CardEffect.Destroy:
-            {
-                if (target is not Structure toDestroy)
-                    return false;
-                if (toDestroy is VoidTile)
-                    return false;
-                if (!toDestroy.CanMove)
-                    return false;
-                mapManager.RemoveStructure((col, row));
-                return true;
-            }
-
-            case CardEffect.Move:
-            {
-                if (target is Structure toMove && toMove.CanMove)
-                {
-                    if (toMove is PlacableMeadow pm)
-                        pm.DeactivateMeadow();
-                    mapManager.RemoveStructure((col, row));
-                    _selectedTile     = (col, row);
-                    _previewStructure = toMove;
-                    return false;
-                }
-                if (_selectedTile != (-1, -1) && mapManager.GetStructure((col, row)) == null)
-                {
-                    var moving = _previewStructure;
-                    if (moving != null)
-                    {
-                        bool isSameTile = _selectedTile.Item1 == col && _selectedTile.Item2 == row;
-                        moving.TilePosition = (col, row);
-                        mapManager.PlaceEntity(moving, (col, row));
-                        if (moving is PlacableMeadow placableMeadow)
-                        {
-                            foreach (var position in MapUtils.GetSurroundingTiles((col, row)))
-                            {
-                                if (mapManager.GetStructure(position) is Meadow nearbyMeadow && nearbyMeadow.HasSheep && !nearbyMeadow.IsDepleted)
-                                {
-                                    placableMeadow.ActivateMeadow(nearbyMeadow.SanityGain);
-                                    break;
-                                }
-                            }
-                        }
-                        _selectedTile     = (-1, -1);
-                        _previewStructure = null;
-                        if (!isSameTile)
-                        {
-                            GamelabGame.SanityManager.DeductSanity(2);
-                            
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            case CardEffect.Polymorph:
-                if (target is Meadow meadow && meadow.HasSheep && !meadow.IsPolymorphed)
-                { meadow.PolymorphSheep(); return true; }
-                return false;
-
-            default: return false;
-        }
     }
 
     private void RemoveFromSlots(Card card)
@@ -533,7 +440,7 @@ public class CardManager
 
         // Meadow Bonus Unlock
         var filteredPool = pool
-            .Where(c => (c.Type == CardType.Build || c.Type == CardType.MapAction)  && IsUnlocked(c.SpriteName))
+            .Where(c => (c.Type == CardType.Build)  && IsUnlocked(c.SpriteName))
             .ToList();
 
         if (filteredPool.Count == 0)
@@ -543,7 +450,7 @@ public class CardManager
         {
             newCard = GetWeightedRandom(filteredPool) with {};
         }
-        while (!isDifferent(newCard) && filteredPool.Count > 1); // 🔥 prevent infinite loop
+        while (!isDifferent(newCard) && filteredPool.Count > 1); 
 
         return WithBalanceCost(newCard);
     }
@@ -618,7 +525,7 @@ public class CardManager
             _previewStructure = null;
 
             if (!isSameTile)
-                GamelabGame.SanityManager.DeductSanity(2);
+                GamelabGame.SanityManager.DeductSanity(2, GameOverType.SmallMonster);
 
             return true;
         }
