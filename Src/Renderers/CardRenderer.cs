@@ -98,7 +98,7 @@ public class CardRenderer
     private static bool IsUnaffordable(CardSlot slot, CardManager cardManager)
     {
         if (slot == null || slot.Card == null || slot.Purchased) return false;
-        if (slot.Card.Type != CardType.Build && slot.Card.Type != CardType.MapAction) return false;
+        if (slot.Card.Type != CardType.Build) return false;
         int cost = cardManager.DiscountActive ? Math.Max(slot.Card.Cost - 2, 0) : slot.Card.Cost;
         return GamelabGame.SanityManager.Sanity <= cost;
     }
@@ -278,7 +278,7 @@ public class CardRenderer
 
             var (arcCenter, angleDeg) = arcPositions[arcIdx++];
 
-            bool isLocked       = (slot.Card.Type == CardType.Build || slot.Card.Type == CardType.MapAction) && !slot.Purchased;
+            bool isLocked       = (slot.Card.Type == CardType.Build) && !slot.Purchased;
             bool isUnaffordable = IsUnaffordable(slot, cardManager);
             bool isHovered      = ExpandedCard != null && ReferenceEquals(slot.Card, ExpandedCard);
             bool isActive       = ReferenceEquals(slot.Card, cardManager._activeMapCard);
@@ -379,7 +379,7 @@ public class CardRenderer
         float lineH = font.LineSpacing * textSc + 2f;
 
         CardSlot slot     = cardManager.GetSlotForCard(ExpandedCard);
-        bool     isLocked = slot != null && (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction) && !slot.Purchased;
+        bool     isLocked = slot != null && (ExpandedCard.Type == CardType.Build) && !slot.Purchased;
         Color infoColor   = new Color(0x40, 0x80, 0xc0);
 
         // ── Measure content to size the panel ────────────────────────────────
@@ -408,7 +408,7 @@ public class CardRenderer
         if (ExpandedCard.Type == CardType.StackAction)
             Measure("Double Click to apply", textSc);
 
-        if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
+        if (ExpandedCard.Type == CardType.Build)
         {
             int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
             if (isLocked)
@@ -495,7 +495,7 @@ public class CardRenderer
             textY += lineH;
         }
 
-        if (ExpandedCard.Type == CardType.Build || ExpandedCard.Type == CardType.MapAction)
+        if (ExpandedCard.Type == CardType.Build)
         {
             int displayCost = cardManager.DiscountActive ? Math.Max(ExpandedCard.Cost - 2, 0) : ExpandedCard.Cost;
             if (isLocked)
@@ -710,32 +710,10 @@ public class CardRenderer
             return;
         }
 
-        Structure target = mapManager.GetStructure(hoverTile) as Structure;
-        switch (cardManager._activeMapCard.Effect)
+        if (cardManager._activeMapCard.Effect == CardEffect.Polymorph)
         {
-            case CardEffect.Move:
-                if (target != null) DrawTransparentStructure(spriteBatch, target);
-                if (cardManager._selectedTile != (-1, -1))
-                {
-                    var moving = cardManager._previewStructure
-                        ?? mapManager.GetStructure(cardManager._selectedTile) as Structure;
-                    if (moving != null)
-                    {
-                        bool valid = target == null;
-                        Color hl = valid ? PLACEMENT_OK : PLACEMENT_BAD;
-                        var old = moving.TilePosition;
-                        moving.TilePosition = hoverTile;
-                        DrawPlacementHighlight(spriteBatch, mapManager, moving, hoverTile, hl);
-                        if (valid)
-                            DrawTransparentStructure(spriteBatch, moving, hl);
-                        moving.TilePosition = old;
-                    }
-                }
-                break;
-
-            case CardEffect.Polymorph:
-                if (target != null) DrawTransparentStructure(spriteBatch, target);
-                break;
+            if (mapManager.GetStructure(hoverTile) is Structure target)
+                DrawTransparentStructure(spriteBatch, target);
         }
     }
 
