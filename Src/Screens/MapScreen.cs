@@ -197,7 +197,7 @@ public class MapScreen : GamelabGameScreen
             notTransition && isDay,             // Move
             notTransition && isDay,             // Hammer
             notTransition && isDay,             // StartNight
-            TutorialManager.IsTutorialActive,   // SkipTutorial
+            TutorialManager.IsTutorialActive && TutorialManager.CurrentTutorialStructure != null && isDay,   // SkipTutorial
         };
         for (int i = 0; i < btns.Length; i++)
             _btnResults[i] = UpdateButton(btns[i], mouse, mousePos, ref _btnClickedInside[i], btnActive[i]);
@@ -956,7 +956,7 @@ public class MapScreen : GamelabGameScreen
             DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
             DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
             DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
-            if (TutorialManager.IsTutorialActive)
+            if (TutorialManager.IsTutorialActive && TutorialManager.CurrentTutorialStructure != null)
                 DrawButton(_skipTutorialBtn, "Skip Tutorial >>", Btn(BtnId.SkipTutorial) == ButtonResult.Pressed);
             if (cardManager.HasAnyCards)
             {
