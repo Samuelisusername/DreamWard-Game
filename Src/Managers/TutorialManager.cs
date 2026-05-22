@@ -52,12 +52,14 @@ public static string WarningText {get; private set;}
 
 public static string TutorialText => IsTutorialActive && tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count ?  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2[..charIndex] : null;
 
+public static string TutorialFullText => IsTutorialActive && tutorialSubStep >= 0 && tutorialSubStep <  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count ?  tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item2 : null;
+
 private static TimeSpan warningTimer = TimeSpan.Zero;
 
 #endregion
 
 #region tutorial dialog
-    public static List<string> BadString => ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend.", "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?","HERE THEY COME!!"];
+    public static List<string> BadString => ["Build defenses! Drag a card from your hand onto a tile next to the tent.", "Click and hold the nearest meadow. Not as much yield as others, but easier to defend.", "Careful! Placing a void here will cut off our tent from the outside world. Are you sure?","HERE THEY COME!!", "CLick on the nearest meadow and then click and hold to move us. Not as much yield as others, but easier to defend."];
 
     private static List<(List<(TutorialAction, int)>, List<(TutorialStructureType,string)>)[]> tutorialTexts = [[
         ([(TutorialAction.PlacedTower, 1),(TutorialAction.StartedNight,3)],[
@@ -267,7 +269,7 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
                 if(CurrentTutorialStructure != null)
                 {
                     CurrentTutorialStructure = null;
-                }            
+                }
                 if(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2.Count > 0)
                 {
                     CurrentTutorialStructure = GetTutorialStructure(tutorialTexts[gamePhaseManager.DayCount-1][tutorialStep].Item2[tutorialSubStep].Item1);

@@ -51,7 +51,7 @@ public static class PopUpRenderer
         if(TutorialManager.CurrentWarningStructure != null)
         {
             //we are displaying a warning everything else shouldnt be displayed
-            DrawDialog(spriteBatch, TutorialManager.CurrentWarningStructure, TutorialManager.WarningText, screen);
+            DrawDialog(spriteBatch, TutorialManager.CurrentWarningStructure, TutorialManager.WarningText, TutorialManager.WarningText, screen);
 
             return;
         }
@@ -62,11 +62,11 @@ public static class PopUpRenderer
         }
         else if(TutorialManager.CurrentTutorialStructure != null && gamePhaseManager.IsDay)
         {
-            DrawDialog(spriteBatch, TutorialManager.CurrentTutorialStructure, TutorialManager.TutorialText, screen);
+            DrawDialog(spriteBatch, TutorialManager.CurrentTutorialStructure, TutorialManager.TutorialText, TutorialManager.TutorialFullText, screen);
         }
     }
-    
-    private static void DrawDialog(SpriteBatch spriteBatch, Structure structure, string text, Rectangle screen)
+
+    private static void DrawDialog(SpriteBatch spriteBatch, Structure structure, string text, string fullText, Rectangle screen)
     {        
         Color rectColor = COLOR_L;
         Color textColor = COLOR_D;
@@ -85,7 +85,7 @@ public static class PopUpRenderer
         Sprite portrait = structure is Tent ? blankPortrait : sheepPortrait;
 
         Vector2 boxDimensions = PopUpRenderer.ProcessTextWithIcons(null, _font, text, Vector2.Zero, Color.White, maxTutorialWidth * sx, new Vector2(sx, sy), true);
-        Vector2 hintSize = TutorialManager.BadString.Contains(text) ? Vector2.Zero: _hintFont.MeasureString(continueHint) * new Vector2(sx, sy);
+        Vector2 hintSize = TutorialManager.BadString.Contains(fullText) ? Vector2.Zero: _hintFont.MeasureString(continueHint) * new Vector2(sx, sy);
         boxWidth = (int)MathF.Max(boxDimensions.X, hintSize.X)  + (pad * 4) + (int)(portrait.Scale.X * portWid);
         boxHeight = (int)(boxDimensions.Y + hintSize.Y) + (pad * 3);
 
@@ -117,7 +117,7 @@ public static class PopUpRenderer
         // Pass false for isMeasuring, pass the actual SpriteBatch
         var dialogBox = PopUpRenderer.ProcessTextWithIcons(spriteBatch, _font, text, textStartPos, textColor, maxTutorialWidth * sx, new Vector2(sx, sy), false);
         
-        if(!TutorialManager.BadString.Contains(text))
+        if(!TutorialManager.BadString.Contains(fullText))
         {
             Vector2 hintPos = new Vector2(
                 left + (portrait.Scale.X * portWid) + (2 * pad) + ((boxWidth -(portrait.Scale.X * portWid) - (2*pad))  / 2) - ((_hintFont.MeasureString(continueHint).X * sx) / 2), // Centered
