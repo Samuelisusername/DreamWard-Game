@@ -25,7 +25,9 @@ public static class TutorialManager
 
     public static bool IsTutorialPrioritized => false;
 
-    public static bool IsTutorialActive => gamePhaseManager.IsDay &&  GamelabGame.GamePhaseManager.DayCount <= 4 && tutorialStep < tutorialTexts[gamePhaseManager.DayCount-1].Length;
+    public static bool TutorialEnabled { get; set; } = true;
+
+    public static bool IsTutorialActive => TutorialEnabled && gamePhaseManager.IsDay &&  GamelabGame.GamePhaseManager.DayCount <= 4 && tutorialStep < tutorialTexts[gamePhaseManager.DayCount-1].Length;
 
     private static int tutorialSubStep = 0;
 
@@ -178,7 +180,7 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
 
 
         ///TUTORIAL
-        if(SheepDead)
+        if(SheepDead || !TutorialEnabled)
         {
             if (CurrentTutorialStructure != null)
             {

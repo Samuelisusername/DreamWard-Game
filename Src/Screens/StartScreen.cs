@@ -20,6 +20,8 @@ public class StartScreen : GamelabGameScreen
     private Rectangle Region(string name) => InterfaceAtlas.GetRegion(name + "0").SourceRectangle;
     private Rectangle[] _buttons;
     private Rectangle _volumeBar;
+    private Rectangle _tutorialCheckbox;
+    private bool _tutorialCheckboxClickedInside;
 
     // Colors
     private readonly Color _bgColor = new(0x85, 0x8f, 0x60);  //new Color(113, 137, 92);
@@ -97,7 +99,11 @@ public class StartScreen : GamelabGameScreen
         }
 
         if (_currentState == MenuState.Settings)
+        {
             _volumeBar = new Rectangle(w / 2 - 200, h / 3, 400, 30);
+            int boxSize = 30;
+            _tutorialCheckbox = new Rectangle(w / 2 - 200, _volumeBar.Bottom + 50, boxSize, boxSize);
+        }
     }
 
     protected override void Update(GameTime gameTime, KeyboardStateExtended keyboard,
@@ -149,6 +155,13 @@ public class StartScreen : GamelabGameScreen
                             _volume = MathHelper.Clamp(_volume, 0f, 1f);
                             AudioManager.UpdateMusicVolume(_volume);
                         }
+                    }
+
+                    if (_currentState == MenuState.Settings)
+                    {
+                        var checkboxResult = UpdateButton(_tutorialCheckbox, mouse, mousePos, ref _tutorialCheckboxClickedInside);
+                        if (checkboxResult == ButtonResult.Clicked)
+                            TutorialManager.TutorialEnabled = !TutorialManager.TutorialEnabled;
                     }
                     break;
             } 
@@ -329,7 +342,35 @@ public class StartScreen : GamelabGameScreen
         Vector2 labelPos = new Vector2(_volumeBar.Center.X - labelSize.X / 2, _volumeBar.Y - labelSize.Y - 5);
         spriteBatch.DrawString(_font, volumeLabel, labelPos, TextColor);
 
+        DrawTutorialCheckbox(barBackgroundColor);
+
         DrawButton(_backButton, "Back", _btnResults[0] == ButtonResult.Pressed, "float_button", "float_button_pressed");
+    }
+
+    private void DrawTutorialCheckbox(Color boxBg)
+    {
+        DrawRoundedRectangle(_tutorialCheckbox, 3, boxBg, TextColor);
+
+        string mark = TutorialManager.TutorialEnabled ? "X" : "";
+        if (mark.Length > 0)
+        {
+            Vector2 markSize = _font.MeasureString(mark);
+            float markScale = MathF.Min(
+                _tutorialCheckbox.Width  * 0.8f / markSize.X,
+                _tutorialCheckbox.Height * 0.8f / markSize.Y);
+            Vector2 markPos = new Vector2(
+                _tutorialCheckbox.Center.X - markSize.X * markScale / 2f,
+                _tutorialCheckbox.Center.Y - markSize.Y * markScale / 2f);
+            spriteBatch.DrawString(_font, mark, markPos, TextColor,
+                0f, Vector2.Zero, markScale, SpriteEffects.None, 0f);
+        }
+
+        string label = "Enable Tutorial";
+        Vector2 size = _font.MeasureString(label);
+        Vector2 pos = new Vector2(
+            _tutorialCheckbox.Right + 12,
+            _tutorialCheckbox.Center.Y - size.Y / 2);
+        spriteBatch.DrawString(_font, label, pos, TextColor);
     }
 
     private void DrawRoundedRectangle(Rectangle rect, int radius, Color fillColor, Color borderColor)
