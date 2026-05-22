@@ -102,7 +102,7 @@ public class PathFindingManager
         _discoveredTargets.RemoveWhere(tile =>
         {
             var s = MapManager.GetStructure(tile);
-            return s == null || s.IsDestroyed;
+            return s == null || s.IsDestroyed || (s is Meadow m && (!m.HasSheep || m.IsPolymorphed));
         });
 
         foreach (var data in _pathFindingStates.Values)
