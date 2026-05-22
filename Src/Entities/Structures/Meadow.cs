@@ -44,10 +44,10 @@ public class Meadow : Structure
 
     public override bool CanMove => false;
     public override (string label, string info)[] Infos => !gamePhaseManager.IsInTransition && !IsGrazed && !HasSheep && mapManager.GetSheep() != null ?
-     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Cost to move:", $"{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}"), ("Days left to graze", $"{MaxGrazingDays - DaysGrazed}")] :
+     [("Sanity gain/day:", $"+{SanityGain}[SANITY]"), ("Cost to move:", $"-{(int)MathF.Round(MapUtils.CalculateTileDistance(TilePosition, mapManager.SheepPosition) * MapManager.MoveCostMultiplier)}[SANITY]"), ("Flowers left:", $"{MaxGrazingDays - DaysGrazed}/{MaxGrazingDays}")] :
      !gamePhaseManager.IsInTransition && !IsGrazed && HasSheep && mapManager.GetSheep() != null ?
-     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}"), ("Days left to graze", $"{MaxGrazingDays - DaysGrazed}")] :
-     [("Health:", $"{CurrentHealth}"), ("Sanity gain:", $"{SanityGain}")];
+     [("Sheep health:", $"{(int)CurrentHealth}/{(int)MaxHealth}"), ("Sanity gain/day:", $"+{SanityGain}[SANITY]"), ("Flowers left:", $"{MaxGrazingDays - DaysGrazed}/{MaxGrazingDays}")] :
+     [("Sanity gain/day:", $"+{SanityGain}[SANITY]")];
 
     public override string BottomText => !gamePhaseManager.IsInTransition && !HasSheep && mapManager.GetSheep() != null ? !IsGrazed ? "Click and hold to move sheep here" : "Can't move sheep to grazed spot" : null;
 
@@ -190,7 +190,7 @@ public class PlacableMeadow : Structure
     private int _baseSanityGain;
     public int SanityGain { get; private set; }
 
-    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}")];
+    public override (string, string)[] Infos => [("Sanity gain:", $"{SanityGain}")];
 
     public PlacableMeadow((int, int) pos, int sanityGain)
         : base("meadowPlaced_idle", pos)

@@ -39,7 +39,7 @@ Gamepad is not supported.
 | Bed of Thorns | damaging thorns tile | drag onto free tile |
 | Lure of Phantoms | lures nightmares | drag onto free tile |
 | Kindle of Resolve | repulses nightmares | drag onto free tile |
-| Cradle of Oblivion | Can deal heavy damage once | drag onto free tile |
+| Cradle of Oblivion | deals heavy damage once | drag onto free tile |
 | Shuffler of Fates | reorders shop cards | double click |
 | Discounter of Burdens | next shop card is cheaper | double click |
 | Choice of Illusions | refill cards | double click |

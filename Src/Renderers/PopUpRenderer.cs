@@ -32,18 +32,25 @@ public static class PopUpRenderer
     private static Sprite blankPortrait;
     private static Sprite sheepPortrait;
 
+    private static Texture2D _cardTexture;
+    private static Dictionary<string, Rectangle> _cardRegions;
+
 #endregion
 
     public static void Reset()
     {
-        
+
         blankPortrait = GamelabGame.TextureAtlas["day_player"].CreateSprite("player0");
         blankPortrait.Scale = Vector2.One * 2;
         blankPortrait.Origin = new Vector2(2,18);
-        
+
         sheepPortrait = GamelabGame.TextureAtlas["day_top"].CreateSprite("sheepBig0");
         sheepPortrait.Scale = Vector2.One * 2;
         sheepPortrait.Origin = new Vector2(49,112);
+
+        var content = GamelabGame.Instance.Content;
+        _cardTexture = content.Load<Texture2D>("Sprites/cards");
+        _cardRegions = DreamWardUtils.Graphics.TextureAtlas.LoadRegions(content, "Sprites/cards.json");
     }
 
     public static void Draw(SpriteBatch spriteBatch, Rectangle screen)
@@ -140,12 +147,12 @@ public static class PopUpRenderer
         float sy = MathF.Max(1f, MathF.Floor(ScreenTransform.M22));
 
         Vector2 worldPos  = mapManager.GetWorldPositionOfTile(structure.TilePosition);
-        int pad = 10, midPad = 50, heightPad = 50;
+        int pad = 10, heightPad = 20;
         int sepH = (int)MathF.Round(2 * sy);
 
         bool hasBonusSection = gamePhaseManager.IsDay && structure is Meadow meadow && meadow.MeadowGrant != null;
         bool showBonusLabel  = hasBonusSection && structure is Meadow med && !string.IsNullOrEmpty(med.BonusLabel);
-        string sectionHeader = "Survive the night here to unlock:";
+        string sectionHeader = "Unlocks:";
 
         // ── Build card blocks once ─────────────────────────────────────────────
         var cardBlocks = new List<(string title, string[] body)>();
@@ -161,10 +168,76 @@ public static class PopUpRenderer
         }
 
         // ── Local helpers ──────────────────────────────────────────────────────
-        float MeasW(string s) => _font.MeasureString(s).X;
-        float MeasH(string s) => _font.MeasureString(s).Y;
+        // Split an info string into ordered segments. All widths are in
+        // unscaled (virtual) pixels so MeasW composes with the existing
+        // sizing math; multiply by sx at draw time.
+        TextureRegion sanityIconRegion = GamelabGame.TextureAtlas["day_interface"].GetRegion("sanity_small0");
+        TextureRegion dayIconRegion = GamelabGame.TextureAtlas["day_interface"].GetRegion("time_small0");
+        const float IconScale = 1.8f;
+        const float IconLeftGap = 4f;
+        List<(string kind, string value, float width)> SplitInfo(string s)
+        {
+            var parts = new List<(string, string, float)>();
+            int idx = 0;
+            while (idx < s.Length)
+            {
+                int sanityAt = s.IndexOf("[SANITY]", idx, StringComparison.Ordinal);
+                int dayAt = s.IndexOf("[DAYICON]", idx, StringComparison.Ordinal);
+                int next = -1; string tag = null; int tagLen = 0;
+                if (sanityAt >= 0 && (dayAt < 0 || sanityAt < dayAt)) { next = sanityAt; tag = "SANITY"; tagLen = 8; }
+                else if (dayAt >= 0) { next = dayAt; tag = "DAYICON"; tagLen = 9; }
+
+                if (next < 0)
+                {
+                    string txt = s.Substring(idx);
+                    if (txt.Length > 0) parts.Add(("t", txt, _font.MeasureString(txt).X));
+                    break;
+                }
+                if (next > idx)
+                {
+                    string txt = s.Substring(idx, next - idx);
+                    parts.Add(("t", txt, _font.MeasureString(txt).X));
+                }
+                var region = tag == "SANITY" ? sanityIconRegion : dayIconRegion;
+                parts.Add((tag, "", region.Width * IconScale + IconLeftGap));
+                idx = next + tagLen;
+            }
+            return parts;
+        }
+        float MeasW(string s) => SplitInfo(s).Sum(p => p.width);
+        float MeasH(string s)
+        {
+            string cleaned = s.Replace("[SANITY]", "").Replace("[DAYICON]", "");
+            if (cleaned.Length == 0) cleaned = " ";
+            return _font.MeasureString(cleaned).Y;
+        }
         int   ScW(string s)   => (int)MathF.Round((MeasW(s) + 2 * pad) * sx);
         int   ScH(string s)   => (int)MathF.Round((MeasH(s) + pad) * sy);
+
+        // Draw a single-line info string (with optional [SANITY]/[DAYICON] tokens)
+        // at the given screen-space position. pos is the top-left in scaled px.
+        void DrawInfoLine(string s, Vector2 pos, Color color)
+        {
+            float lineH = _font.LineSpacing * sy;
+            float cursor = 0f;
+            foreach (var (kind, value, width) in SplitInfo(s))
+            {
+                if (kind == "t")
+                {
+                    spriteBatch.DrawString(_font, value, pos + new Vector2(cursor, 0),
+                        color, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                }
+                else
+                {
+                    var region = kind == "SANITY" ? sanityIconRegion : dayIconRegion;
+                    float iconH = region.Height * IconScale * sy;
+                    float yOffset = (lineH - iconH) / 2f;
+                    region.Draw(spriteBatch, pos + new Vector2(cursor + IconLeftGap * sx, yOffset),
+                        Color.White, 0f, Vector2.Zero, Vector2.One * IconScale * new Vector2(sx, sy), SpriteEffects.None, 0f);
+                }
+                cursor += width * sx;
+            }
+        }
 
         Vector2 ToScreen(float x, float y) => new(
             MathF.Round(x * ScreenTransform.M11 + ScreenTransform.M41),
@@ -175,16 +248,25 @@ public static class PopUpRenderer
         int boxHeight;
         int boxWidth;
 
+        const float StatLabelValueGap = 12f;
         boxWidth = (int)MathF.Round(
-            (structure.Infos.Cast<(string,string)>().Max(i => MeasW(i.Item1 + i.Item2)) + 2 * pad + midPad) * sx);
+            (structure.Infos.Cast<(string,string)>().Max(i => MeasW(i.Item1) + StatLabelValueGap + MeasW(i.Item2)) + 2 * pad) * sx);
         boxHeight = (int)MathF.Round(
             (structure.Infos.Cast<(string,string)>().Sum(i => MeasH(i.Item1)) + pad * (structure.Infos.Length + 1)) * sy);
 
+        float hintMeasW(string s) => _hintFont.MeasureString(s).X;
+        float hintMeasH(string s) => _hintFont.MeasureString(s).Y;
+        int hintScH(string s) => (int)MathF.Round((hintMeasH(s) + pad) * sy);
+
         if (structure.BottomText != null)
         {
-            boxWidth   = Math.Max(boxWidth, ScW(structure.BottomText));
-            boxHeight += (int)MathF.Round((MeasH(structure.BottomText) + heightPad) * sy);
+            boxWidth   = Math.Max(boxWidth, (int)MathF.Round((hintMeasW(structure.BottomText) * 1.2f + 2 * pad) * sx));
+            boxHeight += (int)MathF.Round((hintMeasH(structure.BottomText) + heightPad) * sy);
         }
+
+        const float CardW = 92f;
+        const float CardH = 128f;
+        const float CardGap = 8f;
 
         if (hasBonusSection)
         {
@@ -192,11 +274,21 @@ public static class PopUpRenderer
             boxWidth   = Math.Max(boxWidth, ScW(sectionHeader));
             boxHeight += ScH(sectionHeader);
 
+            int cardCount = structure is Meadow mm && mm.UnlockCardSprites != null ? mm.UnlockCardSprites.Count : 0;
+            if (cardCount > 0)
+            {
+                float rowW = cardCount * CardW + (cardCount - 1) * CardGap;
+                boxWidth   = Math.Max(boxWidth, (int)MathF.Round((rowW + 2 * pad) * sx));
+                boxHeight += (int)MathF.Round((CardH + pad) * sy);
+            }
+
             foreach (var (title, body) in cardBlocks)
             {
-                boxWidth   = Math.Max(boxWidth, ScW(title));
-                boxHeight += ScH(title);
-                foreach (var line in body) { boxWidth = Math.Max(boxWidth, ScW(line)); boxHeight += ScH(line); }
+                foreach (var line in body)
+                {
+                    boxWidth = Math.Max(boxWidth, (int)MathF.Round((hintMeasW(line) + 2 * pad) * sx));
+                    boxHeight += hintScH(line);
+                }
                 boxHeight += (int)MathF.Round(pad * sy);
             }
 
@@ -240,33 +332,41 @@ public static class PopUpRenderer
         // ── Stat rows ──────────────────────────────────────────────────────────
         for (int i = 0; i < structure.Infos.Length; i++)
         {
-            spriteBatch.DrawString(_font, structure.Infos[i].label,
-                new Vector2(left + MathF.Round(pad * sx), top + yOff),
+            string label = structure.Infos[i].label;
+            string info  = structure.Infos[i].info;
+            float labelW = MeasW(label) * sx;
+            float infoW  = MeasW(info)  * sx;
+            float rowW   = labelW + StatLabelValueGap * sx + infoW;
+            float rowX   = anchor.X - rowW / 2f;
+
+            spriteBatch.DrawString(_font, label,
+                new Vector2((int)rowX, top + yOff),
                 textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            float infoW = MeasW(structure.Infos[i].info) * sx;
-            spriteBatch.DrawString(_font, structure.Infos[i].info,
-                new Vector2((int)(left + boxWidth - MathF.Round(pad * sx) - infoW), top + yOff),
-                textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(structure.Infos[i].info) + pad) * sy);
+            DrawInfoLine(info,
+                new Vector2((int)(rowX + labelW + StatLabelValueGap * sx), top + yOff),
+                textColor);
+            yOff += MathF.Round((MeasH(info) + pad) * sy);
         }
 
         // ── Hold-to-move bar ───────────────────────────────────────────────────
         if (structure.BottomText != null )
         {
-            float textW = MeasW(structure.BottomText) * sx;
-            int   barH  = (int)MathF.Round(MeasH(structure.BottomText) * sy);
-            var   pos   = new Vector2((int)(anchor.X - textW / 2f),
-                                    (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy)));
+            float textW = hintMeasW(structure.BottomText) * sx;
+            float barW  = textW * 1.2f;
+            int   barH  = (int)MathF.Round(hintMeasH(structure.BottomText) * sy);
+            int   barX  = (int)(anchor.X - barW / 2f);
+            int   barY  = (int)(top + yOff - MathF.Round(pad * sy) + MathF.Round(heightPad * sy));
+            var   textPos = new Vector2((int)(anchor.X - textW / 2f), barY);
             Color barColor = structure.CantAffordFlash > TimeSpan.Zero
                 ? Color.Red * ((float)(structure.CantAffordFlash / Meadow.FlashDuration) * 0.6f)
                 : loadColor * 0.5f;
             int fillW = structure.CantAffordFlash > TimeSpan.Zero
-                ? (int)textW
-                : (int)MathF.Round(textW * (float)(structure.BarProgress / structure.BarComplete));
-            spriteBatch.Draw(_dummy, new Rectangle((int)pos.X, (int)pos.Y, fillW, barH), barColor);
-            spriteBatch.DrawString(_font, structure.BottomText, pos, textColor,
+                ? (int)barW
+                : (int)MathF.Round(barW * (float)(structure.BarProgress / structure.BarComplete));
+            spriteBatch.Draw(_dummy, new Rectangle(barX, barY, fillW, barH), barColor);
+            spriteBatch.DrawString(_hintFont, structure.BottomText, textPos, textColor,
                 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
-            yOff += MathF.Round((MeasH(structure.BottomText) + heightPad) * sy);
+            yOff += MathF.Round((hintMeasH(structure.BottomText) + heightPad) * sy);
         }
 
         // ── Bonus section ──────────────────────────────────────────────────────
@@ -275,16 +375,50 @@ public static class PopUpRenderer
             yOff += MathF.Round(pad * sy);
             DrawSep();
             yOff += MathF.Round(pad * sy);
-            DrawCentred(sectionHeader, dimColor);
+            DrawCentred(sectionHeader, textColor);
+
+            int cardCount = medo.UnlockCardSprites?.Count ?? 0;
+            if (cardCount > 0 && _cardTexture != null && _cardRegions != null)
+            {
+                float rowW = cardCount * CardW + (cardCount - 1) * CardGap;
+                float startX = anchor.X - (rowW * sx) / 2f;
+                for (int c = 0; c < cardCount; c++)
+                {
+                    string name = medo.UnlockCardSprites[c];
+                    if (_cardRegions.TryGetValue(name, out var region))
+                    {
+                        var dest = new Rectangle(
+                            (int)(startX + c * (CardW + CardGap) * sx),
+                            (int)(top + yOff),
+                            (int)(CardW * sx),
+                            (int)(CardH * sy));
+                        spriteBatch.Draw(_cardTexture, dest, region, Color.White);
+                    }
+                }
+                yOff += MathF.Round((CardH + pad) * sy);
+            }
+
             foreach (var (title, body) in cardBlocks)
             {
-                DrawCentred(title, goldColor);
-                foreach (var line in body) DrawCentred(line, textColor);
+                foreach (var line in body)
+                {
+                    spriteBatch.DrawString(_hintFont, line,
+                        new Vector2((int)(anchor.X - hintMeasW(line) * sx / 2f), (int)(top + yOff)),
+                        textColor, 0f, Vector2.Zero, new Vector2(sx, sy), SpriteEffects.None, 0f);
+                    yOff += MathF.Round((hintMeasH(line) + pad) * sy);
+                }
                 yOff += MathF.Round(pad * sy);
             }
-            if (showBonusLabel) DrawCentred(medo.BonusLabel, goldColor);
+            if (showBonusLabel)
+            {
+                float labelW = MeasW(medo.BonusLabel) * sx;
+                DrawInfoLine(medo.BonusLabel,
+                    new Vector2((int)(anchor.X - labelW / 2f), (int)(top + yOff)),
+                    goldColor);
+                yOff += MathF.Round((MeasH(medo.BonusLabel) + pad) * sy);
+            }
         }
-        
+
     }
 
     public static Vector2 ProcessTextWithIcons(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 startPosition, Color color, float maxLineWidth, Vector2 scale, bool isMeasuring) 

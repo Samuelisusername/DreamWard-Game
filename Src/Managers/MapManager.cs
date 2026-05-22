@@ -1037,7 +1037,7 @@ public class MapManager
         {
             (new List<string>{ "bomb" },    null,                     m => cardManager.UnlockCard("bomb")),
             (new List<string>{ "spikes" }, null,                     m => cardManager.UnlockCard("spikes")),
-            (null,                         "Adds New Tower Card Slot", m => cardManager.AddSlots(1)),
+            (null,                         "+1 Tower Card Slot", m => cardManager.AddSlots(1)),
         });
 
         var zone2 = ShuffleList(new List<(List<string> displays, string label, Action<Meadow> grant)>
@@ -1046,7 +1046,7 @@ public class MapManager
                 m => { cardManager.UnlockCard("dreamcatcher"); cardManager.UnlockCard("void"); }),
             (new List<string>{ "polymorph", "decoy" }, null,
                 m => { cardManager.UnlockCard("polymorph"); cardManager.UnlockCard("decoy"); }),
-            (null, "Adds New Barrier Card Slot",
+            (null, "+1 Barrier Card Slot",
                 m => cardManager.AddSlots(2)),
         });
 
@@ -1054,8 +1054,8 @@ public class MapManager
         {
             (new List<string>{ "meadow", "buff" }, null,
                 m => { cardManager.UnlockCard("meadow"); cardManager.UnlockCard("buff"); }),
-            (null, "Bonus 10 Sanity",  m => { }),
-            (null, "Adds New Support Card Slot", m => cardManager.AddSlots(3)),
+            (null, "+10 [SANITY]",  m => { }),
+            (null, "+1 Support Card Slot", m => cardManager.AddSlots(3)),
         });
 
         var meadowGains = GamelabGame.Instance.Balance.MeadowSanityGains;
@@ -1086,7 +1086,7 @@ public class MapManager
             m.BonusLabel        = bonuses[i].label;
             m.MeadowGrant       = bonuses[i].grant;
 
-            if (bonuses[i].label == "Bonus 10 Sanity")
+            if (bonuses[i].label == "+10 [SANITY]")
                 m.BonusSanity = 10;
         }
     }

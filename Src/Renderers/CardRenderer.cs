@@ -14,20 +14,20 @@ public class CardRenderer
 
     public static readonly Dictionary<string, string> CardDescriptions = new()
     {
-        { "sniper",       "Piercer of Veils\nTargets one nightmare. Long range burst damage.\nClick nightmares to mark as target.\n" },
-        { "aoe",          "Banisher of Horrors\nTargets all nightmares. Short range burn damage.\n" },
-        { "dreamcatcher", "Catcher of Dreams\nBlock all nightmares. Including flying ones.\n" },
-        { "fence",        "Warden of Thresholds\nBlock walking nightmares.\n" },
-        { "meadow",       "Meadow of Slumber\nGain more sanity. Stronger next to sheep.\n" },
-        { "void",         "Absence of Field\nBlock walking nightmares. Cannot be removed.\n" },
-        { "spikes",       "Bed of Thorns\nHurts walking nightmares.\n" },
-        { "decoy",        "Lure of Phantoms\nLures nightmares.\n" },
-        { "buff",         "Kindle of Resolve\nRepels nightmares.\n" },
-        { "shuffle",      "Shuffler of Fates\nShuffles build cards.\n" },
-        { "discount",     "Discounter of Burdens\nNext card purchased gets a discount.\n" },
-        { "top3",         "Dreamer's Bounty\nFills all empty build slots with new cards.\n" },
-        { "polymorph",    "Vermin of Shadows\nTurn sheep to rats. Ignored by nightmares.\n" },
-        { "bomb",         "Cradle of Oblivion\n Can deal heavy damage once.\n" },
+        { "sniper",       "Piercer of Veils\nTargets one nightmare. Long range burst damage.\nClick nightmares to mark as target\n" },
+        { "aoe",          "Banisher of Horrors\nTargets all nightmares. Short range burn damage\n" },
+        { "dreamcatcher", "Catcher of Dreams\nBlocks all kinds of nightmares\n" },
+        { "fence",        "Warden of Thresholds\nBlock walking nightmares\n" },
+        { "meadow",       "Meadow of Slumber\nGain more sanity\n" },
+        { "void",         "Absence of Field\nBlocks walking nightmares\n" },
+        { "spikes",       "Bed of Thorns\nHurts walking nightmares\n" },
+        { "decoy",        "Lure of Phantoms\nLures nightmares\n" },
+        { "buff",         "Kindle of Resolve\nRepels nightmares\n" },
+        { "shuffle",      "Shuffler of Fates\nShuffles build cards\n" },
+        { "discount",     "Discounter of Burdens\nNext card purchased gets a discount\n" },
+        { "top3",         "Dreamer's Bounty\nFills all empty build slots with new cards\n" },
+        { "polymorph",    "Vermin of Shadows\n Makes sheep untargetable\n" },
+        { "bomb",         "Cradle of Oblivion\n Deals heavy damage once\n" },
     };
 
     // ── Tunable hand constants ────────────────────────────────────────────────
