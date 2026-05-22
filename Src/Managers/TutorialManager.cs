@@ -115,9 +115,7 @@ private static TimeSpan warningTimer = TimeSpan.Zero;
         ([(TutorialAction.Click, 1),(TutorialAction.StartedNight,2)],[
             (TutorialStructureType.Sheep, "What a stressful night, I really could use some fresh flowers!"),
             (TutorialStructureType.Tent ,"Theres still enough flowers here for at least one more night!"),
-            (TutorialStructureType.Sheep, "Okay, okay, you're right. But if you move us again, you can use the move button in the bottom left corner."),
-            (TutorialStructureType.Tent ,"Let me guess, thats also gonna cost sanity?"),
-            (TutorialStructureType.Sheep, "You're a fast learner, yes it does, but that still cheaper than building new structures."),]),
+            (TutorialStructureType.Sheep, "Okay, okay, you're right. But if you move us again, you can use the move button in the bottom left corner."),]),
         ([(TutorialAction.StartedNight,1)], []),
         ([(TutorialAction.None,0)], [
             (TutorialStructureType.Sheep, "HERE THEY COME!!"),])

@@ -27,9 +27,10 @@ public class MapScreen : GamelabGameScreen
     private RenderTarget2D _nightBackgroundCache;
     private Point _nightBackgroundCacheSize;
     
-    private enum BtnId { Inventory, TowerRange, Speed, Move, Hammer, StartNight, Count }
+    private enum BtnId { Inventory, TowerRange, Speed, Move, Hammer, StartNight, SkipTutorial, Count }
 
     private Rectangle _speedBtn;
+    private Rectangle _skipTutorialBtn;
 
     // Cards
     private SpriteFont _font;
@@ -156,6 +157,7 @@ public class MapScreen : GamelabGameScreen
         int vw = viewportAdapter.VirtualWidth;
         int vh = viewportAdapter.VirtualHeight;
         _speedBtn = new Rectangle(vw - 260, 20, 240, 96);
+        _skipTutorialBtn = new Rectangle(vw - 260, 40, 240, 96);
         cardRenderer.UpdateUIButtonLayout(vw, vh, _showInventory, ref _inventoryBtn, ref _towerRangeBtn, ref _startNightBtn, ref _hammerBtn, ref _moveBtn);
     }
 
@@ -187,7 +189,7 @@ public class MapScreen : GamelabGameScreen
         }
         bool isDay         = gamePhaseManager.IsDay;
         bool notTransition = !gamePhaseManager.IsInTransition;
-        Rectangle[] btns   = { _inventoryBtn, _towerRangeBtn, _speedBtn, _moveBtn, _hammerBtn, _startNightBtn };
+        Rectangle[] btns   = { _inventoryBtn, _towerRangeBtn, _speedBtn, _moveBtn, _hammerBtn, _startNightBtn, _skipTutorialBtn };
         bool[] btnActive   = {
             notTransition && isDay && cardManager.HasAnyCards, // Inventory
             !isDay || (notTransition && isDay), // TowerRange: night block OR day block
@@ -195,6 +197,7 @@ public class MapScreen : GamelabGameScreen
             notTransition && isDay,             // Move
             notTransition && isDay,             // Hammer
             notTransition && isDay,             // StartNight
+            TutorialManager.IsTutorialActive,   // SkipTutorial
         };
         for (int i = 0; i < btns.Length; i++)
             _btnResults[i] = UpdateButton(btns[i], mouse, mousePos, ref _btnClickedInside[i], btnActive[i]);
@@ -656,11 +659,6 @@ public class MapScreen : GamelabGameScreen
                             else
                             {
                                 _hammerActive = false;
-                                if (GamelabGame.SanityManager.Sanity <= 2)
-                                {
-                                    _clickStarted = false;
-                                    return;
-                                }
                                 _moveActive = true;
                                 cardManager._activeMapCard = null;
                                 cardManager._previewStructure = null;
@@ -681,6 +679,12 @@ public class MapScreen : GamelabGameScreen
                                 cardManager._previewStructure = null;
                                 cardManager._selectedTile = (-1, -1);
                             }
+                            _clickStarted = false;
+                            return;
+                        }
+                        if (Btn(BtnId.SkipTutorial) == ButtonResult.Clicked)
+                        {
+                            TutorialManager.TutorialEnabled = false;
                             _clickStarted = false;
                             return;
                         }
@@ -950,8 +954,10 @@ public class MapScreen : GamelabGameScreen
         {
             DrawButton(_towerRangeBtn, _showTowerRange ? "Hide Range"    : "Tower Range",  Btn(BtnId.TowerRange) == ButtonResult.Pressed, keyHint: HintR);
             DrawButton(_startNightBtn, "Start Night", Btn(BtnId.StartNight) == ButtonResult.Pressed, (float)(_elapsedStartNightTime/_startNightTime), forceLong: true, keyHint: HintSpace);
-            DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move (2 Sanity)", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
+            DrawButton(_moveBtn,    _moveActive    ? "Move (ON)"    : "Move", Btn(BtnId.Move)   == ButtonResult.Pressed || _moveActive);
             DrawButton(_hammerBtn,  _hammerActive  ? "Destroy (ON)" : "Destroy",         Btn(BtnId.Hammer) == ButtonResult.Pressed || _hammerActive);
+            if (TutorialManager.IsTutorialActive)
+                DrawButton(_skipTutorialBtn, "Skip Tutorial >>", Btn(BtnId.SkipTutorial) == ButtonResult.Pressed);
             if (cardManager.HasAnyCards)
             {
                 bool invPrs = Btn(BtnId.Inventory) == ButtonResult.Pressed;
@@ -1130,7 +1136,9 @@ public class MapScreen : GamelabGameScreen
             spriteBatch.Draw(tex, drawDest, src, Color.White);
         }
         var size = _font.MeasureString(text);
-        float sc = Math.Min(drawW / size.X * 0.6f, drawH / size.Y * 0.6f);
+        var refSize = _font.MeasureString("Destroy");
+        float refScale = Math.Min(drawW / refSize.X * 0.6f, drawH / refSize.Y * 0.6f);
+        float sc = Math.Min(Math.Min(drawW / size.X * 0.7f, drawH / size.Y * 0.7f), refScale);
         float pressOffset = pressed ? scale : 0f;
         spriteBatch.DrawString(_font, text,
             new Vector2(drawDest.Center.X - size.X * sc * 0.5f,

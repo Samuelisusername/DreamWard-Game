@@ -519,13 +519,8 @@ public class CardManager
                 }
             }
 
-            bool isSameTile = _selectedTile == tile;
-
             _selectedTile = (-1, -1);
             _previewStructure = null;
-
-            if (!isSameTile)
-                GamelabGame.SanityManager.DeductSanity(2);
 
             return true;
         }
