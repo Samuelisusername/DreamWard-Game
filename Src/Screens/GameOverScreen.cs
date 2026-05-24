@@ -137,7 +137,7 @@ public class GameOverScreen : GamelabGameScreen
     }
 
     // ── Constructor ───────────────────────────────────────────────────────
-    public GameOverScreen(GamelabGame game, GameOverType killedBy) : base(game)
+    public GameOverScreen(GamelabGame game, GameOverType killedBy = GameOverType.RegularMonster) : base(game)
     {
         _killedBy      = killedBy;
         _bestStructure = GamelabGame.MapManager.GetBestStructure();
