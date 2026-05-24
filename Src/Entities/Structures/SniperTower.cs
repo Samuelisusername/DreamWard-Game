@@ -24,7 +24,7 @@ public class SniperTower : Tower
 
     // protected override int rangeDepth => 2;
 
-    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
+    public override (string, string)[] Infos => [("Health:", $"{CurrentHealth}"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)TotalDamage}")];
 
     private TimeSpan attackCD = TimeSpan.Zero;
 
@@ -75,7 +75,7 @@ public class SniperTower : Tower
                 pendingHitTarget = _target;
                 pendingHitDamage = damagePerSecond;
                 pendingHitTimer = projectileTravelTime;
-                totalDamage += damagePerSecond;
+                TotalDamage += damagePerSecond;
                 targetPos = targetGroup.GetInterpolatedWorldPosition();
                 switch (_target.Type)
                 {

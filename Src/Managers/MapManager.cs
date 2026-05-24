@@ -322,75 +322,75 @@ public class MapManager
     /// </summary>
 
     public void TriggerVoidEnclosureFall()
-{
-    Array.Clear(_isFallingTile, 0, _isFallingTile.Length);
-    bool[,] isSafe = new bool[Columns, Rows];
-    Queue<(int col, int row)> checkQueue = new Queue<(int, int)>();
-
-    var tentPos = GetTent();
-    if (tentPos.col == -1) return;
-
-    checkQueue.Enqueue((tentPos.col, tentPos.row));
-    isSafe[tentPos.col, tentPos.row] = true;
-
-    // 1. Flood Fill
-    while (checkQueue.Count > 0)
     {
-        var current = checkQueue.Dequeue();
+        Array.Clear(_isFallingTile, 0, _isFallingTile.Length);
+        bool[,] isSafe = new bool[Columns, Rows];
+        Queue<(int col, int row)> checkQueue = new Queue<(int, int)>();
 
-        foreach (var neighbor in MapUtils.GetSurroundingTiles(current))
+        var tentPos = GetTent();
+        if (tentPos.col == -1) return;
+
+        checkQueue.Enqueue((tentPos.col, tentPos.row));
+        isSafe[tentPos.col, tentPos.row] = true;
+
+        // 1. Flood Fill
+        while (checkQueue.Count > 0)
         {
-            int c = neighbor.Item1;
-            int r = neighbor.Item2;
+            var current = checkQueue.Dequeue();
 
-            if (isSafe[c, r]) continue;
-
-            var structure = GetStructure(neighbor);
-
-            // Check if it's a VoidTile OR if the base ground tile is missing (-1)
-            bool isEmptySpace = _tiles[c, r] == -1; 
-            bool isVoid = structure is VoidTile || isEmptySpace;
-
-            if (isVoid)
+            foreach (var neighbor in MapUtils.GetSurroundingTiles(current))
             {
-                isSafe[c, r] = true;
-            }
-            else
-            {
-                // Connected land
-                isSafe[c, r] = true;
-                checkQueue.Enqueue((c, r));
+                int c = neighbor.Item1;
+                int r = neighbor.Item2;
+
+                if (isSafe[c, r]) continue;
+
+                var structure = GetStructure(neighbor);
+
+                // Check if it's a VoidTile OR if the base ground tile is missing (-1)
+                bool isEmptySpace = _tiles[c, r] == -1; 
+                bool isVoid = structure is VoidTile || isEmptySpace;
+
+                if (isVoid)
+                {
+                    isSafe[c, r] = true;
+                }
+                else
+                {
+                    // Connected land
+                    isSafe[c, r] = true;
+                    checkQueue.Enqueue((c, r));
+                }
             }
         }
-    }
 
-    // 2. Drop the cut-off tiles AND the boundary VoidTiles
-    for (int col = 0; col < Columns; col++)
-    {
-        for (int row = 0; row < Rows; row++)
+        // 2. Drop the cut-off tiles AND the boundary VoidTiles
+        for (int col = 0; col < Columns; col++)
         {
-            var structure = GetStructure((col, row));
-            bool isVoidTile = structure is VoidTile;
-
-            // Drop if it's cut off from the tent OR if it's part of the VoidTile ring
-            if (!isSafe[col, row] || isVoidTile)
+            for (int row = 0; row < Rows; row++)
             {
-                int mapI = col + Columns;
-                int mapJ = row + Rows;
+                var structure = GetStructure((col, row));
+                bool isVoidTile = structure is VoidTile;
 
-                _isFallingTile[mapI, mapJ] = true;
-                SetDistanceFallTimer(mapI, mapJ);
+                // Drop if it's cut off from the tent OR if it's part of the VoidTile ring
+                if (!isSafe[col, row] || isVoidTile)
+                {
+                    int mapI = col + Columns;
+                    int mapJ = row + Rows;
 
-                // Defer clearing until animation completes so the tile stays visible while falling
-                _pendingTileClear.Add((col, row));
+                    _isFallingTile[mapI, mapJ] = true;
+                    SetDistanceFallTimer(mapI, mapJ);
+
+                    // Defer clearing until animation completes so the tile stays visible while falling
+                    _pendingTileClear.Add((col, row));
+                }
             }
         }
-    }
 
-    // Refresh PlayingField now that void tiles and enclosed tiles are cleared,
-    // so the fall renderer sees the updated boundary and animates cluster trees correctly.
-    combatManager.GetSpawnableArea();
-}
+        // Refresh PlayingField now that void tiles and enclosed tiles are cleared,
+        // so the fall renderer sees the updated boundary and animates cluster trees correctly.
+        combatManager.GetSpawnableArea();
+    }
     // In MapManager.cs
     public int GetTileIndex((int col, int row) pos) {
         if (!MapUtils.IsInBounds(pos)) return -1;
@@ -910,6 +910,21 @@ public class MapManager
         return res;
     }
 
+    public Structure GetBestStructure()
+    {
+        int best = -1;
+        Structure bestS = null;
+        foreach (Structure structure in Structures)
+        {
+            if(structure is Tower tower &&  tower.TotalDamage > best)
+            {
+                bestS = structure;
+            }
+        }
+
+        return bestS;
+    }
+
     /// <summary>
     /// Fills the tileset randomly
     /// </summary>
@@ -966,7 +981,7 @@ public class MapManager
             Console.WriteLine("spawnableArea.count was 0");
             logger.Error("TENT IS ISOLATED! No ground connected to tent. Cancelling night.");
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.SpawnFail));
             return; 
         }
         AddMeadows();
@@ -1419,18 +1434,18 @@ public class MapManager
     }
 
     public void StartFalling()
-{
-    isFalling = true;
-    for (int i = 0; i < Columns * 3; i++)
     {
-        for (int j = 0; j < Rows * 3; j++)
+        isFalling = true;
+        for (int i = 0; i < Columns * 3; i++)
         {
-            if (_isFallingTile[i, j]) continue;
-            _isFallingTile[i, j] = true;
-            SetDistanceFallTimer(i, j);
+            for (int j = 0; j < Rows * 3; j++)
+            {
+                if (_isFallingTile[i, j]) continue;
+                _isFallingTile[i, j] = true;
+                SetDistanceFallTimer(i, j);
+            }
         }
     }
-}
 
     public void ResetFall()
     {

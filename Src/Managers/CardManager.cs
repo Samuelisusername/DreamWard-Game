@@ -317,7 +317,7 @@ public class CardManager
                     {
                         // Warned already, placed again → game over
                         GameOverScreen.DidWin = false;
-                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+                        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
                         return true;
                     }
                     else

@@ -12,7 +12,7 @@ public abstract class Tower : Structure
     protected virtual float damagePerSecond => GamelabGame.Instance.Balance.TowerDamage[this.GetType()];
     protected virtual int rangeDepth => GamelabGame.Instance.Balance.TowerRanges[this.GetType()];
     protected float soundTimer = 0.0f;
-    protected float totalDamage = 0;
+    public float TotalDamage {get; protected set;} = 0;
 
     public float DamagePerSecond => damagePerSecond;
 

@@ -199,6 +199,8 @@ public class MapRenderer
                 }
             }
         }
+        //spriteBatch.DrawString(GamelabGame.Font, GamelabGame.InGameTime.ToString(), Vector2.One * 400, Color.Red);
+
     }
 
     /// <summary>

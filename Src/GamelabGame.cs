@@ -244,13 +244,20 @@ public class GamelabGame : Game
     }
     public static float GameSpeed = 1f;
 
+    public static TimeSpan InGameTime = TimeSpan.Zero;
+
     protected override void Update(GameTime gameTime)
     {
         GameTime time = new GameTime(gameTime.TotalGameTime, gameTime.ElapsedGameTime * GameSpeed);
+        GamePhaseManager.Update(time);
         if (nextScreen != null)
         {
             SwitchToScreenImmediately(nextScreen);
             nextScreen = null;
+        }
+        if(screenManager.ActiveScreen == MapScreenInstance)
+        {
+            InGameTime += time.ElapsedGameTime;
         }
 
         IsHovering = false;
@@ -307,6 +314,8 @@ public class GamelabGame : Game
     /// </summary>
     public void ResetGame()
     {
+        GameSpeed = 1.0f;
+        InGameTime = TimeSpan.Zero;
         Seed = setSeed == 0 ? new Random().Next(): setSeed;
         Rng = new Random(Seed);
         logger.Info($"Using seed: {Seed}");

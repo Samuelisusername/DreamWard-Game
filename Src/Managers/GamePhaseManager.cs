@@ -1,6 +1,7 @@
 using Gamelab;
 using Gamelab.Screens;
 using Gamelab.Managers;
+using Microsoft.Xna.Framework;
 using System;
 
 public class GamePhaseManager
@@ -12,6 +13,22 @@ public class GamePhaseManager
     public bool IsDay { get; private set; } = true;
     public bool IsInTransition { get; private set; } = false;
     public int DayCount { get; private set; } = 1;
+    private bool _pendingWin = false;
+    private float _winTimer = 0f;
+
+    public void Update(GameTime gameTime)
+    {
+        if (_pendingWin)
+        {
+            _winTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_winTimer <= 0f)
+            {
+                _pendingWin = false;
+                EndGame(true, GameOverType.Win);
+            }
+        }
+    }
 
     /// <summary>
     /// Switches the game to day and set up the day cycle
@@ -29,7 +46,7 @@ public class GamePhaseManager
         GamelabGame.Instance.MapScreenInstance?.SpawnSanityGainOverSheep(gained);
         GamelabGame.Instance.MapScreenInstance?.ShowDayPopup(DayCount);
         AudioManager.PlayMusic("day_music");
-        checkGameOver();
+        checkGameOver(GameOverType.Win);
         mapManager.ResetFall();
         GamelabGame.GameSpeed = 1.0f;
     }
@@ -45,7 +62,7 @@ public class GamePhaseManager
             Console.WriteLine("spawnableArea.count was 0");
 #endif
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
             return; 
         }
         else
@@ -67,7 +84,7 @@ public class GamePhaseManager
         {
             // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
             return; 
         }
         else
@@ -87,22 +104,23 @@ public class GamePhaseManager
 
     }
 
-    public void checkGameOver()
+    public void checkGameOver(GameOverType type)
     {
         if (sanityManager.Sanity <= 0)
         {
-            EndGame(false); // lose
+            EndGame(false, type); // lose
         }
-        // else if (DayCount > 10)
-        // {
-        //     EndGame(true); // win
-        // }
+        else if (DayCount == 11)
+        {
+            _pendingWin = true; //win
+            _winTimer = 2.0f; // wait 2 second
+        }
     }
 
-    private void EndGame(bool won)
+    private void EndGame(bool won, GameOverType type)
     {
         GamelabGame.GameSpeed = 1.0f;
         GameOverScreen.DidWin = won; 
-        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance));
+        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, type));
     }
 }

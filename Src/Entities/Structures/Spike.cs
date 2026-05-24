@@ -11,7 +11,7 @@ public class Spike : Tower
     // protected override float damagePerSecond => 2f;
 
     // protected override int rangeDepth => 0;
-    public override (string, string)[] Infos => [("Health:", $"Yes"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)totalDamage}")];
+    public override (string, string)[] Infos => [("Health:", $"Yes"), ("DPS:", $"{damagePerSecond}"), ("Total Damage Dealt:", $"{(int)TotalDamage}")];
 
     public override void Attack(GameTime gameTime)
     {
@@ -26,7 +26,7 @@ public class Spike : Tower
             if(group.MonsterType != MonsterType.Flying)
             {
                 group.TakeDamageAOE(damagePerSecond * dt);
-                totalDamage += (damagePerSecond * dt) * group.Count;
+                TotalDamage += (damagePerSecond * dt) * group.Count;
                 dealtDamageThisFrame = true;
             }
         }
