@@ -1,15 +1,24 @@
 Name
-============
+==================
 Dreamward
 
 20 Words
-============
+==================
+A card-based tower defense game where you protect yourself and your flock from nightmares, building defenses each day to survive the night.
 
 100 Words
-============
+==================
+Dreamward is a single-player isometric tower defense game set in a forest where nightmares roam the night. 
+Each day, you prepare your defenses using a hand of cards. Place towers, walls, and conjured structures strategically across the map. 
+Protect your flock, whose peaceful presence generates the sanity you need to survive. 
+When night falls, waves of nightmares advance to test your strategy. 
+Manage your resources wisely, adapt your strategy round by round, and discover new cards by herding your sheep across farther meadows. 
+Survive until dawn and face an ever growing threat with each passing night.
 
-slide attributions
-============
+Slide Attributions
+==================
+Minecraft, The Last Spell, Legends of Andor, Plants vs. Zombies
 
-download link
-============
+Download Link
+==================
+cgls.itch.io/dreamward
