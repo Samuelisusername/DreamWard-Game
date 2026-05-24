@@ -28,7 +28,7 @@ public class GameOverScreen : GamelabGameScreen
 
     public static bool DidWin { get; set; } = false;
 
-    private readonly GameOverType _killedBy;
+    private GameOverType _killedBy = GameOverType.RegularMonster;
     private readonly Structure    _bestStructure;
     private readonly TimeSpan     _runTime;
 
@@ -137,11 +137,15 @@ public class GameOverScreen : GamelabGameScreen
     }
 
     // ── Constructor ───────────────────────────────────────────────────────
-    public GameOverScreen(GamelabGame game, GameOverType killedBy) : base(game)
+    public GameOverScreen(GamelabGame game) : base(game)
     {
-        _killedBy      = killedBy;
         _bestStructure = GamelabGame.MapManager.GetBestStructure();
         _runTime       = GamelabGame.InGameTime;
+    }
+
+    public void SetGameOverType(GameOverType type)
+    {
+        _killedBy = type;
     }
 
     // ── LoadContent ───────────────────────────────────────────────────────
