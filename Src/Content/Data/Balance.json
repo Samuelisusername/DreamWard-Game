@@ -1,47 +1,47 @@
 {
   "TowerRanges": {
-    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2,
-    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 3,
-    "Bomb, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2,
-    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 0
+    "AreaTower": 2,
+    "SniperTower": 3,
+    "Bomb": 2,
+    "Spike": 0
   },
   "TowerDamage": {
-    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 9,
-    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 9,
-    "Bomb, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 20,
-    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 7.0
+    "AreaTower": 9,
+    "SniperTower": 9,
+    "Bomb": 20,
+    "Spike": 7.0
   },
   "EntityHealth": {
-    "AreaTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "Buff, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "Tent, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 0.0,
-    "Fence, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 40.0,
-    "Wall, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 30.0,
-    "Decoy, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "Meadow, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "PlacableMeadow, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "SniperTower, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "Spike, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
-    "TreeTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
-    "VoidTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.1474836E+09,
-    "WallTile, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 24.0,
-    "Bomb, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.0,
-    "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 100.0,
-    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 13,
-    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 18,
-    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.5
+    "AreaTower": 15.0,
+    "Buff": 15.0,
+    "Tent": 0.0,
+    "Fence": 40.0,
+    "Wall": 30.0,
+    "Decoy": 15.0,
+    "Meadow": 15.0,
+    "PlacableMeadow": 15.0,
+    "SniperTower": 15.0,
+    "Spike": 2.1474836E+09,
+    "TreeTile": 2.1474836E+09,
+    "VoidTile": 2.1474836E+09,
+    "WallTile": 24.0,
+    "Bomb": 6.0,
+    "BigMonster": 100.0,
+    "FlyingMonster": 13,
+    "RegularMonster": 18,
+    "SmallMonster": 6.5
   },
   "MonsterDamage": {
-    "BigMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 15.0,
-    "FlyingMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 6.0,
-    "RegularMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 4.0,
-    "SmallMonster, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": 2.0
+    "BigMonster": 15.0,
+    "FlyingMonster": 6.0,
+    "RegularMonster": 4.0,
+    "SmallMonster": 2.0
   },
   "MonsterSpeed": {
-    "BigMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:03",
-    "FlyingMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:02",
-    "RegularMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:02",
-    "SmallMonsterGroup, Gamelab, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "00:00:01"
+    "BigMonsterGroup": "00:00:03",
+    "FlyingMonsterGroup": "00:00:02",
+    "RegularMonsterGroup": "00:00:02",
+    "SmallMonsterGroup": "00:00:01"
   },
   "CardCosts": {
     "sniper":       7,

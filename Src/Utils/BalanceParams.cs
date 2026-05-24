@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 public class BalanceParams
 {
-    public Dictionary<Type,int> TowerRanges;
-    public Dictionary<Type,float> TowerDamage;
-    public Dictionary<Type,float> EntityHealth;
-    public Dictionary<Type,float> MonsterDamage;
-    public Dictionary<Type,TimeSpan> MonsterSpeed;
+    public Dictionary<string,int> TowerRanges;
+    public Dictionary<string,float> TowerDamage;
+    public Dictionary<string,float> EntityHealth;
+    public Dictionary<string,float> MonsterDamage;
+    public Dictionary<string,TimeSpan> MonsterSpeed;
     public int StartingSanity;
     public float MoveCostMultiplier;
     public int MaxGrazingDays;

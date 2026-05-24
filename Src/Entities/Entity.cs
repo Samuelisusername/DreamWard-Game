@@ -9,7 +9,7 @@ public abstract class Entity
     
     public virtual float MaxHealth 
     {
-        get => maxHealth == 0 ? GamelabGame.Instance.Balance.EntityHealth[this.GetType()] : maxHealth;
+        get => maxHealth == 0 ? GamelabGame.Instance.Balance.EntityHealth[this.GetType().Name] : maxHealth;
         protected set => maxHealth = value;
     }
 
