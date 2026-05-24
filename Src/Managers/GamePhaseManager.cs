@@ -62,7 +62,9 @@ public class GamePhaseManager
             Console.WriteLine("spawnableArea.count was 0");
 #endif
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
+            var screen = new GameOverScreen(GamelabGame.Instance);
+            screen.SetGameOverType(GameOverType.TentIsolated);
+            GamelabGame.Instance.SwitchToScreen(screen);
             return; 
         }
         else
@@ -84,7 +86,9 @@ public class GamePhaseManager
         {
             // Force the game back to day or trigger a 'Game Over' / 'Island Lost' state
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.TentIsolated));
+            var screen = new GameOverScreen(GamelabGame.Instance);
+            screen.SetGameOverType(GameOverType.TentIsolated);
+            GamelabGame.Instance.SwitchToScreen(screen);
             return; 
         }
         else
@@ -121,6 +125,8 @@ public class GamePhaseManager
     {
         GamelabGame.GameSpeed = 1.0f;
         GameOverScreen.DidWin = won; 
-        GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, type));
+            var screen = new GameOverScreen(GamelabGame.Instance);
+            screen.SetGameOverType(type);
+            GamelabGame.Instance.SwitchToScreen(screen);
     }
 }

@@ -981,7 +981,9 @@ public class MapManager
             Console.WriteLine("spawnableArea.count was 0");
             logger.Error("TENT IS ISOLATED! No ground connected to tent. Cancelling night.");
             GameOverScreen.DidWin = false; 
-            GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.SpawnFail));
+            var screen = new GameOverScreen(GamelabGame.Instance);
+            screen.SetGameOverType(GameOverType.SpawnFail);
+            GamelabGame.Instance.SwitchToScreen(screen);
             return; 
         }
         AddMeadows();

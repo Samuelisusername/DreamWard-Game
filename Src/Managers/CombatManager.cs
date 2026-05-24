@@ -65,7 +65,9 @@ public class CombatManager
             {
                 Console.WriteLine("no spawnable areas for monsters");
                 GameOverScreen.DidWin = false; 
-                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.SpawnFail));
+                var screen = new GameOverScreen(GamelabGame.Instance);
+                screen.SetGameOverType(GameOverType.SpawnFail);
+                GamelabGame.Instance.SwitchToScreen(screen);
                 return;
             }
             (int, int) pos = SpawnableArea[GamelabGame.Rng.Next(SpawnableArea.Count)];
@@ -76,7 +78,9 @@ public class CombatManager
             if(attempts > maxattempts){
                 Console.WriteLine("not enough spawnable areas for monsters");
                 GameOverScreen.DidWin = false; 
-                GamelabGame.Instance.SwitchToScreen(new GameOverScreen(GamelabGame.Instance, GameOverType.SpawnFail));
+                var screen = new GameOverScreen(GamelabGame.Instance);
+                screen.SetGameOverType(GameOverType.SpawnFail);
+                GamelabGame.Instance.SwitchToScreen(screen);
                 return;
             }         
         }    
