@@ -18,7 +18,7 @@ public abstract class Monster : Entity
     public (int col, int row) NextTarget{get; set;}
 
     // Damage this monster deals per second when attacking
-    public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType().Name];
+    public virtual float DamagePerSecond => GamelabGame.Instance.Balance.MonsterDamage[this.GetType()];
 
     // The type of this monster (Regular or Flying)
     public abstract MonsterType Type { get; }

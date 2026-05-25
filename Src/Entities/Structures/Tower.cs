@@ -9,8 +9,8 @@ using Microsoft.Xna.Framework;
 /// </summary>
 public abstract class Tower : Structure
 {
-    protected virtual float damagePerSecond => GamelabGame.Instance.Balance.TowerDamage[this.GetType().Name];
-    protected virtual int rangeDepth => GamelabGame.Instance.Balance.TowerRanges[this.GetType().Name];
+    protected virtual float damagePerSecond => GamelabGame.Instance.Balance.TowerDamage[this.GetType()];
+    protected virtual int rangeDepth => GamelabGame.Instance.Balance.TowerRanges[this.GetType()];
     protected float soundTimer = 0.0f;
     public float TotalDamage {get; protected set;} = 0;
 
