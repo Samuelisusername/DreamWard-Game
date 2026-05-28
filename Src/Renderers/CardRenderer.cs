@@ -693,6 +693,8 @@ public class CardRenderer
 
         if (cardManager._activeMapCard.Type == CardType.Build)
         {
+            if (IsCardUnaffordable(cardManager._activeMapCard, cardManager)) return;
+
             if (cardManager._previewStructure == null ||
                 cardManager._previewStructure.TilePosition != hoverTile)
                 cardManager._previewStructure =

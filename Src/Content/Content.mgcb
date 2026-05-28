@@ -637,3 +637,11 @@
 /processor:SoundEffectProcessor
 /build:Sounds/buildings/universfield-funny-boing-flexatone-wobble-352710.mp3
 
+#begin Sprites/logo.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:Sprites/logo.png
+
+#begin Sprites/logo.json
+/copy:Sprites/logo.json
+
