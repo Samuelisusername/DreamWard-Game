@@ -1182,7 +1182,7 @@ public class MapManager
         return (-1,-1);
     }
 
-    public void HandleMapClick(Vector2 pos)
+    public void HandleMapClick(Vector2 pos, bool rightClick = false)
     {
         // At night only shake trees that are in the playing field (visible, not fallen)
         if (gamePhaseManager.IsInTransition)
@@ -1191,7 +1191,7 @@ public class MapManager
             if (tile.col < 0 || !combatManager.PlayingField.Contains(tile))
                 return;
         }
-        if(TrySetTarget(pos))
+        if(rightClick && TrySetTarget(pos))
         {
             TutorialManager.CurrentInfoStructure = null;
             return;

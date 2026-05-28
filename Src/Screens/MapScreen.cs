@@ -736,6 +736,11 @@ public class MapScreen : GamelabGameScreen
                 _clickStarted = false;
                 _isDrag = false;
             }
+
+            if(mouse.WasButtonReleased(MouseButton.Right))
+            {
+                mapManager.HandleMapClick(mousePos, true);
+            }
         }        
     }
 
